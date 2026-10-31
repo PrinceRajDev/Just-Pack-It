@@ -97,71 +97,6 @@ export function LiveAuthForm({
           ? "Choose how you’ll join, then add your details."
           : "Your shops, saved picks and orders are waiting."}
       </p>
-      {googleConfigured && options.data?.googleSignInAvailable && (
-        <div className="mt-5">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full gap-3 bg-card"
-            disabled={googleBusy || form.formState.isSubmitting}
-            onClick={async () => {
-              if (submitLock.current) return;
-              submitLock.current = true;
-              setGoogleBusy(true);
-              setError(undefined);
-              try {
-                const identity = await googleIdentity();
-                if (registering) {
-                  setEmailProof({ email: identity.email, googleIdToken: identity.idToken });
-                  form.setValue("name", identity.name);
-                  return;
-                }
-                try {
-                  const session = await loginGoogle(identity.idToken);
-                  onSuccess(session.role);
-                } catch (err) {
-                  if (err instanceof ApiError && err.code === "GOOGLE_ONBOARDING_REQUIRED") {
-                    setRegistering(true);
-                    onModeChange?.(true);
-                    form.setValue("name", identity.name);
-                    setEmailProof({ email: identity.email, googleIdToken: identity.idToken });
-                  } else if (err instanceof ApiError && err.code === "GOOGLE_LINK_REQUIRED") {
-                    setGoogleToken(identity.idToken);
-                    setError(
-                      "Enter your existing phone number and password below to link this Google account and sign in.",
-                    );
-                  } else throw err;
-                }
-              } catch (err) {
-                setError(err instanceof Error ? err.message : "Google sign-in failed.");
-              } finally {
-                setGoogleBusy(false);
-                submitLock.current = false;
-              }
-            }}
-          >
-            <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
-              <path
-                fill="#4285F4"
-                d="M21.6 12.2c0-.7-.1-1.5-.2-2.2H12v4.2h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.8 3-4.3 3-7.5Z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 22c2.7 0 5-.9 6.6-2.3l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.9-1.8-5.7-4.2H3v2.6A10 10 0 0 0 12 22Z"
-              />
-              <path fill="#FBBC05" d="M6.3 14a6 6 0 0 1 0-4V7.4H3a10 10 0 0 0 0 9.2L6.3 14Z" />
-              <path
-                fill="#EA4335"
-                d="M12 5.8c1.5 0 2.8.5 3.8 1.5L18.6 4A9.6 9.6 0 0 0 12 2a10 10 0 0 0-9 5.4L6.3 10A6 6 0 0 1 12 5.8Z"
-              />
-            </svg>
-            {googleBusy ? "Connecting to Google…" : "Continue with Google"}
-          </Button>
-          <p className="mt-3 text-center text-xs text-muted-foreground">
-            Or continue with your phone and password
-          </p>
-        </div>
-      )}
       <form
         ref={formElement}
         noValidate
@@ -418,6 +353,70 @@ export function LiveAuthForm({
           {!form.formState.isSubmitting && <ArrowRight size={18} aria-hidden="true" />}
         </Button>
       </form>
+      {googleConfigured && options.data?.googleSignInAvailable && (
+        <div className="mt-5">
+          <p className="mb-3 text-center text-xs text-muted-foreground">Or continue with</p>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full gap-3 bg-card"
+            disabled={googleBusy || form.formState.isSubmitting}
+            onClick={async () => {
+              if (submitLock.current) return;
+              submitLock.current = true;
+              setGoogleBusy(true);
+              setError(undefined);
+              try {
+                const identity = await googleIdentity();
+                if (registering) {
+                  setEmailProof({ email: identity.email, googleIdToken: identity.idToken });
+                  form.setValue("name", identity.name);
+                  return;
+                }
+                try {
+                  const session = await loginGoogle(identity.idToken);
+                  onSuccess(session.role);
+                } catch (err) {
+                  if (err instanceof ApiError && err.code === "GOOGLE_ONBOARDING_REQUIRED") {
+                    setRegistering(true);
+                    onModeChange?.(true);
+                    form.setValue("name", identity.name);
+                    setEmailProof({ email: identity.email, googleIdToken: identity.idToken });
+                  } else if (err instanceof ApiError && err.code === "GOOGLE_LINK_REQUIRED") {
+                    setGoogleToken(identity.idToken);
+                    setError(
+                      "Enter your existing phone number and password above, then select Sign in to link this Google account.",
+                    );
+                  } else throw err;
+                }
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Google sign-in failed.");
+              } finally {
+                setGoogleBusy(false);
+                submitLock.current = false;
+              }
+            }}
+          >
+            <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
+              <path
+                fill="#4285F4"
+                d="M21.6 12.2c0-.7-.1-1.5-.2-2.2H12v4.2h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.8 3-4.3 3-7.5Z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 22c2.7 0 5-.9 6.6-2.3l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.9-1.8-5.7-4.2H3v2.6A10 10 0 0 0 12 22Z"
+              />
+              <path fill="#FBBC05" d="M6.3 14a6 6 0 0 1 0-4V7.4H3a10 10 0 0 0 0 9.2L6.3 14Z" />
+              <path
+                fill="#EA4335"
+                d="M12 5.8c1.5 0 2.8.5 3.8 1.5L18.6 4A9.6 9.6 0 0 0 12 2a10 10 0 0 0-9 5.4L6.3 10A6 6 0 0 1 12 5.8Z"
+              />
+            </svg>
+            {googleBusy ? "Connecting to Google…" : "Continue with Google"}
+          </Button>
+        </div>
+      )}
+
       {!registering && (
         <Button
           variant="ghost"

@@ -16,7 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { authentication } from "@/services/auth";
 import type { SignupEmailProof } from "@/domain/management";
 import { EmailOtpField } from "./EmailOtpField";
-import { ArrowRight, Eye, EyeOff, Loader2, ShoppingBag, Store, ShieldCheck } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Loader2, ShoppingBag, Store } from "lucide-react";
 import { PasswordRecovery } from "./PasswordRecovery";
 import { googleConfigured, googleIdentity } from "@/services/google-auth";
 import { ApiError } from "@/lib/api/client";
@@ -76,27 +76,6 @@ export function LiveAuthForm({
     );
   return (
     <div className="auth-live-form">
-      {!registering && (
-        <div className="auth-role-guide">
-          <p>One sign-in. Your own workspace.</p>
-          <ul>
-            <li>Buyer</li>
-            <li>Seller</li>
-            <li>Delivery partner</li>
-          </ul>
-          <span>
-            Your account determines where you go. New buyers and sellers can register below.
-          </span>
-        </div>
-      )}
-      <p className="mt-3 text-sm text-muted-foreground">
-        {registering
-          ? "Join your neighbourhood marketplace."
-          : "Sign in with your phone number and password."}{" "}
-        {registering
-          ? "Choose how you’ll join, then add your details."
-          : "Your shops, saved picks and orders are waiting."}
-      </p>
       <form
         ref={formElement}
         noValidate
@@ -448,16 +427,6 @@ export function LiveAuthForm({
       >
         {registering ? "Already have an account? Sign in" : "New here? Create an account"}
       </Button>
-      <p className="auth-session-note mt-4 text-sm text-muted-foreground">
-        <ShieldCheck size={18} aria-hidden="true" />
-        <span>
-          One account, one active device. Signing in here signs out your previous device/browser.
-        </span>
-      </p>
-      <p className="auth-access-footnote mt-3 text-xs text-muted-foreground">
-        Buyers and sellers can register here. Delivery and admin access is assigned by the platform.
-        Password recovery requires an email previously verified on your account.
-      </p>
     </div>
   );
 }

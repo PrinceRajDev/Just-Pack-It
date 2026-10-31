@@ -14,6 +14,10 @@ Backend `.env` (local and later Render environment): `EMAIL_OTP_REQUIRED=true`, 
 
 ## Contract
 
+### Provider failure diagnostics
+
+Failures emit `email_provider_failure` with provider `brevo`, HTTP status when available, and a fixed operational category. Raw provider response bodies, error messages, recipient addresses, API keys and OTPs are never logged. A category narrows investigation; it does not prove a specific account issue. Check Render logs alongside Brevo API-key/IP authorization, transactional account activation and sender configuration. No automatic retries are added. Provider acceptance still does not establish inbox delivery.
+
 `GET /auth/registration-options` → `{emailOtpRequired,emailOtpAvailable}`. `POST /auth/email-otp/send {email}` →202 `{challengeId,expiresAt,resendAfterSeconds:60}`. This means provider submission, not delivery or verification. Registration payloads for `/auth/register` and `/auth/register/seller` add `email,emailChallengeId,emailOtp`. Required by default; admin/delivery cannot self-register. Missing proof400, expired/used/wrong/attempt-limited code400, resend/global limit429, unavailable configuration503, provider failure502. Existing SMS endpoints still fail unavailable. No client-supplied verified flag accepted.
 
 `User.email` is normalized and unique when present; `emailVerifiedAt` is server-written. Challenge/cooldown TTL indexes and the partial unique User.email index must be included in the operator-reviewed `npm run db:indexes` before production rollout. Existing users without email are not marked verified. Legacy isolated QA explicitly opts out of OTP; new OTP tests use mocked Brevo and validate the mandatory path. No real mailbox delivery is claimed until credentials are configured and inbox receipt is checked.

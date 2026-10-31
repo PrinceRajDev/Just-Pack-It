@@ -5,6 +5,7 @@ import type {Config} from "../config/env.js";
 import {fail} from "../common/errors.js";
 import {throttle,tokenHash} from "./service.js";
 import {Throttle,User} from "./models.js";
+import { emailFailureCategory } from "./email-diagnostics.js";
 export const emailAddress=z.email().max(254).transform(value=>value.trim().toLowerCase());
 export const emailProofFields={email:emailAddress.optional(),emailChallengeId:z.uuid().optional(),emailOtp:z.string().regex(/^\d{6}$/).optional()};
 export const EmailChallenge=model("EmailChallenge",new Schema({_id:String,target:{type:String,index:true},email:String,purpose:String,userId:String,authVersion:Number,digest:{type:String,select:false},state:String,attempts:{type:Number,default:0},expiresAt:{type:Date,index:{expireAfterSeconds:0}}},{versionKey:false}));
@@ -16,9 +17,19 @@ export async function verifyEmailIndexes(){
 }
 export async function deliverEmailOtp(email:string,code:string,config:Config,purpose="signup"){
   const action=purpose==="recovery" ? "password reset" : "signup";
+  let rejectionLogged=false;
+  try {
   const response=await fetch("https://api.brevo.com/v3/smtp/email",{method:"POST",headers:{"api-key":config.BREVO_API_KEY!,"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({sender:{email:config.EMAIL_FROM,name:"Just Pack It"},to:[{email}],subject:purpose==="recovery" ? "Just Pack It — reset your password" : "Just Pack It — verify your email",textContent:`Your Just Pack It ${action} code is ${code}. It expires in 10 minutes. Never share this code. If you did not request ${action}, ignore this email.`}),signal:AbortSignal.timeout(15000),redirect:"error"});
-  const result=await response.json();
-  if(response.status!==201 || typeof result?.messageId!=="string" || !result.messageId)throw new Error("Email provider submission not confirmed");
+  const result=await response.json().catch(()=>null);
+  if(response.status!==201 || typeof result?.messageId!=="string" || !result.messageId) {
+    console.warn(JSON.stringify({ event: "email_provider_failure", provider: "brevo", status: response.status, category: emailFailureCategory(response.status, result?.code) }));
+    rejectionLogged=true;
+    throw new Error("Email provider submission not confirmed");
+  }
+  } catch {
+    if (!rejectionLogged) console.warn(JSON.stringify({ event: "email_provider_failure", provider: "brevo", category: "network_timeout_or_transport" }));
+    throw new Error("Email provider submission not confirmed");
+  }
 }
 const digest=(id:string,code:string,config:Config)=>createHmac("sha256",config.EMAIL_OTP_SECRET!).update(`${id}:${code}`).digest("hex");
 export type EmailSender=(email:string,code:string)=>Promise<void>;

@@ -1302,6 +1302,11 @@
   background: linear-gradient(135deg, #e2e8cf, #f1e5d1);
 }
 .store-interior .shop-page-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem;
   margin: 1.5rem clamp(1rem, 3vw, 3rem) 0;
   border: 1px solid #e6dece;
   border-radius: 1.25rem;
@@ -1309,11 +1314,24 @@
   background: #fffdf8;
 }
 .shop-page-cover {
-  height: 13rem;
+  height: 14rem;
+  min-width: 0;
+  aspect-ratio: auto;
+  overflow: hidden;
+  border-radius: 0.875rem;
+}
+.shop-page-cover img {
+  object-fit: contain;
+}
+.shop-page-summary > .size-20 {
+  width: 4rem;
+  height: 4rem;
+  font-size: 1.5rem;
 }
 .shop-page-identity {
+  min-width: 0;
   max-width: none;
-  padding: 1.5rem 2rem;
+  padding: 0.75rem 1.25rem;
 }
 .shop-page-identity h1 {
   font-size: clamp(2rem, 3.5vw, 3.25rem);
@@ -1559,10 +1577,14 @@
     gap: 0.75rem;
   }
   .shop-page-identity {
-    padding: 1.25rem;
+    padding: 0.75rem 0;
+  }
+  .store-interior .shop-page-hero {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1rem;
   }
   .shop-page-cover {
-    height: 9rem;
+    height: 11rem;
   }
   .shop-catalogue-sidebar > div {
     padding: 0.75rem;

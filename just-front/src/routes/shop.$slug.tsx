@@ -68,12 +68,14 @@ function ShopPage() {
             </Link>{" "}
             / Shops / {shop.name}
           </nav>
-          <div className="mt-6 flex flex-col gap-6 md:flex-row md:items-end">
+          <div className="shop-page-summary mt-5 flex flex-col gap-4 md:flex-row md:items-start">
             <ShopInitials shop={shop} className="size-20 text-3xl" />
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <h1 className="font-display text-4xl md:text-6xl">{shop.name}</h1>
               <p className="mt-2 text-muted-foreground">
-                {shop.tagline} · {shop.locality} · since {shop.since}
+                {[shop.tagline, shop.locality, shop.since ? `since ${shop.since}` : null]
+                  .filter(Boolean)
+                  .join(" · ")}
               </p>
               {shop.description && (
                 <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{shop.description}</p>
@@ -96,6 +98,8 @@ function ShopPage() {
                 <OpenState shop={shop} />
               </div>
             </div>
+          </div>
+          <div className="mt-4 border-t border-border pt-4">
             <FulfilmentChips methods={shop.fulfilment} />
           </div>
         </div>

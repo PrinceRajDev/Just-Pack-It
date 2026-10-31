@@ -2,8 +2,23 @@ import { afterEach, expect, it, vi } from "vitest";
 import { emailFailureCategory } from "../src/auth/email-diagnostics.js";
 import { deliverEmailOtp, emailTestWindow } from "../src/auth/email-otp.js";
 import { loadConfig } from "../src/config/env.js";
+import { otpEmail } from "../src/auth/email-template.js";
 const config = loadConfig({ NODE_ENV: "test", MONGODB_URI: "mongodb://127.0.0.1/unused", CORS_ORIGINS: "http://localhost:8081", SESSION_PEPPER: "qa-session-".repeat(4), CURSOR_SECRET: "qa-cursor-".repeat(4), BREVO_API_KEY: "qa-provider-secret-".repeat(3), EMAIL_FROM: "sender@qa.invalid" });
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+it("keeps signup and recovery email purposes clear with matching text fallbacks",()=>{
+  for(const purpose of ["signup","recovery"]){
+    const content=otpEmail("001234",purpose);
+    expect(content.htmlContent).toContain("001234");
+    expect(content.textContent).toContain("001234");
+    expect(content.htmlContent).toContain('lang="en"');
+    expect(content.htmlContent).not.toContain("<script");
+    expect(content.htmlContent).not.toContain("<img");
+    expect(content.textContent).toContain("10 minutes");
+  }
+  expect(otpEmail("001234","recovery").htmlContent).toContain("Reset your password");
+  expect(otpEmail("001234").htmlContent).toContain("signup page");
+  expect(()=>otpEmail('<img>')).toThrow();
+});
 it("restricts temporary send bypass to the configured mailbox and short active window",()=>{
   const now=Date.parse("2026-11-01T00:00:00Z");
   const enabled={...config,EMAIL_OTP_TEST_RECIPIENT:"test@qa.invalid",EMAIL_OTP_TEST_UNTIL:new Date(now+3600000).toISOString()};

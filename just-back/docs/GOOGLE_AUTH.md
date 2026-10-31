@@ -1,0 +1,13 @@
+# Google sign-in
+
+Google is an optional additional identity method using Firebase Authentication. Enable the Google provider in Firebase Authentication, configure the support email, and add `justpackit.vercel.app` (and localhost for local tests) under Authorized domains. Existing public VITE_FIREBASE_API_KEY, AUTH_DOMAIN, PROJECT_ID and APP_ID are reused. Never put the Admin credential file in the frontend.
+
+Render requires `GOOGLE_SIGN_IN_ENABLED=true`, `FIREBASE_PROJECT_ID` matching the frontend and `GOOGLE_APPLICATION_CREDENTIALS` pointing to the existing Firebase Admin secret file. Default is disabled. Before enabling, run the operator-reviewed `npm run db:indexes` against the intended database: the new partial unique `User.googleUid` index is required; endpoints fail closed if absent. No live database migration is performed by this change.
+
+`GET /auth/registration-options` adds optional `googleSignInAvailable`. `POST /auth/google` accepts `{idToken,phone?,password?}` and returns the usual marketplace Session. Token is a Firebase ID token from Google popup, never an OAuth access token. Server verifies signature/project/expiry/revocation/disabled status through Admin SDK, requires Google provider, verified email and recent authentication (10 minutes). Session role comes only from the database. Existing single-device session rotation applies.
+
+Unknown identity returns 409 GOOGLE_ONBOARDING_REQUIRED. Existing registration endpoints accept optional `googleIdToken` instead of email challenge/code. Buyers still provide name, phone and password; sellers also complete the existing shop onboarding and approval. Google verifies email, not phone/shop identity. Email and Google UID come from verified server claims, never client profile fields. UID and verified email are unique; concurrent registration cannot create duplicate identities.
+
+Existing accounts are never automatically linked just because emails match: 409 GOOGLE_LINK_REQUIRED requests the existing phone and password, then atomically binds the UID while rotating sessions. Unverified-email accounts, mismatching linked identities and disabled users fail closed. Existing password login/recovery remains available. Google does not self-provision admin/delivery roles. No Google token is persisted to browser storage or logged; Firebase client persistence is memory-only and signed out after obtaining proof.
+
+Popup cancellation/blocking/network errors keep the password form available. Real Google consent, production Firebase configuration and mobile popup behavior require a live user test after console setup. Do not claim mocked token tests establish a working real provider.

@@ -15,6 +15,7 @@ export interface UserRecord {
   authVersion?:number;
   authRevision?:number;
   email?:string;
+  googleUid?:string;
   emailVerifiedAt?:Date;
 }
 const userSchema = new Schema<UserRecord>(
@@ -30,11 +31,13 @@ const userSchema = new Schema<UserRecord>(
     authVersion:{type:Number,default:0},
     authRevision:{type:Number,default:0},
     email:String,
+    googleUid:String,
     emailVerifiedAt:Date,
   },
   { timestamps: true },
 );
 userSchema.index({email:1},{unique:true,partialFilterExpression:{email:{$type:"string"}}});
+userSchema.index({googleUid:1},{unique:true,partialFilterExpression:{googleUid:{$type:"string"}}});
 export const User = model<UserRecord>("User", userSchema);
 export interface SessionRecord {
   _id: string;

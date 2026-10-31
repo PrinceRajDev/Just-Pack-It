@@ -4,7 +4,7 @@ import {
   timingSafeEqual,
   createHmac,
 } from "node:crypto";
-import { User, Session, Throttle, type Role } from "./models.js";
+import { User, Session, Throttle, type Role, type UserRecord } from "./models.js";
 import { fail } from "../common/errors.js";
 import type { Config } from "../config/env.js";
 import mongoose from "mongoose";
@@ -32,7 +32,7 @@ export async function hashPassword(password: string) {
   const hash = await scrypt(password, salt);
   return `${salt}:${hash.toString("hex")}`;
 }
-async function verifyPassword(password: string, stored: string) {
+export async function verifyPassword(password: string, stored: string) {
   const [salt, expected] = stored.split(":");
   const actual = await scrypt(password, salt);
   const target = Buffer.from(expected, "hex");
@@ -87,9 +87,12 @@ export async function login(
   );
   if (!user || !valid || !user.active)
     fail(401, "INVALID_CREDENTIALS", "Invalid phone or password");
+  return issueSession(user,config);
+}
+export async function issueSession(user:UserRecord,config:Config,googleUid?:string){
   const token = randomBytes(32).toString("base64url");
   await mongoose.connection.transaction(async session=>{
-    const current=await User.findOneAndUpdate({_id:user._id,passwordHash:user.passwordHash,active:true,$or:[{authVersion:user.authVersion ?? 0},...((user.authVersion ?? 0)===0 ? [{authVersion:{$exists:false}}] : [])]},{$inc:{authVersion:1,authRevision:1}},{session,returnDocument:"after"});
+    const current=await User.findOneAndUpdate({_id:user._id,passwordHash:user.passwordHash,active:true,$or:[{authVersion:user.authVersion ?? 0},...((user.authVersion ?? 0)===0 ? [{authVersion:{$exists:false}}] : [])]},{$inc:{authVersion:1,authRevision:1},...(googleUid ? {$set:{googleUid}} : {})},{session,returnDocument:"after"});
     if(!current)fail(401,"INVALID_CREDENTIALS","Credentials changed. Sign in again.");
     await Session.deleteMany({userId:current._id}).session(session);
     await Session.create([{_id:tokenHash(token,config),userId:current._id,authVersion:current.authVersion ?? 0,expiresAt:new Date(Date.now()+config.SESSION_TTL_HOURS*3600000)}],{session});

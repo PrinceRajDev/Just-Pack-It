@@ -9,6 +9,11 @@ export interface AccountProfile {
   version: number;
 }
 export const authentication = {
+  google: (idToken: string, phone?: string, password?: string) =>
+    api<Session>("/auth/google", {
+      method: "POST",
+      body: JSON.stringify({ idToken, phone, password }),
+    }),
   profile: () => api<AccountProfile>("/auth/profile"),
   updateProfile: (name: string, version: number) =>
     api<AccountProfile>("/auth/profile", {
@@ -27,7 +32,9 @@ export const authentication = {
     newPassword: string;
   }) => api<void>("/auth/password-recovery/reset", { method: "POST", body: JSON.stringify(input) }),
   registrationOptions: () =>
-    api<{ emailOtpRequired: boolean; emailOtpAvailable: boolean }>("/auth/registration-options"),
+    api<{ emailOtpRequired: boolean; emailOtpAvailable: boolean; googleSignInAvailable?: boolean }>(
+      "/auth/registration-options",
+    ),
   sendEmailOtp: (email: string) =>
     api<{ challengeId: string; expiresAt: string; resendAfterSeconds: number }>(
       "/auth/email-otp/send",

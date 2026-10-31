@@ -2,7 +2,8 @@ import { Router } from "express";
 import type { Config } from "../config/env.js";
 import { registerInput, loginInput,password } from "./validators.js";
 import {z} from "zod";
-import { hashPassword, login, throttle, tokenHash,secureAccount } from "./service.js";
+import { hashPassword, login, throttle, tokenHash,secureAccount,issueSession,verifyPassword } from "./service.js";
+import {verifyGoogle} from "./google-identity.js";
 import mongoose from "mongoose";
 import {emailAddress,emailAvailable,sendSignupEmail,verifySignupEmail,consumeEmailProof} from "./email-otp.js";
 import { Session, User } from "./models.js";
@@ -14,7 +15,22 @@ export function authRoutes(config: Config) {
   const router = Router();
   router.use((_req,res,next)=>{res.setHeader("Cache-Control","private, no-store");next();});
   router.use(recoveryRoutes(config));
-  router.get("/registration-options",(_req,res)=>res.json({emailOtpRequired:config.EMAIL_OTP_REQUIRED,emailOtpAvailable:emailAvailable(config)}));
+  router.get("/registration-options",(_req,res)=>res.json({emailOtpRequired:config.EMAIL_OTP_REQUIRED,emailOtpAvailable:emailAvailable(config),googleSignInAvailable:config.GOOGLE_SIGN_IN_ENABLED && !!config.FIREBASE_PROJECT_ID}));
+  router.post("/google",async(req,res)=>{
+    const input=z.object({idToken:z.string().min(100).max(10000),phone:loginInput.shape.phone.optional(),password:password.optional()}).strict().parse(req.body);
+    await throttle(`google-ip:${req.ip}`,config,20);
+    const identity=await verifyGoogle(input.idToken,config);
+    const user=await User.findOne({$or:[{googleUid:identity.googleUid},{email:identity.email}]}).select("+passwordHash");
+    if(!user)fail(409,"GOOGLE_ONBOARDING_REQUIRED","Complete your buyer or seller registration.");
+    if(!user.active || !user.emailVerifiedAt || user.email!==identity.email)fail(403,"GOOGLE_ACCOUNT_UNAVAILABLE","Use your existing account sign-in or contact support.");
+    if(user.googleUid!==identity.googleUid){
+      if(user.googleUid)fail(403,"GOOGLE_ACCOUNT_UNAVAILABLE","Use your existing account sign-in.");
+      await throttle(`google-link:${user._id}`,config,5);
+      if(!input.phone || !input.password)fail(409,"GOOGLE_LINK_REQUIRED","Enter your existing phone and password to securely link Google.");
+      if(input.phone!==user.phone || !await verifyPassword(input.password,user.passwordHash))fail(401,"INVALID_CREDENTIALS","Invalid phone or password.");
+    }
+    res.json(await issueSession(user,config,identity.googleUid));
+  });
   router.post("/email-otp/send",async(req,res)=>{
     const {email}=z.object({email:emailAddress}).strict().parse(req.body);
     res.status(202).json(await sendSignupEmail(email,req.ip ?? "unknown",config));

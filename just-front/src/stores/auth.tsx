@@ -14,6 +14,7 @@ interface AuthCtx {
   signInDemo: (role: Role) => void;
   signIn: (phone: string, otp: string) => Promise<Session>;
   loginPassword: (phone: string, password: string) => Promise<Session>;
+  loginGoogle: (idToken: string, phone?: string, password?: string) => Promise<Session>;
   registerBuyer: (
     name: string,
     phone: string,
@@ -165,6 +166,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
         loginPassword: async (phone, password) => {
           const s = await authentication.login(phone, password);
+          persist(s);
+          return s;
+        },
+        loginGoogle: async (idToken, phone, password) => {
+          const s = await authentication.google(idToken, phone, password);
           persist(s);
           return s;
         },

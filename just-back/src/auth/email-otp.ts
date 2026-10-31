@@ -7,8 +7,9 @@ import {throttle,tokenHash} from "./service.js";
 import {Throttle,User} from "./models.js";
 import { emailFailureCategory } from "./email-diagnostics.js";
 import { otpEmail } from "./email-template.js";
+import { verifyGoogle } from "./google-identity.js";
 export const emailAddress=z.email().max(254).transform(value=>value.trim().toLowerCase());
-export const emailProofFields={email:emailAddress.optional(),emailChallengeId:z.uuid().optional(),emailOtp:z.string().regex(/^\d{6}$/).optional()};
+export const emailProofFields={email:emailAddress.optional(),emailChallengeId:z.uuid().optional(),emailOtp:z.string().regex(/^\d{6}$/).optional(),googleIdToken:z.string().min(100).max(10000).optional()};
 export const EmailChallenge=model("EmailChallenge",new Schema({_id:String,target:{type:String,index:true},email:String,purpose:String,userId:String,authVersion:Number,digest:{type:String,select:false},state:String,attempts:{type:Number,default:0},expiresAt:{type:Date,index:{expireAfterSeconds:0}}},{versionKey:false}));
 export const EmailCooldown=model("EmailCooldown",new Schema({_id:String,expiresAt:{type:Date,index:{expireAfterSeconds:0}}},{versionKey:false}));
 export const emailAvailable=(config:Config)=>!!(config.EMAIL_OTP_SECRET && config.BREVO_API_KEY && config.EMAIL_FROM);
@@ -59,8 +60,14 @@ export async function sendSignupEmail(email:string,ip:string,config:Config,sende
   }catch{await EmailChallenge.updateOne({_id:id},{$set:{state:"failed"}});if(purpose!=="recovery")fail(502,"EMAIL_SEND_FAILED","Could not confirm email submission. Retry after 60 seconds; only a new code will be valid.");}
   return {challengeId:id,expiresAt:expiresAt.toISOString(),resendAfterSeconds:60};
 }
-export interface EmailProof {id:string;email:string;digest:string;purpose:"signup"|"recovery";userId?:string;authVersion?:number}
-export async function verifySignupEmail(input:{email?:string;emailChallengeId?:string;emailOtp?:string},config:Config,purpose:"signup"|"recovery"="signup"):Promise<EmailProof|undefined>{
+export interface EmailProof {id:string;email:string;digest:string;purpose:"signup"|"recovery";userId?:string;authVersion?:number;googleUid?:string}
+export async function verifySignupEmail(input:{email?:string;emailChallengeId?:string;emailOtp?:string;googleIdToken?:string},config:Config,purpose:"signup"|"recovery"="signup"):Promise<EmailProof|undefined>{
+  if(input.googleIdToken){
+    if(purpose!=="signup" || input.emailOtp || input.emailChallengeId)fail(400,"INVALID_VERIFICATION","Choose one email verification method.");
+    const identity=await verifyGoogle(input.googleIdToken,config);
+    if(input.email && input.email!==identity.email)fail(400,"INVALID_VERIFICATION","Google email does not match.");
+    return {id:"",digest:"",purpose:"signup",...identity};
+  }
   if(!config.EMAIL_OTP_REQUIRED && purpose==="signup")return undefined;
   if(!emailAvailable(config))fail(503,"EMAIL_OTP_UNAVAILABLE","Email verification is not configured yet");
   if(!input.email || !input.emailChallengeId || !input.emailOtp)fail(400,"EMAIL_VERIFICATION_REQUIRED","Verify your email using the six-digit signup code");
@@ -72,6 +79,7 @@ export async function verifySignupEmail(input:{email?:string;emailChallengeId?:s
 }
 export async function consumeEmailProof(proof:EmailProof|undefined,session:ClientSession){
   if(!proof)return {};
+  if(proof.googleUid)return {email:proof.email,emailVerifiedAt:new Date(),googleUid:proof.googleUid};
   const result=await EmailChallenge.updateOne({_id:proof.id,email:proof.email,purpose:proof.purpose,digest:proof.digest,state:"sent",attempts:{$lte:5},expiresAt:{$gt:new Date()}},{$set:{state:"consumed"}},{session});
   if(result.modifiedCount!==1)fail(400,"OTP_INVALID","Code expired or already used; request another");
   return {email:proof.email,emailVerifiedAt:new Date()};

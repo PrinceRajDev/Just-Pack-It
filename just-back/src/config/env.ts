@@ -22,6 +22,7 @@ const schema = z
     CURSOR_SECRET: secret,
     SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(72).default(12),
     EMAIL_OTP_REQUIRED:z.enum(["true","false"]).default("true").transform(value=>value==="true"),
+    GOOGLE_SIGN_IN_ENABLED:z.enum(["true","false"]).default("false").transform(value=>value==="true"),
     EMAIL_OTP_SECRET:secret.optional(),
     EMAIL_OTP_DAILY_LIMIT:z.coerce.number().int().min(1).max(300).default(200),
     EMAIL_OTP_TEST_RECIPIENT:z.email().optional(),
@@ -56,6 +57,7 @@ const schema = z
     CLOUDFLARE_IMAGES_VARIANT: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/).default("public"),
   })
   .superRefine((value, ctx) => {
+    if(value.GOOGLE_SIGN_IN_ENABLED && (!value.FIREBASE_PROJECT_ID || !value.GOOGLE_APPLICATION_CREDENTIALS))ctx.addIssue({code:"custom",path:["GOOGLE_SIGN_IN_ENABLED"],message:"Configure Firebase project and admin credential file before enabling Google sign-in"});
     if(value.EMAIL_OTP_SECRET && [value.SESSION_PEPPER,value.CURSOR_SECRET].includes(value.EMAIL_OTP_SECRET))ctx.addIssue({code:"custom",path:["EMAIL_OTP_SECRET"],message:"Use an independent email OTP secret"});
     if(value.FIREBASE_PUSH_ENABLED && (!value.FIREBASE_PROJECT_ID || !value.GOOGLE_APPLICATION_CREDENTIALS))ctx.addIssue({code:"custom",path:["FIREBASE_PUSH_ENABLED"],message:"Configure Firebase project and credential file before enabling"});
     if(value.PAYMENT_RECOVERY_WORKER_ENABLED && !value.RAZORPAY_ENABLED)ctx.addIssue({code:"custom",path:["PAYMENT_RECOVERY_WORKER_ENABLED"],message:"Recovery requires configured Razorpay integration"});

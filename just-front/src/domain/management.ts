@@ -73,8 +73,9 @@ export type ShopInput = {
 };
 export interface SignupEmailProof {
   email: string;
-  emailChallengeId: string;
-  emailOtp: string;
+  emailChallengeId?: string;
+  emailOtp?: string;
+  googleIdToken?: string;
 }
 export interface SellerSignupInput extends Partial<SignupEmailProof> {
   name: string;

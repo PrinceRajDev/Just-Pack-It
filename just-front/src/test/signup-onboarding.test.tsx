@@ -4,6 +4,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LiveAuthForm } from "@/components/auth/LiveAuthForm";
 import { management } from "@/services/management";
 import { authentication } from "@/services/auth";
+import { googleIdentity } from "@/services/google-auth";
+import { ApiError } from "@/lib/api/client";
+vi.mock("@/services/google-auth", () => ({ googleConfigured: true, googleIdentity: vi.fn() }));
 vi.mock("@/services/auth", () => ({
   authentication: { registrationOptions: vi.fn(), sendEmailOtp: vi.fn() },
 }));
@@ -11,6 +14,7 @@ const auth = vi.hoisted(() => ({
   registerBuyer: vi.fn(),
   registerSeller: vi.fn(),
   loginPassword: vi.fn(),
+  loginGoogle: vi.fn(),
 }));
 vi.mock("@/stores/auth", () => ({ useAuth: () => auth }));
 vi.mock("@/services/management", () => ({ management: { categories: vi.fn(), areas: vi.fn() } }));
@@ -68,6 +72,67 @@ function identity() {
     target: { value: "Test-only-password-2026" },
   });
 }
+describe("Google onboarding", () => {
+  it("uses verified Google proof while still requiring buyer details", async () => {
+    vi.mocked(authentication.registrationOptions).mockResolvedValue({
+      emailOtpRequired: true,
+      emailOtpAvailable: false,
+      googleSignInAvailable: true,
+    });
+    vi.mocked(googleIdentity).mockResolvedValue({
+      idToken: "qa-google-proof",
+      email: "qa@example.invalid",
+      name: "Google buyer",
+    });
+    mount();
+    fireEvent.click(await screen.findByRole("button", { name: "Continue with Google" }));
+    await screen.findByText(/Email selected with Google/);
+    identity();
+    fireEvent.click(screen.getByRole("button", { name: "Create buyer account" }));
+    await waitFor(() =>
+      expect(auth.registerBuyer).toHaveBeenCalledWith(
+        "Test owner",
+        "+919876543210",
+        "Test-only-password-2026",
+        { email: "qa@example.invalid", googleIdToken: "qa-google-proof" },
+      ),
+    );
+  });
+  it("routes a new Google identity into onboarding instead of creating an account immediately", async () => {
+    vi.mocked(authentication.registrationOptions).mockResolvedValue({
+      emailOtpRequired: true,
+      emailOtpAvailable: false,
+      googleSignInAvailable: true,
+    });
+    vi.mocked(googleIdentity).mockResolvedValue({
+      idToken: "qa-google-proof",
+      email: "qa@example.invalid",
+      name: "Google buyer",
+    });
+    auth.loginGoogle.mockRejectedValue(
+      new ApiError("Complete registration", 409, "GOOGLE_ONBOARDING_REQUIRED"),
+    );
+    mount();
+    fireEvent.click(screen.getByRole("button", { name: "Already have an account? Sign in" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Continue with Google" }));
+    await screen.findByText(/Email selected with Google/);
+    expect(screen.getByRole("button", { name: "Create buyer account" })).toBeInTheDocument();
+    expect(auth.registerBuyer).not.toHaveBeenCalled();
+  });
+  it("keeps phone/password login available after popup cancellation", async () => {
+    vi.mocked(authentication.registrationOptions).mockResolvedValue({
+      emailOtpRequired: false,
+      emailOtpAvailable: false,
+      googleSignInAvailable: true,
+    });
+    vi.mocked(googleIdentity).mockRejectedValue(new Error("Google sign-in cancelled."));
+    mount();
+    fireEvent.click(screen.getByRole("button", { name: "Already have an account? Sign in" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Continue with Google" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Google sign-in cancelled");
+    expect(screen.getByRole("button", { name: /^Sign in$/ })).toBeEnabled();
+  });
+});
 describe("Buyer/seller signup", () => {
   it("ignores duplicate submits while authentication is pending", async () => {
     mount();

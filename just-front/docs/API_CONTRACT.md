@@ -1,5 +1,13 @@
 # Just Pack It — expected backend integration points
 
+## Google sign-in — 2026-11-01
+
+`GET /auth/registration-options` adds optional `googleSignInAvailable`. With Firebase Google provider configured, the frontend obtains a Firebase ID token through a popup (memory-only client session) and calls `POST /auth/google {idToken,phone?,password?}`. Response is the existing `Session`; database role and single-device session rotation remain authoritative. Server checks the Firebase project, signature, expiry, revocation, Google provider, verified email and recent authentication. OAuth access tokens/client email claims are not accepted as proof.
+
+409 `GOOGLE_ONBOARDING_REQUIRED` opens existing buyer/seller onboarding. Both registration endpoints accept `googleIdToken` instead of `emailChallengeId,emailOtp`; phone/password and seller shop fields remain required. Google email verification does not verify the phone or approve the shop. 409 `GOOGLE_LINK_REQUIRED` requires existing phone/password confirmation before binding Google to a matching verified-email account; matching email alone never signs into or links an existing account. Inactive, mismatching or unverified accounts fail closed. No admin/delivery self-registration. Raw tokens are never logged or persisted to browser storage.
+
+Backend enable flag defaults false. Requires Firebase Admin credentials, project alignment and the partial unique `User.googleUid` index (reviewed `npm run db:indexes`). Frontend reuses public Firebase web configuration; no new client secret. Firebase Console must enable Google and authorize the frontend domain. Real consent and device popup behavior remain deployment checks; mocked provider tests are not proof of live login.
+
 ## GPS address, recovery, cancellation and operations follow-up — 2026-10-30
 
 - GPS discovery now prompts an address/landmark confirmation sheet after a service area is resolved. It saves only manually confirmed fields through existing `POST /addresses`; GPS is not reverse-geocoded and precise coordinates are not saved into the address. Authenticated buyer required by this UI; browsing can continue without saving. Checkout still independently validates address version, pincode and shop service area.

@@ -1,0 +1,15 @@
+# Product photos
+
+Verification (2026-10-29): frontend 66 tests across 14 files and backend 48 tests across 3 files passed; typecheck/build passed in both projects. Backend lint passed; frontend lint completed with 0 errors and 22 existing Fast Refresh warnings. npm reported 0 vulnerabilities after installing sharp. Cloudflare HTTP calls were mocked, and backend data tests used an isolated replica set. The user confirmed Cloudflare Images is not set up yet; real uploads/delivery are disabled/unverified until configuration. No Cloudflare resource or real seller listing was created for testing.
+
+The API-mode product editor now supports local photo selection, preview, upload/discard, visible failure/conflict states and a server-confirmed saved image. Save the listing first; then use **Product photo** below the listing/options forms. Existing durable URL/key editing remains compatible. Shop cover uploads are not part of this change.
+
+The separate photo editor locks other listing/variant editors while a file is selected. Unsaved listing/variant edits lock photo selection. The backend commits the image immediately with the current product version; a preview alone is not stored or represented as success. Object URLs are revoked when discarded/unmounted.
+
+Cloudflare Images was selected. The backend proxies bounded binary uploads and validates real image content before storage; it does not issue client direct-upload URLs. The frontend only talks to its existing API client/service layer. Full returned HTTPS delivery URLs pass through the existing `imageUrl()` abstraction; no VITE token/hash setting is necessary.
+
+Configure the backend only using [backend image setup](../../just-back/docs/IMAGES.md). All credentials unset means uploads remain disabled; the UI says so explicitly. Configured credentials plus an existing delivery variant and real seller/listing are required for live verification. No sample seller, shop, product or Cloudflare asset has been created for testing. Decoder/provider tests use generated fixtures, mocked HTTP and an isolated MongoDB replica set.
+
+Implementation files: frontend `src/services/product-images.ts`, `src/components/portal/ProductPhotoUpload.tsx`, `LiveProducts.tsx` and photo/service/UI tests; backend `src/images/service.ts`, `routes.ts`, environment/app config, `.env.example`, package/lock files and image/foundation/ownership tests. Backend adds sharp for real decoding, metadata removal and bounded WebP optimisation.
+
+Current limits: JPEG/PNG/WebP ≤5 MiB, non-animated, ≤25 megapixels, optimised inside 1600x1600. Two active processing jobs per backend process; 20 attempts per seller per 15-minute bucket. Full orphan reconciliation, retention policy, multi-process ingress limits and real Cloudflare delivery verification remain launch dependencies. Previous image assets are retained; automatic deletion must not break other references. A newly uploaded asset from a failed attachment is cleaned up only if no product references it; uncertain outcomes require operator reconciliation.

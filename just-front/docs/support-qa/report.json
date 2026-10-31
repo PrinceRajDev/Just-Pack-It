@@ -1,0 +1,10 @@
+{
+  "verified": true,
+  "steps": [
+    "Buyer submits shop-specific issue and sees saved ticket",
+    "Admin tracks in progress then resolves with buyer-visible note; mobile fits",
+    "Buyer refresh sees admin resolution",
+    "Seller explicitly enables audio context and reviews new orders; mobile fits (audibility not manually verified)"
+  ],
+  "errors": []
+}

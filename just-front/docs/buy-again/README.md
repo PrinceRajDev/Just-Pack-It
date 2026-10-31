@@ -1,0 +1,11 @@
+# Buy again and printable receipt verification
+
+Buyer order details now review exact historical product/variant/owning-shop identifiers through existing cart quote before adding. Price changes require review; stock is reduced after existing bag quantity; unavailable/closed listings are skipped. Confirmation rechecks and changed plans require another explicit confirmation. Cart writes are atomic and preserve existing lines within 100-line/999-quantity limits. Receipt prints saved seller/item/pricing snapshots and supplied payment/refund/cancellation data, with clear missing-data and demo/test labels.
+
+Verified 2026-10-31: 216 frontend tests in49 files passed; production build and TypeScript check passed. Full lint exits0 with23 existing warnings, zero errors. Changed files also pass targeted lint. The five new tests cover exact identity, current price/stock, closed/unavailable/foreign-shop handling, explicit review/recheck, failed/changed confirmation, and receipt copy/print action. Existing tracking and order tests isolate action components from their own assertions.
+
+Browser:9 checks passed at390px using isolated temporary MongoDB/API and a simulated historical order response. Cart quote uses real isolated API. Verified exact variant/current price written to buyer-scoped cart, old price shown, no horizontal overflow, receipt-only print layout, seller snapshot, test/unpaid labels and no page errors. Print screenshot was visually inspected. No production orders, accounts or payments were created; physical printer output and production browser matrix were not tested.
+
+No new backend endpoint or credentials. Existing owned order snapshots and public cart quote are required. Tax invoice registration/numbering remains a future seller/backend dependency; this printable order receipt is not a GST invoice or independent payment verification.
+
+Files: src/components/store/BuyAgain.tsx, OrderReceipt.tsx, LiveOrders.tsx; src/routes/orders.$id.tsx; src/lib/reorder.ts; src/services/reorder.ts; src/stores/cart.tsx; src/styles.css; docs/API_CONTRACT.md; src/test/buy-again.test.tsx, live-orders.test.tsx, order-tracking.test.tsx; scripts/buy-again-smoke.mjs; this verification directory.

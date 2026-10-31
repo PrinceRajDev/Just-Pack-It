@@ -1,0 +1,11 @@
+{
+  "verified": true,
+  "checks": [
+    "Guest cart/wishlist remain separate until explicit import",
+    "Display name saves through own-profile API and survives reload without changing identity",
+    "Imported wishlist renders for buyer A",
+    "Buyer B has isolated empty cart/wishlist; buyer A data preserved",
+    "Buyer A data restored on return; sign-out shows guest data without leaking account wishlist"
+  ],
+  "errors": []
+}

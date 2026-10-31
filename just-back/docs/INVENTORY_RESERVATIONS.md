@@ -1,0 +1,23 @@
+# Inventory reservation foundation — before real orders
+
+Current extension: COD order creation can atomically mark holds `committed`; committed records never expire or release via hold cleanup. Seller pre-preparation cancellation restores only its own frozen SKU quantities with a per-suborder restock marker. See `COD_ORDERS.md` and `SELLER_ORDERS.md`; the initial internal-only design below is retained as historical context.
+
+## Decisions before implementation
+
+Reservations are an internal backend primitive, not a public purchase endpoint. Existing checkout still has no final fee/tax/offer policy, payment lifecycle or order state machine. Keep all live order/payment submission disabled. No background worker or reservation creation is activated against the real database in this step.
+
+Available stock is decremented inside one MongoDB transaction for all requested shop-owned SKU lines. A hold stores immutable server-resolved shop, product, optional variant, quantity and price snapshots. Base stock and variant stock remain independent. Idempotency identity is SHA-256 of buyer ID plus caller request key; the built-in `_id` unique index prevents duplicate holds. A canonical request fingerprint binds that key to the line IDs and quantities. Replaying the same key returns the existing hold, even after expiry/release, without decrementing again; reusing it for another payload fails. The caller must supply a new key for a new attempt.
+
+Only active buyers can reserve. Only active listings in active categories belonging to approved/open shops qualify. Product-specific variant IDs are required whenever active options exist. All lines commit or none do. Product writes serialize competing holds and seller edits; shop/category revision writes serialize approval/taxonomy changes. These checks are inventory eligibility only: future order orchestration must additionally validate owned address/version, chosen methods, area coverage, fees/minimums, accepted pricing and payment policy in the same transaction.
+
+Holds last 10 minutes from server creation. Expiration is an explicit transactional transition that restores every quantity exactly once. **Do not use MongoDB TTL deletion**: deleting a held record would lose restock information. A bounded expiry worker primitive will be provided but not scheduled here. Delayed expiry conservatively keeps inventory unavailable until release. A buyer-owned release uses the same atomic transition. No payment/order consumption operation is provided yet, so a hold can never be mistaken for an order.
+
+While a hold references a product, seller/admin product mutation is rejected, including variant removal and stock replacement. This conservative temporary lock prevents restocking a deleted variant or overwriting reserved inventory. Editing can resume after all holds are released/expired. Release restores inventory even if the listing/shop has since been deactivated. It must not resurrect the listing. Missing product/variant during release is an invariant failure: roll back the whole transition for operator reconciliation rather than dropping stock silently.
+
+Before public activation: add per-buyer hold limits/rate limits, scheduled expiry with monitoring/reconciliation, bounded operational audit/history, transactional order consumption and idempotency, server quote acceptance, payment expiry/refund handling, and migrations/index verification. There is no reserve API or frontend hold button in this step.
+
+## Verification — 2026-10-29
+
+Backend typecheck, lint and build passed. Final full backend suite passed 65 tests across three files against isolated local MongoMemoryReplSet. Seven new reservation tests cover competing last-unit requests, concurrent same-key replay, changed-payload conflicts, atomic multi-line rollback, unrelated/missing variants, base/variant independence, held-listing edit rejection, foreign release rejection, concurrent expiry/release, role/duplicate/closed-shop validation, and invariant-failure rollback/recovery. An intermediate test-only type error (`toObject` on a typed variant) was corrected; final typecheck passed. Existing Mongoose deprecation warnings for older address updates remain unrelated to these primitives.
+
+Changed files: new `src/inventory/models.ts`, `src/inventory/service.ts`; seller mutation protection in `src/catalogue/service.ts`; additive optional index declarations in `scripts/create-indexes.ts`; `test/phase1.test.ts`; `docs/API.md`; this design document. Frontend code is unchanged and frontend checks were not rerun. No real holds, orders or payments were created, and no migration or scheduler was run against Atlas. These internal primitives are not a completed production order system.

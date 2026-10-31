@@ -1,0 +1,15 @@
+{
+  "isolated": true,
+  "physicalDevice": false,
+  "checks": [
+    "existing isolated order list loads; unsupported reporting remains unavailable",
+    "invalid ID rejected; exact uppercase lookup normalizes and updates URL",
+    "read-only drawer shows actual platform delivery and zero recorded cash",
+    "recorded/outstanding cash filters and Clear lookup preserve semantics",
+    "768px order cards and detail drawer fit screen",
+    "390px order cards and detail drawer fit screen",
+    "320px order cards and detail drawer fit screen",
+    "error retry recovers actual records",
+    "no browser errors or order mutations"
+  ]
+}

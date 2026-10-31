@@ -1,0 +1,802 @@
+[
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\router.tsx",
+    "Hash": "72B68964D3F55BA4F7DCF2A04AAD9D97D7C61FABAD13AEC1D298F1E39EE59FCC"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routeTree.gen.ts",
+    "Hash": "4DC192ABF372653CBB2E3F368B8522860A1A47681EB041144B19AF41E96E80CC"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\server.ts",
+    "Hash": "F0EE683067AFEE145F81A63A3AF76B3D3767E2A1F61F0E82582F8DA184AD3EF6"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\start.ts",
+    "Hash": "D79D142C6C5D057ACC7A140197F464EF29A2C55BB422AAFE700F82B418894E74"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\styles.css",
+    "Hash": "648DCE542506AF6639412A1CD8E08F1ACC65CDBE16DF2E743C15C856758043DD"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\assets\\hero.jpg",
+    "Hash": "2DA3013BAC003F1C493A4EEFCA1B90300DD56A6EB8F59BAC529B4BF4F92D96CF"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\assets\\p-banana.jpg",
+    "Hash": "6047A8B146E925AF0B913A39F3F2E1912A571C31B03A159B3602C1443824CE80"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\assets\\p-bread.jpg",
+    "Hash": "3057BD33DBC7A3CECEACD44CA304553919053490A9E216E46D478F47B3A1D901"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\assets\\p-dairy.jpg",
+    "Hash": "8D9596271F8CBF5DFCDBDF03FB2C09C57A9E75FAD54C6B8B09504BB0AA0A1860"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\assets\\p-eggs.jpg",
+    "Hash": "4324CB9024224C5EC0B1CF30E2F99386CCE0BDAE69BBC59C3BDDCD89CEA45CC6"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\assets\\p-greens.jpg",
+    "Hash": "ADD0ECE24551A3E8D1497D85FB09A7E7B04ADD8909D81DB62EEEC8B08757C044"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\assets\\p-home.jpg",
+    "Hash": "01298260F8A4E8C83E10DDB629DB9E8F731F5D2802DAE371BC72E626776D420C"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\assets\\p-mango.jpg",
+    "Hash": "5149572B5BE2AC403D596414EEB03AB30AAA3BD83C40A3F5307823E78463CC30"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\assets\\p-rice.jpg",
+    "Hash": "581CE3B847455F97813BAC23BE506E499841A93DB52100D7356C22184C22E425"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\assets\\p-tea.jpg",
+    "Hash": "2FF956C7FB61E31CEF3FC109AC06F0E9986E5C689694A57285E6E67842DDB3D1"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\assets\\p-tomato.jpg",
+    "Hash": "BEC09BAEC9FBAB38F9107E36DB9BDF9B61CB2343D577AB133A07DB42D93660AA"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\auth\\RoleGuard.tsx",
+    "Hash": "965CF67FEBC48D3335E1962C893E77A3B3B50433C436F2ECEB2C68D227609C3E"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\brand\\Logo.tsx",
+    "Hash": "8E2BDD0DF83DE1D339C06F29F4A56E0B9CD0474BFF1B8E97AD58BD588B7122E9"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\common\\ConfirmAction.tsx",
+    "Hash": "90F1D4757A19F7291C3EE645503CA8BF63A774011EBCBA014C27A83B3890180C"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\common\\Panel.tsx",
+    "Hash": "F167397113F329D4908A62057704F6F0790A9678C9E63F8F6ED5C0CA496DCF96"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\common\\states.tsx",
+    "Hash": "F495E5B868A3CC3577189D1CC095D4A5852EC2F9CBE7A211B6680D54A24BA6BA"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\common\\StatusBadge.tsx",
+    "Hash": "0EBE852A46940723355A8A271AAEB51815DDCC18ED130BB2DF0705134719506D"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\portal\\DataTable.tsx",
+    "Hash": "4BE78938533F31F7458AE57A928F1F04E96B402173D133E11F1D457C251D57AF"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\portal\\PortalShell.tsx",
+    "Hash": "D43412BB690C8E16261FF2DE0132889E4E11F972770C830401689B7769E55677"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\portal\\SellerProductForm.tsx",
+    "Hash": "6F714E8E1B4837A8B4BBA2A519C960F38706C1F325EC4420CD0711F83204E32A"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\AreaNotice.tsx",
+    "Hash": "08901AD1CAA717A4538B8F09FAB3AFC3FD223DA09CBE4E3C29E49EDE645369A8"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\BagSummary.tsx",
+    "Hash": "B6F303EFB49373DA6D098FAFC4B2D27B8B6B460A117D3E4184F3EA9E66581A0B"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\CartRecovery.tsx",
+    "Hash": "3D5856BF372618F02EDF6A0659AC16E054B0C61F9BB808337497933A3BC8E8BD"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\CategoryTile.tsx",
+    "Hash": "B5E0C995B0213A9B9D9B4AA9230A2A271BD172959EA2F814DD180A4739874A2B"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\CheckoutProgress.tsx",
+    "Hash": "6D333B03D7CFF55CD2B6F36465D6041C272C85E9DC030DB8D22C9FC6762C6BE9"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\MobileProductPurchase.tsx",
+    "Hash": "1015B36A7A12F7DEAEBD27E97FD8E34BE369F4A407EA54FFCE1490067B43E689"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\OrdersList.tsx",
+    "Hash": "C472A31EDDA36B1F776429D4D89950CDD4C2BBA1E9A48C7ACC2ED9F807495E80"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\OrderTimeline.tsx",
+    "Hash": "BBCBD423DADDE0F4A6B9954BB196EB651B82D03301A0CCA1D33A51DF32F05366"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\ProductBrowser.tsx",
+    "Hash": "1BAACC54DE6BB968171C8AF7F834265A0940730243CE64E6A456FEA0294CD481"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\ProductCard.tsx",
+    "Hash": "E132A6D208ACC8337DC32379204013BC2ED58496CF2593E26008EC21AEDD9FA2"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\ProductImage.tsx",
+    "Hash": "90C5D36457184E937CE4711B5A8A0BE9E88AF8CA18345F96BBD751F452D6279A"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\QtyStepper.tsx",
+    "Hash": "933C44FCDE12C9E4FC8B13C32188D67FB29929D5415BBD103A171D83DDDF6606"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\ShopMark.tsx",
+    "Hash": "6B2303D889EF91F30897BA1DE5E63D6AA5461CF32716341CFE7659F227259765"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\ShopOffer.tsx",
+    "Hash": "A2217375C98853D90A6DBD5A136628864784D5F1505A2BB90E7206E4FD023332"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\StoreHeader.tsx",
+    "Hash": "243ACCF2ACEBA9D9955BBA214DB1726BC383AA5F8B7AA759F89046F5D3D2C0D8"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\StoreLayout.tsx",
+    "Hash": "44FEE7B5B22195D72FCF399B2664CF6063582BF31111A3B78B7CEA0424E641AA"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\useAreaShops.ts",
+    "Hash": "BEBCF9F568EF2F80DD00604A5340D71B81177E533730D74157A68D572EF64196"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\store\\VariantPicker.tsx",
+    "Hash": "8E17EC1AFDBFC0A77C5946DF05B345AC39B9C6B21AE18EE2ECDC2B5482F89A25"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\accordion.tsx",
+    "Hash": "0903EFCD7B746EEF0A10C954A541B0DFA7AA1172F3C380A1A88F4E19A317FDA3"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\alert-dialog.tsx",
+    "Hash": "6A996686B0745549ADE0E4899B90DDA9ECB678F42B9FDBBD66579DB1E0AC9E34"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\alert.tsx",
+    "Hash": "E7F4C2E6F78C59270905B4152B7D3EF4D5C6B9E3B2D370DAA7B301AA7CBD27B3"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\aspect-ratio.tsx",
+    "Hash": "D72C73D629E37995A0A71647D851D68D6FDCD7EC120797F36AB83A8EE89F2CAB"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\avatar.tsx",
+    "Hash": "0326C9041C5A0B1BA31FF29822C51950B6AEAC485CD0985E7DF714741A54E7F4"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\badge.tsx",
+    "Hash": "6519775252FE729F21C60B92C7C9FEEFD1FE7D0A8C2CF16D6F1C2FA7E153FE75"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\breadcrumb.tsx",
+    "Hash": "D5224E87344B3AC0F8B002E5DDA6A71FF8FEE296DB8A5FBE6B034D06BD5C2AE1"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\button.tsx",
+    "Hash": "E715FEED35DD2210AA7921624F1545701AB69D11CC234C173DD1885C4A2B66F6"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\calendar.tsx",
+    "Hash": "E883F2245873FDF360764F77FC8F391426BEF5776C6397537012C46970EBD6EE"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\card.tsx",
+    "Hash": "F13878A0078A5EF9F3E92AF29259FC1E93EA56EA80CB992E0C4DEA4E35396459"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\carousel.tsx",
+    "Hash": "568E00E8EDBFAB8AF67EE902CA9EF5CEB6D5ED6F3045E7F9B3C15B4F7EF9E974"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\chart.tsx",
+    "Hash": "81B1F692F9334BA3030213FF37EEAF2DD762B644E5D96E51ADA7072109F07430"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\checkbox.tsx",
+    "Hash": "C44D02535D5C9C92807576804407DD63D01E7189DBDE526E925B53885E645FD4"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\collapsible.tsx",
+    "Hash": "5F0A45D8F6CA72D37ED10BF0A85306158B67D7CBC386319186CE013EAD9BC0A6"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\command.tsx",
+    "Hash": "BA8C0F8B23044CE9A5066E66D7AB7BE3A3C79BFC4A0AB7DFAE6FFAFE439145A3"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\context-menu.tsx",
+    "Hash": "B299F50A0A7840B136DB5670F2B2E7EEC6FC62B3C06BC2AD0015800959CC381B"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\dialog.tsx",
+    "Hash": "5B01B6141787C46B64F8643A84BE4F75D58DFD9E469FD83A3597811AD4C34E5A"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\drawer.tsx",
+    "Hash": "478C487F66245641D5FA0F0D1C53A07D68BD60C4B3C497EC4C41CE08B482E14B"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\dropdown-menu.tsx",
+    "Hash": "A6B87C89F5A806225B7F3A81F13A6577289C67E5787C2A56B5A22BD1EDEA02CE"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\form.tsx",
+    "Hash": "1ED53D4AB564A64708938643DE590F2BEF3718B0B2A309C1019C57E9C1FDE23F"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\hover-card.tsx",
+    "Hash": "69DC172ECE56AC77BF3A044A1CD60ED601B0041945D16B5DA4C6CC4F42116988"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\input-otp.tsx",
+    "Hash": "45B7C4FD518616F76DD611B9DA13BC60BECE1352E050878BF943E1CC6A4ED678"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\input.tsx",
+    "Hash": "E9E20BDF652F440692404C048C1E7EAD93E5F1C56129578677F545BD5B006E39"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\label.tsx",
+    "Hash": "9F72E2ECF16206593AA9E3C4FBC14CD8E81AA8488D57D92D4A950B30935A9FA9"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\menubar.tsx",
+    "Hash": "5BD157C3A446EA1E451867E63724B2E87AD6BBA6251C8B5F1B267D1DF7BD4E0E"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\navigation-menu.tsx",
+    "Hash": "755AECC77B7911AB61159C9FBB9B25254009EB4C32C95B1430B6B5B7D37ED8F0"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\pagination.tsx",
+    "Hash": "CBE8559C578EE2D34C7DAEF5EE75DC3AFEB795851E294B111DEC375BA44A9A2D"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\popover.tsx",
+    "Hash": "861C18577EA5988C6F5CA00D1C677200319FD427CF8B424E59A5CCA6FF24F830"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\progress.tsx",
+    "Hash": "418F612946A520D1380B7A0D058185BB6A6D09846846DD6D6904A0016152DD4A"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\radio-group.tsx",
+    "Hash": "8C55AA0496B00A27FC4F609CA8B43A7E82C6802F6BF613998438B7632899FA96"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\resizable.tsx",
+    "Hash": "F0399FEC7BC334F06433B41B6EBF34255942CE4916B99173898893FA7FCC8281"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\scroll-area.tsx",
+    "Hash": "B607F562455152A079D70A22538C95072B0267E0D59A1A1CF16A905A2E373A6F"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\select.tsx",
+    "Hash": "6D4DEEE18CF7CED0354EB719300833A83CAF46400DE6EE9C3D1942FA4C579AD4"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\separator.tsx",
+    "Hash": "BF5838B692E5F74FDE7083280B99492DD402BCE6966E912E79F5E23F14BC98EB"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\sheet.tsx",
+    "Hash": "AC5D6C95BECE52E913A6BB81A9635E24C2E32E0B2FA799B9C7361760ED50B7B0"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\sidebar.tsx",
+    "Hash": "9F44F4523271F965ADEC608AE1C3B8A2F350F2F45BA1401A2C7EE33BC5EDA238"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\skeleton.tsx",
+    "Hash": "F4C42257D73925B0B856A3500E2CBDD918FE6744FCD6BE87EF28BB88E7EB7366"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\slider.tsx",
+    "Hash": "D307CF3FF05B54BE4A04389EF4379F9E8B4DC49720197937991CE843A8D4B5EC"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\sonner.tsx",
+    "Hash": "3AD40F66C339E799B1A57C00E10B4627294C7D580D99D8A48AE0D8D4C13CF931"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\switch.tsx",
+    "Hash": "C3C298DF4FFB56695E4A8F0FF3E37EEE08437DEC542A677153EC16BED0820107"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\table.tsx",
+    "Hash": "1E945E564C2CC5CA3EF33019BA7DA7A8B94CBC73FEB3CBC2B7B33C36EA648D92"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\tabs.tsx",
+    "Hash": "E9B454D2F987C83B36CC8870BBA47D9355DB4E8F5C733B310DBC1119A7D27654"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\textarea.tsx",
+    "Hash": "35617A2CF053E52C9E56983BDE82D556861D38E462F9E578876C8E99A0432687"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\toggle-group.tsx",
+    "Hash": "D59CD3937C967A3E221FDFCFE4EA5CD57EB97CBE37E1AC98126664C9C7DB49C1"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\toggle.tsx",
+    "Hash": "62E6E21993F1AB633B9F830CBBF0C181F3D161BAE3A7792DBF2D842D42A2F09C"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\components\\ui\\tooltip.tsx",
+    "Hash": "9682690FC3755D0F4B8684F2D7B1F77945876D41A45B723D0761B26804AD5010"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\domain\\types.ts",
+    "Hash": "1A3DFE274720DDF75CB83AEBE4458933FE17C8469F0EF183640C87DF68B92D48"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\hooks\\use-mobile.tsx",
+    "Hash": "21EFF740F9E5C965C7F0782925A7E8F67DDFCDF0F58B6613550F99C3E1C454E9"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\lib\\bag-readiness.ts",
+    "Hash": "C74BDC798D6523A835A86926FA6E027602BEBD7F10EF2A202B728A29B98D5CC8"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\lib\\config.ts",
+    "Hash": "3ECCC909A3F39C8CF19BC1929A31211357BEFCB1584E54C11BEF4C87C7D5E228"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\lib\\error-capture.ts",
+    "Hash": "D6FA7756CBC4C399F4E891B174C2DCE8160E2354972C2AE68413DFD1DB843088"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\lib\\error-page.ts",
+    "Hash": "635915886F5D44A18B6ADD2A53959DBE2E8BA1BB3F7E597FC714650E74157BB6"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\lib\\image.ts",
+    "Hash": "8D3E582FAC9E284E3DB71C0383A81EE3917E3D716C2B372B88836E3A9A6D6F9D"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\lib\\lovable-error-reporting.ts",
+    "Hash": "0A2E8B5F3FFD2DD682AB78BE1A9B0998B73284A6525080E4960F85827CD608D3"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\lib\\offers.ts",
+    "Hash": "B07448EAB5E0D837D3A9DBCDBD2CF6139423DCE2B9D667BE4AFF80609DCF5D60"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\lib\\pricing.ts",
+    "Hash": "915A3A3F8012C85E512A1ED49327227AC09238D27A5BFCFECF4E3581814598E1"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\lib\\search.ts",
+    "Hash": "A8A75A670A06D4F8406ECFBFB9BB736CE8358DF8DE9A318106B55610AF248D0A"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\lib\\seller-product.ts",
+    "Hash": "6FA9040BD53D0D16FADBA3E754FE6B6198D10F76986EFFAFB775CBFBFE6ECA28"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\lib\\shop-discovery.ts",
+    "Hash": "315B1462BB984F4784CEFFFFDDBA8632FF9F485B4191318153683DC0928913ED"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\lib\\utils.ts",
+    "Hash": "D1F1E0D62CB8D8D1E04C26E14DE842D8A151F75812D81B046C65B5D1FE8E4B27"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\lib\\api\\client.ts",
+    "Hash": "732563A2008E469B52BA99FB13A91DB26EAE9606058A5FC0BDA1640E9AC7079F"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\mocks\\admin.ts",
+    "Hash": "345342B91BD781D7E8F9C1B2C598D9C5A2FB8ECDF753036756CA0B6856D69F0D"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\mocks\\data.ts",
+    "Hash": "84D79E4654127F3DB86042874EBB57BF5D705E598433204A1F90CD48BC8F058F"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\__root.tsx",
+    "Hash": "02FD33CA71004320CAF201716EC4949BDC294634CED0AA78A3BBDCF839A56B42"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\account.tsx",
+    "Hash": "2615E3684E06AC38268376B2F5C64307E8B48150C2112C2C785A5C29101B93B9"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\admin.catalog.tsx",
+    "Hash": "21E2B16331E89597CBCAC1A0E07B431938D2EDA8AF3A64C7FAE42AD5C452888F"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\admin.finance.tsx",
+    "Hash": "0C3666DFB7737A6D653085DCA94E97398DEA21F6EB25665EA68827AC5A7CF88C"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\admin.index.tsx",
+    "Hash": "F0C4202D549DC0A3ED001E609EF3257B70D7313F5B4825C43C0D65AFB9747873"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\admin.orders.tsx",
+    "Hash": "B6FA34C391626142CA8934F4DE6CF693C3352C44FF0558F517FCFA29FB470869"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\admin.partners.tsx",
+    "Hash": "7C3EF388285EBF6799822B21B11416345C5C7BD06B8BE0B52BEA746D72D83D81"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\admin.settings.tsx",
+    "Hash": "8290A5C6DEB206B20FBF1E4D4C317A485CB77C233535EDAC2A559FE09D95A05D"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\admin.support.tsx",
+    "Hash": "7D1BBB617D8B1237E9C7D1347EBF583818647364FDBE18B76603E863707A5E9A"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\admin.tsx",
+    "Hash": "F669733F1C98CB73C8246607AE9C01799A61B238EBCCFE5C8023EBEF05E563EB"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\cart.tsx",
+    "Hash": "E9B8DFC05E960B171495BDAF97B034D910FF02B451D44AAD1C7A6826BC152A6B"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\categories.tsx",
+    "Hash": "9B58A2E81A1A8DED83BC70B6215450626659EB5BB9CFD6DE4D89ACC685DC84B6"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\category.$slug.tsx",
+    "Hash": "BD4DB9BD1A51BC552729E327583CDB0E6F9D37F60882696307260DA3B2C5890A"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\checkout.tsx",
+    "Hash": "B94B10C55C8176C98414351C31E48E4997D8633B7905B40A10F7FFB008C8285D"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\delivery.$id.tsx",
+    "Hash": "01751A3E2947726A2A3035DF5E9AA4987061F7E5D7387709F80A87EC7DB3C64D"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\delivery.earnings.tsx",
+    "Hash": "C506DB1F84606A20667476A1598796C0C94DC1DEAF41EBCC4133AADE73788605"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\delivery.index.tsx",
+    "Hash": "BB6C2F0176A109C22D0EC71E01D08197F8EDF5150DB8819E6F6DA129E9350BCC"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\delivery.tsx",
+    "Hash": "612B36EBD6AB90867AAE941A737C8A715D0BCA3C8FD85E685BB1A1CF620680AA"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\index.tsx",
+    "Hash": "BF23FFC70E567494EA2CDE12F27628E9003B856C9E6B8485E007EBEEF777021C"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\login.tsx",
+    "Hash": "526B687AD6E7418D573D5FF6EA72800BB63EDFD5B39283F6A4525202C84D5CF5"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\orders.$id.tsx",
+    "Hash": "B0F524DDBA934FF8E4EF0917288029FDD45D921C125EBC36E427D68E7AD776A8"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\orders.index.tsx",
+    "Hash": "986449055849FAEF8423EFB0A94F3A4FE2BE89F73FAF4A317F3BB0312898FA11"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\product.$id.tsx",
+    "Hash": "3C29ECF1422B7EF6051C1FD636ACCB447EC509A538F2D011FDE1E44B8F407F28"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\README.md",
+    "Hash": "EDBD5D3CD5A427882C60B7B7DCDD12C7031F2F8AC0C085D20D2F6ABEC719E95D"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\search.tsx",
+    "Hash": "9C3940E07F554CFEA8419187F36C3CE18DA0DE782D98E6EC7B7577ABF66CAC7D"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\seller.index.tsx",
+    "Hash": "8A8F203959426082C156F3BC52424BA38681EFE77AAE7E7B451D0F56C2EA43F8"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\seller.inventory.tsx",
+    "Hash": "923622F42C110D64AF86B7F3660C7C9C2926493BDFEAD06404AFBC7957E87CE4"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\seller.offers.tsx",
+    "Hash": "843F3B38E13A5FB123BE31344E742918960D73DCE04E946A1C5F4E7E304ECD82"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\seller.orders.tsx",
+    "Hash": "A934918FE247C16E82E88AEB0223934709F41019513E3FB11EF10FD6310E10F1"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\seller.products.$id.edit.tsx",
+    "Hash": "9E700D6CB67728918F0F62882EDA33F92C5F29ACB554A090DE4932F1D422AF4E"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\seller.products.new.tsx",
+    "Hash": "AF682EA7809BC8726E4B38011D6DFB1139292574E6E0061D41CD4F2C5FB143C5"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\seller.products.tsx",
+    "Hash": "13EDF3652D7DC27B1BFA88FBD541808FF77487DD651B47A934994FEAAEFBC05F"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\seller.settings.tsx",
+    "Hash": "8A23D45A909C540BC32B4DA45039645ED372E8C215A4E0E64D55816D1530326B"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\seller.settlements.tsx",
+    "Hash": "A02A1FB17258419D56BD34A07FF5D0824CC6374A8BD93A897B6B7F4403035445"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\seller.tsx",
+    "Hash": "7D300948A6CE09380AA8DDE99D618DF29FCF51E3B49D82C9D48EC45928BE7253"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\routes\\shop.$slug.tsx",
+    "Hash": "A870992D230A023175164C2B72BE820464886AB2C301C5F4FC83A0E1B00BECA7"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\services\\catalog.ts",
+    "Hash": "D6A49604FD37E8FEB65E2194BA30F845100CA75D663E3580BF5B0FC5EB756C79"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\services\\orders.ts",
+    "Hash": "98BA2F9312CF1BE527BB0081E7BF26CB0FBF782CCA1CBCDEE7149B7AF7C06B19"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\stores\\auth.tsx",
+    "Hash": "E2BBFCA965EDDC7E83ABE18DC72592A440C99BD4B472A020158D902C128E911A"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\stores\\cart.tsx",
+    "Hash": "DA095DB8953BF51A86AC987B396FDB591FD04DC3AB18B58825B47CE22450D4A3"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\stores\\delivery.tsx",
+    "Hash": "E846865D5905A5251ED09DDF546223F66B46FB6998B73955494FACB056B179DD"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\stores\\location.tsx",
+    "Hash": "335FE46F7A130F83797C7A6C7E789E16F3AFF57F479D175E43F1A70166E4408C"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\stores\\seller.tsx",
+    "Hash": "7D366E3F6AE0A869CBDA04FE3D123D41E41D9051172AAAAF20526BA8CCC775B2"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\styles\\workspaces.css",
+    "Hash": "F7F7221EA5ADC2C6FA919B575EC16460DD7FEF63EE6953C7CFCAC6677EC966D4"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\test\\app-routing.test.tsx",
+    "Hash": "C817058668430273E00A43620A835F562B8CFE1234EE361C057958C06470CEE3"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\test\\bag-readiness.test.ts",
+    "Hash": "793DE09B4598E59FA821C4AC06497D7E7993951C799B653A268AB075BE29D430"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\test\\location-catalog.test.tsx",
+    "Hash": "576816BE0BA3865995F5DF4824C2690A465C65B8B707C66703DEC4E18DDC18AE"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\test\\pricing.test.tsx",
+    "Hash": "4DEC0B31802C6C03A6437499B86D38E7B90D1F76399890C6B1ABC2B795C7BC0C"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\test\\recovery-search-offers.test.tsx",
+    "Hash": "0C1C6C185F5A6C4D2B6CE6E93D14BB0213F01499E3767B73C3AE2993933C3D0F"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\test\\seller-editing.test.tsx",
+    "Hash": "9993C742F0F3BD88CF107E26232441B21336626AA705A9D83F26F645D4A9391B"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\test\\setup.ts",
+    "Hash": "049FD55D8C3BF8742482F5684ECF15407EADD752BAD5E86907032112DC05A558"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\test\\shop-discovery.test.ts",
+    "Hash": "CB14521ACECD5835067830E5FD452BB9CB035E6727325F24F05FCEFB5839941C"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\src\\test\\variant-selection.test.tsx",
+    "Hash": "141F2D1A3A8B48836DAC2CF2AB8F9437FAFC5AC7206D3EEE1FBA44BAFB7CF39F"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\API_CONTRACT.md",
+    "Hash": "6BF070DE9837D76F9BE8FAC0245EE37027526978AC5D5341F9F2A565B79D3EF4"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\CHECKOUT_CLARITY.md",
+    "Hash": "E2F32CF5C686ADE21CDE60662F0A7818834DBE6381DC90086E78A28EF2C16D20"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\checkout-clarity-preview.png",
+    "Hash": "96A78CC1C37A230EB81B6C473149CFB9A2767640D542A49D395ED5447891834E"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\FRONTEND_RELIABILITY_PASS.md",
+    "Hash": "6D0A6FF07FA7DDD697B5F473A8DC86533D7A40AA0D073044B8DBEE9109841E18"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\LOCATION_FIRST_BROWSING.md",
+    "Hash": "2225332B5D3B4374FDCD147EFB2C5BCBE520E5DD404055FE53DC578A5A047F94"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\location-first-preview.png",
+    "Hash": "3BC0DC47CDB339044A68B541E4719BDD0DBB8462CCE9F1440810AD6403E0614C"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\MARKETPLACE_VISUAL_ASSETS.md",
+    "Hash": "02D3545AE5C9877A58063E292B943C5A219A6D9C143B60FFDA12BF6EE44E0C96"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\MOBILE_SHOPPING.md",
+    "Hash": "BF000D8D4CF9E1517B4FA22B8517F312681B765602D06D0C29183D452612454C"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\mobile-purchase-preview.png",
+    "Hash": "123574785CA82BFA631FFEB117E0168C437FB9A9BDA078E28BD0B55326353665"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\PRODUCT_VARIANTS_UI.md",
+    "Hash": "041002910BDEB8F83E02811F7F996245976F3DC7D5938EE89F5B09060EA893A5"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\product-variants-preview.png",
+    "Hash": "18D5E695CBEF22258667A6F7715F89B1A58DE603AA6E089273FAFFA08A647961"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\SELLER_EDITING_AND_POLISH.md",
+    "Hash": "3D71F9830D1794EAA58B39571CBC010CA94AA783BAF34E3843115371FC928875"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\seller-edit-preview.png",
+    "Hash": "DABBEF4343FDC671825598648005A37FE751790B36E1D18976BCD0504FB371D5"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\SHOP_DISCOVERY.md",
+    "Hash": "44E52AE1AAD739B76D78B764EA27FC6B3EC07377E6F06E97E0A6E0B33CB986D0"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\shop-discovery-preview.png",
+    "Hash": "165608809D04970C6C9C9DA71138128D977A7E55F38B67F8439B092A58D5794A"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\UI_REDESIGN_CHECKLIST.md",
+    "Hash": "87E8299B0E3CED4DDC796FFD9A9B3A1A4867578773D680E1F2F97AA1389AFB01"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\UI_REDESIGN_REPORT.md",
+    "Hash": "880F5299EADB8B75B761B31FEBA9B0483179AA0EEBF937DEF60313EEA6238D0A"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\ui-directory-preview.png",
+    "Hash": "827693B60DC825DAD7D92CA43F0FFAAD45065F0B601D2B7EFBD5DAD5095420C4"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\docs\\unsaved-draft-preview.png",
+    "Hash": "2212D01564CCCABE42FFE35756838204D344D43EC97970D59DF3579697BC6890"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\public\\favicon.ico",
+    "Hash": "DD821076A9B03ADC2173C93956226AEA3D92482D7578FC4339C5D3A2E9C24586"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\public\\market-categories-v2.png",
+    "Hash": "69ACA579077E785B99AF9B4DCE332441D6A199D492B4A4789EC46B3FFE06173A"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\public\\market-categories-v2.webp",
+    "Hash": "D9AD8314C270FAFD28608EF0EFD1354F98085620CD404291D511FCAB805935EF"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\public\\market-hero-v2.png",
+    "Hash": "4737AC210B20DAA138811D4B96DC97A2F21AF178B468C383ECF9A905A500A432"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\public\\market-hero-v2.webp",
+    "Hash": "EEB03E5D17BD9BD1E09327DCC58F7944E331930982D14328B6099BD03557B2F3"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\public\\market-storefronts-v2.png",
+    "Hash": "F98E38D027D393515281104F30691AAFCE434366F07D61097BAF16B4604C061A"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\public\\market-storefronts-v2.webp",
+    "Hash": "25424A207BE935CA954B25D7554094790CCFD19E549C6AC934BF2A5E451412BA"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\public\\robots.txt",
+    "Hash": "A3D27B3CA5CE32341FA9F96F01169B521B1657C05D1860C45D1E53A6258E9E8B"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\.gitignore",
+    "Hash": "74366D54BCD8375F43E80EBE6C1963C27BFA139CB2F384A5A4EE113A9A462E81"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\.prettierignore",
+    "Hash": "52C7C767FF0615EEC4EB64CC71265877F7F423EB597D665B5E439F337C661A5A"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\.prettierrc",
+    "Hash": "1ED88D3B99ECED8DC3B6F58F26645466DD1CEACA6C5A9B818531C941AC28E55B"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\AGENTS.md",
+    "Hash": "BCBAA353052F3EFE49126BC158A01EE0B6C0B918D8222447770C0B999039FBB3"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\bun.lock",
+    "Hash": "DC432A889592FC46CB8B638C92CFE32C6919493AA2A1774ED23C95575A4A2CE9"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\bunfig.toml",
+    "Hash": "1ED9B1FC5131FD50C2E0975635C3E98A8362362103F4061910B56EAC510B748E"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\components.json",
+    "Hash": "37C484818824D2521EEE3367E7AA2C2ABBD19635D8103D19734B6E24603D0292"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\eslint.config.js",
+    "Hash": "3266245A1FF610A0B37DBB8B8C77B93A125E0D8758B9838CFD04B2E0A1397D56"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\package-lock.json",
+    "Hash": "493BC7F1217F47CF408BCF972B1D3F9C6B98A5242B3C8C5B54C914EC1F8EECF8"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\package.json",
+    "Hash": "C306D5B56AF1A53DD8F650102FB47A708C4EDD31791092CBF1241318C49A12C6"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\README.md",
+    "Hash": "AC8AACD1BE52ECF9ABC829111E14C8A2785EBFEEEA626E4EF0A2894C8D6F328C"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\tsconfig.json",
+    "Hash": "16802714E7F0117CD17D998DE8AE1F90B0A6E1E81702C76BD19B6D26D5306477"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\vite.config.ts",
+    "Hash": "694F17DAF64D3BF3481EE838CE69C26C593C60C0ED45A19209754FE5A742BCF0"
+  },
+  {
+    "Path": "D:\\justpackit\\just-front\\vitest.config.ts",
+    "Hash": "0158325852B8C6C2C4C9E2AE02196430B432A7F40772EB546E227CE16B9DA97B"
+  }
+]

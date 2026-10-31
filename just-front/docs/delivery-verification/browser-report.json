@@ -1,0 +1,16 @@
+{
+  "isolated": true,
+  "checks": [
+    "available list has no customer address",
+    "partner claims ready task",
+    "active task reveals saved address",
+    "contact action and real map pin link",
+    "seller confirms pickup before dispatch",
+    "partner dispatches",
+    "buyer issues receipt after cash/receipt confirmations",
+    "partner confirms exact COD and code",
+    "cash stored once and task released",
+    "390px no overflow",
+    "no page errors"
+  ]
+}

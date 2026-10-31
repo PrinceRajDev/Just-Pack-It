@@ -1,0 +1,14 @@
+{
+  "isolated": true,
+  "mockedPagination": true,
+  "checks": [
+    "No area: no catalogue list requests",
+    "Area-scoped first page only",
+    "24 cards before Load more",
+    "Failed next page preserves cards",
+    "Retry appends two unique cards",
+    "No next button after final page",
+    "390px no overflow",
+    "No page errors"
+  ]
+}

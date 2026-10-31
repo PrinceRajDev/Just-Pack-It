@@ -1,0 +1,10 @@
+{
+  "isolated": true,
+  "actualRazorpayTestGateway": true,
+  "realFundsMoved": false,
+  "orderId": "709c2cd4-c868-4cbb-8276-27e964baef2c",
+  "providerOrderId": "order_TuQI7o9VNgzWOs",
+  "outcome": "Success",
+  "paymentStatus": "paid",
+  "stockAfter": 4
+}

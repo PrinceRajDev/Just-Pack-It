@@ -1,0 +1,27 @@
+# Pre-preparation prepaid cancellation and refunds
+
+Design: a seller may reject/cancel only its own paid online suborder before preparation, with the existing version and reason checks. Cancellation, exact-once stock return and a unique suborder refund obligation commit together. Full suborder item value plus its original delivery charge is refundable; clients cannot choose amount, destination, status or provider payment. Other shops remain unaffected. The original captured total remains immutable; refund state is represented separately.
+
+An admin explicitly confirms issuing that existing obligation. A separately disabled-by-default `RAZORPAY_REFUNDS_ENABLED` gate prevents accidental provider writes. Persist the fixed request/key before the provider call; use Razorpay's documented `X-Refund-Idempotency` header with the same immutable body for retry. Concurrent submissions are leased. A timeout remains uncertain, never successful. A known pending refund is polled, not recreated. Verify provider refund ID, captured payment association, amount, INR and status before recording `processed`; do not equate initiation with money returned or promise a bank arrival time. Processed status cannot regress.
+
+Buyer and seller see only their own refund summaries. Admin sees sanitized obligations and audit outcomes. Test refunds are labelled test-only. No real refunds, production data writes, credentials or live flag changes are performed during implementation. Unpaid/abandoned checkout closure and post-preparation/return disputes remain separate workflows.
+
+Official sources: https://razorpay.com/docs/api/refunds/normal-refunds-idempotent/ and https://razorpay.com/docs/api/refunds/fetch-specific-refund-payment/ . Refund creation is `POST /v1/payments/:paymentId/refund` and verification is `GET /v1/payments/:paymentId/refunds/:refundId`.
+
+## Implementation and activation
+
+Backend routes: admin `GET /admin/payments/:orderId/refunds`, `POST /admin/refunds/:suborderId/submit {confirmRefund:true}` and `POST /admin/refunds/:suborderId/reconcile {}`. Normal refund bodies are derived from the immutable obligation, never the admin payload. Reads remain available while provider submission is disabled. Role middleware, strict body validation and account-based throttling protect commands. The existing signed webhook endpoint additionally accepts `refund.processed` and `refund.failed`, fetching current provider state before recording a terminal status. Subscribe to both events when configuring the test dashboard.
+
+Frontend admin payment detail shows refund obligations, exact amount, test warning, explicit confirmation and submit/recovery/status buttons. Buyer and seller use a shared typed refund notice. Seller cancellation remains limited to placed/accepted suborders; a cancellation reason is mandatory. Original capture status/total remain separate from refund outcome. Inventory is restored once on cancellation and never on refund retry/webhook.
+
+Set `RAZORPAY_REFUNDS_ENABLED=true` only after test credentials and the refund flow have been verified in a staging environment; Razorpay itself must also be enabled and the original account configured. The flag remains false by default and no actual `.env` was changed. Live keys retain the separate live activation gate. Production startup checks the refund uniqueness index when submissions are enabled; use the existing operator-reviewed index deployment process. No production index command was run.
+
+Pending/failed refunds, unexpected external dashboard refunds, missing provider mappings, post-preparation returns/disputes and unpaid checkout closure still need operator handling. Failed provider refunds are checked, not recreated under a new key automatically. Provider processed status does not promise when the customer's bank will show credit. Test fixtures and provider doubles do not prove real gateway delivery or credit.
+
+Changed backend: new `src/payments/refund-model.ts`, `src/payments/refunds.ts`; order model/seller service, Razorpay provider/webhook module, app/server/config/index wiring, `.env.example`, foundation/integration tests. Changed frontend: new refund types, service, `RefundNotice`, `AdminRefunds`; admin payment detail, buyer/seller order views, suborder types and refund tests. No new dependencies or routing library changes.
+
+## Verification — 2026-10-30
+
+Backend typecheck, lint, build and 100 tests/four files passed using isolated MongoDB and explicit provider HTTP doubles. Frontend TypeScript, build and 130 tests/28 files passed. Tests cover owner-only cancellation, concurrent exact-once stock return/refund obligation, admin-only submission, explicit consent and disabled gates, immutable amount/body/idempotency key, concurrent submission, timeouts, mismatch rejection, duplicate webhook handling, processed-state non-regression and rejection after preparation. UI tests verify monetary confirmation, disabled actions, pending-status checking without resubmission and requested/processed message distinctions.
+
+No real Razorpay API/refund, test gateway browser transaction, public webhook delivery or new refund browser E2E was executed. Existing buyer/seller/demo regressions ran in the automated suites. Actual provider verification remains pending credentials and staging setup. Production `.env` and live flags were not modified. Earlier references in payment docs to all prepaid cancellations being blocked describe the prior phase; the contract above supersedes them.

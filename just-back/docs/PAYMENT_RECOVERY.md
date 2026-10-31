@@ -1,0 +1,27 @@
+# Payment/refund recovery worker — decisions
+
+Add a separate, opt-in worker using the existing non-overlapping scheduling pattern. It checks only mapped unpaid online payments and existing provider refunds. It never creates a provider order, submits/retries a refund, captures funds, cancels an order or releases inventory. Existing signature-independent provider verification services remain authoritative for applying a captured/processed result.
+
+Persist due time, check lease, failure count, last check code/time and manual-review flag on records. Atomically claim bounded due batches so multiple workers do not ordinarily overlap a record. Retry provider failures with capped exponential backoff. Missing provider IDs require explicit operator reconciliation and are never guessed. Pending payments older than 24 hours, pending refunds older than 14 days or eight consecutive errors get an operator-review flag and hourly rechecks; no money/stock status is inferred from age.
+
+The HTTP server never schedules this worker. `PAYMENT_RECOVERY_WORKER_ENABLED=false` defaults off and requires configured/enabled Razorpay when switched on. Worker startup checks queue/uniqueness indexes; normal deployment/index review remains an operator task. Shutdown stops new claims and waits for the active provider check. Admin detail shows sanitized recovery metadata, without leases, account keys, buyer identity or provider bodies. Existing demo views and buyer/seller flows remain unchanged.
+
+## Running after staging verification
+
+Configure Razorpay test credentials and its public webhook endpoint as documented in `RAZORPAY.md`; then set `PAYMENT_RECOVERY_WORKER_ENABLED=true` only in the backend environment and run `npm run payments:worker` in a separate process. Compiled deployment command is `npm run payments:worker:start` after `npm run build`. Keep one managed process initially; record leases also protect multiple instances. The worker requires `RAZORPAY_ENABLED=true` but does not require `RAZORPAY_REFUNDS_ENABLED`: checking an already-created refund cannot submit a refund.
+
+Before production deployment, the existing reviewed `npm run db:indexes` process must create `payment_recovery_due` and `refund_recovery_due` along with critical payment/refund uniqueness indexes. No index or worker command was executed against Atlas during this task. Startup fails safely if declared queue/uniqueness indexes are missing. Worker logs only batch counts and sanitized codes; admin detail audit shows individual checks.
+
+Each pass handles at most 10 payments and 10 refunds, sequentially, with a 60-second interval between completed passes. Per-record leases expire after two minutes; stale lease tokens cannot overwrite a newer worker's scheduling metadata. Provider failures retry from 60 seconds with exponential backoff capped at one hour. Pending success checks retry after 60 seconds, or hourly when operator review is required. Payment age threshold is 24 hours; refund threshold is 14 calendar days. These are review thresholds, not promises of failure or bank credit. Verified terminal records have no next eligible check. A verified manual capture/processed-refund result also removes stale review scheduling.
+
+SIGINT/SIGTERM stops new claims, waits for the current provider check and disconnects MongoDB. A 60-second shutdown deadline bounds a stuck process; an interrupted record is eligible after its lease expires. Read-only provider calls plus existing idempotent local updates protect overlapping late completions.
+
+Unmapped provider orders, refunds with no verified provider ID, external dashboard discrepancies, failed refunds, unpaid checkout closure and post-preparation disputes still require operator review. The worker intentionally does not resolve these by issuing financial operations or releasing stock.
+
+Changed backend: new `src/payments/recovery-model.ts`, `recovery.ts`, `recovery-worker.ts`; payment/refund schema/DTO/reconciliation metadata, config, `.env.example`, package worker scripts and tests. Changed frontend: recovery domain type/notice, admin payment/refund types/views and notice tests. No dependency or routing changes. Actual backend `.env`, infrastructure and activation flags were unchanged; the worker was not activated against a real account.
+
+## Validation
+
+Automated recovery tests use isolated MongoDB and explicit provider HTTP doubles. They assert every recovery provider request is GET, missed captures/refunds are verified, concurrent workers claim a record once, disabled or different-account records are skipped, active leases are respected and expired leases recover, errors back off and flag review without restocking, manual verified capture clears stale review flags, and requested refunds are never submitted by the worker. Existing scheduler tests cover non-overlap, shutdown waiting and failure recovery; the sweep also honors an early-stop callback.
+
+Backend 103 tests/four files, typecheck, lint and build passed. Frontend 132 tests/29 files passed, including honest operator-review/history copy. Frontend TypeScript, lint and build passed with 22 existing Fast Refresh warnings. Initial query-literal typing and an unused assignment were fixed before final checks passed. No real Razorpay or gateway browser test, production worker, production index creation or new browser E2E was executed. Actual provider/daemon deployment verification remains a staging task after credentials are configured.

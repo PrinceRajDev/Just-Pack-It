@@ -1,0 +1,61 @@
+{
+  "verified": true,
+  "steps": [
+    {
+      "scenario": "Pickup selection reaches final COD review on mobile",
+      "status": "pass"
+    },
+    {
+      "scenario": "mixed shops and double click",
+      "status": "pass",
+      "posts": 1,
+      "total": 95,
+      "suborders": 2
+    },
+    {
+      "scenario": "closed after review",
+      "status": "pass",
+      "code": "SHOP_UNAVAILABLE"
+    },
+    {
+      "scenario": "stock after review",
+      "status": "pass",
+      "code": "INSUFFICIENT_STOCK"
+    },
+    {
+      "scenario": "price after review",
+      "status": "pass",
+      "code": "PRICE_CHANGED"
+    },
+    {
+      "scenario": "address after review",
+      "status": "pass",
+      "code": "ADDRESS_CHANGED"
+    },
+    {
+      "scenario": "address selection change",
+      "status": "pass",
+      "detail": "fulfilment selections cleared; order button unavailable until new review"
+    },
+    {
+      "scenario": "area change with cart",
+      "status": "pass",
+      "detail": "cart preserved; old-area order not placeable"
+    },
+    {
+      "scenario": "offline submit before receive + reload recovery",
+      "status": "pass",
+      "sameKey": true,
+      "ordersCreated": 1,
+      "stockDeductedOnce": true
+    },
+    {
+      "scenario": "lost response after commit + reload recovery",
+      "status": "pass",
+      "sameKey": true,
+      "ordersCreated": 1,
+      "stockDeductedOnce": true
+    }
+  ],
+  "errors": []
+}

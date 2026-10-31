@@ -1,0 +1,71 @@
+{
+  "isolated": true,
+  "headless": true,
+  "browser": "156.0.8078.4",
+  "steps": [
+    "Area/category shows both eligible QA shops",
+    "Mobile variant price/stock/quick-add and width checked",
+    "Two shop-owned prices and two independent variants added",
+    "Lost create response recovered with same key/payload; reload created no duplicate",
+    "Seller receives one new-order alert despite buyer lost-response retry",
+    "Owned seller processing, pickup ready and seller delivery dispatched",
+    "Mobile buyer inbox shows deduplicated order and both handoffs; read state survives reload",
+    "Both receipt codes consumed; cash recorded once; original stock decrements preserved",
+    "Admin taxonomy smoke check with real isolated API",
+    "Admin notifications remain accessible on mobile and show both isolated shop submissions",
+    "Admin cash monitor shows recorded order, filters outstanding cash and fits mobile",
+    "Admin online-payment route, filters and honest empty state fit mobile with gateway disabled"
+  ],
+  "verified": true,
+  "createRequests": 2,
+  "sameKeyReplay": true,
+  "state": {
+    "isolated": true,
+    "orders": [
+      {
+        "id": "17a9dff7-0f31-4219-8a0f-6a95c871a47a",
+        "paymentStatus": "cash_recorded",
+        "totalCents": 13500,
+        "subOrders": [
+          {
+            "shopId": "e1f84f93-054d-4d6d-966f-49401e67e9c2",
+            "status": "delivered",
+            "version": 5,
+            "cashRecordedCents": 7000
+          },
+          {
+            "shopId": "b270a0e4-ba52-44b9-a558-db41fa61c8d9",
+            "status": "delivered",
+            "version": 4,
+            "cashRecordedCents": 6500
+          }
+        ]
+      }
+    ],
+    "products": [
+      {
+        "name": "QA DEMO Rice",
+        "shopId": "e1f84f93-054d-4d6d-966f-49401e67e9c2",
+        "stock": 3,
+        "variants": []
+      },
+      {
+        "name": "QA DEMO Rice",
+        "shopId": "b270a0e4-ba52-44b9-a558-db41fa61c8d9",
+        "stock": 99,
+        "variants": [
+          {
+            "label": "500 g",
+            "stock": 4,
+            "priceCents": 2500
+          },
+          {
+            "label": "1 kg",
+            "stock": 2,
+            "priceCents": 4000
+          }
+        ]
+      }
+    ]
+  }
+}

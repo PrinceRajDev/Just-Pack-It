@@ -1,0 +1,10 @@
+{
+  "verified": true,
+  "steps": [
+    "GPS opens address confirmation; explicit buyer confirmation saves an owned address",
+    "Buyer cancels one shop before preparation; status and current COD due refresh on mobile",
+    "Admin overview renders all five honest empty attention queues and fits mobile",
+    "Unconfigured Brevo prevents recovery and shows no fake email/reset success"
+  ],
+  "errors": []
+}

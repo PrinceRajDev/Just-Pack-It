@@ -1,0 +1,19 @@
+{
+  "emulated": true,
+  "physicalDevice": false,
+  "checks": [
+    "320px login fits; 16px fields and tel keyboard hint",
+    "320px password visibility and first invalid field focus work",
+    "320px buyer signup fits; radios have native-sized controls",
+    "320px seller shop fields, categories, area, photo and submit stay within screen",
+    "320px session: landscape seller submit remains reachable",
+    "320px short viewport recovery form usable without sending email",
+    "390px login fits; 16px fields and tel keyboard hint",
+    "390px password visibility and first invalid field focus work",
+    "390px buyer signup fits; radios have native-sized controls",
+    "390px seller shop fields, categories, area, photo and submit stay within screen",
+    "390px session: landscape seller submit remains reachable",
+    "390px short viewport recovery form usable without sending email",
+    "no page errors; no real account registration/email/payment invoked"
+  ]
+}

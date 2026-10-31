@@ -1,0 +1,9 @@
+# Saved addresses: implementation decision
+
+Authenticated accounts manage only their own delivery addresses. This is a checkout prerequisite, not an order or delivery guarantee. No geocoding, phone verification, default-address selection or delivery pricing is implied.
+
+`GET /addresses` returns an array of `{id,label,line1,locality,city,pincode,version}` compatible with the frontend Address shape plus an additive version. `POST /addresses` accepts those six text fields without id/version and returns 201. `PATCH /addresses/:id` accepts changed fields plus required current `version`; `DELETE /addresses/:id` accepts `{version}`. Successful deletion returns 204. Updates return the incremented version. Unknown and other accounts' identifiers both return 404; stale owned records return 409. All endpoints require a valid session, return private no-store responses, and reject client ownership fields. Pincodes are six Indian digits; storage does not assert serviceability. Future checkout must resolve the owned address, snapshot it and validate each shop/method against server service-area data.
+
+Addresses are separate documents with a user index and atomic version-conditional mutations. Deleting an address must never delete future order snapshots. No customer data is created by this implementation or its isolated tests.
+
+Verification (2026-10-29): backend typecheck, lint and build passed. All 55 tests across three files passed with isolated MongoMemoryReplSet, including authentication, account isolation, strict address validation, stale update/delete conflicts and successful deletion. The first sandboxed run failed on loopback EACCES; the rerun with local-network access passed. Frontend is unchanged and its checks were not rerun. Address management UI and checkout serviceability integration remain the next step. No real customer address was saved or production index migration run.

@@ -1,0 +1,123 @@
+{
+  "verified": true,
+  "results": [
+    {
+      "route": "/admin",
+      "width": 1440,
+      "status": "pass"
+    },
+    {
+      "route": "/admin/partners",
+      "width": 1440,
+      "status": "pass"
+    },
+    {
+      "route": "/admin/orders",
+      "width": 1440,
+      "status": "pass"
+    },
+    {
+      "route": "/admin/catalog",
+      "width": 1440,
+      "status": "pass"
+    },
+    {
+      "route": "/admin/finance",
+      "width": 1440,
+      "status": "pass"
+    },
+    {
+      "route": "/admin/support",
+      "width": 1440,
+      "status": "pass"
+    },
+    {
+      "route": "/admin/settings",
+      "width": 1440,
+      "status": "pass"
+    },
+    {
+      "route": "/admin/support/",
+      "width": 1440,
+      "status": "pass"
+    },
+    {
+      "route": "/admin",
+      "width": 390,
+      "status": "pass"
+    },
+    {
+      "route": "/admin/partners",
+      "width": 390,
+      "status": "pass"
+    },
+    {
+      "route": "/admin/orders",
+      "width": 390,
+      "status": "pass"
+    },
+    {
+      "route": "/admin/catalog",
+      "width": 390,
+      "status": "pass"
+    },
+    {
+      "route": "/admin/finance",
+      "width": 390,
+      "status": "pass"
+    },
+    {
+      "route": "/admin/support",
+      "width": 390,
+      "status": "pass"
+    },
+    {
+      "route": "/admin/settings",
+      "width": 390,
+      "status": "pass"
+    },
+    {
+      "route": "/admin/support/",
+      "width": 390,
+      "status": "pass"
+    },
+    {
+      "route": "mobile menu navigation",
+      "width": 390,
+      "status": "pass"
+    },
+    {
+      "action": "create persisted category",
+      "status": "pass"
+    },
+    {
+      "action": "create persisted service area",
+      "status": "pass"
+    },
+    {
+      "action": "persist versioned shop approval",
+      "status": "pass"
+    },
+    {
+      "action": "/admin API failure and recovery",
+      "status": "pass"
+    },
+    {
+      "action": "/admin/catalog API failure and recovery",
+      "status": "pass"
+    },
+    {
+      "action": "/admin/support API failure and recovery",
+      "status": "pass"
+    },
+    {
+      "role": "buyer",
+      "status": "admin access blocked"
+    },
+    {
+      "role": "seller",
+      "status": "admin access blocked"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,12 @@
+import {Schema,model} from "mongoose";
+import {createHash} from "node:crypto";
+export const pushId=(value:string)=>createHash("sha256").update(value).digest("hex");
+const subscriptionSchema=new Schema({_id:String,userId:{type:String,required:true},sessionId:{type:String,required:true,unique:true},role:{type:String,required:true},token:{type:String,required:true,select:false},expiresAt:{type:Date,required:true}},{versionKey:false});
+subscriptionSchema.index({expiresAt:1},{expireAfterSeconds:0});
+subscriptionSchema.index({userId:1});
+subscriptionSchema.index({role:1});
+export const PushSubscription=model("PushSubscription",subscriptionSchema);
+const jobSchema=new Schema({_id:String,subscriptionId:{type:String,required:true},userId:{type:String,required:true},sessionId:{type:String,required:true},notificationId:{type:String,required:true},state:{type:String,enum:["pending","sending","sent","discarded","failed"],default:"pending"},attempts:{type:Number,default:0},nextAt:{type:Date,required:true},leaseId:String,leaseUntil:Date,expiresAt:{type:Date,required:true},purgeAt:{type:Date,required:true}},{versionKey:false});
+jobSchema.index({state:1,nextAt:1,leaseUntil:1});
+jobSchema.index({purgeAt:1},{expireAfterSeconds:0});
+export const PushJob=model("PushJob",jobSchema);

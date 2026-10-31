@@ -1,0 +1,21 @@
+{
+  "isolated": true,
+  "simulatedCashAndTransferAcknowledgements": true,
+  "realFundsMoved": false,
+  "checks": [
+    "delivered COD proof source posted",
+    "payout held before cash receipt",
+    "partner actual-handover confirmation required",
+    "admin receipt reference and cash-count confirmation required",
+    "single intent prepared before external-transfer recording",
+    "transfer reference and explicit actual-transfer acknowledgement required",
+    "recorded state labelled not bank verified",
+    "three balanced journals",
+    "no second payout intent",
+    "seller-owned statement/reference visible",
+    "seller cannot write payouts",
+    "partner sees receipt acknowledgement",
+    "390px no overflow across three roles",
+    "no page errors"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "verified": true,
+  "checks": [
+    "Create category persists and clears new-category form",
+    "Subcategory slug search and combined status filtering work",
+    "Cancel is non-mutating; confirmed subcategory deactivation persists and disables editing",
+    "Confirmed unused category deactivation and inactive filter persist; mobile fits"
+  ],
+  "errors": []
+}

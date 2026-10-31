@@ -1,0 +1,16 @@
+{
+  "isolated": true,
+  "physicalDevice": false,
+  "checks": [
+    "actual buyer-created isolated ticket and scoped loaded counts; desktop layout",
+    "order link, required buyer-visible note, persisted versioned in-progress update",
+    "actual resolution, reopen and persisted conversation reply",
+    "server conversation search/status filtering, actual empty view and clear",
+    "failed status update preserves resolution draft and shows server conflict",
+    "768px ticket cards/drawer fit; conversation refresh retains reply; keyboard close",
+    "390px ticket cards/drawer fit; conversation refresh retains reply; keyboard close",
+    "320px ticket cards/drawer fit; conversation refresh retains reply; keyboard close",
+    "list error is distinct from empty/zero counts; retry recovers",
+    "no browser page errors"
+  ]
+}

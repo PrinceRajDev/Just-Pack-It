@@ -1,0 +1,55 @@
+{
+  "name": "just-pack-it-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "notifications:worker": "tsx src/notifications/push-worker.ts",
+    "check:firebase": "tsx scripts/check-firebase.ts",
+    "notifications:worker:start": "node dist/notifications/push-worker.js",
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "check:readiness": "tsx scripts/check-readiness.ts",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "seed:dev": "tsx scripts/seed-dev.ts",
+    "create-user": "tsx scripts/create-user.ts",
+    "db:indexes": "tsx scripts/create-indexes.ts",
+    "inventory:worker": "tsx src/inventory/worker.ts",
+    "inventory:worker:start": "node dist/inventory/worker.js",
+    "payments:worker": "tsx src/payments/recovery-worker.ts",
+    "payments:worker:start": "node dist/payments/recovery-worker.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1160.0",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "firebase-admin": "^14.5.0",
+    "helmet": "^8.3.0",
+    "mongoose": "^9.11.4",
+    "pino": "^10.4.0",
+    "sharp": "^0.35.5",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.6",
+    "@types/supertest": "^7.2.1",
+    "eslint": "^10.13.0",
+    "mongodb-memory-server": "^11.3.0",
+    "supertest": "^7.3.1",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^5.0.5"
+  }
+}

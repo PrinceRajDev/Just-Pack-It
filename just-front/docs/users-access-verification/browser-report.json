@@ -1,0 +1,15 @@
+{
+  "isolated": true,
+  "physicalDevice": false,
+  "checks": [
+    "connected Users & roles route/sidebar and actual private account directory",
+    "required reason, confirmation cancel/block and actual old-token rejection",
+    "actual restoration does not revive old sessions; fresh login succeeds; blocked filter empty",
+    "admin/self protected and no role mutation controls",
+    "server search/filter clear and truthful empty state",
+    "768px account cards and drawer fit; keyboard close",
+    "390px account cards and drawer fit; keyboard close",
+    "320px account cards and drawer fit; keyboard close",
+    "load failure/retry and no browser page errors"
+  ]
+}

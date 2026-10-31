@@ -1,0 +1,19 @@
+{
+  "isolated": true,
+  "liveR2": true,
+  "verified": true,
+  "browser": "156.0.8078.4",
+  "preview": true,
+  "upload": true,
+  "publicImageLoaded": true,
+  "persistedAfterReload": true,
+  "replacement": true,
+  "versionAdvanced": true,
+  "mobileWidth": true,
+  "runtimeErrors": [],
+  "cleanup": {
+    "isolated": true,
+    "removed": 2,
+    "remaining": 0
+  }
+}

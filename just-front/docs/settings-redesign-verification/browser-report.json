@@ -1,0 +1,17 @@
+{
+  "isolated": true,
+  "physicalDevice": false,
+  "checks": [
+    "actual configured areas/shop metrics and real temporary audit record; desktop bounds",
+    "six-digit pincode validation and actual area create/reset",
+    "versioned edit, pincode retention and actual deactivate/reactivate",
+    "referenced area deactivation refused by server; draft retained; Clear returns create",
+    "local pincode search, status filters and original GPS readiness",
+    "actual exact-action/UUID audit filtering and clear; no fake date/user fields",
+    "768px forms, area/audit tables and filters fit page",
+    "390px forms, area/audit tables and filters fit page",
+    "320px forms, area/audit tables and filters fit page",
+    "audit failed refresh/retry preserves filter/records",
+    "no browser page errors"
+  ]
+}

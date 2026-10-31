@@ -1,0 +1,19 @@
+{
+  "isolated": true,
+  "checks": [
+    "admin goods-at-shop confirmation required",
+    "pre-pickup task release",
+    "old partner loses active access and cannot reclaim",
+    "second partner claims same shop order",
+    "seller pickup before dispatch",
+    "partner reports failed attempt",
+    "post-pickup admin return request only",
+    "partner sees return instructions and cannot complete delivery",
+    "buyer receipt control blocked during return",
+    "seller physical receipt and stock decision required",
+    "exact committed variant quantity restored once",
+    "cancelled order and released partner",
+    "buyer/admin390px no overflow",
+    "no page errors"
+  ]
+}

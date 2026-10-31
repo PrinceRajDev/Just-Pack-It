@@ -1,0 +1,371 @@
+.account-dashboard {
+  --account-heading: Georgia, "Times New Roman", serif;
+  max-width: 1480px;
+  margin: 28px auto 0;
+  padding-inline: clamp(16px, 3vw, 48px);
+  color: #103d2d;
+}
+.account-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  min-height: 190px;
+  padding: 28px 32px;
+  gap: 24px;
+  background: #eff4e3;
+  border: 1px solid #e1e7d1;
+  border-radius: 18px;
+  overflow: hidden;
+}
+.account-welcome > div {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+.account-welcome p {
+  font-size: 12px;
+  font-weight: 700;
+  color: #658254;
+  letter-spacing: 0.03em;
+}
+.account-welcome h1 {
+  margin: 8px 0 16px;
+  font-family: var(--account-heading);
+  font-size: clamp(30px, 3.5vw, 46px);
+  font-weight: 700;
+  line-height: 1.16;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+.account-welcome h1::after {
+  content: "";
+  display: block;
+  width: 90px;
+  height: 4px;
+  background: #709640;
+  border-radius: 50%;
+  transform: rotate(-3deg);
+  margin-top: 5px;
+}
+.account-welcome > div > span {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #637268;
+}
+.account-welcome-art {
+  width: min(36%, 350px);
+  height: 170px;
+  flex-shrink: 0;
+  align-self: flex-end;
+  margin-bottom: -28px;
+}
+.account-overview-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block: 20px;
+}
+.account-overview-tabs > a {
+  min-height: 44px;
+  padding-inline: 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.account-dashboard-grid {
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.account-dashboard-guest {
+  grid-template-columns: minmax(0, 1fr);
+}
+.account-identity-card {
+  position: sticky;
+  top: 120px;
+  border: 1px solid #e9e0d1;
+  border-radius: 18px;
+  background: #fffefa;
+  padding: 22px 20px;
+  box-shadow: 0 4px 20px #143d2810;
+  min-width: 0;
+}
+.account-identity-summary {
+  text-align: center;
+  padding: 4px 0 24px;
+  border-bottom: 1px solid #eee6db;
+}
+.account-initials {
+  display: grid;
+  place-items: center;
+  width: 78px;
+  height: 78px;
+  margin: auto auto 14px;
+  border: 1px solid #deebbf;
+  border-radius: 50%;
+  background: #e8f3c9;
+  font: 700 29px var(--account-heading);
+}
+.account-identity-summary h2 {
+  font-family: var(--account-heading);
+  font-size: 24px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.account-identity-summary p {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #61716b;
+  overflow-wrap: anywhere;
+}
+.account-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f1f5e6;
+  padding: 3px 8px;
+  border-radius: 7px;
+  font-size: 12px;
+  margin-top: 8px;
+}
+.account-identity-card nav {
+  display: grid;
+  gap: 5px;
+  padding-block: 14px 30px;
+}
+.account-identity-card nav > a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.account-identity-card nav > a:hover {
+  background: #f2f4e9;
+}
+.account-identity-card nav > a[aria-current] {
+  background: #e8f3c9;
+}
+.account-identity-card > button {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 9px;
+}
+.account-main-content,
+.account-main-content > div {
+  min-width: 0;
+}
+.account-main-content .account-content-section {
+  scroll-margin-top: 125px;
+}
+.account-main-content .account-content-section > section,
+.account-wishlist-card,
+.account-guest-card {
+  margin: 0 0 20px;
+  padding: 24px;
+  border: 1px solid #e9e0d1;
+  background: #fffefa;
+  border-radius: 17px;
+  box-shadow: 0 3px 18px #163e2604;
+}
+.account-main-content .account-content-section > section > p,
+.account-main-content .account-section-heading > p {
+  font-size: 13px;
+  color: #65756c;
+  line-height: 1.7;
+}
+.account-main-content .account-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-family: var(--account-heading);
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+.account-card-heading > span {
+  display: grid;
+  place-items: center;
+  width: 41px;
+  height: 41px;
+  border-radius: 11px;
+  background: #e8f3c9;
+  flex-shrink: 0;
+  color: #164d34;
+}
+.account-main-content .account-section-heading {
+  margin-bottom: 12px;
+}
+.account-main-content
+  .account-content-section
+  :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid #ded5c8;
+  background: #fffdf9;
+  border-radius: 9px;
+  min-height: 44px;
+  margin-top: 5px;
+}
+.account-main-content input:focus-visible,
+.account-main-content select:focus-visible,
+.account-main-content textarea:focus-visible {
+  outline: 2px solid #76984f;
+  outline-offset: 2px;
+}
+.account-main-content button {
+  min-height: 42px;
+  border-radius: 8px;
+  white-space: normal;
+  height: auto;
+}
+.account-main-content #account-security form {
+  max-width: none;
+}
+.account-main-content #account-security form > fieldset {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 24px;
+}
+.account-main-content #account-security form > fieldset > * {
+  margin: 0;
+  min-width: 0;
+}
+.account-main-content #account-security form > fieldset > label {
+  grid-column: 1 / -1;
+}
+.account-main-content #account-security form > fieldset > label:first-child {
+  max-width: 430px;
+}
+.account-main-content #account-security form > fieldset > button {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+.account-main-content #account-addresses section > div.flex {
+  flex-wrap: wrap;
+}
+.account-main-content #account-addresses li {
+  background: #fbfaf3;
+  border-color: #e6e0d3;
+}
+.account-main-content .account-order-recovery:empty {
+  display: none;
+}
+.account-main-content .account-order-recovery:not(:empty) {
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #dedfc8;
+  background: #f4f6ea;
+  border-radius: 14px;
+}
+.account-wishlist-card > section > div > h2,
+.account-guest-card h2 {
+  font-family: var(--account-heading);
+  font-size: 28px;
+}
+.account-wishlist-card > section > ul {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.account-guest-card {
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+}
+.account-dashboard :is(a, button):focus-visible {
+  outline: 2px solid #618746;
+  outline-offset: 4px;
+}
+.account-dashboard :is(input[type="checkbox"], input[type="radio"]) {
+  accent-color: #064b35;
+}
+@media (max-width: 1023px) {
+  .account-dashboard-grid {
+    grid-template-columns: 225px minmax(0, 1fr);
+    gap: 18px;
+  }
+  .account-identity-card {
+    padding-inline: 14px;
+  }
+  .account-main-content .account-content-section > section,
+  .account-wishlist-card {
+    padding: 20px;
+  }
+  .account-wishlist-card > section > ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 767px) {
+  .account-dashboard {
+    margin-top: 20px;
+  }
+  .account-welcome {
+    padding: 24px 20px;
+    gap: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .account-welcome-art {
+    width: 170px;
+    height: 105px;
+    margin-bottom: -24px;
+    align-self: flex-end;
+  }
+  .account-welcome h1 {
+    font-size: 32px;
+  }
+  .account-dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+  .account-identity-card {
+    position: static;
+    padding: 20px;
+  }
+  .account-identity-card nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding-bottom: 18px;
+  }
+  .account-identity-card nav > a {
+    padding: 9px 8px;
+    font-size: 12px;
+    gap: 7px;
+  }
+  .account-identity-summary {
+    padding-bottom: 18px;
+  }
+  .account-main-content #account-security form > fieldset {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .account-main-content .account-content-section {
+    scroll-margin-top: 195px;
+  }
+  .account-overview-tabs {
+    gap: 9px;
+  }
+  .account-overview-tabs > a {
+    padding-inline: 14px;
+    font-size: 13px;
+  }
+  .account-main-content .account-content-section > section,
+  .account-wishlist-card {
+    padding: 20px 16px;
+  }
+  .account-main-content :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    font-size: 16px;
+  }
+  .account-main-content .account-card-heading {
+    font-size: 23px;
+  }
+  .account-wishlist-card > section > ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

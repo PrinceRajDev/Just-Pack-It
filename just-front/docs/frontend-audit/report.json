@@ -1,0 +1,307 @@
+{
+  "verified": true,
+  "checks": 50,
+  "results": [
+    {
+      "role": "guest",
+      "path": "/login",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "guest",
+      "path": "/categories",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "guest",
+      "path": "/cart",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "guest",
+      "path": "/seller",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "guest",
+      "path": "/admin",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "guest",
+      "path": "/delivery",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "guest",
+      "path": "/missing-page",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "guest",
+      "path": "/login",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "guest",
+      "path": "/categories",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "guest",
+      "path": "/cart",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "guest",
+      "path": "/seller",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "guest",
+      "path": "/admin",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "guest",
+      "path": "/delivery",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "guest",
+      "path": "/missing-page",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "buyer",
+      "path": "/account",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "buyer",
+      "path": "/search",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "buyer",
+      "path": "/category/qa-demo-grocery",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "buyer",
+      "path": "/shop/qa-demo-counter-1",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "buyer",
+      "path": "/orders",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "buyer",
+      "path": "/seller",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "buyer",
+      "path": "/admin",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "buyer",
+      "path": "/account",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "buyer",
+      "path": "/search",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "buyer",
+      "path": "/category/qa-demo-grocery",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "buyer",
+      "path": "/shop/qa-demo-counter-1",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "buyer",
+      "path": "/orders",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "buyer",
+      "path": "/seller",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "buyer",
+      "path": "/admin",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "seller",
+      "path": "/seller",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "seller",
+      "path": "/seller/settings",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "seller",
+      "path": "/seller/products",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "seller",
+      "path": "/seller/products/new",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "seller",
+      "path": "/seller/inventory",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "seller",
+      "path": "/seller/orders",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "seller",
+      "path": "/seller",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "seller",
+      "path": "/seller/settings",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "seller",
+      "path": "/seller/products",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "seller",
+      "path": "/seller/products/new",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "seller",
+      "path": "/seller/inventory",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "seller",
+      "path": "/seller/orders",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "path": "/admin",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "path": "/admin/partners",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "path": "/admin/catalog",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "path": "/admin/orders",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "path": "/admin/finance",
+      "width": 1366,
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "path": "/admin",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "path": "/admin/partners",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "path": "/admin/catalog",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "path": "/admin/orders",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "path": "/admin/finance",
+      "width": 390,
+      "passed": true
+    }
+  ],
+  "errors": []
+}

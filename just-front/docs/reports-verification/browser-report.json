@@ -1,0 +1,14 @@
+{
+  "isolated": true,
+  "physicalDevice": false,
+  "checks": [
+    "enabled report route/nav; counts/paise formatting match actual isolated API",
+    "daily chart has accessible exact data table",
+    "actual date range with genuine zero metrics, no invented activity",
+    "server rejects >90 days; retains dates; stale metrics hidden; reset restores report",
+    "768px metrics/chart/table fit overall page; chart keyboard-focusable",
+    "390px metrics/chart/table fit overall page; chart keyboard-focusable",
+    "320px metrics/chart/table fit overall page; chart keyboard-focusable",
+    "error/retry recovers; no browser errors or write/provider requests"
+  ]
+}

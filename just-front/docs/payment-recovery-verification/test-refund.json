@@ -1,0 +1,20 @@
+{
+  "isolated": true,
+  "actualRazorpayTestGateway": true,
+  "realFundsMoved": false,
+  "orderId": "709c2cd4-c868-4cbb-8276-27e964baef2c",
+  "suborderId": "29fea7a6-4785-4c21-b71c-cf1d92a04dc8",
+  "providerRefundId": null,
+  "state": "uncertain",
+  "amount": 25,
+  "duplicateSubmissionSameRefund": false,
+  "verifiedProcessed": false,
+  "submissionHttpStatus": null,
+  "stockAfter": 5,
+  "submissionAttempted": false,
+  "diagnosticProviderHttpStatus": 400,
+  "diagnosticProviderCode": "BAD_REQUEST_ERROR",
+  "diagnosticProviderDescription": "invalid request sent",
+  "reportMode": "read-only observation after prior rejected submission",
+  "priorSubmissionAttempted": true
+}

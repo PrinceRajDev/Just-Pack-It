@@ -1,0 +1,19 @@
+{
+  "isolated": true,
+  "checks": [
+    "buyer creates owned ticket",
+    "buyer reply persists",
+    "admin literal ticket search",
+    "admin conversation reply",
+    "admin resolves",
+    "buyer reopens with explanation",
+    "resolution history retained",
+    "admin blocks public listing",
+    "admin removes block",
+    "taxonomy reactivates same ID",
+    "audit action filter",
+    "read-only reconciliation no transfer buttons",
+    "390px no overflow for admin/buyer",
+    "no page errors"
+  ]
+}

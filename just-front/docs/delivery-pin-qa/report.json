@@ -1,0 +1,11 @@
+{
+  "verified": true,
+  "checks": [
+    "Map imagery: loaded",
+    "GPS draft requires explicit confirmation; map click adjusts pin; saved with address",
+    "Saved pin is editable and persists through API",
+    "Checkout confirms saved-pin and pincode coverage, quotes seller delivery",
+    "Outside-radius delivery pin blocks seller delivery while pickup remains available"
+  ],
+  "errors": []
+}

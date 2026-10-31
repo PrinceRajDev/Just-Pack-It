@@ -1,0 +1,22 @@
+{
+  "isolated": true,
+  "physicalDevice": false,
+  "liveData": false,
+  "checks": [
+    "queue counts match existing operations API; five unsupported metrics unavailable",
+    "API/database checked; provider health unknown, never fabricated",
+    "all seven existing sidebar destinations navigate under admin guard",
+    "header workspace search navigates to existing order screen",
+    "refresh fetches actual audit action; activity tabs filter with honest empty state",
+    "view audit log reaches existing explorer and anchor",
+    "1024px layout has no horizontal overflow; available navigation works",
+    "768px layout has no horizontal overflow; available navigation works",
+    "390px layout has no horizontal overflow; available navigation works",
+    "320px layout has no horizontal overflow; available navigation works",
+    "operations error shows unavailable rather than zero; retry recovers",
+    "existing notification unread count matches API; notification drawer opens",
+    "existing sign-out action still clears admin access",
+    "buyer denied by existing frontend guard and backend operations authorization",
+    "no browser page errors"
+  ]
+}

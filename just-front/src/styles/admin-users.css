@@ -1,0 +1,218 @@
+.admin-users {
+  color: #17251e;
+  min-width: 0;
+}
+.users-hero {
+  margin-bottom: 1.5rem;
+}
+.users-hero nav {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.75rem;
+  color: #68746e;
+  margin-bottom: 1.3rem;
+}
+.users-hero > div {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 2rem;
+  align-items: center;
+}
+.users-hero h1 {
+  font: 500 clamp(2.1rem, 3vw, 3.2rem)/1.1 var(--font-display);
+  letter-spacing: -0.04em;
+}
+.users-hero p {
+  font-size: 0.9rem;
+  color: #68746e;
+  line-height: 1.7;
+  margin-top: 0.8rem;
+}
+.users-hero aside {
+  padding: 1.3rem;
+  background: #e9f6e9;
+  border: 1px solid #dce8d4;
+  border-radius: 16px;
+}
+.users-hero aside > svg {
+  color: #12613e;
+  float: left;
+  margin: 0 0.8rem 0.7rem 0;
+}
+.users-hero h2 {
+  font: 500 1.35rem var(--font-display);
+}
+.users-toolbar {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  padding: 1rem;
+  border: 1px solid #e9e1d4;
+  border-radius: 14px;
+  background: #fffdf9;
+  margin-bottom: 1rem;
+}
+.users-toolbar label {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+.users-toolbar label:first-child {
+  flex: 1;
+  min-width: 180px;
+}
+.users-toolbar select {
+  min-height: 44px;
+  padding: 0.7rem;
+  border: 1px solid #ded5c7;
+  border-radius: 8px;
+  background: #fffdf9;
+}
+.users-panel {
+  padding: 1rem;
+  background: #fffdf9;
+  border: 1px solid #e9e1d4;
+  border-radius: 14px;
+}
+.users-result-count {
+  font-size: 0.8rem;
+  color: #68746e;
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+.users-table {
+  overflow-x: auto;
+}
+.users-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.users-table th {
+  text-align: left;
+  background: #f4f3e9;
+}
+.users-table td,
+.users-table th {
+  padding: 1rem;
+  border-bottom: 1px solid #e9e1d4;
+  vertical-align: top;
+}
+.users-table small {
+  display: block;
+  color: #68746e;
+  margin-top: 0.4rem;
+}
+.users-badge {
+  display: inline-block;
+  padding: 0.3rem 0.7rem;
+  border-radius: 20px;
+  background: #e9f6e9;
+  color: #12613e;
+}
+.users-badge.blocked {
+  background: #fdebe8;
+  color: #a52d21;
+}
+.users-panel nav {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+.users-empty {
+  padding: 2.5rem;
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+}
+.users-empty h2 {
+  font: 500 1.6rem var(--font-display);
+}
+.users-drawer {
+  width: min(100%, 600px) !important;
+  max-width: 600px !important;
+  padding: 2.8rem 1.4rem 2rem;
+  background: #fcf9f2;
+  overflow-wrap: anywhere;
+}
+.users-access {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.users-access h2 {
+  font: 500 1.8rem var(--font-display);
+}
+.users-access dl {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 0.7rem;
+  padding: 1rem;
+  background: #f0f2e7;
+  border-radius: 12px;
+  font-size: 0.85rem;
+}
+.users-access dt {
+  color: #68746e;
+}
+.users-access p {
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.users-access textarea {
+  font-size: 16px;
+}
+@media (max-width: 767px) {
+  .users-hero > div {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .users-toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .users-toolbar input,
+  .users-toolbar select {
+    font-size: 16px;
+  }
+  .users-table table,
+  .users-table tbody {
+    display: block;
+    width: 100%;
+  }
+  .users-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+  .users-table tr {
+    display: block;
+    border: 1px solid #e9e1d4;
+    border-radius: 12px;
+    margin: 0.8rem 0;
+    padding: 0.7rem;
+  }
+  .users-table td {
+    display: grid;
+    gap: 0.4rem;
+    border: 0;
+    padding: 0.5rem;
+  }
+  .users-table td:before {
+    content: attr(data-label);
+    color: #68746e;
+    font-size: 0.75rem;
+  }
+  .users-access dl {
+    grid-template-columns: 1fr;
+  }
+  .users-drawer {
+    padding: 2.8rem 1rem 1.5rem;
+  }
+}

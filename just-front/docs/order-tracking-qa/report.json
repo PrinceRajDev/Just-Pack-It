@@ -1,0 +1,11 @@
+{
+  "verified": true,
+  "checks": [
+    "mobile pickup timeline reflects placed status",
+    "seller-owned accept API succeeds",
+    "buyer auto-refresh shows acceptance without manual click",
+    "last checked and server shop timestamp shown",
+    "no overflow or page errors"
+  ],
+  "errors": []
+}

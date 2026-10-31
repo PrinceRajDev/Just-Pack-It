@@ -1,0 +1,23 @@
+{
+  "emulated": true,
+  "physicalDevice": false,
+  "geolocationSimulated": true,
+  "actualAndroidKeyboardTested": false,
+  "checks": [
+    "simulated GPS denied gives explicit manual fallback",
+    "320px bounded area picker selectable with keyboard after denied",
+    "simulated GPS timeout gives explicit manual fallback",
+    "320px bounded area picker selectable with keyboard after timeout",
+    "simulated precise GPS finds eligible area and opens address confirmation",
+    "address dialog traps keyboard focus; close touch target 44px",
+    "Escape restores focus to address trigger",
+    "address editing clears stale written confirmation",
+    "short 390x360 viewport keeps address sheet scrollable (keyboard viewport simulation)",
+    "blocked map tiles leave coordinate/address form usable",
+    "keyboard-only address confirmation and save succeeds against isolated API",
+    "640x360 landscape page has no horizontal overflow",
+    "360px mixed-shop pickup and seller delivery selection works with keyboard",
+    "keyboard submit creates exactly one isolated COD order with two shop suborders",
+    "no browser page errors"
+  ]
+}

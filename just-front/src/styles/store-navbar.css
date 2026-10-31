@@ -1,0 +1,227 @@
+.market-navbar {
+  background: #fffdf5f5;
+  border-bottom-color: #dedfce;
+  box-shadow: 0 5px 24px #173c2810;
+}
+.market-navbar::before {
+  content: "";
+  display: block;
+  height: 3px;
+  background: linear-gradient(90deg, #143f2e 0 24%, #cce58b 24% 33%, #143f2e 33% 100%);
+}
+.market-navbar-main {
+  min-height: 90px;
+  gap: clamp(12px, 1.5vw, 28px);
+}
+.market-navbar-brand {
+  padding-right: 20px;
+  border-right: 1px solid #dedfce;
+}
+.market-navbar-brand > a {
+  gap: 10px;
+}
+.market-navbar-brand > a > svg {
+  width: 36px;
+  height: 36px;
+}
+.market-navbar-brand > a > span {
+  font-size: 25px;
+  letter-spacing: -0.045em;
+}
+.market-navbar-tagline {
+  font-size: 11px;
+  margin-left: 46px;
+  margin-top: 3px;
+  letter-spacing: 0.01em;
+}
+.market-navbar .market-location {
+  min-height: 52px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  gap: 10px;
+}
+.market-navbar .market-location > svg:first-child {
+  width: 34px;
+  height: 34px;
+  padding: 7px;
+  background: #eef2df;
+  border: 1px solid #e1e6cf;
+  border-radius: 50%;
+}
+.market-navbar .market-location .label-stamp {
+  text-transform: none;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  line-height: 1.6;
+}
+.market-navbar .market-location > span > span:last-child {
+  font-weight: 600;
+  font-size: 14px;
+  max-width: 150px;
+}
+.market-navbar .market-search {
+  min-width: 100px;
+}
+.market-navbar .market-search > input {
+  height: 50px;
+  background: #f3f3e9;
+  border: 1px solid #e0e1d3;
+  border-radius: 14px;
+  padding-left: 40px;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
+}
+.market-navbar .market-search > input:focus {
+  background: #fff;
+  box-shadow: 0 0 0 3px #d2dfb580;
+}
+.market-navbar .market-search > button {
+  top: 5px;
+  right: 5px;
+  height: 40px;
+  width: 44px;
+  border-radius: 10px;
+}
+.market-navbar-actions {
+  gap: 5px;
+  flex-shrink: 0;
+}
+.market-navbar-actions > a:not(.market-navbar-bag) {
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
+  border-radius: 12px;
+  color: #244632;
+}
+.market-navbar-actions > .market-navbar-offers {
+  background: #fcf0d8;
+  color: #74500d;
+}
+.market-navbar-actions > .market-navbar-bag {
+  min-height: 48px;
+  border-radius: 14px;
+  padding-inline: 14px;
+  gap: 10px;
+  box-shadow: 0 3px 0 #092f20;
+  margin-left: 5px;
+}
+.market-navbar-bag > svg {
+  width: 20px;
+  height: 20px;
+}
+.market-navbar-bag-label {
+  font-size: 13px;
+  white-space: nowrap;
+}
+.market-navbar-count {
+  display: grid;
+  place-items: center;
+  min-width: 25px;
+  height: 25px;
+  padding-inline: 5px;
+  background: #d7ec9a;
+  color: #183b28;
+  font-size: 12px;
+  border-radius: 8px;
+}
+.market-navbar :is(a, button):focus-visible {
+  outline: 2px solid #65813b;
+  outline-offset: 4px;
+}
+@media (min-width: 768px) and (max-width: 1199px) {
+  .market-navbar-main {
+    gap: 10px;
+    padding-inline: 20px;
+  }
+  .market-navbar-brand {
+    padding-right: 12px;
+  }
+  .market-navbar-brand > a > span {
+    font-size: 21px;
+  }
+  .market-navbar-brand > a > svg {
+    width: 30px;
+    height: 30px;
+  }
+  .market-navbar .market-location > span > span:last-child {
+    max-width: 112px;
+    font-size: 12px;
+  }
+  .market-navbar-bag-label {
+    display: none;
+  }
+}
+@media (max-width: 767px) {
+  .market-navbar-main {
+    min-height: 66px;
+    padding: 10px 16px;
+    gap: 10px;
+  }
+  .market-navbar-brand {
+    padding-right: 0;
+    border: 0;
+  }
+  .market-navbar-brand > a > span {
+    font-size: 23px;
+  }
+  .market-navbar-brand > a > svg {
+    width: 31px;
+    height: 31px;
+  }
+  .market-navbar-actions {
+    gap: 2px;
+  }
+  .market-navbar-actions > .market-navbar-bag {
+    min-height: 42px;
+    padding-inline: 10px;
+    margin-left: 0;
+    gap: 7px;
+    border-radius: 12px;
+  }
+  .market-navbar-bag-label {
+    display: none;
+  }
+  .market-navbar-mobile-location {
+    border-top-style: dashed;
+    border-color: #dedfce;
+    padding-block: 5px;
+  }
+  .market-navbar .market-location {
+    min-height: 44px;
+    padding: 2px 0;
+  }
+  .market-navbar .market-location > svg:first-child {
+    width: 30px;
+    height: 30px;
+    padding: 6px;
+  }
+  .market-navbar .market-location > span > span:last-child {
+    max-width: 205px;
+    font-size: 13px;
+  }
+  .market-navbar .market-search > input {
+    font-size: 16px;
+    height: 46px;
+  }
+  .market-navbar .market-search > button {
+    height: 36px;
+  }
+}
+@media (max-width: 359px) {
+  .market-navbar-main {
+    padding-inline: 12px;
+    gap: 5px;
+  }
+  .market-navbar-brand > a {
+    gap: 6px;
+  }
+  .market-navbar-brand > a > span {
+    font-size: 20px;
+  }
+  .market-navbar-actions > .market-navbar-account {
+    padding-inline: 8px;
+    min-width: 38px;
+  }
+}

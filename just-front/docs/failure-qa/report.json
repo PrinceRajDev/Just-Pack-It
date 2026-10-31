@@ -1,0 +1,10 @@
+{
+  "verified": true,
+  "steps": [
+    "/product/11111111-1111-4111-8111-111111111111: honest not-found state fits mobile",
+    "/shop/no-such-shop: honest not-found state fits mobile",
+    "/category/no-such-category: honest not-found state fits mobile",
+    "Disconnected API shows an error boundary with recovery actions",
+    "Try again recovers without a full-page reload after API connectivity returns"
+  ]
+}

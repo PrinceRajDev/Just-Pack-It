@@ -1,0 +1,17 @@
+{
+  "isolated": true,
+  "physicalDevice": false,
+  "checks": [
+    "actual seller count and pending/approved counts match isolated APIs",
+    "approval changes only after confirmation and actual backend response; counts refresh",
+    "rejection reason is saved server-side and rejected count updates",
+    "owner search, no-results reset and Z–A sorting work",
+    "category and service-area filters use actual configured IDs",
+    "768px cards and review drawer fit; Escape closes",
+    "390px cards and review drawer fit; Escape closes",
+    "320px cards and review drawer fit; Escape closes",
+    "failed load shows retry rather than fake empty/zero",
+    "empty illustration is data-driven; refresh restores API list",
+    "no page errors; isolated approval restored"
+  ]
+}

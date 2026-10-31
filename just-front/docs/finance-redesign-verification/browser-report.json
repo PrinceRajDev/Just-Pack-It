@@ -1,0 +1,20 @@
+{
+  "isolated": true,
+  "providerDisabled": true,
+  "physicalDevice": false,
+  "checks": [
+    "actual isolated API records and four unavailable global metrics; desktop bounds",
+    "exact part UUID lookup validates, normalizes and clears",
+    "ledger details show missing financial proof and no recorded payout; posting disabled",
+    "real payment state and test/live filters; clear resets cursor/filter",
+    "payment paise and refund rupees formatting, actual requested refund, test/account/provider safety guards",
+    "reconciliation UUID filter/empty/clear retain distinct allocations",
+    "actual API empty ledger and online payment views, refresh/clear restores records",
+    "768px financial cards and both drawers fit; keyboard closes",
+    "390px financial cards and both drawers fit; keyboard closes",
+    "320px financial cards and both drawers fit; keyboard closes",
+    "payment list failure/retry, no invented empty data",
+    "ledger failed refresh/retry preserves records and recovers",
+    "no page errors or financial mutation/provider requests"
+  ]
+}

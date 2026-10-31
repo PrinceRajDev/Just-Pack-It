@@ -1,0 +1,16 @@
+{
+  "isolated": true,
+  "mockedOwnedOrderSnapshot": true,
+  "realCartQuote": true,
+  "checks": [
+    "exact variant added at fresh price",
+    "old price change displayed",
+    "cart scoped to buyer",
+    "390px no overflow",
+    "print-only receipt visible",
+    "seller snapshot retained",
+    "test and unpaid labels",
+    "other UI excluded from print",
+    "no page errors"
+  ]
+}

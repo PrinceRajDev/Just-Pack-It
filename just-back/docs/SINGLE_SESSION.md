@@ -1,0 +1,13 @@
+# One active login per account
+
+Policy: a new successful password login replaces the previous account session, for buyer, seller, delivery and admin. The login transaction increments `authVersion`, deletes previous session records and creates one replacement session carrying the new version. Authentication checks both token record and user version. Failed password validation cannot revoke the current session. A stale token record reinserted accidentally is still rejected by its old version.
+
+Concurrent logins serialize through the user credential/version compare; at most one returned token is usable. A competing attempt may return 401 and require fresh login. Password-change versus new-login races can resolve as successful password change or a new login winning and password change rejecting with 401/409. Neither outcome leaves an old authenticated session valid. Existing password/logout-all security remains intact.
+
+This is single-session enforcement, not physical hardware identification. Tabs in one browser normally share the same token. A copied bearer token is not a separate tracked device, so normal token secrecy/HTTPS remain necessary. Prior-device server access is rejected on the next authenticated request; already executing requests and static screen content cannot be cancelled remotely. There is no WebSocket/push sign-out. Frontend already clears sessions on 401 and cross-tab changes; login now discloses replacement behaviour.
+
+No production session purge, account mutation, `.env` change or migration was executed. Existing real users get their earlier sessions replaced when they next successfully log in. User/session version defaults remain compatible with legacy records. No endpoint/DTO/routing changes.
+
+Changed backend `src/auth/service.ts`, integration tests; frontend login notice and API contract/docs. Tests cover all four roles, failed-login preservation, latest-login token replacement, stale-record rejection, concurrent device logins and credential races using isolated accounts/database. No real account password/session or device was used for destructive verification.
+
+Verification: backend TypeScript, lint, build and 121 tests/six files passed; frontend TypeScript, build and 141 tests/31 files passed, lint zero errors with 22 existing Fast Refresh warnings. The earlier password-change race test initially assumed password change always wins; it was updated to accept a safely rejected change when new login wins and the full suite passed on rerun. No real-device browser E2E was performed; server-level multi-session tests verify the access rule.

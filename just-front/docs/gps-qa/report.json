@@ -1,0 +1,7 @@
+{
+  "verified": true,
+  "steps": [
+    "Explicit GPS permission finds one eligible shop within6km; outside shop hidden and coordinates not persisted",
+    "Manual service-area fallback clears GPS filtering and restores both eligible area shops"
+  ]
+}

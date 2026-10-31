@@ -1,0 +1,11 @@
+{
+  "verified": true,
+  "checks": [
+    "support link opens exact order",
+    "reload retains lookup",
+    "browser back returns support",
+    "clear removes lookup from URL",
+    "mobile fits",
+    "zero page errors"
+  ]
+}

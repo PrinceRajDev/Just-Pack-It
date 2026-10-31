@@ -1,0 +1,19 @@
+{
+  "isolated": true,
+  "physicalDevice": false,
+  "checks": [
+    "real temporary listing data; unavailable global metrics; desktop layout",
+    "server product-name search, no-results and clear",
+    "product summary, confirmation cancel, persisted block and unblock using versioned API",
+    "server blocked status filter",
+    "category creation, generated slug, API persistence and drawer close",
+    "category edit, stable slug, parent-scoped subcategory add/rename/deactivate/reactivate",
+    "unreferenced category deactivate/reactivate",
+    "taxonomy subcategory search and category status filter",
+    "768px responsive cards, drawer and keyboard close",
+    "390px responsive cards, drawer and keyboard close",
+    "320px responsive cards, drawer and keyboard close",
+    "failed product refresh and retry recover without fake empty data",
+    "no browser page errors"
+  ]
+}

@@ -1,0 +1,9 @@
+# Server cart review (no checkout)
+
+`POST /cart/quote` is a public, read-only catalogue review accepting `{areaId,items:[{productId,variantId?,qty}]}`. Strict UUID/quantity validation; max 100 distinct lines, quantities 1–999. Duplicate product/variant pairs and extra price/shop/role fields are rejected. It creates no cart, quote commitment, reservation, order or payment.
+
+Only approved active shops eligible for the requested active service area and active product categories may appear in the response. Unavailable/private listings return a generic unavailable line without names or ownership. Product/variant prices and stocks are loaded from MongoDB; variant IDs must belong to that exact product. Required/removed options never fall back to parent pricing/stock. Totals use integer paise. Closed shops, shortage, unavailable options and unmet known shop minimums are explicit issues.
+
+Response: `checkedAt,areaId,currency:"INR",reserved:false,checkoutAvailable:false,lines[],shops[],itemsSubtotal,deliveryTotal:null,grandTotal:null`. Lines include the requested IDs/qty, public product DTO when eligible, derived shop ID, unit price/line subtotal/stock when priceable, and structured issues. Shop groups include only public shop DTO, item subtotal and issues. Item subtotal includes all priceable requested quantities for review, even if closed or short on stock; it is not a payable amount. Fees displayed on shop DTOs are listed metadata, not delivery quotes. Tax/discount/address-specific delivery and final total remain unimplemented.
+
+This is a best-effort read across changing catalogue data, not an atomic purchase guarantee. Future checkout must reprice and reserve inventory transactionally. Client acceptedPrice is local acknowledgement only and is never sent/trusted. No persisted database data is mutated by review. Public read access permits guest browsing; only already-public stock/prices are returned.

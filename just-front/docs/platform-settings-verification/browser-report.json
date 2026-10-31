@@ -1,0 +1,16 @@
+{
+  "isolated": true,
+  "physicalDevice": false,
+  "checks": [
+    "enabled platform route/nav, blank defaults and read-only deployment configuration",
+    "required reason, preview, confirmation cancel and actual versioned publication",
+    "anonymous customer sees published notice/contact; public DTO excludes all private/configuration fields",
+    "disabling announcement hides it publicly while preserving support contacts",
+    "concurrent version protects unsaved draft; explicit reload adopts latest saved settings",
+    "768px platform form/preview/configuration fits page",
+    "390px platform form/preview/configuration fits page",
+    "320px platform form/preview/configuration fits page",
+    "refresh failure/retry retains unsaved text and never claims a publication",
+    "no browser page errors"
+  ]
+}

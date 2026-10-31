@@ -44,6 +44,7 @@ const schema = z
       .default("info"),
     CLOUDFLARE_ACCOUNT_ID: z.string().regex(/^[a-f0-9]{32}$/i).optional(),
     IMAGE_STORAGE_PROVIDER: z.enum(["cloudflare_images","r2"]).default("cloudflare_images"),
+    R2_ALLOW_DEV_PUBLIC_URL: z.enum(["true", "false"]).default("false").transform(value => value === "true"),
     CLOUDFLARE_R2_ACCESS_KEY_ID: z.string().regex(/^[a-f0-9]{32}$/i).optional(),
     CLOUDFLARE_R2_SECRET_ACCESS_KEY: z.string().min(32).optional(),
     CLOUDFLARE_R2_BUCKET: z.string().min(3).max(63).regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$/).optional(),
@@ -62,7 +63,7 @@ const schema = z
     const imageSettings=[value.CLOUDFLARE_ACCOUNT_ID,value.CLOUDFLARE_IMAGES_API_TOKEN,value.CLOUDFLARE_IMAGES_ACCOUNT_HASH];
     if(value.IMAGE_STORAGE_PROVIDER==="cloudflare_images" && imageSettings.some(Boolean) && !imageSettings.every(Boolean)) ctx.addIssue({code:"custom",path:["CLOUDFLARE_IMAGES_API_TOKEN"],message:"Configure all Cloudflare Images settings together"});
     if(value.IMAGE_STORAGE_PROVIDER==="r2" && ![value.CLOUDFLARE_ACCOUNT_ID,value.CLOUDFLARE_R2_ACCESS_KEY_ID,value.CLOUDFLARE_R2_SECRET_ACCESS_KEY,value.CLOUDFLARE_R2_BUCKET,value.CLOUDFLARE_R2_PUBLIC_BASE_URL].every(Boolean))ctx.addIssue({code:"custom",path:["CLOUDFLARE_R2_BUCKET"],message:"Configure all R2 upload settings"});
-    if(value.NODE_ENV==="production" && value.IMAGE_STORAGE_PROVIDER==="r2" && value.CLOUDFLARE_R2_PUBLIC_BASE_URL && new URL(value.CLOUDFLARE_R2_PUBLIC_BASE_URL).hostname.endsWith(".r2.dev"))ctx.addIssue({code:"custom",path:["CLOUDFLARE_R2_PUBLIC_BASE_URL"],message:"Use a custom R2 delivery domain in production"});
+    if(value.NODE_ENV==="production" && value.IMAGE_STORAGE_PROVIDER==="r2" && value.CLOUDFLARE_R2_PUBLIC_BASE_URL && new URL(value.CLOUDFLARE_R2_PUBLIC_BASE_URL).hostname.endsWith(".r2.dev") && !value.R2_ALLOW_DEV_PUBLIC_URL)ctx.addIssue({code:"custom",path:["CLOUDFLARE_R2_PUBLIC_BASE_URL"],message:"Use a custom R2 delivery domain or explicitly enable the pilot development URL allowance"});
     if (value.SESSION_PEPPER === value.CURSOR_SECRET)
       ctx.addIssue({
         code: "custom",

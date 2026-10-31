@@ -1,6 +1,7 @@
 import {loadConfig} from "./env.js";
 export function deploymentReadiness(env:NodeJS.ProcessEnv){
   const checks:{code:string;status:"pass"|"blocked"|"unverified";message:string}[]=[];
+  if(env.IMAGE_STORAGE_PROVIDER==="r2" && env.R2_ALLOW_DEV_PUBLIC_URL==="true") checks.push({code:"R2_PILOT_DELIVERY",status:"unverified",message:"Pilot R2 development URL allowance is enabled. Public development delivery is rate-limited; verify uploads and image loading. Use a custom delivery domain for reliable public launch."});
   try{loadConfig(env);checks.push({code:"CURRENT_CONFIG",status:"pass",message:"Current configuration validates."});}
   catch(error){checks.push({code:"CURRENT_CONFIG",status:"blocked",message:error instanceof Error ? error.message : "Configuration is invalid."});}
   try{loadConfig({...env,NODE_ENV:"production"});checks.push({code:"PRODUCTION_CONFIG",status:"pass",message:"Production configuration validation passes; deployment is not verified."});}

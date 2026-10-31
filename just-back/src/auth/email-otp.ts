@@ -33,13 +33,18 @@ export async function deliverEmailOtp(email:string,code:string,config:Config,pur
 }
 const digest=(id:string,code:string,config:Config)=>createHmac("sha256",config.EMAIL_OTP_SECRET!).update(`${id}:${code}`).digest("hex");
 export type EmailSender=(email:string,code:string)=>Promise<void>;
+export function emailTestWindow(email:string,config:Config,now=Date.now()){
+  const until=Date.parse(config.EMAIL_OTP_TEST_UNTIL ?? "");
+  return !!config.EMAIL_OTP_TEST_RECIPIENT && email===config.EMAIL_OTP_TEST_RECIPIENT.trim().toLowerCase() && until>now && until-now<=86400000;
+}
 export async function sendSignupEmail(email:string,ip:string,config:Config,sender?:EmailSender,purpose:"signup"|"recovery"="signup"){
   if(!emailAvailable(config))fail(503,"EMAIL_OTP_UNAVAILABLE","Email verification is not configured yet");
   email=emailAddress.parse(email);const target=tokenHash(`email:${purpose}:${email}`,config),now=new Date();
-  await throttle(`email-otp-ip:${ip}`,config,10);await throttle(`email-otp:${target}`,config,3);
+  const testing=purpose==="signup" && emailTestWindow(email,config);
+  if(!testing){await throttle(`email-otp-ip:${ip}`,config,10);await throttle(`email-otp:${target}`,config,3);}
   const quota=await Throttle.findOneAndUpdate({_id:tokenHash(`email-daily:${now.toISOString().slice(0,10)}`,config)},{$inc:{count:1},$setOnInsert:{expiresAt:new Date(now.getTime()+2*86400000)}},{upsert:true,returnDocument:"after"});
   if(quota.count>config.EMAIL_OTP_DAILY_LIMIT)fail(429,"EMAIL_DAILY_LIMIT","Email verification daily limit reached; try later");
-  try{await EmailCooldown.findOneAndUpdate({_id:target,expiresAt:{$lte:now}},{$set:{expiresAt:new Date(now.getTime()+60000)}},{upsert:true});}
+  try{if(!testing)await EmailCooldown.findOneAndUpdate({_id:target,expiresAt:{$lte:now}},{$set:{expiresAt:new Date(now.getTime()+60000)}},{upsert:true});}
   catch(error){if((error as {code?:number}).code===11000)fail(429,"OTP_RESEND_WAIT","Wait 60 seconds before requesting another code");throw error;}
   await EmailChallenge.updateMany({target,state:{$in:["sent","sending"]}},{$set:{state:"superseded"}});
   const id=randomUUID(),code=String(randomInt(0,1000000)).padStart(6,"0"),expiresAt=new Date(now.getTime()+600000);

@@ -24,6 +24,8 @@ const schema = z
     EMAIL_OTP_REQUIRED:z.enum(["true","false"]).default("true").transform(value=>value==="true"),
     EMAIL_OTP_SECRET:secret.optional(),
     EMAIL_OTP_DAILY_LIMIT:z.coerce.number().int().min(1).max(300).default(200),
+    EMAIL_OTP_TEST_RECIPIENT:z.email().optional(),
+    EMAIL_OTP_TEST_UNTIL:z.iso.datetime().optional(),
     BREVO_API_KEY:z.string().min(20).optional(),
     EMAIL_FROM:z.email().optional(),
     FIREBASE_PUSH_ENABLED:z.enum(["true","false"]).default("false").transform(value=>value==="true"),

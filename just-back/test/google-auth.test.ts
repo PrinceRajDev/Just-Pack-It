@@ -6,10 +6,11 @@ import {createApp} from "../src/app.js";
 import {loadConfig} from "../src/config/env.js";
 import {User,Session,Throttle} from "../src/auth/models.js";
 import {createUser,login} from "../src/auth/service.js";
-import {googleClaims} from "../src/auth/google-identity.js";
+import {googleClaims,googleFailureCode} from "../src/auth/google-identity.js";
 import type {DecodedIdToken} from "firebase-admin/auth";
 const verifier=vi.hoisted(()=>vi.fn());
 vi.mock("firebase-admin/auth",()=>({getAuth:()=>({verifyIdToken:verifier})}));
+vi.mock("firebase-admin/app",()=>({getApps:()=>[{name:"jpi-auth"}],initializeApp:vi.fn(),cert:vi.fn()}));
 const config=loadConfig({NODE_ENV:"test",MONGODB_URI:"mongodb://127.0.0.1/unused",CORS_ORIGINS:"http://localhost:8081",SESSION_PEPPER:"google-session-test-".repeat(3),CURSOR_SECRET:"google-cursor-test-".repeat(3),GOOGLE_SIGN_IN_ENABLED:"true",FIREBASE_PROJECT_ID:"qa-google-project",GOOGLE_APPLICATION_CREDENTIALS:"unused-test-credential.json",LOG_LEVEL:"silent"});
 const api=request(createApp(config)),idToken="test-token-".repeat(20),password="isolated-qa-password-2026";
 const claims=()=>({uid:"google-test-uid",email:"google@qa.invalid",email_verified:true,auth_time:Math.floor(Date.now()/1000),firebase:{sign_in_provider:"google.com"}} as DecodedIdToken);
@@ -22,7 +23,16 @@ it("requires recent verified Google identity",()=>{
   expect(googleClaims(claims()).email).toBe("google@qa.invalid");
   for(const patch of [{email_verified:false},{auth_time:1},{firebase:{sign_in_provider:"password"}},{email:undefined}])expect(()=>googleClaims({...claims(),...patch} as DecodedIdToken)).toThrow();
 });
-it("rejects invalid/revoked tokens without creating an account",async()=>{verifier.mockRejectedValue(new Error("private-provider-error"));const res=await api.post("/auth/google").send({idToken});expect(res.status).toBe(401);expect(JSON.stringify(res.body)).not.toContain("private-provider-error");expect(await User.countDocuments()).toBe(0);});
+it("rejects invalid/revoked tokens without creating an account",async()=>{verifier.mockRejectedValue(Object.assign(new Error("private-provider-error"),{code:"auth/id-token-revoked"}));const res=await api.post("/auth/google").send({idToken});expect(res.status).toBe(401);expect(JSON.stringify(res.body)).not.toContain("private-provider-error");expect(await User.countDocuments()).toBe(0);});
+it("logs only fixed Firebase failure categories and treats credential errors as service failures",async()=>{
+  expect(googleFailureCode({code:"private-provider-message-token"})).toBe("verification_unavailable");
+  const warn=vi.spyOn(console,"warn").mockImplementation(()=>{});
+  try{
+    verifier.mockRejectedValue(Object.assign(new Error("sensitive-token-and-email"),{code:"auth/insufficient-permission"}));
+    const res=await api.post("/auth/google").send({idToken});expect(res.status).toBe(503);expect(res.body.code).toBe("GOOGLE_UNAVAILABLE");
+    expect(JSON.stringify(warn.mock.calls)).toContain("auth/insufficient-permission");expect(JSON.stringify(warn.mock.calls)).not.toContain("sensitive");
+  }finally{warn.mockRestore();}
+});
 it("requests onboarding for a new identity and rejects client roles",async()=>{expect((await api.post("/auth/google").send({idToken})).body.code).toBe("GOOGLE_ONBOARDING_REQUIRED");expect((await api.post("/auth/google").send({idToken,role:"admin"})).status).toBe(400);});
 it("does not auto-link by email and requires the existing password",async()=>{
   await account();expect((await api.post("/auth/google").send({idToken})).body.code).toBe("GOOGLE_LINK_REQUIRED");

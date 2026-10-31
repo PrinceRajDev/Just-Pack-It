@@ -16,6 +16,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AccountCartProvider } from "@/stores/AccountCartProvider";
 import { AuthProvider } from "@/stores/auth";
 import { LocationProvider } from "@/stores/location";
+import { isChunkLoadError } from "@/lib/chunk-load-error";
 
 function NotFoundComponent() {
   return (
@@ -42,6 +43,7 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
+  const chunkFailed = isChunkLoadError(error);
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
@@ -51,17 +53,23 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
       <div className="max-w-md text-center">
         <h1 className="font-display text-3xl text-foreground">This page didn't load</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. Try again or head back home.
+          {chunkFailed
+            ? "Some page files couldn't load. Reload to get the latest version. Unsaved changes may be lost."
+            : "Something went wrong on our end. Try again or head back home."}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
+              if (chunkFailed) {
+                window.location.reload();
+                return;
+              }
               router.invalidate();
               reset();
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
-            Try again
+            {chunkFailed ? "Reload page" : "Try again"}
           </button>
           <a
             href="/"

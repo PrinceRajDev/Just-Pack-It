@@ -44,6 +44,11 @@ export const management = {
       version === undefined ? input : { ...input, version },
     ),
   products: () => apiAll<ManagedProduct>("/seller/products"),
+  inventory: (product: ManagedProduct, stock: number) =>
+    write<ManagedProduct>(`/seller/products/${id(product.id)}/inventory`, "PATCH", {
+      stock,
+      version: product.version,
+    }),
   product: (productId: string) => api<ManagedProduct>(`/seller/products/${id(productId)}`),
   saveProduct: (input: ProductInput, product?: ManagedProduct) =>
     write<ManagedProduct>(

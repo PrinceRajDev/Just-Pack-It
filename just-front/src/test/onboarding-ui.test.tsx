@@ -98,6 +98,17 @@ function setupSeller() {
   vi.mocked(management.categories).mockResolvedValue([category]);
   vi.mocked(management.areas).mockResolvedValue([area]);
 }
+it("routes Stock to its own workspace without loading catalogue taxonomy", async () => {
+  state.path = "/seller/inventory";
+  setupSeller();
+  vi.mocked(management.products).mockResolvedValue([]);
+  mount(<LiveSeller />);
+  await screen.findByRole("heading", { name: "Stock room" });
+  await screen.findByText("No stock to manage yet");
+  expect(screen.queryByRole("heading", { name: "Your catalogue" })).not.toBeInTheDocument();
+  expect(management.categories).not.toHaveBeenCalled();
+  expect(management.areas).not.toHaveBeenCalled();
+});
 describe("Live onboarding UI", () => {
   it("requires a rejection reason and sends it with the reviewed shop version", async () => {
     state.path = "/admin/partners";

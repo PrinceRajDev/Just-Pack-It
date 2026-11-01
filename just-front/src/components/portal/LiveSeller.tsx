@@ -18,12 +18,14 @@ import { ShopReviewNotice } from "./ShopReviewNotice";
 import { LiveSellerOrders } from "./LiveSellerOrders";
 import { ShopPhotoUpload } from "./ShopPhotoUpload";
 import { ShopAvailability } from "./ShopAvailability";
+import { LiveInventory } from "./LiveInventory";
 
 export function LiveSeller() {
   const path = useRouterState({ select: (state) => state.location.pathname });
   const settlementPath = path.replace(/\/+$/, "") === "/seller/settlements";
   const homePath = path === "/seller" || path === "/seller/";
   const ordersPath = path === "/seller/orders" || path === "/seller/orders/";
+  const inventoryPath = path.replace(/\/+$/, "") === "/seller/inventory";
   const shop = useQuery({
     queryKey: ["seller-shop"],
     queryFn: management.shop,
@@ -36,6 +38,7 @@ export function LiveSeller() {
     enabled:
       !settlementPath &&
       !ordersPath &&
+      !inventoryPath &&
       (!homePath || (shop.isSuccess && shop.data?.status !== "approved")),
   });
   const areas = useQuery({
@@ -44,6 +47,7 @@ export function LiveSeller() {
     enabled:
       !settlementPath &&
       !ordersPath &&
+      !inventoryPath &&
       (!homePath || (shop.isSuccess && shop.data?.status !== "approved")),
   });
   if (settlementPath) return <SettlementLedger />;
@@ -58,6 +62,12 @@ export function LiveSeller() {
     ) : (
       <EmptyState title="Create your shop first" />
     );
+  }
+  if (inventoryPath) {
+    if (shop.error)
+      return <ErrorState message={shop.error.message} onRetry={() => void shop.refetch()} />;
+    if (shop.isPending) return <p role="status">Loading your shop…</p>;
+    return shop.data ? <LiveInventory /> : <EmptyState title="Create your shop first" />;
   }
   const error = shop.error || categories.error || areas.error;
   if (error)
@@ -75,7 +85,7 @@ export function LiveSeller() {
     return <p role="status">Loading your shop…</p>;
   if ((path === "/seller" || path === "/seller/") && shop.data)
     return <SellerOnboarding shop={shop.data} categories={categories.data} areas={areas.data} />;
-  if (path.includes("/products") || path === "/seller/inventory")
+  if (path.includes("/products"))
     return shop.data ? (
       <LiveProducts key={path} shop={shop.data} categories={categories.data} path={path} />
     ) : (

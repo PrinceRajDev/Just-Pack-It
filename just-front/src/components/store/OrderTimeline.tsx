@@ -38,7 +38,7 @@ export function OrderTimeline({ sub }: { sub: SubOrder }) {
           </p>
           <p className="text-sm text-muted-foreground">
             {sub.status === "cancelled"
-              ? "Any prepaid amount is refunded to the original method in 5–7 working days."
+              ? "Any prepaid amount is refunded to the original method in 5 to 7 working days."
               : "Our team will contact you to reschedule or refund."}
           </p>
         </div>

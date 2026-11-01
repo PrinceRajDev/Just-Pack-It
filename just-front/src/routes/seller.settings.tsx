@@ -16,7 +16,7 @@ function Settings() {
   const shop = shopById("s1")!;
   const save = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.info("Saved locally — will sync once the backend is connected.");
+    toast.info("Saved locally: will sync once the backend is connected.");
   };
   return (
     <>

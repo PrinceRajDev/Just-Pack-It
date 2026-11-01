@@ -111,7 +111,7 @@ export function AdminSettings() {
               {(areas.isPending || shops.isPending) && !ready ? (
                 <Skeleton className="my-2 h-8 w-12" />
               ) : (
-                <strong>{ready ? value : "—"}</strong>
+                <strong>{ready ? value : "N/A"}</strong>
               )}
               <small>{ready ? note : "Data unavailable"}</small>
             </div>

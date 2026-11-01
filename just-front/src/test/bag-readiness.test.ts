@@ -10,7 +10,7 @@ const shop: Shop = {
   locality: "",
   categories: [],
   isOpen: true,
-  hours: "9–5",
+  hours: "9 to 5",
   fulfilment: ["pickup"],
   since: 2000,
   initials: "T",

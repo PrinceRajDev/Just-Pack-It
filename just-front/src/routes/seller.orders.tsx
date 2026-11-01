@@ -97,7 +97,7 @@ function SellerOrders() {
                         size="lg"
                         onClick={() =>
                           toast.info(
-                            "Rejecting needs a reason — available once connected to the backend.",
+                            "Rejecting needs a reason: available once connected to the backend.",
                           )
                         }
                       >

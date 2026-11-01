@@ -12,6 +12,7 @@ import {reserveInventory} from "../inventory/service.js";
 import type {Actor} from "../auth/middleware.js";
 import {fail} from "../common/errors.js";
 import {notify} from "../notifications/service.js";
+import {fenceSellerPurchase} from "../catalogue/owner-eligibility.js";
 export const orderInput=cartReviewInput.safeExtend({addressId:z.uuid(),addressVersion:z.number().int().nonnegative(),paymentMethod:z.literal("cod"),expectedTotal:z.number().finite().nonnegative().max(1e12).refine(value=>Math.abs(value*100-Math.round(value*100))<0.0001),fulfilments:z.array(z.object({shopId:z.uuid(),method:z.enum(["pickup","seller_delivery","platform_delivery"])}).strict()).min(1).max(100)}).superRefine((input,ctx)=>{
   if(new Set(input.fulfilments.map(choice=>choice.shopId)).size!==input.fulfilments.length)ctx.addIssue({code:"custom",path:["fulfilments"],message:"Duplicate shop methods"});
 });
@@ -37,6 +38,8 @@ export async function createCodOrder(who:Actor,key:string,raw:z.infer<typeof ord
     const subOrders:SubOrderRecord[]=[];
     for(const shopId of shopIds){
       const shop=await Shop.findById(shopId).session(session);if(!shop || !shop.areaIds.includes(area._id))fail(409,"SHOP_UNAVAILABLE","A shop is unavailable in the browsing area");
+      // Also check reused holds; replaying an already-created order remains read-only.
+      await fenceSellerPurchase(shop.ownerId,session);
       const method=fulfilments.find(choice=>choice.shopId===shopId)!.method;
       if(!shop.fulfilment.includes(method))fail(409,"METHOD_UNAVAILABLE","The selected fulfilment method is unavailable");
       let fee=0;

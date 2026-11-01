@@ -158,7 +158,7 @@ export async function openOnlineCheckout(
     currency: "INR",
     name: "Just Pack It",
     description: checkout.testMode
-      ? "TEST MODE — no real purchase"
+      ? "TEST MODE: no real purchase"
       : "Neighbourhood marketplace order",
     theme: { color: "#154b31" },
     modal: {

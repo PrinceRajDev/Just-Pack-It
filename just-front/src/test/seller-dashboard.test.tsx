@@ -19,7 +19,7 @@ const shop = {
   isOpen: true,
   status: "approved",
   active: true,
-  hours: "9–5",
+  hours: "9 to 5",
   version: 0,
   timezone: "Asia/Kolkata",
   openingHours: [{ day: 1, opens: "09:00", closes: "17:00" }],

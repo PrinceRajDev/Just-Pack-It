@@ -8,7 +8,7 @@ export function otpEmail(code: string, purpose = "signup") {
     : "Welcome to Just Pack It. Enter this code on the signup page to verify your email and continue creating your account.";
   const action = recovery ? "password reset" : "signup";
   return {
-    subject: recovery ? "Just Pack It — reset your password" : "Your verification code — Just Pack It",
+    subject: recovery ? "Just Pack It: reset your password" : "Your verification code: Just Pack It",
     textContent: `Just Pack It\nYour neighbourhood, delivered.\n\n${recovery ? title : "Verify your email"}\n${instruction}\n\nYour code is ${code}\nValid for 10 minutes. Use the latest code if you request another.\n\nKeep this code private. Our team will never ask you to share it. If you did not request ${action}, ignore this email.\n\nJust Pack It`,
     htmlContent: `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>${recovery ? title : "Verify your email"}</title></head>

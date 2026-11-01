@@ -24,14 +24,14 @@ export const Route = createFileRoute("/category/$slug")({
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: `${loaderData?.category.name ?? "Category"} — Just Pack It` },
+      { title: `${loaderData?.category.name ?? "Category"}: Just Pack It` },
       {
         name: "description",
         content: `Shop ${loaderData?.category.name ?? "products"} from local stores near you.`,
       },
       {
         property: "og:title",
-        content: `${loaderData?.category.name ?? "Category"} — Just Pack It`,
+        content: `${loaderData?.category.name ?? "Category"}: Just Pack It`,
       },
       {
         property: "og:description",
@@ -141,7 +141,7 @@ function CategoryPage() {
               className="h-11 max-w-full rounded-lg border border-input bg-card px-2"
             >
               <option value="recommended">Recommended</option>
-              <option value="name">Name A–Z</option>
+              <option value="name">Name A to Z</option>
               <option value="fee_asc">Delivery fee: low to high</option>
               <option value="fee_desc">Delivery fee: high to low</option>
             </select>
@@ -193,7 +193,7 @@ function CategoryPage() {
         </div>
         <p className="mt-4 text-sm text-muted-foreground" role="status" aria-live="polite">
           {eligible.length} loaded{total !== undefined ? ` of ${total} matching` : ""} shops
-          {area ? ` serving ${area.name}` : " — choose an area to see availability"}
+          {area ? ` serving ${area.name}` : ": choose an area to see availability"}
         </p>
         {search.sort?.startsWith("fee_") && (
           <p className="mt-2 text-xs text-muted-foreground">

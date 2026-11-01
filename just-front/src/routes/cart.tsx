@@ -22,9 +22,9 @@ import { LiveCart } from "@/components/store/LiveCart";
 export const Route = createFileRoute("/cart")({
   head: () => ({
     meta: [
-      { title: "Your bag — Just Pack It" },
+      { title: "Your bag: Just Pack It" },
       { name: "description", content: "Review items from each shop before checkout." },
-      { property: "og:title", content: "Your bag — Just Pack It" },
+      { property: "og:title", content: "Your bag: Just Pack It" },
       { property: "og:description", content: "Items grouped by local shop." },
     ],
   }),
@@ -142,7 +142,7 @@ function CartPage() {
                   </header>
                   {!g.shop.isOpen && (
                     <p className="bg-warning/10 px-4 py-2 text-sm">
-                      Closed now — remove these items or wait until the shop reopens to check out.
+                      Closed now: remove these items or wait until the shop reopens to check out.
                       Hours: {g.shop.hours}.
                     </p>
                   )}

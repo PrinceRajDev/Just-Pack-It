@@ -37,7 +37,9 @@ function Earnings() {
                 <span className="block text-xs text-muted-foreground">{t.subOrderId}</span>
               </span>
               <StatusBadge status={t.status} />
-              <span className="tabular-nums">{t.status === "delivered" ? inr(t.payout) : "—"}</span>
+              <span className="tabular-nums">
+                {t.status === "delivered" ? inr(t.payout) : "N/A"}
+              </span>
             </li>
           ))}
         </ul>

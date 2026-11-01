@@ -88,7 +88,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Just Pack It — Shop your neighbourhood stores" },
+      { title: "Just Pack It: Shop your neighbourhood stores" },
       {
         name: "description",
         content: "Order from local kiranas, sabziwalas, dairies and bakeries near you.",

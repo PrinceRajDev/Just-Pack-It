@@ -147,3 +147,19 @@ it("keeps demo totals explicitly labelled and never fetches live metrics or heal
   expect(overviewHealth.api).not.toHaveBeenCalled();
   expect(overviewHealth.database).not.toHaveBeenCalled();
 });
+
+it("renders actual shop and product totals, including zero, and refreshes them", async () => {
+  vi.mocked(operationsSummary).mockResolvedValue({ ...summary, totals: { shops: 1, products: 0 } });
+  mount();
+  await waitFor(() =>
+    expect(screen.getByText("Total shops").closest("article")).toHaveTextContent("1"),
+  );
+  expect(screen.getByText("Total products").closest("article")).toHaveTextContent("0");
+  expect(screen.getAllByText("Reporting unavailable")).toHaveLength(3);
+  vi.mocked(operationsSummary).mockResolvedValue({ ...summary, totals: { shops: 2, products: 3 } });
+  fireEvent.click(screen.getByRole("button", { name: "Refresh data" }));
+  await waitFor(() =>
+    expect(screen.getByText("Total shops").closest("article")).toHaveTextContent("2"),
+  );
+  expect(screen.getByText("Total products").closest("article")).toHaveTextContent("3");
+});

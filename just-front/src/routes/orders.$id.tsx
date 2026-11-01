@@ -35,7 +35,7 @@ export const Route = createFileRoute("/orders/$id")({
   validateSearch: z.object({ placed: z.boolean().optional() }),
   head: ({ params }) => ({
     meta: [
-      { title: `Order ${params.id} — Just Pack It` },
+      { title: `Order ${params.id}: Just Pack It` },
       { name: "description", content: "Track each shop's part of your order." },
       { property: "og:title", content: `Order ${params.id}` },
       { property: "og:description", content: "Order tracking on Just Pack It." },
@@ -187,7 +187,7 @@ function OrderPage() {
                                 onClick={() =>
                                   toast.info(
                                     isDemoMode
-                                      ? "Cancellation needs the backend — not available in demo."
+                                      ? "Cancellation needs the backend: not available in demo."
                                       : "Cancellation requested",
                                   )
                                 }

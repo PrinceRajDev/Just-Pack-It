@@ -39,8 +39,18 @@ export function OperationsDashboard({ preview }: { preview?: OverviewPreview }) 
   const fetching = useIsFetching({ queryKey: ["admin-overview"] }),
     data = preview?.summary ?? query.data;
   const metrics = [
-    { title: "Total shops", icon: Store, tone: "green", value: preview?.shops },
-    { title: "Total products", icon: ShoppingBag, tone: "yellow", value: preview?.products },
+    {
+      title: "Total shops",
+      icon: Store,
+      tone: "green",
+      value: preview ? preview.shops : data?.totals?.shops,
+    },
+    {
+      title: "Total products",
+      icon: ShoppingBag,
+      tone: "yellow",
+      value: preview ? preview.products : data?.totals?.products,
+    },
     { title: "Orders today", icon: ShoppingCart, tone: "orange" },
     { title: "Active users", icon: Users, tone: "blue" },
     { title: "GMV today", icon: IndianRupee, tone: "purple" },
@@ -70,7 +80,7 @@ export function OperationsDashboard({ preview }: { preview?: OverviewPreview }) 
       to: "/admin/orders",
       note: preview
         ? "Failed demo deliveries needing review."
-        : `Unchanged for ${data?.thresholds.orderStaleMinutes ?? "—"} minutes; attention, not a breach.`,
+        : `Unchanged for ${data?.thresholds.orderStaleMinutes ?? "N/A"} minutes; attention, not a breach.`,
     },
     {
       title: "Payment attention",
@@ -216,9 +226,15 @@ export function OperationsDashboard({ preview }: { preview?: OverviewPreview }) 
             </span>
             <div>
               <h2>{title}</h2>
-              <strong>{value === undefined ? "—" : value.toLocaleString("en-IN")}</strong>
+              <strong>{value === undefined ? "N/A" : value.toLocaleString("en-IN")}</strong>
             </div>
-            <p>{value === undefined ? "Reporting unavailable" : "From demo records"}</p>
+            <p>
+              {value === undefined
+                ? "Reporting unavailable"
+                : preview
+                  ? "From demo records"
+                  : "All registered records"}
+            </p>
           </article>
         ))}
       </section>
@@ -254,7 +270,7 @@ export function OperationsDashboard({ preview }: { preview?: OverviewPreview }) 
               <div>
                 <h3>{title}</h3>
                 <strong className={!preview && query.isPending ? "admin-loading-value" : ""}>
-                  {!preview && query.isPending ? "…" : (count ?? "—")}
+                  {!preview && query.isPending ? "…" : (count ?? "N/A")}
                 </strong>
                 <p>
                   {count === undefined && data ? "Count unavailable. " : ""}

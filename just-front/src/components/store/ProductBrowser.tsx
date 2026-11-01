@@ -109,7 +109,7 @@ export function ProductBrowser({
             <option value="relevance">Relevance</option>
             <option value="price_asc">Price: low to high</option>
             <option value="price_desc">Price: high to low</option>
-            <option value="name">Name A–Z</option>
+            <option value="name">Name A to Z</option>
           </select>
         </label>
       </div>

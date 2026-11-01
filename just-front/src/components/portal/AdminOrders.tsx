@@ -79,7 +79,7 @@ export function AdminOrders({
           <ShoppingCart aria-hidden="true" />
           <div>
             <h2>Total orders</h2>
-            <strong>—</strong>
+            <strong>N/A</strong>
             <p>Reporting unavailable</p>
           </div>
         </article>
@@ -87,7 +87,7 @@ export function AdminOrders({
           <IndianRupee aria-hidden="true" />
           <div>
             <h2>Total order value</h2>
-            <strong>—</strong>
+            <strong>N/A</strong>
             <p>Reporting unavailable</p>
           </div>
         </article>
@@ -95,7 +95,7 @@ export function AdminOrders({
           <Banknote aria-hidden="true" />
           <div>
             <h2>COD collections</h2>
-            <strong>—</strong>
+            <strong>N/A</strong>
             <p>Reporting unavailable</p>
           </div>
         </article>
@@ -103,7 +103,7 @@ export function AdminOrders({
           <CreditCard aria-hidden="true" />
           <div>
             <h2>Online payments</h2>
-            <strong>—</strong>
+            <strong>N/A</strong>
             <p>Reporting unavailable</p>
           </div>
         </article>
@@ -306,7 +306,7 @@ export function AdminOrders({
             {query.data.orders.map((order) => (
               <article key={order.id} className="rounded-xl border bg-card p-5">
                 {order.testMode && (
-                  <p className="font-semibold">Test order — no real payment. Do not fulfil.</p>
+                  <p className="font-semibold">Test order: no real payment. Do not fulfil.</p>
                 )}
                 <h2 className="break-all font-semibold">Order {order.id}</h2>
                 <p className="text-sm text-muted-foreground">

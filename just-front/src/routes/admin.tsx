@@ -33,9 +33,9 @@ const nav: NavItem[] = [
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Operations — Just Pack It" },
+      { title: "Operations: Just Pack It" },
       { name: "description", content: "Marketplace operations console." },
-      { property: "og:title", content: "Operations — Just Pack It" },
+      { property: "og:title", content: "Operations: Just Pack It" },
       { property: "og:description", content: "Admin console." },
       { name: "robots", content: "noindex" },
     ],

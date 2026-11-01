@@ -204,7 +204,7 @@ export function SellerApprovalsPage() {
             </span>
             <div>
               <h2>{label}</h2>
-              {pending ? <Skeleton className="mt-2 h-8 w-12" /> : <strong>{count ?? "—"}</strong>}
+              {pending ? <Skeleton className="mt-2 h-8 w-12" /> : <strong>{count ?? "N/A"}</strong>}
               <p>{count === undefined && !pending ? "Unavailable" : hint}</p>
             </div>
             {label === "Pending approvals" && <ArrowRight size={17} aria-hidden="true" />}
@@ -246,7 +246,7 @@ export function SellerApprovalsPage() {
           <TabsList aria-label="Application status">
             {(["all", "pending", "approved", "rejected", "suspended"] as const).map((s) => (
               <TabsTrigger key={s} value={s}>
-                {s[0].toUpperCase() + s.slice(1)} ({counts[s] ?? "—"})
+                {s[0].toUpperCase() + s.slice(1)} ({counts[s] ?? "N/A"})
               </TabsTrigger>
             ))}
           </TabsList>
@@ -314,8 +314,8 @@ export function SellerApprovalsPage() {
           <label className="seller-sort">
             Sort by
             <select value={sort} onChange={(e) => setSort(e.target.value)}>
-              <option value="az">Shop name A–Z</option>
-              <option value="za">Shop name Z–A</option>
+              <option value="az">Shop name A to Z</option>
+              <option value="za">Shop name Z to A</option>
             </select>
           </label>
         </div>

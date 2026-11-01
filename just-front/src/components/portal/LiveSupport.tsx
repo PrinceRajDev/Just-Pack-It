@@ -104,7 +104,7 @@ export function LiveSupport() {
               {q.isPending ? (
                 <Skeleton className="my-2 h-8 w-12" />
               ) : (
-                <strong>{q.isError ? "—" : value}</strong>
+                <strong>{q.isError ? "N/A" : value}</strong>
               )}
               <small>{q.isError ? "Count unavailable" : note}</small>
             </div>

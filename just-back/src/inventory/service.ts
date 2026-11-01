@@ -8,6 +8,7 @@ import {isOpen} from "../catalogue/presenters.js";
 import {fail,AppError} from "../common/errors.js";
 import type {Actor} from "../auth/middleware.js";
 import type {ClientSession} from "mongoose";
+import {fenceSellerPurchase} from "../catalogue/owner-eligibility.js";
 const lineSchema=z.object({productId:z.uuid(),variantId:z.uuid().optional(),qty:z.number().int().min(1).max(999)}).strict();
 const inputSchema=z.object({key:z.string().regex(/^[A-Za-z0-9_-]{16,100}$/),items:z.array(lineSchema).min(1).max(100)}).strict().superRefine((input,ctx)=>{
   if(new Set(input.items.map(line=>`${line.productId}:${line.variantId ?? ""}`)).size!==input.items.length)ctx.addIssue({code:"custom",path:["items"],message:"Duplicate SKU lines"});
@@ -33,6 +34,7 @@ export async function reserveInventory(who:Actor,raw:z.infer<typeof inputSchema>
         if(!product)fail(409,"LISTING_UNAVAILABLE","A listing is no longer available");
         const shop=await Shop.findOne({_id:product.shopId,active:true,status:"approved"}).session(session);
         if(!shop || !isOpen(shop,now) || !shop.categoryIds.includes(product.categoryId))fail(409,"SHOP_UNAVAILABLE","A shop cannot accept inventory holds");
+        await fenceSellerPurchase(shop.ownerId,session);
         const category=await Category.findOne({_id:product.categoryId,active:true}).session(session);
         if(!category || (product.subcategoryId && !category.subcategories.some(sub=>sub._id===product.subcategoryId && sub.active)))fail(409,"LISTING_UNAVAILABLE","A listing category is unavailable");
         await Shop.updateOne({_id:shop._id},{$inc:{revision:1}},{session});

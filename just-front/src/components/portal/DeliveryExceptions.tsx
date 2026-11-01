@@ -223,9 +223,9 @@ function ExceptionCard({ task }: { task: DeliveryException }) {
                 >
                   <option value="">Choose after checking all goods</option>
                   <option value="yes">
-                    All items are sellable — restore exact ordered quantities
+                    All items are sellable: restore exact ordered quantities
                   </option>
-                  <option value="no">Do not restock — goods are not confirmed sellable</option>
+                  <option value="no">Do not restock: goods are not confirmed sellable</option>
                 </select>
               </label>
             )}

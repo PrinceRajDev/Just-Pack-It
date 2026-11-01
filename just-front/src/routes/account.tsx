@@ -37,9 +37,9 @@ export const Route = createFileRoute("/account")({
   validateSearch: z.object({ tab: z.enum(tabs).optional() }),
   head: () => ({
     meta: [
-      { title: "Your account — Just Pack It" },
+      { title: "Your account: Just Pack It" },
       { name: "description", content: "Orders, addresses, wishlist and support." },
-      { property: "og:title", content: "Your account — Just Pack It" },
+      { property: "og:title", content: "Your account: Just Pack It" },
       { property: "og:description", content: "Manage your Just Pack It account." },
     ],
   }),
@@ -192,7 +192,7 @@ function AccountPage() {
                 <AccordionItem value="r">
                   <AccordionTrigger>How do refunds work?</AccordionTrigger>
                   <AccordionContent>
-                    Prepaid refunds go back to the original payment method in 5–7 working days.
+                    Prepaid refunds go back to the original payment method in 5 to 7 working days.
                     Cash-on-delivery orders aren't charged until delivery.
                   </AccordionContent>
                 </AccordionItem>

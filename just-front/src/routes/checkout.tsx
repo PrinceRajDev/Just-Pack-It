@@ -28,12 +28,12 @@ import { LiveCart } from "@/components/store/LiveCart";
 export const Route = createFileRoute("/checkout")({
   head: () => ({
     meta: [
-      { title: "Checkout — Just Pack It" },
+      { title: "Checkout: Just Pack It" },
       {
         name: "description",
         content: "Choose an address and payment method, then review your order.",
       },
-      { property: "og:title", content: "Checkout — Just Pack It" },
+      { property: "og:title", content: "Checkout: Just Pack It" },
       { property: "og:description", content: "Review and place your order." },
     ],
   }),
@@ -53,13 +53,13 @@ const payments: { id: PaymentMethod; label: string; note: string; available: boo
   {
     id: "upi",
     label: "UPI (pay now)",
-    note: "Needs payment gateway — not connected yet",
+    note: "Needs payment gateway: not connected yet",
     available: false,
   },
   {
     id: "card",
     label: "Debit / credit card",
-    note: "Needs payment gateway — not connected yet",
+    note: "Needs payment gateway: not connected yet",
     available: false,
   },
 ];

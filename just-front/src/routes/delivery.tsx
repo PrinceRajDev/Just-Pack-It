@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/delivery")({
   head: () => ({
     meta: [
-      { title: "Delivery partner — Just Pack It" },
+      { title: "Delivery partner: Just Pack It" },
       {
         name: "description",
         content: "Pickups, drops and earnings for Just Pack It delivery partners.",

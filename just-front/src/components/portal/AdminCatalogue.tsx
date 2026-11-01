@@ -57,7 +57,7 @@ export function AdminCatalogue() {
               <strong>
                 {i === 3 && categories.isSuccess
                   ? categories.data.filter((c) => c.active !== false).length
-                  : "—"}
+                  : "N/A"}
               </strong>
               <small>{i === 3 && categories.isPending ? "Loading categories…" : note}</small>
             </div>

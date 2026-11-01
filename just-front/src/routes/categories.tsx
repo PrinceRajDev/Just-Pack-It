@@ -13,7 +13,7 @@ import { useAreaShopPages } from "@/components/store/useAreaShops";
 import { useLocationArea } from "@/stores/location";
 
 export const Route = createFileRoute("/categories")({
-  head: () => ({ meta: [{ title: "Explore the market — Just Pack It" }] }),
+  head: () => ({ meta: [{ title: "Explore the market: Just Pack It" }] }),
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(categoriesQuery())]),
   component: Categories,
 });

@@ -20,7 +20,7 @@ export const Route = createFileRoute("/shop/$slug")({
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: `${loaderData?.name ?? "Shop"} — Just Pack It` },
+      { title: `${loaderData?.name ?? "Shop"}: Just Pack It` },
       { name: "description", content: loaderData?.tagline ?? "A local shop on Just Pack It." },
       { property: "og:title", content: `${loaderData?.name ?? "Shop"} on Just Pack It` },
       {

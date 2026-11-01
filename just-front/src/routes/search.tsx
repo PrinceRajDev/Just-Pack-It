@@ -18,12 +18,12 @@ export const Route = createFileRoute("/search")({
   validateSearch: schema,
   head: () => ({
     meta: [
-      { title: "Search products — Just Pack It" },
+      { title: "Search products: Just Pack It" },
       {
         name: "description",
         content: "Search groceries and essentials from local shops near you.",
       },
-      { property: "og:title", content: "Search — Just Pack It" },
+      { property: "og:title", content: "Search: Just Pack It" },
       { property: "og:description", content: "Find products from neighbourhood stores." },
     ],
   }),

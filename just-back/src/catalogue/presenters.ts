@@ -46,7 +46,7 @@ export function scheduleLabel(shop: ShopRecord, now = new Date()) {
   const today = shop.openingHours.filter(h => h.day === day).sort((a,b) => a.opens.localeCompare(b.opens));
   const time = new Intl.DateTimeFormat("en-GB", { timeZone: shop.timezone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(now);
   const overnight = shop.openingHours.filter(h => (h.day + 1) % 7 === day && h.closes < h.opens && time < h.closes).map(h => `Overnight until ${h.closes}`);
-  const labels = [...overnight, ...today.map(h => `${h.opens}–${h.closes}${h.closes < h.opens ? " (+1 day)" : ""}`)];
+  const labels = [...overnight, ...today.map(h => `${h.opens} to ${h.closes}${h.closes < h.opens ? " (+1 day)" : ""}`)];
   return (labels.length ? labels.join(", ") : "Closed today") + ` · ${shop.timezone}`;
 }
 export const categoryDto = (category: CategoryRecord) => ({

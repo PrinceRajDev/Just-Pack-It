@@ -23,14 +23,14 @@ export function AccountSecurity() {
     if (busy || uncertain) return;
     setError("");
     if (current.length < 12 || current.length > 128) {
-      setError("Enter your current password (12–128 characters).");
+      setError("Enter your current password (12 to 128 characters).");
       return;
     }
     if (
       mode === "password" &&
       (next.length < 12 || next.length > 128 || next === current || next !== confirm)
     ) {
-      setError("Use a different new password of 12–128 characters and match its confirmation.");
+      setError("Use a different new password of 12 to 128 characters and match its confirmation.");
       return;
     }
     if (!ack) {

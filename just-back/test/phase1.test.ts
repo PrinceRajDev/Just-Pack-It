@@ -271,6 +271,62 @@ describe("COD orders with explicitly enabled isolated configuration",()=>{
     }
   }
   const body=(product:string,address:string)=>({areaId,addressId:address,addressVersion:0,paymentMethod:"cod" as const,expectedTotal:25,items:[{productId:product,qty:2}],fulfilments:[{shopId,method:"pickup" as const}]});
+  it("H01 blocks discovery, quote, fulfilment and reused-hold checkout after seller suspension",async()=>fixture(async(product,address)=>{
+    const shop=await Shop.findById(shopId);
+    const existingKey=randomUUID(),existing=await createCodOrder(buyer,existingKey,body(product,address));
+    const key=randomUUID();await reserveInventory(buyer,{key,items:[{productId:product,qty:2}]});
+    const accessVersion=(await User.findById(seller.id))!.accessVersion ?? 0;
+    const access=async(active:boolean,version:number)=>enabled.patch(`/admin/users/${seller.id}/access`).set("Authorization",auth(admin)).send({active,version,reason:"Security regression seller suspension"});
+    expect((await access(false,accessVersion)).status).toBe(200);
+    try {
+      expect((await api.get('/shops')).body.some((s:{id:string})=>s.id===shopId)).toBe(false);
+      expect((await api.get(`/shops/${shop!.slug}`)).status).toBe(404);
+      expect((await api.get(`/products/${product}`)).status).toBe(404);
+      expect((await api.get('/products')).body.some((p:{id:string})=>p.id===product)).toBe(false);
+      const quote=await api.post('/cart/quote').send({areaId,items:[{productId:product,qty:1}]});
+      expect(quote.body.lines[0].issues[0].code).toBe('PRODUCT_UNAVAILABLE');
+      const fulfilment=await enabled.post('/cart/fulfilment').set('Authorization',auth(buyer)).send({addressId:address,shopIds:[shopId]});
+      expect(fulfilment.body.shops[0].issues[0].code).toBe('SHOP_UNAVAILABLE');
+      await expect(reserveInventory(buyer,{key:randomUUID(),items:[{productId:product,qty:1}]})).rejects.toMatchObject({code:'SHOP_UNAVAILABLE'});
+      await expect(createCodOrder(buyer,key,body(product,address))).rejects.toMatchObject({code:'SHOP_UNAVAILABLE'});
+      expect((await Product.findById(product))!.stock).toBe(1);
+      expect(await Order.countDocuments({'subOrders.lines.productId':product})).toBe(1);
+      const replay=await createCodOrder(buyer,existingKey,body(product,address));
+      expect(replay.replayed).toBe(true);expect(replay.order._id).toBe(existing.order._id);
+    } finally {
+      expect((await access(true,accessVersion+1)).status).toBe(200);
+      const user=await User.findById(seller.id);tokens[seller.id]=(await login({phone:user!.phone,password},config,'security-restore')).token;
+    }
+    expect((await api.get(`/shops/${shop!.slug}`)).status).toBe(200);
+    await Shop.updateOne({_id:shopId},{$set:{status:'suspended'}});
+    expect((await api.get(`/shops/${shop!.slug}`)).status).toBe(404);
+  }));
+  it("H01 retries checkout against a concurrent admin block without committing stock",async()=>fixture(async(product,address)=>{
+    let reached!:()=>void,release!:()=>void;
+    const waiting=new Promise<void>(resolve=>{reached=resolve;}),gate=new Promise<void>(resolve=>{release=resolve;});
+    const original=User.updateOne.bind(User);
+    const spy=vi.spyOn(User,'updateOne');
+    // Pause after the transaction's snapshot reads but before its owner fence write.
+    spy.mockImplementationOnce(((...args:Parameters<typeof User.updateOne>)=>{
+      reached();return gate.then(()=>original(...args));
+    }) as typeof User.updateOne);
+    const version=(await User.findById(seller.id))!.accessVersion ?? 0;
+    const pending=createCodOrder(buyer,randomUUID(),body(product,address));
+    // Attach rejection immediately while the request is deliberately paused.
+    const outcome=pending.then(()=>null,error=>error);
+    try {
+      await waiting;
+      const blocked=await enabled.patch(`/admin/users/${seller.id}/access`).set('Authorization',auth(admin)).send({active:false,version,reason:'Security regression concurrent block'});
+      expect(blocked.status).toBe(200);release();
+      expect(await outcome).toMatchObject({code:'SHOP_UNAVAILABLE'});
+      expect((await Product.findById(product))!.stock).toBe(5);
+      expect(await Order.countDocuments({'subOrders.lines.productId':product})).toBe(0);
+    } finally {
+      release();spy.mockRestore();await outcome;
+      await enabled.patch(`/admin/users/${seller.id}/access`).set('Authorization',auth(admin)).send({active:true,version:version+1,reason:'Security regression restore account'});
+      const user=await User.findById(seller.id);tokens[seller.id]=(await login({phone:user!.phone,password},config,'security-race-restore')).token;
+    }
+  }));
   it("lets only the buyer cancel before preparation, idempotently returns stock and updates COD due",async()=>fixture(async(product,address)=>{
     const created=await createCodOrder(buyer,randomUUID(),body(product,address)),id=created.order._id,sub=created.order.subOrders[0],path=`/orders/${id}/suborders/${sub._id}/cancel`;
     expect((await enabled.post(path).set("Authorization",auth(seller)).send({version:0,reason:"Changed plans"})).status).toBe(403);
@@ -287,7 +343,7 @@ describe("COD orders with explicitly enabled isolated configuration",()=>{
   it("shows admin attention queues without customer/receipt/provider secrets",async()=>fixture(async(product,address)=>{
     const {order}=await createCodOrder(buyer,randomUUID(),body(product,address));await Order.updateOne({_id:order._id},{$set:{createdAt:new Date(0),"subOrders.0.updatedAt":new Date(0)}});
     expect((await enabled.get("/admin/operations").set("Authorization",auth(buyer))).status).toBe(403);
-    const result=await enabled.get("/admin/operations").set("Authorization",auth(admin));expect(result.status).toBe(200);expect(result.body.staleSuborders.items.some((row:{orderId:string})=>row.orderId===order._id)).toBe(true);expect(result.body.thresholds.orderStaleMinutes).toBe(60);expect(result.body.staleSuborders.items.length).toBeLessThanOrEqual(10);expect(JSON.stringify(result.body)).not.toContain("Isolated test lane");expect(JSON.stringify(result.body)).not.toContain("receipt");
+    const result=await enabled.get("/admin/operations").set("Authorization",auth(admin));expect(result.status).toBe(200);expect(result.body.staleSuborders.items.some((row:{orderId:string})=>row.orderId===order._id)).toBe(true);expect(result.body.thresholds.orderStaleMinutes).toBe(60);expect(result.body.totals).toEqual({shops:await Shop.countDocuments({}),products:await Product.countDocuments({})});expect(result.body.staleSuborders.items.length).toBeLessThanOrEqual(10);expect(JSON.stringify(result.body)).not.toContain("Isolated test lane");expect(JSON.stringify(result.body)).not.toContain("receipt");
   }));
   const acknowledgement=(version=3)=>({version,confirmReceived:true as const,confirmCashPaid:true as const});
   const paymentConfig={...config,RAZORPAY_ENABLED:true,RAZORPAY_KEY_ID:"rzp_test_isolated",RAZORPAY_KEY_SECRET:"isolated-provider-secret-for-unit-tests",RAZORPAY_WEBHOOK_SECRET:"isolated-webhook-secret-for-unit-tests"};

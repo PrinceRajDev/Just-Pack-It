@@ -65,7 +65,7 @@ function LoadedImage({
     return (
       <div
         role={alt ? "img" : undefined}
-        aria-label={alt ? `${alt} — image unavailable` : undefined}
+        aria-label={alt ? `${alt}: image unavailable` : undefined}
         className={cn(
           "flex aspect-square items-center justify-center bg-muted text-muted-foreground",
           className,

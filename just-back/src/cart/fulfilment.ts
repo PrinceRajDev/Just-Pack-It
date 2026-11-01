@@ -8,6 +8,7 @@ import { Address } from "../addresses/routes.js";
 import { Area, Category, Shop } from "../catalogue/models.js";
 import { isOpen } from "../catalogue/presenters.js";
 import { fail } from "../common/errors.js";
+import {activeSellerIds} from "../catalogue/owner-eligibility.js";
 const inputSchema=z.object({addressId:z.uuid(),shopIds:z.array(z.uuid()).min(1).max(100).refine(ids=>new Set(ids).size===ids.length,"Duplicate shops")}).strict();
 export function fulfilmentRoutes(config:Config){
   const router=Router();
@@ -22,7 +23,7 @@ export async function readFulfilment(userId:string,input:z.infer<typeof inputSch
     const address=await Address.findOne({_id:input.addressId,userId}).lean();
     if(!address) fail(404,"NOT_FOUND","Address not found");
     const [areas,categories]=await Promise.all([Area.find({active:true,pincodes:address.pincode}).lean(),Category.find({active:true}).lean()]);
-    const shops=await Shop.find({_id:{$in:input.shopIds},active:true,status:"approved",categoryIds:{$in:categories.map(category=>category._id)}}).lean();
+    const shops=await Shop.find({_id:{$in:input.shopIds},ownerId:{$in:await activeSellerIds()},active:true,status:"approved",categoryIds:{$in:categories.map(category=>category._id)}}).lean();
     const riders=config?.PLATFORM_DELIVERY_ENABLED?await deliveryAvailable(areas.map(a=>a._id)):false;
     return {checkedAt:now.toISOString(),addressId:address._id,addressVersion:address.version,checkoutAvailable:false,reserved:false,shops:input.shopIds.map(shopId=>{
       const shop=shops.find(shop=>shop._id===shopId);

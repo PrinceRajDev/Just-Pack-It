@@ -209,7 +209,7 @@ export function AdminShopReview({
                   ? shop.openingHours
                       .map(
                         (h) =>
-                          `${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][h.day]} ${h.opens}–${h.closes}`,
+                          `${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][h.day]} ${h.opens} to ${h.closes}`,
                       )
                       .join("; ")
                   : "No operating intervals (closed)"}

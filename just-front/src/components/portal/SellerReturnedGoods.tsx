@@ -68,7 +68,7 @@ export function SellerReturnedGoods({ sub }: { sub: SellerSuborder }) {
             onChange={(e) => setRestock(e.target.value)}
           >
             <option value="">Choose after inspecting all items</option>
-            <option value="yes">All goods sellable — restore ordered quantities</option>
+            <option value="yes">All goods sellable: restore ordered quantities</option>
             <option value="no">Do not restock returned goods</option>
           </select>
         </label>

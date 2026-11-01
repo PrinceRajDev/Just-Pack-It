@@ -14,6 +14,7 @@ import { productDto, shopDto } from "./presenters.js";
 import { fail } from "../common/errors.js";
 import { encodeCursor, decodeCursor } from "../common/cursor.js";
 import type { Config } from "../config/env.js";
+import {activeSellerIds} from "./owner-eligibility.js";
 
 const escape = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 export function nearbyFilter(query:{lat?:number;lng?:number}):Record<string,unknown>{
@@ -52,7 +53,7 @@ export async function publicReferences(
       "INVALID_SUBCATEGORY",
       "Unknown or ambiguous subcategory; specify category",
     );
-  return { areas, categories, category, subcategory: subcategory?.[0] };
+  return { areas, categories, category, subcategory: subcategory?.[0], ownerIds:await activeSellerIds() };
 }
 export function eligibleShopFilter(
   refs: Awaited<ReturnType<typeof publicReferences>>,
@@ -60,6 +61,7 @@ export function eligibleShopFilter(
 ) {
   return {
     active: true,
+    ownerId: { $in: refs.ownerIds },
     status: "approved" as const,
     areaIds: { $in: area ? [area] : refs.areas.map((a) => a._id) },
     categoryIds: { $in: refs.categories.map((c) => c._id) },

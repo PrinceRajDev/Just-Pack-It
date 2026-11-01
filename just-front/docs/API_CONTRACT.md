@@ -465,3 +465,7 @@ Public shop DTO adds `availability: "open" | "closed" | "temporarily_closed"` an
 
 Active buyer shop lists/details, cart review and fulfilment review refresh approximately every 30 seconds while foregrounded. This is polling, not a live-delivery/ETA guarantee. Checkout/inventory/order services remain authoritative and revalidate shop status, selected method, fees and coverage. Existing orders and their snapshotted fees are unchanged by availability edits.
 
+
+### Admin overview catalogue totals
+
+GET /admin/operations includes additive totals: {shops: number, products: number}. These are all stored shop and product records, including pending/suspended shops and inactive products; they are not purchasable-listing counts or period metrics. Existing admin authorization and private/no-store apply. Older backend responses without totals render unavailable rather than zero. Approval mutations invalidate admin-operations; overview refresh and the existing 60-second refresh reload totals. Counts are bounded database queries, not a cross-collection transactional snapshot.

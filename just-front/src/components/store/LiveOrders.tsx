@@ -62,7 +62,7 @@ function History({ userId }: { userId: string }) {
       {query.data.map((order) => (
         <li key={order.id} className="rounded-xl border border-border bg-card p-4">
           {order.testMode && (
-            <p className="font-semibold">Test order — no real payment. Do not fulfil.</p>
+            <p className="font-semibold">Test order: no real payment. Do not fulfil.</p>
           )}
           <Link to="/orders/$id" params={{ id: order.id }} className="font-medium underline">
             Order {order.id.slice(0, 8)}
@@ -143,7 +143,7 @@ function Detail({ userId, id }: { userId: string; id: string }) {
       </div>
       {order.testMode && (
         <p role="status" className="font-semibold">
-          Test order — no real payment or purchase. Do not fulfil.
+          Test order: no real payment or purchase. Do not fulfil.
         </p>
       )}
       <p className="font-semibold">

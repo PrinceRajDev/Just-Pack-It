@@ -91,7 +91,7 @@ function Tasks() {
             </div>
           ) : available.length === 0 ? (
             <p className="border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-              No requests right now. Stay online — we'll show new ones here.
+              No requests right now. Stay online: we'll show new ones here.
             </p>
           ) : (
             <ul className="space-y-3">

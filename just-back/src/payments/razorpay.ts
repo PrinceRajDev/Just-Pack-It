@@ -96,7 +96,7 @@ export async function reconcilePayment(orderId:string,config:Config,paymentId?:s
       if(record.recovery){record.recovery.manualReview=false;record.recovery.nextCheckAt=null;}
       await record.save({session});await order.save({session});
       await notify(`${orderId}:captured`,{userId:order.buyerId},order.testMode ? "Test payment captured" : "Online payment captured",order.testMode ? "Test-mode capture verified. This is not a real purchase." : "Payment capture was verified with Razorpay. Shop acceptance is separate.",`/orders/${orderId}`,session);
-      for(const sub of order.subOrders){const shop=await Shop.findById(sub.shopId).session(session);if(shop)await notify(`${orderId}:seller:${sub.shopId}`,{userId:shop.ownerId},order.testMode ? "New test order — do not fulfil" : "New prepaid shop order","Payment capture is verified. Review your shop's part in orders.","/seller/orders",session);}
+      for(const sub of order.subOrders){const shop=await Shop.findById(sub.shopId).session(session);if(shop)await notify(`${orderId}:seller:${sub.shopId}`,{userId:shop.ownerId},order.testMode ? "New test order: do not fulfil" : "New prepaid shop order","Payment capture is verified. Review your shop's part in orders.","/seller/orders",session);}
     });
   }
   return orderDto((await Order.findById(orderId).lean())!);

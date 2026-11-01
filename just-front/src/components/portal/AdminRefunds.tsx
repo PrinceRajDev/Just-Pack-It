@@ -80,7 +80,7 @@ function RefundAction({ refund }: { refund: AdminRefund }) {
   return (
     <div className="finance-refund space-y-3">
       <h4 className="font-semibold">{refund.shopName}</h4>
-      {refund.testMode && <p className="font-semibold">TEST refund — no real money returned.</p>}
+      {refund.testMode && <p className="font-semibold">TEST refund: no real money returned.</p>}
       <RefundNotice refund={refund} />
       <dl className="finance-detail-summary">
         <dt>Refund request ID</dt>

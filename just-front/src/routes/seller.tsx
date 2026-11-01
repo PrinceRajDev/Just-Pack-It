@@ -27,12 +27,12 @@ const nav: NavItem[] = [
 export const Route = createFileRoute("/seller")({
   head: () => ({
     meta: [
-      { title: "Seller portal — Just Pack It" },
+      { title: "Seller portal: Just Pack It" },
       {
         name: "description",
         content: "Manage your shop's orders, products and stock on Just Pack It.",
       },
-      { property: "og:title", content: "Seller portal — Just Pack It" },
+      { property: "og:title", content: "Seller portal: Just Pack It" },
       { property: "og:description", content: "Tools for neighbourhood shopkeepers." },
     ],
   }),

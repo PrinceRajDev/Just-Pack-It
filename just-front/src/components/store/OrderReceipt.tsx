@@ -12,13 +12,13 @@ export function OrderReceipt({ order }: { order: Order }) {
         Print order receipt
       </Button>
       <section className="order-receipt" aria-label="Printable order receipt">
-        <h1>Just Pack It — Order receipt</h1>
+        <h1>Just Pack It: Order receipt</h1>
         {(order.isDemo || isDemoMode || order.testMode) && (
           <p>
             <strong>
               {order.testMode
-                ? "TEST ORDER — no real payment. Do not fulfil."
-                : "DEMO — sample order, not a real purchase."}
+                ? "TEST ORDER: no real payment. Do not fulfil."
+                : "DEMO: sample order, not a real purchase."}
             </strong>
           </p>
         )}

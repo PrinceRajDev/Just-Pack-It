@@ -1,12 +1,12 @@
 import type { RefundSummary } from "@/domain/refunds";
 import { inr } from "@/lib/image";
 const refundLabel = {
-  requested: "Refund requested — not yet issued",
+  requested: "Refund requested: not yet issued",
   submitting: "Refund submission in progress",
-  uncertain: "Refund submission uncertain — operator check needed",
+  uncertain: "Refund submission uncertain: operator check needed",
   pending: "Refund pending with provider",
   processed: "Refund processed by provider",
-  failed: "Refund failed — operator review needed",
+  failed: "Refund failed: operator review needed",
 };
 export function RefundNotice({ refund }: { refund: RefundSummary }) {
   return (

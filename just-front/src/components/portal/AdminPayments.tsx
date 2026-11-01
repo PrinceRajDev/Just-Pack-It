@@ -118,7 +118,7 @@ export function AdminPayments() {
                     <span className="finance-id">{payment.orderId}</span>
                     <small>
                       {payment.testMode
-                        ? "TEST order — no real payment. Do not fulfil."
+                        ? "TEST order: no real payment. Do not fulfil."
                         : "Live-mode payment record"}
                     </small>
                     {payment.recovery?.manualReview && (
@@ -250,11 +250,11 @@ function PaymentDetail({ id }: { id: string }) {
         <dt>Amount (INR)</dt>
         <dd>{inr(payment.amount / 100)}</dd>
         <dt>Mode</dt>
-        <dd>{payment.testMode ? "TEST — no real payment. Do not fulfil." : "Live"}</dd>
+        <dd>{payment.testMode ? "TEST: no real payment. Do not fulfil." : "Live"}</dd>
         <dt>State</dt>
         <dd>{stateLabel[payment.state]}</dd>
         <dt>Razorpay order ID</dt>
-        <dd>{payment.providerOrderId ?? "Not attached — reconciliation required"}</dd>
+        <dd>{payment.providerOrderId ?? "Not attached: reconciliation required"}</dd>
         <dt>Created (IST)</dt>
         <dd>{financeDate(payment.createdAt)}</dd>
       </dl>

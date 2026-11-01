@@ -16,13 +16,13 @@ import { isDemoMode } from "@/lib/config";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Just Pack It — Groceries from your neighbourhood shops" },
+      { title: "Just Pack It: Groceries from your neighbourhood shops" },
       {
         name: "description",
         content:
           "Order fresh vegetables, dairy, staples and bakes from trusted local shops near you, delivered by the shop or a Just Pack It rider.",
       },
-      { property: "og:title", content: "Just Pack It — Your neighbourhood, packed and delivered" },
+      { property: "og:title", content: "Just Pack It: Your neighbourhood, packed and delivered" },
       {
         property: "og:description",
         content: "Shop local kiranas, sabziwalas, dairies and bakeries online.",
@@ -58,8 +58,8 @@ function Home() {
               now <em className="hero-script text-primary">at your door.</em>
             </h1>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-foreground/85 md:text-lg">
-              Fresh groceries, daily essentials and everything from your neighbourhood shops —
-              packed with care.
+              Fresh groceries, daily essentials and everything from your neighbourhood shops: packed
+              with care.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-4">
               <Link

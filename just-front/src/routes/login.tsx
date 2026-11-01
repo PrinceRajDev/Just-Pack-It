@@ -23,9 +23,9 @@ export const Route = createFileRoute("/login")({
   validateSearch: z.object({ redirect: z.string().optional() }),
   head: () => ({
     meta: [
-      { title: "Sign in — Just Pack It" },
+      { title: "Sign in: Just Pack It" },
       { name: "description", content: "Sign in to shop, sell, deliver or manage Just Pack It." },
-      { property: "og:title", content: "Sign in — Just Pack It" },
+      { property: "og:title", content: "Sign in: Just Pack It" },
       { property: "og:description", content: "Sign in with your phone number." },
     ],
   }),

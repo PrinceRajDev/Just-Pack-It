@@ -15,9 +15,9 @@ import { LiveOrdersPage } from "@/components/store/LiveOrders";
 export const Route = createFileRoute("/orders/")({
   head: () => ({
     meta: [
-      { title: "Your orders — Just Pack It" },
+      { title: "Your orders: Just Pack It" },
       { name: "description", content: "Track and reorder from your past orders." },
-      { property: "og:title", content: "Your orders — Just Pack It" },
+      { property: "og:title", content: "Your orders: Just Pack It" },
       { property: "og:description", content: "Order history and tracking." },
     ],
   }),

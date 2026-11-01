@@ -10,7 +10,7 @@ const shop = (id: string, extra: Partial<Shop> = {}): Shop => ({
   locality: "Market Road",
   categories: ["grocery"],
   isOpen: true,
-  hours: "9–5",
+  hours: "9 to 5",
   fulfilment: ["platform_delivery"],
   since: 2000,
   initials: id,

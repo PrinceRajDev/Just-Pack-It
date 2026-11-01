@@ -180,7 +180,7 @@ export function LiveDelivery() {
                               {task.itemCount} items ·{" "}
                               {task.paymentMethod === "cod"
                                 ? `Collect ${inr(task.amountToCollect)} at drop-off`
-                                : "Prepaid — no cash"}
+                                : "Prepaid: no cash"}
                             </p>
                             <p className="text-sm">
                               Customer details appear only after a successful claim.
@@ -295,10 +295,10 @@ function DeliveryTask({
       )}
       <p>
         {task.status === "returning"
-          ? "Cash collection stopped — return goods to the shop"
+          ? "Cash collection stopped: return goods to the shop"
           : task.paymentMethod === "cod"
             ? `Cash to collect: ${inr(task.amountToCollect)}`
-            : "Prepaid — do not collect cash"}
+            : "Prepaid: do not collect cash"}
         . Cash acknowledgement is not bank settlement or payout.
       </p>
       <Button

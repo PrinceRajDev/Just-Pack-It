@@ -72,7 +72,7 @@ describe("image states", () => {
     const first = screen.getByRole("img", { name: "Rice" });
     expect(first.parentElement).toHaveAttribute("aria-busy", "true");
     fireEvent.error(first);
-    expect(screen.getByRole("img", { name: "Rice — image unavailable" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Rice: image unavailable" })).toBeInTheDocument();
     rerender(<ProductImage src="/two.jpg" alt="Rice" />);
     const second = screen.getByRole("img", { name: "Rice" });
     fireEvent.load(second);

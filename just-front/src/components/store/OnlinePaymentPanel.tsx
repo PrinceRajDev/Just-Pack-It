@@ -78,7 +78,7 @@ export function OnlinePaymentPanel({ id }: { id: string }) {
     >
       <h2 className="font-semibold">Razorpay online payment</h2>
       {query.data?.testMode && (
-        <p className="font-semibold">Test mode — no real payment or purchase.</p>
+        <p className="font-semibold">Test mode: no real payment or purchase.</p>
       )}
       <p className="text-sm">
         Do not pay cash for this online order. Payment confirmation and shop acceptance are

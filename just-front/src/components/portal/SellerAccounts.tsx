@@ -120,7 +120,7 @@ export function SellerAccounts() {
             </label>
           </div>
           <p id="seller-password-help" className="text-xs text-muted-foreground">
-            12–128 characters. Share securely with the seller. This does not change an existing
+            12 to 128 characters. Share securely with the seller. This does not change an existing
             account or automatically approve a shop. Password reset and SMS invitations are not
             connected yet.
           </p>

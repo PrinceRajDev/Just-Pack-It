@@ -43,7 +43,7 @@ export function AdminFinance() {
             <Icon aria-hidden="true" />
             <div>
               <p>{title}</p>
-              <strong>—</strong>
+              <strong>N/A</strong>
               <small>Global reporting unavailable</small>
             </div>
           </article>

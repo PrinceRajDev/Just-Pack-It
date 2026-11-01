@@ -1,5 +1,6 @@
 export interface OperationsSummary {
   asOf: string;
+  totals?: { shops: number; products: number };
   thresholds: {
     orderStaleMinutes: number;
     paymentPendingMinutes: number;

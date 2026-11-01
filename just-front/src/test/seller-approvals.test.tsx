@@ -153,7 +153,7 @@ it("keeps errors separate from empty results and does not show zero counts on fa
   mount();
   await screen.findByText("Shop submissions could not be refreshed.");
   expect(screen.queryByText("No shop submissions yet")).not.toBeInTheDocument();
-  expect(screen.getByRole("tab", { name: "All (—)" })).toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "All (N/A)" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Retry applications" })).toBeEnabled();
 });
 it("blocks repeated confirmation requests while server review is pending", async () => {

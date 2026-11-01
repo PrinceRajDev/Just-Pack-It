@@ -10,7 +10,7 @@ export function reportRange(input:unknown,now=new Date()){
  const q=z.object({from:z.iso.date().optional(),to:z.iso.date().optional()}).strict().parse(input),today=new Date(now.getTime()+330*60000).toISOString().slice(0,10);
  if(!!q.from!==!!q.to)fail(400,"INVALID_RANGE","Supply both from and to dates");
  const to=q.to ?? today,from=q.from ?? new Date(new Date(`${to}T00:00:00+05:30`).getTime()-29*dayMs+330*60000).toISOString().slice(0,10),start=new Date(`${from}T00:00:00+05:30`),end=new Date(new Date(`${to}T00:00:00+05:30`).getTime()+dayMs),days=(end.getTime()-start.getTime())/dayMs;
- if(days<1 || days>90 || to>today)fail(400,"INVALID_RANGE","Choose 1–90 dates ending no later than today (IST)");
+ if(days<1 || days>90 || to>today)fail(400,"INVALID_RANGE","Choose 1 to 90 dates ending no later than today (IST)");
  return{from,to,start,end,days};
 }
 interface Amount {count:number;amountCents:number}

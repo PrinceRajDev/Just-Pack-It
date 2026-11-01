@@ -325,7 +325,7 @@ function LedgerRow({ row, role }: { row: SettlementRow; role: string }) {
         <div className="space-y-1 rounded bg-secondary p-3 text-sm">
           <p>
             {row.payout.state === "recorded"
-              ? "Manual payout recorded by admin — not bank/provider verified"
+              ? "Manual payout recorded by admin: not bank/provider verified"
               : "Payout intent prepared. Transfer externally only once, after verifying the seller/payee."}
           </p>
           <p className="break-all">Intent ID: {row.id}</p>

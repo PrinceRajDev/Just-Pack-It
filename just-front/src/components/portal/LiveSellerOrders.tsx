@@ -166,7 +166,7 @@ export function SellerOrderCard({
     <article className="space-y-3 rounded-xl border border-border bg-card p-5">
       {sub.testMode && (
         <p className="font-semibold">
-          Test order — no real payment. Do not physically fulfil or collect cash.
+          Test order: no real payment. Do not physically fulfil or collect cash.
         </p>
       )}
       <h2 className="font-display text-xl">

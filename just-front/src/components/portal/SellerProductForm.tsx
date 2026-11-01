@@ -212,7 +212,7 @@ export function SellerProductForm({ product }: { product?: SellerProduct }) {
           if (product) updateProduct(product.id, listing);
           else addProduct(listing);
           saved.current = true;
-          toast.success(`Product ${product ? "updated" : "added"} (demo — not saved to server)`);
+          toast.success(`Product ${product ? "updated" : "added"} (demo: not saved to server)`);
           navigate({ to: "/seller/products" });
         })}
       >

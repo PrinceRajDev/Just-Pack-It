@@ -412,7 +412,7 @@
 }
 .seller-today-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: 1rem;
 }
@@ -587,10 +587,10 @@
     grid-template-columns: 1fr;
   }
   .seller-controls-column {
-    order: 1;
+    order: 2;
   }
   .seller-activity-column {
-    order: 2;
+    order: 1;
   }
   .seller-today-metrics {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -635,4 +635,43 @@
     scroll-behavior: auto;
     transition: none !important;
   }
+}
+
+.seller-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+.seller-quick-actions > a {
+  flex: 1 1 10rem;
+}
+.seller-controls-column {
+  order: 2;
+}
+.seller-activity-column {
+  order: 1;
+}
+.seller-availability-disclosure {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--card);
+}
+.seller-availability-disclosure > summary {
+  cursor: pointer;
+  padding: 1.25rem;
+  font-weight: 700;
+}
+.seller-availability-disclosure > summary span {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+.seller-availability-disclosure > summary:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+.seller-activity-column > .mb-5 p {
+  font-size: 0.875rem;
 }

@@ -45,10 +45,34 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
         </Button>
       </header>
       <ShopReviewNotice shop={shop} />
+      <nav className="seller-quick-actions" aria-label="Daily shop tasks">
+        <Button asChild>
+          <Link to="/seller/orders">
+            <ClipboardList aria-hidden="true" size={18} />
+            Manage orders
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link to="/seller/inventory">
+            <Boxes aria-hidden="true" size={18} />
+            Update stock
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link to="/seller/products/new">
+            <Plus aria-hidden="true" size={18} />
+            Add product
+          </Link>
+        </Button>
+      </nav>
       <div className="seller-today-grid">
-        <div className="seller-controls-column">
+        <details className="seller-controls-column seller-availability-disclosure">
+          <summary>
+            Shop hours and delivery settings
+            <span>Pause orders, change fees or update opening hours</span>
+          </summary>
           <ShopAvailability shop={shop} />
-        </div>
+        </details>
         <div className="seller-activity-column">
           {!shop.active && (
             <p role="status">
@@ -119,10 +143,14 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
                   tone={data.lowStock.count ? "warn" : undefined}
                 />
               </div>
-              <p className="my-4 text-sm text-muted-foreground">
-                Daily count excludes test orders and online orders awaiting payment; later-cancelled
-                orders remain counted. These figures are not earnings or payout totals.
-              </p>
+              <details className="my-4 text-sm text-muted-foreground">
+                <summary className="cursor-pointer">About these counts</summary>
+                <p>
+                  Daily count excludes test orders and online orders awaiting payment;
+                  later-cancelled orders remain counted. These figures are not earnings or payout
+                  totals.
+                </p>
+              </details>
               {data.pendingPayment > 0 && (
                 <p className="mb-5 rounded-lg border border-border p-3 text-sm">
                   {data.pendingPayment} online shop order(s) awaiting payment across all dates. Do
@@ -138,8 +166,7 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
                   Waiting at your counter
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Oldest {data.urgent.length} of {data.counts.placed ?? 0} awaiting acceptance.
-                  Review each order before accepting or declining.
+                  {data.counts.placed ?? 0} orders need your response. Oldest orders appear first.
                 </p>
                 {!data.urgent.length && <p>No orders awaiting acceptance.</p>}
                 {data.urgent.map((sub) => (
@@ -165,8 +192,7 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
                     {data.counts.out_for_delivery ?? 0}
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    All dates. Use the order handoff flow to record buyer receipt and cash; these
-                    counters do not confirm delivery or cash collection.
+                    Open orders to confirm handoff, receipt and cash collection.
                   </p>
                   <Button asChild className="mt-4" variant="outline">
                     <Link to="/seller/orders">Manage handoffs</Link>
@@ -194,11 +220,7 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
                             {item.stock === 0 ? "Out of stock" : `${item.stock} remaining`}
                           </span>
                         </span>
-                        <Link
-                          to="/seller/products/$id/edit"
-                          params={{ id: item.productId }}
-                          className="shrink-0 underline"
-                        >
+                        <Link to="/seller/inventory" className="shrink-0 underline">
                           Edit stock
                         </Link>
                       </li>

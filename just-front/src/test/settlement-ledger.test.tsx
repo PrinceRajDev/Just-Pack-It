@@ -53,6 +53,38 @@ afterEach(() => {
   vi.resetAllMocks();
   auth.role = "admin";
 });
+it("seller empty statement keeps lookup validation, refresh and failure feedback", async () => {
+  auth.role = "seller";
+  vi.mocked(settlements.list).mockResolvedValue({ items: [] });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <SettlementLedger />
+    </QueryClientProvider>,
+  );
+  expect(
+    screen.getByRole("status", { name: "Loading delivered order settlements" }),
+  ).toBeInTheDocument();
+  await screen.findByRole("heading", { name: "No settlement records found" });
+  expect(
+    screen.getByRole("heading", { name: "Your seller settlement statement", level: 1 }),
+  ).toBeInTheDocument();
+  const input = screen.getByLabelText("Shop-order part ID (optional)");
+  fireEvent.change(input, { target: { value: "not-a-uuid" } });
+  expect(screen.getByRole("button", { name: "Find settlement record" })).toBeDisabled();
+  const id = "00000000-0000-4000-8000-000000000001";
+  fireEvent.change(input, { target: { value: id } });
+  fireEvent.click(screen.getByRole("button", { name: "Find settlement record" }));
+  await waitFor(() => expect(settlements.list).toHaveBeenCalledWith({ suborderId: id }, undefined));
+  await screen.findByRole("heading", { name: "No settlement records found" });
+  vi.mocked(settlements.list).mockRejectedValue(new Error("offline"));
+  fireEvent.click(screen.getByRole("button", { name: "Refresh settlement ledger" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Could not refresh the ledger");
+  expect(
+    screen.queryByRole("button", { name: "Prepare manual payout intent" }),
+  ).not.toBeInTheDocument();
+  client.clear();
+});
 it("partner must acknowledge actual full cash handover, not earnings", async () => {
   auth.role = "delivery";
   vi.mocked(settlements.submitCash).mockResolvedValue({});

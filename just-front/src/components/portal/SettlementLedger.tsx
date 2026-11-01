@@ -1,7 +1,8 @@
 import { financeDate } from "@/lib/finance-date";
 import { FinancialTable, FinanceEmpty } from "./FinancePresentation";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Search, RefreshCw } from "lucide-react";
+import { SettlementIllustration } from "./SettlementIllustration";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRef, useState } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -28,28 +29,48 @@ export function SettlementLedger({ adminLayout = false }: { adminLayout?: boolea
   const rows = query.data?.pages.flatMap((p) => p.items) ?? [];
   const selectedRow = rows.find((row) => row.id === selected);
   const compact = adminLayout && role === "admin";
-  return (
-    <section
-      className={
-        compact
-          ? "finance-panel space-y-4"
-          : "my-6 space-y-4 rounded-xl border border-border bg-card p-5"
-      }
-      aria-label="Cash and seller settlement ledger"
-    >
-      <h2 className="finance-panel-title font-display text-2xl">
+  const seller = role === "seller";
+  const empty = query.isSuccess && !rows.length;
+  const Heading = seller ? "h1" : "h2";
+  const intro = (
+    <>
+      <Heading className="finance-panel-title font-display text-2xl">
         {compact && <BookOpen aria-hidden="true" />}
         {role === "delivery"
           ? "Cash handover ledger"
           : role === "seller"
             ? "Your seller settlement statement"
             : "Cash & seller settlement ledger"}
-      </h2>
+      </Heading>
       <p className="text-sm">
         Zero commission. Seller-delivery fee belongs to the seller; platform-delivery fee belongs to
         the platform. Partner cash handover, admin receipt and manual seller payout are separate
         records. No automatic bank transfer or verified bank balance is provided.
       </p>
+    </>
+  );
+  return (
+    <section
+      className={
+        seller
+          ? "seller-settlement-page"
+          : compact
+            ? "finance-panel space-y-4"
+            : "my-6 space-y-4 rounded-xl border border-border bg-card p-5"
+      }
+      aria-label="Cash and seller settlement ledger"
+    >
+      {seller ? (
+        <header className="seller-settlement-hero">
+          <div>
+            <p className="workspace-eyebrow">Just Pack It · Workspace</p>
+            {intro}
+          </div>
+          <SettlementIllustration />
+        </header>
+      ) : (
+        intro
+      )}
       {role === "delivery" && (
         <p className="text-sm">
           This is collected cash custody, not your earnings or delivery payout. Hand over the full
@@ -57,7 +78,13 @@ export function SettlementLedger({ adminLayout = false }: { adminLayout?: boolea
         </p>
       )}
       <form
-        className={compact ? "finance-toolbar" : "flex flex-wrap items-end gap-3"}
+        className={
+          seller
+            ? "seller-settlement-search"
+            : compact
+              ? "finance-toolbar"
+              : "flex flex-wrap items-end gap-3"
+        }
         onSubmit={(e) => {
           e.preventDefault();
           if (!draft || uuid.test(draft)) setFilter(draft.toLowerCase());
@@ -65,14 +92,18 @@ export function SettlementLedger({ adminLayout = false }: { adminLayout?: boolea
       >
         <label className="min-w-0 flex-1 text-sm">
           Shop-order part ID (optional)
-          <Input
-            placeholder="Enter shop-order part ID…"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value.trim())}
-            aria-invalid={!!draft && !uuid.test(draft)}
-          />
+          <span className={seller ? "seller-settlement-search-input" : undefined}>
+            {seller && <Search size={20} aria-hidden="true" />}
+            <Input
+              placeholder="Enter shop-order part ID…"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value.trim())}
+              aria-invalid={!!draft && !uuid.test(draft)}
+            />
+          </span>
         </label>
-        <Button variant="outline" disabled={!!draft && !uuid.test(draft)}>
+        <Button variant={seller ? "default" : "outline"} disabled={!!draft && !uuid.test(draft)}>
+          {seller && <Search size={18} aria-hidden="true" />}
           Find settlement record
         </Button>
         {compact && (
@@ -165,12 +196,31 @@ export function SettlementLedger({ adminLayout = false }: { adminLayout?: boolea
           ) : (
             rows.map((row) => <LedgerRow key={row.id} row={row} role={role ?? ""} />)
           )}
-          {query.isSuccess && !query.data.pages.some((p) => p.items.length) && (
-            <FinanceEmpty kind="ledger" title="No settlement records found">
-              No delivered live shop orders in this view. Pending collections or test orders are not
-              payable balances.
-            </FinanceEmpty>
-          )}
+          {query.isSuccess &&
+            !query.data.pages.some((p) => p.items.length) &&
+            (seller ? (
+              <section className="seller-settlement-empty" aria-label="No settlement records">
+                <SettlementIllustration receiptOnly />
+                <h2>No settlement records found</h2>
+                <p>
+                  No delivered live shop orders in this view. Pending collections or test orders are
+                  not payable balances.
+                </p>
+                <Button
+                  variant="outline"
+                  disabled={query.isFetching}
+                  onClick={() => void query.refetch()}
+                >
+                  <RefreshCw size={18} aria-hidden="true" />
+                  Refresh settlement ledger
+                </Button>
+              </section>
+            ) : (
+              <FinanceEmpty kind="ledger" title="No settlement records found">
+                No delivered live shop orders in this view. Pending collections or test orders are
+                not payable balances.
+              </FinanceEmpty>
+            ))}
         </>
       )}
       {query.isError && (
@@ -179,16 +229,31 @@ export function SettlementLedger({ adminLayout = false }: { adminLayout?: boolea
           handover or external transfer.
         </p>
       )}
-      <div className="flex flex-wrap gap-3">
-        <Button variant="outline" disabled={query.isFetching} onClick={() => void query.refetch()}>
-          Refresh settlement ledger
-        </Button>
-        {query.hasNextPage && (
-          <Button disabled={query.isFetching} onClick={() => void query.fetchNextPage()}>
-            More settlement records
+      {!(seller && empty && !query.hasNextPage) && (
+        <div className="seller-settlement-actions flex flex-wrap gap-3">
+          <Button
+            variant="outline"
+            disabled={query.isFetching}
+            onClick={() => void query.refetch()}
+          >
+            Refresh settlement ledger
           </Button>
-        )}
-      </div>
+          {query.hasNextPage && (
+            <Button disabled={query.isFetching} onClick={() => void query.fetchNextPage()}>
+              More settlement records
+            </Button>
+          )}
+        </div>
+      )}
+      {seller && query.isSuccess && (
+        <p className="seller-settlement-updated text-sm text-muted-foreground" role="status">
+          Last refreshed{" "}
+          <time dateTime={new Date(query.dataUpdatedAt).toISOString()}>
+            {new Date(query.dataUpdatedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
+          </time>{" "}
+          · IST
+        </p>
+      )}
       {compact && (
         <Sheet
           open={selected !== null}

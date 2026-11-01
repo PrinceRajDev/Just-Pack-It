@@ -5,6 +5,7 @@
 @import "./styles/seller-dashboard.css";
 @import "./styles/seller-products.css";
 @import "./styles/seller-inventory.css";
+@import "./styles/seller-settlements.css";
 @import "./styles/fonts.css";
 
 @custom-variant dark (&:is(.dark *));

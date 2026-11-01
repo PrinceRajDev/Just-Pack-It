@@ -237,15 +237,6 @@ function Login() {
             </div>
           )}
           <div className="mt-6 flex items-center justify-center gap-3 text-sm text-muted-foreground">
-            <img
-              src={imageUrl("/brand/prince-developer.jpg")}
-              alt="Prince"
-              width={48}
-              height={48}
-              loading="lazy"
-              decoding="async"
-              className="size-12 shrink-0 rounded-full border border-primary/20 object-cover object-top"
-            />
             <p>
               Developed by{" "}
               <a
@@ -258,6 +249,15 @@ function Login() {
                 Prince
               </a>
             </p>
+            <img
+              src={imageUrl("/brand/prince-developer.jpg")}
+              alt="Prince"
+              width={48}
+              height={48}
+              loading="lazy"
+              decoding="async"
+              className="size-12 shrink-0 rounded-full border border-primary/20 object-cover object-top"
+            />
           </div>
         </div>
       </div>

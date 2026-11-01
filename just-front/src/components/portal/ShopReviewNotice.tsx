@@ -4,8 +4,9 @@ export function ShopReviewNotice({ shop }: { shop: ManagedShop }) {
   const date = new Date(shop.review.reviewedAt);
   return (
     <aside
-      className="space-y-1 rounded-lg border border-border bg-secondary/40 p-3 text-sm"
+      className="shop-review-notice space-y-1 rounded-lg border border-border bg-secondary/40 p-3 text-sm"
       aria-label="Latest shop review"
+      data-review-status={shop.review.status}
     >
       <p className="font-medium">
         {shop.status === "pending" && shop.review.status !== "pending"

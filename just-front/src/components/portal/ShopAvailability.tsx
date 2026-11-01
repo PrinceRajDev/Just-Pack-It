@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { fulfilmentLabel, OpenState } from "@/components/store/ShopMark";
 import { ApiError } from "@/lib/api/client";
 import { toast } from "sonner";
+import { Store } from "lucide-react";
 
 const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 export function ShopAvailability({
@@ -52,8 +53,9 @@ export function ShopAvailability({
   });
   const stale = conflict || version !== shop.version;
   return (
-    <section className="surface-panel mb-5" aria-label="Shop availability">
+    <section className="surface-panel shop-availability mb-5" aria-label="Shop availability">
       <div className="surface-panel-heading">
+        <Store className="availability-heading-icon" aria-hidden="true" />
         <div>
           <h2>Today’s shop controls</h2>
           <p>
@@ -137,7 +139,7 @@ export function ShopAvailability({
             Delivery needs a listed fee and an eligible address. Platform delivery also depends on
             platform coverage; selecting it does not guarantee a rider.
           </p>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="availability-prices grid gap-4 sm:grid-cols-2">
             {[
               ["deliveryFee", "Listed delivery fee (₹)", shop.deliveryFee],
               ["minimumOrderAmount", "Minimum items total (₹)", shop.minimumOrderAmount],
@@ -155,7 +157,7 @@ export function ShopAvailability({
               </label>
             ))}
           </div>
-          <label className="block text-sm">
+          <label className="availability-pickup block text-sm">
             Pickup instructions
             <textarea
               name="pickupNote"
@@ -165,7 +167,7 @@ export function ShopAvailability({
               className="mt-1 block w-full rounded-lg border bg-background p-3"
             />
           </label>
-          <details>
+          <details className="availability-hours">
             <summary className="cursor-pointer py-3 text-sm font-semibold">
               Operating hours · {hours.length} intervals
             </summary>
@@ -229,7 +231,7 @@ export function ShopAvailability({
               Add opening interval
             </Button>
           </details>
-          <Button type="submit" disabled={!methods.length}>
+          <Button className="availability-save" type="submit" disabled={!methods.length}>
             {mutation.isPending ? "Saving availability…" : "Save availability"}
           </Button>
         </fieldset>

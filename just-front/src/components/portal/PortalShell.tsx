@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import {
+  ChevronDown,
   LogOut,
   Menu,
   ArrowUpRight,
@@ -120,7 +121,13 @@ export function PortalShell({
     </div>
   );
   return (
-    <div className={cn("portal-shell workspace-shell min-h-screen", admin && "admin-workspace")}>
+    <div
+      className={cn(
+        "portal-shell workspace-shell min-h-screen",
+        admin && "admin-workspace",
+        label === "Seller" && "seller-workspace",
+      )}
+    >
       <DemoBanner>
         Sample data for preview. Workspace edits affect this session only; metrics are not live
         business figures.
@@ -184,7 +191,20 @@ export function PortalShell({
               <span>{label === "Seller" ? "Seller workspace" : "Operations workspace"}</span>
               <span className="flex items-center gap-3">
                 <NotificationBell />
-                {session?.name}
+                <details className="seller-profile-menu">
+                  <summary>
+                    {session?.name}
+                    <ChevronDown size={16} aria-hidden="true" />
+                  </summary>
+                  <div>
+                    <Link to="/account">My account</Link>
+                    <Link to="/seller/settings">Shop settings</Link>
+                    <button onClick={signOut}>
+                      <LogOut size={16} aria-hidden="true" />
+                      Sign out
+                    </button>
+                  </div>
+                </details>
                 {session?.isDemo ? " · Demo session" : ""}
               </span>
             </div>
@@ -222,11 +242,13 @@ export function Kpi({
   value,
   hint,
   tone,
+  icon: Icon,
 }: {
   label: string;
   value: ReactNode;
   hint?: string;
   tone?: "warn";
+  icon?: LucideIcon;
 }) {
   return (
     <div
@@ -235,6 +257,11 @@ export function Kpi({
         tone === "warn" ? "border-promo" : "border-foreground",
       )}
     >
+      {Icon && (
+        <span className="seller-stat-icon">
+          <Icon size={22} aria-hidden="true" />
+        </span>
+      )}
       <p className="label-stamp text-muted-foreground">{label}</p>
       <p className="mt-1 font-display text-3xl tabular-nums">{value}</p>
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}

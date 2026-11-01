@@ -1,12 +1,15 @@
 import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Boxes, RefreshCw } from "lucide-react";
+import { Boxes, RefreshCw, Tag, TriangleAlert, Search, Info, Package } from "lucide-react";
 import { management } from "@/services/management";
 import type { ManagedProduct } from "@/domain/management";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/common/states";
-import { PortalHeader } from "./PortalShell";
+import { StockRoomIllustration } from "./StockRoomIllustration";
+import { OrderBoxIllustration } from "./OrderBoxIllustration";
+import { ProductImage } from "@/components/store/ProductImage";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SaveError } from "./management-shared";
 import { useDraftGuard } from "./useDraftGuard";
 import { toast } from "sonner";
@@ -21,7 +24,15 @@ export function LiveInventory() {
   });
   const [search, setSearch] = useState(""),
     [filter, setFilter] = useState("all");
-  if (query.isPending) return <p role="status">Loading stock…</p>;
+  if (query.isPending)
+    return (
+      <div className="seller-stock-loading" role="status" aria-label="Loading stock">
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="mt-5 h-24 w-full" />
+        <Skeleton className="mt-5 h-64 w-full" />
+        <span className="sr-only">Loading stock…</span>
+      </div>
+    );
   if (query.isError)
     return <ErrorState message={query.error.message} onRetry={() => void query.refetch()} />;
   const options = query.data.flatMap((p) =>
@@ -38,41 +49,53 @@ export function LiveInventory() {
     .sort((a, b) => quantity(a) - quantity(b) || a.name.localeCompare(b.name));
   return (
     <div className="seller-stock-page">
-      <PortalHeader
-        title="Stock room"
-        sub="Manage quantities here. Use Products to change listing details, photos and prices."
-        actions={
-          <Button
-            variant="outline"
-            disabled={query.isFetching}
-            onClick={() => void query.refetch()}
-          >
-            <RefreshCw size={17} aria-hidden="true" />
-            Refresh stock
-          </Button>
-        }
-      />
+      <header className="seller-stock-hero">
+        <div>
+          <p className="workspace-eyebrow">Just Pack It · Workspace</p>
+          <h1>Stock room</h1>
+          <p>Manage quantities here. Use Products to change listing details, photos and prices.</p>
+        </div>
+        <StockRoomIllustration />
+        <Button disabled={query.isFetching} onClick={() => void query.refetch()}>
+          <RefreshCw size={17} aria-hidden="true" />
+          Refresh stock
+        </Button>
+      </header>
       <div className="seller-stock-summary">
-        <Boxes aria-hidden="true" />
-        <span>
-          <strong>{options.length}</strong> stock options
-        </span>
-        <span>
-          <strong>{options.filter((n) => n > 0 && n <= 5).length}</strong> low stock
-        </span>
-        <span>
-          <strong>{options.filter((n) => n === 0).length}</strong> out of stock
-        </span>
+        <div className="stock-metric stock-metric-total">
+          <Boxes aria-hidden="true" />
+          <div>
+            <strong>{options.length}</strong>
+            <p>Stock options</p>
+          </div>
+        </div>
+        <div className="stock-metric stock-metric-low">
+          <Tag aria-hidden="true" />
+          <div>
+            <strong>{options.filter((n) => n > 0 && n <= 5).length}</strong>
+            <p>Low stock</p>
+          </div>
+        </div>
+        <div className="stock-metric stock-metric-out">
+          <TriangleAlert aria-hidden="true" />
+          <div>
+            <strong>{options.filter((n) => n === 0).length}</strong>
+            <p>Out of stock</p>
+          </div>
+        </div>
       </div>
-      <div className="seller-orders-toolbar">
+      <div className="seller-stock-toolbar">
         <label className="grid gap-1 text-sm">
           Search stock
-          <input
-            className="rounded-lg border p-3"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Product name"
-          />
+          <span className="seller-stock-search">
+            <Search size={20} aria-hidden="true" />
+            <input
+              className="rounded-lg border p-3"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Product name"
+            />
+          </span>
         </label>
         <label className="grid gap-1 text-sm">
           Stock status
@@ -83,12 +106,14 @@ export function LiveInventory() {
           </select>
         </label>
       </div>
-      <p className="mb-4 text-sm text-muted-foreground">
+      <p className="seller-stock-info text-sm text-muted-foreground">
+        <Info size={19} aria-hidden="true" />
         Quantities are whole sale units. Variant stock is independent; base stock is never added to
         option totals. Inactive and blocked listings remain visible here.
       </p>
       {!rows.length ? (
-        <section className="seller-orders-feedback">
+        <section className="seller-stock-empty">
+          <OrderBoxIllustration />
           <h2 className="font-semibold">
             {query.data.length ? "No stock matches these filters" : "No stock to manage yet"}
           </h2>
@@ -97,8 +122,11 @@ export function LiveInventory() {
               ? "Try another product name or stock status."
               : "Add a listing in Products, then manage its quantities here."}
           </p>
-          <Button asChild variant="outline" className="mt-3">
-            <Link to="/seller/products">Open Products</Link>
+          <Button asChild className="mt-3">
+            <Link to="/seller/products">
+              <Package size={18} aria-hidden="true" />
+              Open Products
+            </Link>
           </Button>
         </section>
       ) : (
@@ -109,6 +137,15 @@ export function LiveInventory() {
             </li>
           ))}
         </ul>
+      )}
+      {query.isSuccess && (
+        <p className="seller-stock-updated text-xs text-muted-foreground">
+          Last refreshed{" "}
+          <time dateTime={new Date(query.dataUpdatedAt).toISOString()}>
+            {new Date(query.dataUpdatedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
+          </time>{" "}
+          · IST
+        </p>
       )}
     </div>
   );
@@ -125,12 +162,25 @@ function InventoryRow({ product }: { product: ManagedProduct }) {
   return (
     <article className="seller-stock-row">
       {draft.dialog}
-      <div>
-        <h2 className="font-semibold">{product.name}</h2>
-        <p className="text-sm text-muted-foreground">
-          {product.unit} · {product.active ? "Active" : "Inactive"}
-          {product.moderation?.blocked ? " · Blocked by admin" : ""}
-        </p>
+      <div className="seller-stock-product">
+        <div className="seller-stock-photo">
+          <ProductImage src={product.image} alt={product.name} width={100} />
+        </div>
+        <div>
+          <h2 className="font-semibold">{product.name}</h2>
+          <p className="text-sm text-muted-foreground">
+            {product.unit} · {product.active ? "Active" : "Inactive"}
+            {product.moderation?.blocked ? " · Blocked by admin" : ""}
+          </p>
+          {!variants.length && (
+            <span
+              className="seller-stock-badge"
+              data-state={product.stock === 0 ? "out" : product.stock <= 5 ? "low" : "in"}
+            >
+              {product.stock === 0 ? "Out of stock" : product.stock <= 5 ? "Low stock" : "In stock"}
+            </span>
+          )}
+        </div>
       </div>
       {variants.length ? (
         <div>

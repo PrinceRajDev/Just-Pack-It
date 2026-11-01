@@ -36,6 +36,31 @@ afterEach(() => {
   clients.splice(0).forEach((c) => c.clear());
   vi.resetAllMocks();
 });
+it("keeps low-stock search, no-results and manual refresh working", async () => {
+  vi.mocked(management.products).mockResolvedValue([
+    product,
+    {
+      ...product,
+      id: "low",
+      name: "Milk",
+      stock: 2,
+      active: false,
+      moderation: { blocked: true, reason: "Review" },
+    },
+  ]);
+  mount();
+  await screen.findByText("Milk");
+  fireEvent.change(screen.getByLabelText("Stock status"), { target: { value: "low" } });
+  expect(screen.queryByText("Rice")).not.toBeInTheDocument();
+  expect(screen.getByText(/Blocked by admin/)).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("Search stock"), { target: { value: "missing" } });
+  expect(screen.getByText("No stock matches these filters")).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("Search stock"), { target: { value: "" } });
+  fireEvent.change(screen.getByLabelText("Stock status"), { target: { value: "all" } });
+  expect(screen.getByText("Rice")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Refresh stock" }));
+  await waitFor(() => expect(management.products).toHaveBeenCalledTimes(2));
+});
 it("saves only the versioned stock of a simple listing", async () => {
   vi.mocked(management.products).mockResolvedValue([product]);
   vi.mocked(management.inventory).mockResolvedValue({ ...product, stock: 4, version: 4 });

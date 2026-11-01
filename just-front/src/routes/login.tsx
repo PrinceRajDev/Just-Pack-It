@@ -17,6 +17,7 @@ import { LiveAuthForm } from "@/components/auth/LiveAuthForm";
 import { authDestination, accountLabels } from "@/lib/auth-flow";
 import { Link } from "@tanstack/react-router";
 import "@/styles/auth.css";
+import { imageUrl } from "@/lib/image";
 
 export const Route = createFileRoute("/login")({
   validateSearch: z.object({ redirect: z.string().optional() }),
@@ -235,18 +236,29 @@ function Login() {
               </ul>
             </div>
           )}
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Developed by{" "}
-            <a
-              href="https://prince-newportfolio.vercel.app/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-sm font-semibold text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
-              aria-label="Prince’s portfolio (opens in a new tab)"
-            >
-              Prince
-            </a>
-          </p>
+          <div className="mt-6 flex items-center justify-center gap-3 text-sm text-muted-foreground">
+            <img
+              src={imageUrl("/brand/prince-developer.jpg")}
+              alt="Prince"
+              width={48}
+              height={48}
+              loading="lazy"
+              decoding="async"
+              className="size-12 shrink-0 rounded-full border border-primary/20 object-cover object-top"
+            />
+            <p>
+              Developed by{" "}
+              <a
+                href="https://prince-newportfolio.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-sm font-semibold text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+                aria-label="Prince’s portfolio (opens in a new tab)"
+              >
+                Prince
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </main>

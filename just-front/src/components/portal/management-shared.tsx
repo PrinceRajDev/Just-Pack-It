@@ -13,6 +13,7 @@ export function Field({
   min,
   max,
   step,
+  placeholder,
 }: {
   label: string;
   name: string;
@@ -22,6 +23,7 @@ export function Field({
   min?: number;
   max?: number;
   step?: string;
+  placeholder?: string;
 }) {
   return (
     <label className="block space-y-1 text-sm">
@@ -34,6 +36,7 @@ export function Field({
         min={min}
         max={max}
         step={step}
+        placeholder={placeholder}
       />
     </label>
   );

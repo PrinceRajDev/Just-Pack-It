@@ -224,7 +224,7 @@ describe("Live onboarding UI", () => {
     fireEvent.change(screen.getByLabelText("Shop category"), { target: { value: "c" } });
     fireEvent.change(screen.getByLabelText("Base price ₹"), { target: { value: "40" } });
     fireEvent.change(screen.getByLabelText("Stock (whole sale units)"), { target: { value: "5" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save listing" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add product" }));
     await waitFor(() =>
       expect(management.saveProduct).toHaveBeenCalledWith(
         expect.objectContaining({ name: "Actual item", price: 40, stock: 5, categoryId: "c" }),

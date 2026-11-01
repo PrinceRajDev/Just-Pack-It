@@ -3,6 +3,7 @@
 @import "tw-animate-css";
 @import "./styles/workspaces.css";
 @import "./styles/seller-dashboard.css";
+@import "./styles/seller-products.css";
 @import "./styles/fonts.css";
 
 @custom-variant dark (&:is(.dark *));

@@ -1,0 +1,280 @@
+.seller-products-page {
+  min-width: 0;
+}
+.seller-catalogue-hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 12rem;
+  padding: 1.6rem;
+  overflow: hidden;
+  border: 1px solid #e1e7cc;
+  border-radius: 1.1rem;
+  background: #eff4db;
+  margin-bottom: 1.25rem;
+}
+.seller-catalogue-hero > div:first-child {
+  max-width: 62%;
+  position: relative;
+  z-index: 1;
+}
+.seller-catalogue-hero h1 {
+  font:
+    700 clamp(2rem, 3vw, 2.9rem)/1.1 Georgia,
+    serif;
+  color: #12452e;
+  letter-spacing: -0.035em;
+}
+.seller-catalogue-hero h1 + p {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin-top: 0.75rem;
+}
+.seller-approval-chip {
+  display: block;
+  width: fit-content;
+  color: #28583a;
+  font-weight: 600;
+}
+.seller-approval-chip[data-status="rejected"],
+.seller-approval-chip[data-status="suspended"] {
+  color: #944431;
+}
+.seller-catalogue-art {
+  position: absolute;
+  width: 19rem;
+  right: 1.5rem;
+  bottom: -1.7rem;
+  max-width: 36%;
+  z-index: -1;
+}
+.seller-catalogue-art svg {
+  width: 100%;
+  height: auto;
+}
+.seller-catalogue-add {
+  align-self: end;
+  margin-left: auto;
+  z-index: 1;
+}
+.seller-products-page .seller-catalogue-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 1.25rem 1.25rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 1.1rem;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
+}
+.seller-catalogue-empty > svg {
+  width: 17rem;
+  max-width: 80%;
+  margin-top: 0.5rem;
+}
+.seller-catalogue-empty h2 {
+  font:
+    700 clamp(1.7rem, 2.5vw, 2.2rem)/1.2 Georgia,
+    serif;
+  letter-spacing: -0.03em;
+}
+.seller-catalogue-empty > p {
+  max-width: 36rem;
+  margin: 0.75rem 0 1.2rem;
+  color: #5c665b;
+  line-height: 1.6;
+}
+.seller-catalogue-guidance {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  width: 100%;
+  border-top: 1px solid var(--line-soft);
+  padding-top: 1.1rem;
+  margin-top: 2rem;
+}
+.seller-catalogue-guidance li {
+  display: flex;
+  align-items: start;
+  gap: 0.65rem;
+  padding: 1rem 0.8rem;
+  border-radius: 0.9rem;
+  background: #f3f5e4;
+  text-align: left;
+  font-size: 0.8rem;
+}
+.seller-catalogue-guidance svg {
+  width: 2.3rem;
+  height: 2.3rem;
+  padding: 0.45rem;
+  flex-shrink: 0;
+  background: #e3efbf;
+  border-radius: 50%;
+  color: #346333;
+}
+.seller-catalogue-guidance strong {
+  display: block;
+  line-height: 1.4;
+}
+.seller-catalogue-guidance p {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: #65705b;
+}
+.seller-products-page .seller-catalogue-grid > section {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow-panel);
+  transition: border-color 150ms ease;
+}
+.seller-products-page .seller-catalogue-grid > section:hover {
+  border-color: #9db67a;
+}
+.seller-products-page .seller-catalogue-grid > section > div > div:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.seller-product-category {
+  font-size: 0.75rem;
+  color: #5a704d;
+  margin-block: 0.2rem;
+}
+.seller-products-page .seller-catalogue-grid h2 {
+  font-size: 1rem;
+}
+.seller-products-page section:has(> .seller-listing-form) {
+  border-radius: 1.1rem;
+  background: #fffdf8;
+  box-shadow: var(--shadow-panel);
+}
+.seller-products-page .seller-listing-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font:
+    700 1.6rem/1.2 Georgia,
+    serif;
+}
+.seller-listing-title svg {
+  color: #2e633c;
+  flex-shrink: 0;
+}
+.seller-products-page .seller-listing-form input:not([type="checkbox"]),
+.seller-products-page .seller-listing-form select {
+  min-height: 2.9rem;
+  border-radius: 0.65rem;
+  background: #fffdf8;
+}
+.seller-products-page .seller-listing-form input:focus-visible,
+.seller-products-page .seller-listing-form textarea:focus-visible,
+.seller-products-page .seller-listing-form select:focus-visible {
+  outline: 2px solid #36784e;
+  outline-offset: 2px;
+}
+.seller-products-page .seller-listing-form label > span:first-child,
+.seller-products-page .seller-listing-form label {
+  line-height: 1.5;
+}
+.seller-products-page .seller-listing-form label:has(> input[required]) > span:first-child::after {
+  content: " *";
+  color: #a83c2b;
+}
+.seller-products-page .seller-listing-form input[type="checkbox"] {
+  accent-color: #175235;
+  width: 1rem;
+  height: 1rem;
+}
+.seller-products-page .seller-listing-form textarea {
+  resize: vertical;
+  min-height: 5rem;
+}
+.seller-listing-details {
+  border-block: 1px solid var(--line-soft);
+  padding: 0.8rem 0;
+}
+.seller-listing-details > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.5rem;
+  cursor: pointer;
+  font-weight: 700;
+  list-style: none;
+}
+.seller-listing-details > summary::-webkit-details-marker {
+  display: none;
+}
+.seller-listing-details > summary > svg:first-child {
+  color: #387341;
+}
+.seller-listing-details > summary > svg:last-child {
+  margin-left: auto;
+}
+.seller-listing-details[open] > summary {
+  margin-bottom: 0.6rem;
+}
+.seller-listing-details[open] > summary > svg:last-child {
+  transform: rotate(180deg);
+}
+.seller-listing-details > fieldset > legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.seller-listing-actions {
+  display: flex;
+  justify-content: end;
+  gap: 0.7rem;
+  border-top: 1px solid var(--line-soft);
+  padding-top: 1rem;
+}
+.seller-listing-actions > a {
+  border: 1px solid var(--line-soft);
+}
+@media (max-width: 767px) {
+  .seller-catalogue-hero {
+    min-height: 13rem;
+    padding: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .seller-catalogue-hero > div:first-child {
+    max-width: 100%;
+  }
+  .seller-catalogue-art {
+    max-width: none;
+    width: 14rem;
+    opacity: 0.14;
+    right: -2rem;
+  }
+  .seller-catalogue-add {
+    margin-left: 0;
+  }
+  .seller-catalogue-guidance {
+    grid-template-columns: 1fr;
+  }
+  .seller-listing-details > fieldset > div {
+    flex-wrap: wrap;
+  }
+  .seller-listing-details > fieldset > div > label {
+    flex: 1 1 8rem;
+    min-width: 0;
+  }
+  .seller-listing-actions {
+    flex-direction: column-reverse;
+  }
+  .seller-listing-actions > * {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .seller-products-page * {
+    transition: none !important;
+  }
+}

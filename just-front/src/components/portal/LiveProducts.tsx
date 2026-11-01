@@ -6,6 +6,9 @@ import type { ManagedCategory, ManagedProduct, ManagedShop } from "@/domain/mana
 import type { ProductVariant } from "@/domain/types";
 import { PortalHeader } from "./PortalShell";
 import { ErrorState, EmptyState } from "@/components/common/states";
+import { Plus, Package, Tag, Store, Box, ChevronDown } from "lucide-react";
+import { NeighbourhoodIllustration } from "./NeighbourhoodIllustration";
+import { OrderBoxIllustration } from "./OrderBoxIllustration";
 import { Button } from "@/components/ui/button";
 import { ProductImage } from "@/components/store/ProductImage";
 import { inr } from "@/lib/image";
@@ -59,16 +62,42 @@ export function LiveProducts({
   const adding = path === "/seller/products/new";
   const editing = detailId ? detail.data : undefined;
   return (
-    <>
-      <PortalHeader
-        title={adding ? "Add a listing" : editing ? "Edit listing" : "Your catalogue"}
-        sub={`Shop approval: ${shop.status}. Only approved, active shops appear in the marketplace.`}
-        actions={
-          <Button asChild>
-            <Link to="/seller/products/new">Add product</Link>
-          </Button>
-        }
-      />
+    <div className={path.startsWith("/seller/products") ? "seller-products-page" : undefined}>
+      {path === "/seller/inventory" ? (
+        <PortalHeader
+          title={adding ? "Add a listing" : editing ? "Edit listing" : "Your catalogue"}
+          sub={`Shop approval: ${shop.status}. Only approved, active shops appear in the marketplace.`}
+          actions={
+            <Button asChild>
+              <Link to="/seller/products/new">Add product</Link>
+            </Button>
+          }
+        />
+      ) : (
+        <header className="seller-catalogue-hero">
+          <div>
+            <p className="workspace-eyebrow">Just Pack It · Workspace</p>
+            <h1>{adding ? "Add a listing" : editing ? "Edit listing" : "Your catalogue"}</h1>
+            <p>
+              <span className="seller-approval-chip" data-status={shop.status}>
+                Shop approval: {shop.status}
+              </span>{" "}
+              Only approved, active shops appear in the marketplace.
+            </p>
+          </div>
+          <div className="seller-catalogue-art" aria-hidden="true">
+            {adding || editing ? <OrderBoxIllustration /> : <NeighbourhoodIllustration />}
+          </div>
+          {!adding && !editing && (
+            <Button asChild className="seller-catalogue-add">
+              <Link to="/seller/products/new">
+                <Plus size={18} aria-hidden="true" />
+                Add product
+              </Link>
+            </Button>
+          )}
+        </header>
+      )}
       {editing?.moderation?.blocked && (
         <p role="alert" className="mb-4 rounded border border-destructive p-3 text-sm">
           This listing is blocked by admin: {editing.moderation.reason}. Editing or activating it
@@ -112,7 +141,7 @@ export function LiveProducts({
           )}
         </>
       ) : products.data?.length ? (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="seller-catalogue-grid grid gap-4 md:grid-cols-2">
           {products.data.map((p) => (
             <Panel key={p.id}>
               <div className="flex items-center gap-4">
@@ -121,6 +150,12 @@ export function LiveProducts({
                 </div>
                 <div>
                   <h2 className="font-medium">{p.name}</h2>
+                  {path.startsWith("/seller/products") && (
+                    <p className="seller-product-category">
+                      {categories.find((category) => category.id === p.categoryId)?.name ??
+                        "Category unavailable"}
+                    </p>
+                  )}
                   <p className="text-sm">
                     {p.active ? "Active" : "Inactive"} ·{" "}
                     {inr(
@@ -143,13 +178,47 @@ export function LiveProducts({
             </Panel>
           ))}
         </div>
-      ) : (
+      ) : path === "/seller/inventory" ? (
         <EmptyState
           title="No listings yet"
           body="Add actual products from your shop. Prices and stock are saved independently for each listing."
         />
+      ) : (
+        <section className="seller-catalogue-empty" aria-label="Empty catalogue">
+          <OrderBoxIllustration />
+          <h2>No listings yet</h2>
+          <p>
+            Add actual products from your shop. Prices and stock are saved independently for each
+            listing.
+          </p>
+          <Button asChild>
+            <Link to="/seller/products/new">
+              <Plus size={18} aria-hidden="true" />
+              Add your first product
+            </Link>
+          </Button>
+          <ol className="seller-catalogue-guidance">
+            {[
+              { Icon: Package, title: "List your products", body: "Add items from your shop" },
+              { Icon: Tag, title: "Set price & stock", body: "Keep it up to date" },
+              {
+                Icon: Store,
+                title: "Go live in marketplace",
+                body: "Approved, active shops appear for buyers",
+              },
+            ].map(({ Icon, title, body }) => (
+              <li key={title}>
+                <Icon aria-hidden="true" />
+                <div>
+                  <strong>{title}</strong>
+                  <p>{body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
       )}
-    </>
+    </div>
   );
 }
 
@@ -174,6 +243,7 @@ function ProductForm({
     <Panel>
       {draft.dialog}
       <form
+        className="seller-listing-form"
         onChange={() => {
           draft.mark();
           onDirty(true);
@@ -207,16 +277,35 @@ function ProductForm({
         }}
       >
         <fieldset disabled={save.isPending} className="space-y-4">
-          <h2 className="font-display text-2xl">Listing details</h2>
+          <h2 className="seller-listing-title font-display text-2xl">
+            <Box aria-hidden="true" />
+            Listing details
+          </h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Product name" name="name" value={product?.name} required />
+            <Field
+              label="Product name"
+              name="name"
+              value={product?.name}
+              placeholder="e.g. Dog food"
+              required
+            />
             <Field
               label="Unit / pack (e.g. 500 g, piece, portion)"
               name="unit"
               value={product?.unit}
+              placeholder="e.g. 500 g, piece, portion"
               required
             />
-            <Field label="Description" name="description" value={product?.description} />
+            <label className="block space-y-1 text-sm">
+              <span>Description</span>
+              <textarea
+                name="description"
+                defaultValue={product?.description}
+                rows={3}
+                placeholder="Describe your product, brand and key features"
+                className="block w-full rounded-lg border bg-background p-3"
+              />
+            </label>
             <label className="space-y-1 text-sm">
               Shop category
               <select
@@ -262,6 +351,7 @@ function ProductForm({
               min={0.01}
               step="0.01"
               value={product?.price}
+              placeholder="e.g. 299"
               required
             />
             <Field
@@ -271,6 +361,7 @@ function ProductForm({
               min={0.01}
               step="0.01"
               value={product?.mrp}
+              placeholder="e.g. 399"
             />
             {!product?.variants?.length && (
               <Field
@@ -295,6 +386,7 @@ function ProductForm({
             <input
               className="mt-1 block w-full rounded border bg-background p-2"
               name="image"
+              placeholder="Paste image HTTPS URL or durable key"
               value={image}
               onChange={(e) => setImage(e.target.value)}
             />
@@ -309,7 +401,17 @@ function ProductForm({
               <ProductImage src={image} alt="Listing image preview" width={200} />
             </div>
           )}
-          <Attributes values={product?.attributes} />
+          <details
+            className="seller-listing-details"
+            open={product?.attributes?.length ? true : undefined}
+          >
+            <summary>
+              <Tag size={20} aria-hidden="true" />
+              Product details (optional)
+              <ChevronDown size={16} aria-hidden="true" />
+            </summary>
+            <Attributes values={product?.attributes} />
+          </details>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="active" defaultChecked={product?.active ?? true} />
             Active listing
@@ -319,10 +421,14 @@ function ProductForm({
             stock and details.
           </p>
           <SaveError error={save.error} />
-          <Button type="submit">{save.isPending ? "Saving…" : "Save listing"}</Button>
-          <Button type="button" variant="ghost" asChild>
-            <Link to="/seller/products">Back to products</Link>
-          </Button>
+          <div className="seller-listing-actions">
+            <Button type="button" variant="ghost" asChild>
+              <Link to="/seller/products">Cancel</Link>
+            </Button>
+            <Button type="submit">
+              {save.isPending ? "Saving…" : product ? "Save listing" : "Add product"}
+            </Button>
+          </div>
         </fieldset>
       </form>
     </Panel>

@@ -37,6 +37,7 @@ export function Field({
         max={max}
         step={step}
         placeholder={placeholder}
+        onWheel={name === "stock" ? (event) => event.currentTarget.blur() : undefined}
       />
     </label>
   );

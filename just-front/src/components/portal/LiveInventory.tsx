@@ -222,10 +222,10 @@ function InventoryRow({ product }: { product: ManagedProduct }) {
             setError(null);
             setSaved(false);
             try {
-              await management.inventory(product, value);
+              const savedProduct = await management.inventory(product, value);
               draft.reset();
               setSaved(true);
-              toast.success("Stock saved");
+              toast.success(`Stock saved: ${savedProduct.stock} units`);
               for (const key of [
                 "seller-products",
                 "seller-product",
@@ -256,6 +256,7 @@ function InventoryRow({ product }: { product: ManagedProduct }) {
               min={0}
               max={100000000}
               step={1}
+              onWheel={(event) => event.currentTarget.blur()}
               required
               value={stock}
               disabled={busy}
@@ -270,6 +271,12 @@ function InventoryRow({ product }: { product: ManagedProduct }) {
             {busy ? "Saving…" : "Save stock"}
           </Button>
           <div className="seller-stock-feedback">
+            {stock !== String(product.stock) && !saved && (
+              <p className="text-sm text-muted-foreground">
+                Unsaved quantity: {stock || "empty"}. Last loaded stock: {product.stock}. Click Save
+                stock to apply.
+              </p>
+            )}
             <SaveError error={error} />
             {saved && <p role="status">Stock saved.</p>}
           </div>

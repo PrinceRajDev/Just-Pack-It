@@ -12,6 +12,7 @@ import { fail } from "../common/errors.js";
 import type { Actor } from "../auth/middleware.js";
 import { InventoryReservation } from "../inventory/models.js";
 import {notify} from "../notifications/service.js";
+import {audit} from "../admin/audit.js";
 import type {
   ProductInput,
   ProductPatch,
@@ -249,6 +250,7 @@ export async function createProduct(
     });
     deriveProduct(product);
     await product.save({ session });
+    await audit(who,"product.created",product._id,session,product.version,JSON.stringify({stock:product.stock,variants:product.variants.map(v=>({id:v._id,stock:v.stock}))}));
     return product;
   });
 }
@@ -271,6 +273,8 @@ export async function mutateProduct(
       shopId: shop._id,
     }).session(session);
     if (!product) fail(404, "PRODUCT_NOT_FOUND", "Product not found");
+    const stockSnapshot = () => ({stock:product.stock,variants:product.variants.map(v=>({id:v._id,stock:v.stock,active:v.active}))});
+    const beforeStock = stockSnapshot();
     checkVersion(product.version, expectedVersion);
     if(await InventoryReservation.exists({state:"held","lines.productId":productId}).session(session))
       fail(409,"INVENTORY_HELD","This listing has reserved stock. Retry after its holds are released.");
@@ -283,6 +287,8 @@ export async function mutateProduct(
     );
     deriveProduct(product);
     await product.save({ session });
+    const afterStock = stockSnapshot();
+    if(JSON.stringify(beforeStock)!==JSON.stringify(afterStock))await audit(who,"product.stock.changed",product._id,session,product.version,JSON.stringify({before:beforeStock,after:afterStock}));
     return product;
   });
 }

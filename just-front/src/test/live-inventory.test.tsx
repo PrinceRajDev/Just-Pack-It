@@ -63,11 +63,17 @@ it("keeps low-stock search, no-results and manual refresh working", async () => 
 });
 it("saves only the versioned stock of a simple listing", async () => {
   vi.mocked(management.products).mockResolvedValue([product]);
-  vi.mocked(management.inventory).mockResolvedValue({ ...product, stock: 4, version: 4 });
+  vi.mocked(management.inventory).mockResolvedValue({ ...product, stock: 20, version: 4 });
   mount();
-  fireEvent.change(await screen.findByLabelText("Stock for Rice"), { target: { value: "4" } });
+  const input = await screen.findByLabelText("Stock for Rice");
+  input.focus();
+  fireEvent.wheel(input, { deltaY: 100 });
+  expect(input).not.toHaveFocus();
+  expect(input).toHaveValue(7);
+  fireEvent.change(input, { target: { value: "20" } });
+  expect(screen.getByText(/Unsaved quantity: 20/)).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Save stock" }));
-  await waitFor(() => expect(management.inventory).toHaveBeenCalledWith(product, 4));
+  await waitFor(() => expect(management.inventory).toHaveBeenCalledWith(product, 20));
   expect(screen.queryByText("Your catalogue")).not.toBeInTheDocument();
 });
 it("shows independent variant quantities and filters out-of-stock options without a base stock input", async () => {

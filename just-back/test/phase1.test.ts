@@ -15,6 +15,7 @@ import { loadConfig } from "../src/config/env.js";
 import { connectDatabase, disconnectDatabase } from "../src/db.js";
 import { createUser, login } from "../src/auth/service.js";
 import { User } from "../src/auth/models.js";
+import { Audit } from "../src/admin/audit.js";
 import { Session } from "../src/auth/models.js";
 import { throttle, tokenHash } from "../src/auth/service.js";
 import {
@@ -271,6 +272,20 @@ describe("COD orders with explicitly enabled isolated configuration",()=>{
     }
   }
   const body=(product:string,address:string)=>({areaId,addressId:address,addressVersion:0,paymentMethod:"cod" as const,expectedTotal:25,items:[{productId:product,qty:2}],fulfilments:[{shopId,method:"pickup" as const}]});
+  it("persists an exact 20-unit stock edit without reads reducing it, and audits later edits",async()=>fixture(async(product)=>{
+    const original=await Product.findById(product);
+    const result=await api.patch(`/seller/products/${product}/inventory`).set("Authorization",auth(seller)).send({stock:20,version:original!.version});
+    expect(result.status).toBe(200);expect(result.body.stock).toBe(20);
+    for(let i=0;i<2;i++)expect((await api.get(`/seller/products/${product}`).set("Authorization",auth(seller))).body.stock).toBe(20);
+    await api.post('/cart/quote').send({areaId,items:[{productId:product,qty:2}]});
+    expect((await Product.findById(product))!.stock).toBe(20);
+    const changed=await api.patch(`/seller/products/${product}/inventory`).set("Authorization",auth(seller)).send({stock:18,version:result.body.version});
+    expect(changed.status).toBe(200);
+    const record=await Audit.findOne({targetId:product,action:'product.stock.changed',version:changed.body.version}).lean();
+    expect(record?.actorId).toBe(seller.id);expect(JSON.parse(record!.reason!)).toMatchObject({before:{stock:20},after:{stock:18}});
+    const stale=await api.patch(`/seller/products/${product}/inventory`).set("Authorization",auth(seller)).send({stock:1,version:result.body.version});
+    expect(stale.status).toBe(409);expect(await Audit.countDocuments({targetId:product,action:'product.stock.changed'})).toBe(2);
+  }));
   it("H01 blocks discovery, quote, fulfilment and reused-hold checkout after seller suspension",async()=>fixture(async(product,address)=>{
     const shop=await Shop.findById(shopId);
     const existingKey=randomUUID(),existing=await createCodOrder(buyer,existingKey,body(product,address));

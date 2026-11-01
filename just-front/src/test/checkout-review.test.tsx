@@ -41,7 +41,7 @@ afterEach(cleanup);
 it("shows server prices and blockers without offering order submission", async () => {
   vi.mocked(reviewCheckout).mockResolvedValue(response);
   mount();
-  await screen.findByText("Current item subtotal: ₹10.5");
+  await screen.findByText("Items: ₹10.5");
   expect(screen.getByText("Final charges are not quoted.")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Ordering is not available yet" })).toBeDisabled();
   expect(reviewCheckout).toHaveBeenCalledWith(
@@ -62,6 +62,6 @@ it("hides obsolete reviews after an address version change", async () => {
 it("retries failed review requests", async () => {
   vi.mocked(reviewCheckout).mockRejectedValueOnce(new Error("Network")).mockResolvedValue(response);
   mount();
-  fireEvent.click(await screen.findByRole("button", { name: "Retry full review" }));
-  await screen.findByText("Current item subtotal: ₹10.5");
+  fireEvent.click(await screen.findByRole("button", { name: "Retry bill" }));
+  await screen.findByText("Items: ₹10.5");
 });

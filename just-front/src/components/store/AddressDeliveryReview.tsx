@@ -28,9 +28,7 @@ export function AddressDeliveryReview({
         Where should it go?
       </h2>
       <p className="text-sm text-muted-foreground">
-        Check pincode coverage, saved delivery-pin distance when available, and listed pickup
-        options. The server review below determines whether COD can be placed; this check does not
-        reserve stock.
+        Choose your saved address and how you want to receive your order.
       </p>
       {!ready ? (
         <p role="status">Checking your session…</p>
@@ -70,7 +68,7 @@ function SignedInReview({
   });
   const current = addresses.isError
     ? undefined
-    : addresses.data?.find((address) => address.id === selected);
+    : addresses.data?.find((address) => address.id === (selected || addresses.data?.[0]?.id));
   const ids = shops.map((shop) => shop.id).sort();
   const check = useQuery({
     queryKey: ["fulfilment-review", userId, current?.id, current?.version, ids],
@@ -81,6 +79,18 @@ function SignedInReview({
     retry: false,
     staleTime: 0,
   });
+  // Only delivery can be preselected. Pickup always needs an explicit choice.
+  const resolvedChoices = { ...choices };
+  if (check.data?.addressVersion === current?.version) {
+    for (const group of check.data?.shops ?? []) {
+      if (!resolvedChoices[group.shopId]) {
+        const delivery = group.options.find(
+          (option) => option.status === "eligible" && option.method !== "pickup",
+        );
+        if (delivery) resolvedChoices[group.shopId] = delivery.method;
+      }
+    }
+  }
   return (
     <>
       {addresses.isPending ? (
@@ -102,7 +112,7 @@ function SignedInReview({
           </Button>
           {!!addresses.data.length && (
             <fieldset className="space-y-2">
-              <legend className="mb-2 font-medium">Choose an address to check</legend>
+              <legend className="mb-2 font-medium">Delivery address</legend>
               {addresses.data.map((address) => (
                 <label
                   key={address.id}
@@ -112,7 +122,7 @@ function SignedInReview({
                     type="radio"
                     name="delivery-address"
                     value={address.id}
-                    checked={selected === address.id}
+                    checked={current?.id === address.id}
                     onChange={() => {
                       setSelected(address.id);
                       setChoices({});
@@ -172,7 +182,7 @@ function SignedInReview({
                     </p>
                   ))}
                   {!group.options.length && (
-                    <p className="text-sm">No fulfilment options verified.</p>
+                    <p className="text-sm">No delivery or pickup options available.</p>
                   )}
                   <ul className="space-y-2">
                     {group.options.map((option) => (
@@ -180,7 +190,7 @@ function SignedInReview({
                         <p className="font-medium">
                           {fulfilmentLabel[option.method]} ·{" "}
                           {option.status === "eligible"
-                            ? "Configured checks passed"
+                            ? "Available"
                             : option.status === "unavailable"
                               ? "Unavailable"
                               : "Not verified"}
@@ -192,7 +202,7 @@ function SignedInReview({
                               type="radio"
                               name={`fulfilment-${group.shopId}`}
                               disabled={option.status !== "eligible" || check.isFetching}
-                              checked={choices[group.shopId] === option.method}
+                              checked={resolvedChoices[group.shopId] === option.method}
                               onChange={() =>
                                 setChoices({ ...choices, [group.shopId]: option.method })
                               }
@@ -206,7 +216,7 @@ function SignedInReview({
                           <p>
                             {option.method === "pickup"
                               ? "Pickup delivery charge: ₹0"
-                              : `Listed fee: ${option.listedFee === null ? "Not supplied" : inr(option.listedFee)} · Final quote pending`}
+                              : `Listed fee: ${option.listedFee === null ? "Not supplied" : inr(option.listedFee)}`}
                           </p>
                         )}
                       </li>
@@ -228,7 +238,8 @@ function SignedInReview({
                   check
                     .data!.shops.find((shop) => shop.shopId === id)
                     ?.options.some(
-                      (option) => option.method === choices[id] && option.status === "eligible",
+                      (option) =>
+                        option.method === resolvedChoices[id] && option.status === "eligible",
                     ),
                 ) && (
                   <CheckoutReviewPanel
@@ -237,7 +248,7 @@ function SignedInReview({
                     addressId={current.id}
                     addressVersion={current.version}
                     lines={lines}
-                    fulfilments={ids.map((shopId) => ({ shopId, method: choices[shopId] }))}
+                    fulfilments={ids.map((shopId) => ({ shopId, method: resolvedChoices[shopId] }))}
                   />
                 )}
             </div>

@@ -37,7 +37,7 @@ export function CheckoutReviewPanel({
       <div role="alert">
         <p>Couldn't complete the review. Your bag and selections are kept.</p>
         <Button variant="outline" onClick={() => void check.refetch()}>
-          Retry full review
+          Retry bill
         </Button>
       </div>
     );
@@ -67,16 +67,15 @@ export function CheckoutReviewPanel({
       aria-labelledby="full-review-title"
     >
       <h3 id="full-review-title" className="font-semibold">
-        Your selected bag review
+        Bill details
       </h3>
-      <p>Current item subtotal: {inr(check.data.itemsSubtotal)}</p>
+      <p>Items: {inr(check.data.itemsSubtotal)}</p>
       <ul className="space-y-2 text-sm">
         {check.data.fulfilments.map((selection) => (
           <li key={selection.shopId}>
             {check.data.shops.find((group) => group.shop.id === selection.shopId)?.shop.name ??
               "Shop"}{" "}
-            · Selected listed fee:{" "}
-            {selection.listedFee === null ? "Not verified" : inr(selection.listedFee)}
+            · Delivery: {selection.listedFee === null ? "Not verified" : inr(selection.listedFee)}
           </li>
         ))}
       </ul>
@@ -86,7 +85,7 @@ export function CheckoutReviewPanel({
         ))}
       </ul>
       <Button variant="outline" disabled={check.isFetching} onClick={() => void check.refetch()}>
-        Refresh full review
+        Refresh bill
       </Button>
       {check.data.checkoutAvailable &&
       check.data.grandTotal !== null &&
@@ -104,7 +103,7 @@ export function CheckoutReviewPanel({
               : "Payable on delivery / collection"}
             : {inr(check.data.grandTotal)}
           </p>
-          <p className="text-sm">Tax included. No added platform fee or promotional discount.</p>
+          <p className="text-sm">Includes tax. No extra platform fee.</p>
           <label className="block text-sm">
             Payment method{" "}
             <select

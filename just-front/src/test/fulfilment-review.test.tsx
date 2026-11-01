@@ -82,7 +82,7 @@ it("prompts sign-in without reading private addresses", () => {
   expect(screen.getByText("Sign in to check your address")).toBeInTheDocument();
   expect(savedAddresses.list).not.toHaveBeenCalled();
 });
-it("checks only after explicit address selection and distinguishes unknown delivery from pickup", async () => {
+it("automatically checks the saved address and distinguishes unknown delivery from pickup", async () => {
   vi.mocked(reviewFulfilment).mockResolvedValue({
     checkedAt: "now",
     addressId: "a",
@@ -107,7 +107,6 @@ it("checks only after explicit address selection and distinguishes unknown deliv
   });
   mount();
   const choice = await screen.findByRole("radio");
-  expect(reviewFulfilment).not.toHaveBeenCalled();
   fireEvent.click(choice);
   await screen.findByText("Rider not verified");
   expect(screen.getByText("Pickup delivery charge: ₹0")).toBeInTheDocument();
@@ -133,4 +132,36 @@ it("shows retry when delivery verification fails without claiming availability",
   fireEvent.click(await screen.findByRole("radio"));
   expect(await screen.findByRole("button", { name: "Retry delivery check" })).toBeInTheDocument();
   expect(screen.queryByText(/Configured checks passed/)).toBeNull();
+});
+
+it("preselects eligible delivery but preserves a buyer pickup choice", async () => {
+  vi.mocked(reviewFulfilment).mockResolvedValue({
+    checkedAt: "now",
+    addressId: "a",
+    addressVersion: 2,
+    checkoutAvailable: false,
+    reserved: false,
+    shops: [
+      {
+        shopId: "s",
+        issues: [],
+        options: [
+          { method: "pickup", status: "eligible", listedFee: 0, message: "Collect" },
+          {
+            method: "seller_delivery",
+            status: "eligible",
+            listedFee: 30,
+            message: "Shop delivery",
+          },
+        ],
+      },
+    ],
+  });
+  mount(true);
+  expect(await screen.findByText("Full selection review mounted")).toBeInTheDocument();
+  const delivery = screen.getByRole("radio", { name: /Choose Shop delivers/ });
+  expect(delivery).toBeChecked();
+  fireEvent.click(screen.getByRole("radio", { name: /Choose Store pickup/ }));
+  expect(delivery).not.toBeChecked();
+  expect(screen.getByRole("radio", { name: /Choose Store pickup/ })).toBeChecked();
 });

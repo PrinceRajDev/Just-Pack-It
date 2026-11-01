@@ -31,8 +31,7 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
     <StoreLayout>
       <PageTitle title={checkout ? "Review your order" : "Your bag"} eyebrow="Shop by shop">
         <p className="mt-3 text-sm text-muted-foreground">
-          Review current prices and stock. This review does not reserve items. Available payment
-          methods are confirmed by the server.
+          Your items, delivery address and payment, all in one place.
         </p>
       </PageTitle>
       <AreaNotice />
@@ -134,7 +133,7 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
                       {group.shop.deliveryFee === undefined
                         ? "Not supplied"
                         : inr(group.shop.deliveryFee)}{" "}
-                      · Final delivery quote unavailable
+                      · Confirmed in your bill below
                     </p>
                   </div>
                 </section>
@@ -156,32 +155,13 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
                   areaId={area.id}
                 />
               )}
-              <section className="space-y-3 rounded-xl border border-primary/20 bg-secondary/40 p-5">
-                <h2 className="font-display text-2xl">
-                  Current item subtotal: {inr(quote.data.itemsSubtotal)}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Includes priced requested quantities, even when stock is short or a shop is
-                  closed. Unpriced unavailable lines are excluded. This item subtotal does not
-                  include delivery charges. See the selected-address review above for any available
-                  COD total.
-                </p>
-                {!checkout && (
-                  <Button asChild variant="outline">
-                    <Link to="/checkout">Review address and methods</Link>
-                  </Button>
-                )}
-                <p className="text-sm">
-                  Unconfirmed previous order?{" "}
-                  <Link to="/account" className="underline">
-                    Recover it from your account
-                  </Link>{" "}
-                  before submitting another.
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  This check does not reserve inventory, create an order or take payment.
-                </p>
-              </section>
+              <p className="text-sm text-muted-foreground">
+                Need to check a previous order?{" "}
+                <Link to="/account" className="underline">
+                  Open your account
+                </Link>{" "}
+                before ordering again.
+              </p>
             </>
           )
         )}

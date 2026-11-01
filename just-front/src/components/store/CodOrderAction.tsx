@@ -23,7 +23,6 @@ export function CodOrderAction({
   const [attempt, setAttempt] = useState<CodAttempt | null>(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
-    [confirmed, setConfirmed] = useState(false),
     [storageError, setStorageError] = useState("");
   const cart = useCart(),
     client = useQueryClient(),
@@ -83,7 +82,6 @@ export function CodOrderAction({
     setError("");
     try {
       await resetCodAttempt(userId);
-      setConfirmed(false);
       onReset?.();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Couldn't reset order recovery.");
@@ -145,21 +143,8 @@ export function CodOrderAction({
       ) : (
         input && (
           <>
-            <label className="flex items-start gap-3 text-sm">
-              <input
-                type="checkbox"
-                className="mt-1 accent-primary"
-                checked={confirmed}
-                onChange={(event) => setConfirmed(event.target.checked)}
-                disabled={busy || !!storageError}
-              />
-              I confirm {inr(input.expectedTotal)}, payable on delivery or collection. No online
-              payment will be taken.
-            </label>
-            <Button
-              disabled={!confirmed || busy || !!storageError}
-              onClick={() => void place(false)}
-            >
+            <p className="text-sm">Pay {inr(input.expectedTotal)} when you receive your order.</p>
+            <Button disabled={busy || !!storageError} onClick={() => void place(false)}>
               {busy ? "Confirming order…" : `Place COD order · ${inr(input.expectedTotal)}`}
             </Button>
           </>

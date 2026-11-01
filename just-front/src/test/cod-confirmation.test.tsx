@@ -42,7 +42,6 @@ it("does not mutate the current cart or navigate after the submitting screen unm
       }),
   );
   const view = mount();
-  fireEvent.click(screen.getByRole("checkbox"));
   fireEvent.click(screen.getByRole("button", { name: "Place COD order · ₹25" }));
   view.unmount();
   finish({
@@ -67,7 +66,7 @@ beforeEach(() => {
   vi.mocked(readCodAttempt).mockReturnValue(null);
 });
 afterEach(cleanup);
-it("requires explicit consent and removes purchased lines only after server confirmation", async () => {
+it("uses the explicit place-order action and removes purchased lines only after server confirmation", async () => {
   let finish!: (value: Awaited<ReturnType<typeof submitCodAttempt>>) => void;
   vi.mocked(submitCodAttempt).mockImplementation(
     () =>
@@ -77,8 +76,7 @@ it("requires explicit consent and removes purchased lines only after server conf
   );
   mount();
   const button = screen.getByRole("button", { name: "Place COD order · ₹25" });
-  expect(button).toBeDisabled();
-  fireEvent.click(screen.getByRole("checkbox"));
+  expect(button).toBeEnabled();
   fireEvent.click(button);
   expect(submitCodAttempt).toHaveBeenCalledWith("buyer", input);
   expect(state.removePurchased).not.toHaveBeenCalled();
@@ -104,7 +102,6 @@ it("requires explicit consent and removes purchased lines only after server conf
 it("keeps the bag and route unchanged after an unknown failure", async () => {
   vi.mocked(submitCodAttempt).mockRejectedValue(new Error("Outcome unknown"));
   mount();
-  fireEvent.click(screen.getByRole("checkbox"));
   fireEvent.click(screen.getByRole("button", { name: "Place COD order · ₹25" }));
   await screen.findByRole("alert");
   expect(state.removePurchased).not.toHaveBeenCalled();

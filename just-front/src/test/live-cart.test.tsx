@@ -112,9 +112,9 @@ describe("Live server-checked bag", () => {
     expect(await screen.findByText("Independent shop")).toBeInTheDocument();
     expect(screen.getByText("This shop is currently closed.")).toBeInTheDocument();
     expect(screen.getByText("Only 2 available; reduce the quantity.")).toBeInTheDocument();
-    expect(screen.getByText("Current item subtotal: ₹31.5")).toBeInTheDocument();
+    expect(screen.getByText("Shop item subtotal: ₹31.5")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Place COD order/ })).toBeNull();
-    expect(screen.getByText("Review address and methods")).toBeInTheDocument();
+    expect(screen.queryByText("Review address and methods")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Reduce to 2" }));
     expect(state.cart.setQty).toHaveBeenCalledWith("p", 2, "v");
   });

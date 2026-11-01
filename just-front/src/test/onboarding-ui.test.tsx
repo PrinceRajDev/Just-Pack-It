@@ -8,9 +8,11 @@ import { LiveProducts } from "@/components/portal/LiveProducts";
 import { SellerAccounts } from "@/components/portal/SellerAccounts";
 import { ApiError } from "@/lib/api/client";
 import { management } from "@/services/management";
+import { productImages } from "@/services/product-images";
 vi.mock("@/services/product-images", () => ({
   productImages: {
-    capability: async () => ({ enabled: false, maxBytes: 5242880, types: ["image/png"] }),
+    capability: vi.fn(),
+    upload: vi.fn(),
   },
 }));
 const state = vi.hoisted(() => ({ path: "/seller/settings", navigate: vi.fn() }));
@@ -87,11 +89,17 @@ function mount(view: ReactNode) {
   return client;
 }
 beforeEach(() => {
+  vi.mocked(productImages.capability).mockResolvedValue({
+    enabled: false,
+    maxBytes: 5242880,
+    types: ["image/png"],
+  });
   vi.mocked(management.sellers).mockResolvedValue([]);
 });
 afterEach(() => {
   cleanup();
   vi.resetAllMocks();
+  vi.unstubAllGlobals();
 });
 function setupSeller() {
   vi.mocked(management.shop).mockResolvedValue(shop);
@@ -208,47 +216,84 @@ describe("Live onboarding UI", () => {
     expect(screen.getByLabelText("Seller mobile number")).toHaveValue("9876543210");
     expect(screen.queryByText(/seller account is ready/)).not.toBeInTheDocument();
   });
-  it("creates a base listing without fabricated variant IDs and opens its edit route", async () => {
-    const product = {
-      id: "p",
-      shopId: "s",
-      name: "Actual item",
-      unit: "piece",
-      description: "",
-      categoryId: "c",
-      categorySlug: "grocery",
-      price: 40,
-      stock: 5,
-      version: 0,
-      active: true,
-      attributes: [],
-    };
-    vi.mocked(management.products).mockResolvedValue([]);
-    vi.mocked(management.saveProduct).mockResolvedValue(product);
-    mount(<LiveProducts path="/seller/products/new" shop={shop} categories={[category]} />);
-    fireEvent.change(await screen.findByLabelText("Product name"), {
-      target: { value: "Actual item" },
-    });
-    fireEvent.change(screen.getByLabelText("Unit / pack (e.g. 500 g, piece, portion)"), {
-      target: { value: "piece" },
-    });
-    fireEvent.change(screen.getByLabelText("Shop category"), { target: { value: "c" } });
-    fireEvent.change(screen.getByLabelText("Base price ₹"), { target: { value: "40" } });
-    fireEvent.change(screen.getByLabelText("Stock (whole sale units)"), { target: { value: "5" } });
-    fireEvent.click(screen.getByRole("button", { name: "Add product" }));
-    await waitFor(() =>
-      expect(management.saveProduct).toHaveBeenCalledWith(
-        expect.objectContaining({ name: "Actual item", price: 40, stock: 5, categoryId: "c" }),
-        undefined,
-      ),
-    );
-    await waitFor(() =>
-      expect(state.navigate).toHaveBeenCalledWith({
-        to: "/seller/products/$id/edit",
-        params: { id: "p" },
-      }),
-    );
-  });
+  it.each(["none", "success", "uncertain"])(
+    "creates one base listing with photo outcome %s and opens its edit route",
+    async (photoOutcome) => {
+      const product = {
+        id: "p",
+        shopId: "s",
+        name: "Actual item",
+        unit: "piece",
+        description: "",
+        categoryId: "c",
+        categorySlug: "grocery",
+        price: 40,
+        stock: 5,
+        version: 0,
+        active: true,
+        attributes: [],
+      };
+      vi.mocked(management.products).mockResolvedValue([]);
+      vi.mocked(management.saveProduct).mockResolvedValue(product);
+      if (photoOutcome !== "none") {
+        vi.mocked(productImages.capability).mockResolvedValue({
+          enabled: true,
+          maxBytes: 5242880,
+          types: ["image/png"],
+        });
+        const OriginalURL = URL;
+        vi.stubGlobal(
+          "URL",
+          Object.assign(class extends OriginalURL {}, {
+            createObjectURL: vi.fn(() => "blob:new-photo"),
+            revokeObjectURL: vi.fn(),
+          }),
+        );
+        if (photoOutcome === "success")
+          vi.mocked(productImages.upload).mockResolvedValue({
+            ...product,
+            version: 1,
+            image: "https://example.test/photo.webp",
+          });
+        else vi.mocked(productImages.upload).mockRejectedValue(new Error("Upload uncertain"));
+      }
+      mount(<LiveProducts path="/seller/products/new" shop={shop} categories={[category]} />);
+      fireEvent.change(await screen.findByLabelText("Product name"), {
+        target: { value: "Actual item" },
+      });
+      fireEvent.change(screen.getByLabelText("Unit / pack (e.g. 500 g, piece, portion)"), {
+        target: { value: "piece" },
+      });
+      fireEvent.change(screen.getByLabelText("Shop category"), { target: { value: "c" } });
+      fireEvent.change(screen.getByLabelText("Base price ₹"), { target: { value: "40" } });
+      fireEvent.change(screen.getByLabelText("Stock (whole sale units)"), {
+        target: { value: "5" },
+      });
+      const file = new File(["png-fixture"], "product.png", { type: "image/png" });
+      if (photoOutcome !== "none") {
+        fireEvent.change(await screen.findByLabelText("Choose product photo"), {
+          target: { files: [file] },
+        });
+        expect(await screen.findByAltText("Selected product photo preview")).toBeInTheDocument();
+      }
+      fireEvent.click(screen.getByRole("button", { name: "Add product" }));
+      await waitFor(() =>
+        expect(management.saveProduct).toHaveBeenCalledWith(
+          expect.objectContaining({ name: "Actual item", price: 40, stock: 5, categoryId: "c" }),
+          undefined,
+        ),
+      );
+      await waitFor(() =>
+        expect(state.navigate).toHaveBeenCalledWith({
+          to: "/seller/products/$id/edit",
+          params: { id: "p" },
+        }),
+      );
+      expect(management.saveProduct).toHaveBeenCalledTimes(1);
+      if (photoOutcome === "none") expect(productImages.upload).not.toHaveBeenCalled();
+      else expect(productImages.upload).toHaveBeenCalledWith(product, file);
+    },
+  );
   it("edits option stock using the parent product version and keeps the existing variant ID", async () => {
     const product = {
       id: "p",

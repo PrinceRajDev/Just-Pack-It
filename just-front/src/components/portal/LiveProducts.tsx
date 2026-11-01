@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { productImages } from "@/services/product-images";
+import { toast } from "sonner";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { management } from "@/services/management";
@@ -106,6 +108,16 @@ export function LiveProducts({
       )}
       {adding || editing ? (
         <>
+          {editing && (
+            <div className="mt-4">
+              <ProductPhotoUpload
+                key={`${editing.id}:${editing.version}`}
+                product={editing}
+                disabled={baseDirty || variantDirty}
+                onEditing={setImageEditing}
+              />
+            </div>
+          )}
           <fieldset disabled={variantDirty || imageEditing}>
             {variantDirty && (
               <p className="mb-3 text-sm">Save option changes before editing the listing.</p>
@@ -128,16 +140,6 @@ export function LiveProducts({
               )}
               <VariantManager key={editing.id} product={editing} onDirty={setVariantDirty} />
             </fieldset>
-          )}
-          {editing && (
-            <div className="mt-4">
-              <ProductPhotoUpload
-                key={`${editing.id}:${editing.version}`}
-                product={editing}
-                disabled={baseDirty || variantDirty}
-                onEditing={setImageEditing}
-              />
-            </div>
           )}
         </>
       ) : products.data?.length ? (
@@ -239,6 +241,25 @@ function ProductForm({
   const draft = useDraftGuard();
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? "");
   const [image, setImage] = useState(product?.image ?? "");
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string>();
+  const [photoError, setPhotoError] = useState("");
+  const photoInput = useRef<HTMLInputElement>(null);
+  const capability = useQuery({
+    queryKey: ["seller-image-upload"],
+    queryFn: productImages.capability,
+    enabled: !product,
+    staleTime: 60000,
+  });
+  useEffect(() => {
+    if (!photo) {
+      setPreview(undefined);
+      return;
+    }
+    const url = URL.createObjectURL(photo);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photo]);
   return (
     <Panel>
       {draft.dialog}
@@ -270,9 +291,25 @@ function ProductForm({
               ...(image ? { image } : product ? { image: null } : {}),
             };
             const result = await management.saveProduct(input, product);
-            draft.reset();
-            onDirty(false);
-            if (!product) onCreated(result);
+            if (!product) {
+              let created = result;
+              if (photo) {
+                try {
+                  created = await productImages.upload(result, photo);
+                } catch {
+                  toast.error(
+                    "Listing saved, but the photo upload could not be confirmed. Inspect the photo on the edit page before retrying.",
+                    { duration: 10000 },
+                  );
+                }
+              }
+              draft.reset();
+              onDirty(false);
+              onCreated(created);
+            } else {
+              draft.reset();
+              onDirty(false);
+            }
           });
         }}
       >
@@ -281,6 +318,99 @@ function ProductForm({
             <Box aria-hidden="true" />
             Listing details
           </h2>
+          {!product && (
+            <section
+              className="new-listing-photo rounded-xl border border-border bg-secondary/30 p-4"
+              aria-label="Product photo"
+            >
+              <h3 className="font-semibold">Product photo</h3>
+              <p className="my-2 text-sm text-muted-foreground">
+                Choose a JPEG, PNG or WebP up to 5 MiB. The photo uploads after your listing is
+                created.
+              </p>
+              {capability.isPending ? (
+                <p role="status">Checking photo uploads…</p>
+              ) : capability.isError ? (
+                <div>
+                  <p role="alert">Photo upload availability could not be checked.</p>
+                  <Button type="button" variant="outline" onClick={() => void capability.refetch()}>
+                    Check photo uploads
+                  </Button>
+                </div>
+              ) : capability.data?.enabled ? (
+                <>
+                  <label className="block text-sm">
+                    Choose product photo
+                    <input
+                      ref={photoInput}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="mt-2 block w-full"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        setPhoto(null);
+                        setPhotoError("");
+                        if (!file) return;
+                        if (!capability.data.types.includes(file.type)) {
+                          setPhotoError("Choose a JPEG, PNG or WebP photo.");
+                          e.target.value = "";
+                          return;
+                        }
+                        if (
+                          !file.size ||
+                          file.size > Math.min(capability.data.maxBytes, 5 * 1024 * 1024)
+                        ) {
+                          setPhotoError("Choose a non-empty photo no larger than 5 MiB.");
+                          e.target.value = "";
+                          return;
+                        }
+                        setPhoto(file);
+                        setImage("");
+                      }}
+                    />
+                  </label>
+                  {preview && (
+                    <div className="mt-3 w-32">
+                      <ProductImage
+                        src={preview}
+                        alt="Selected product photo preview"
+                        width={200}
+                      />
+                    </div>
+                  )}
+                  {photo && (
+                    <div>
+                      <p className="mt-2 text-sm">
+                        {photo.name} selected. Add product to save the listing and upload its photo.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="mt-2"
+                        onClick={() => {
+                          setPhoto(null);
+                          setPhotoError("");
+                          if (photoInput.current) photoInput.current.value = "";
+                        }}
+                      >
+                        Remove selected photo
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm">
+                  Photo uploads are not configured yet. You can save the listing and add a photo
+                  after storage is enabled.
+                </p>
+              )}
+              {photoError && (
+                <p role="alert" className="mt-2 text-sm text-destructive">
+                  {photoError}
+                </p>
+              )}
+            </section>
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
               label="Product name"
@@ -386,6 +516,7 @@ function ProductForm({
             <input
               className="mt-1 block w-full rounded border bg-background p-2"
               name="image"
+              disabled={!!photo}
               placeholder="Paste image HTTPS URL or durable key"
               value={image}
               onChange={(e) => setImage(e.target.value)}
@@ -393,8 +524,8 @@ function ProductForm({
           </label>
           <p className="text-xs text-muted-foreground">
             {product
-              ? "Use the photo uploader below, or provide an existing durable image URL/key here."
-              : "Save the listing first to unlock photo uploads. An existing durable image URL/key can also be used."}
+              ? "Use Product photo above to choose a file, or provide an existing durable image URL/key here."
+              : "Use Choose product photo above, or provide an existing image URL/key if you have one."}
           </p>
           {image && (
             <div className="w-32">

@@ -7,7 +7,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { sellerOrders } from "@/services/seller-orders";
 import type { SellerOrderStatus, SellerSuborder } from "@/domain/seller-orders";
 import type { ManagedShop } from "@/domain/management";
-import { PortalHeader } from "./PortalShell";
+import { NeighbourhoodIllustration } from "./NeighbourhoodIllustration";
+import { OrderBoxIllustration } from "./OrderBoxIllustration";
+import { ClipboardCheck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,11 +29,21 @@ export function LiveSellerOrders({ shop }: { shop: ManagedShop }) {
     retry: false,
   });
   return (
-    <>
-      <PortalHeader
-        title="Your shop's orders"
-        sub="Accept and prepare only your shop's part. COD is not collected by changing these statuses."
-      />
+    <div className="seller-orders-page">
+      <header className="seller-orders-hero">
+        <div>
+          <p className="workspace-eyebrow">Just Pack It · Workspace</p>
+          <h1>Your shop's orders</h1>
+          <p>
+            Accept and prepare only your shop's part. COD is not collected by changing these
+            statuses.
+          </p>
+        </div>
+        <div className="seller-orders-hero-art" aria-hidden="true">
+          <NeighbourhoodIllustration />
+          <ClipboardCheck className="seller-orders-checklist" />
+        </div>
+      </header>
       <SellerOrderAlerts
         key={shop.id}
         shopId={shop.id}
@@ -40,7 +52,7 @@ export function LiveSellerOrders({ shop }: { shop: ManagedShop }) {
           void query.refetch();
         }}
       />
-      <div className="mb-5 flex flex-wrap items-center gap-3">
+      <div className="seller-orders-toolbar">
         <Label htmlFor="seller-order-filter">Order status</Label>
         <select
           id="seller-order-filter"
@@ -72,6 +84,11 @@ export function LiveSellerOrders({ shop }: { shop: ManagedShop }) {
             })
           }
         >
+          <RefreshCw
+            size={18}
+            aria-hidden="true"
+            className={query.isFetching ? "animate-spin" : ""}
+          />
           Refresh orders
         </Button>
       </div>
@@ -81,18 +98,24 @@ export function LiveSellerOrders({ shop }: { shop: ManagedShop }) {
         </p>
       )}
       {query.isPending ? (
-        <p role="status">Loading shop orders…</p>
+        <p role="status" className="seller-orders-feedback">
+          Loading shop orders…
+        </p>
       ) : query.isError ? (
-        <div role="alert">
+        <div role="alert" className="seller-orders-feedback">
           <p>Couldn't load shop orders. No sample orders are shown.</p>
           <Button variant="outline" onClick={() => void query.refetch()}>
             Retry shop orders
           </Button>
         </div>
       ) : !query.data.length ? (
-        <p>No orders in this view.</p>
+        <section className="seller-orders-empty" aria-label="No matching orders">
+          <OrderBoxIllustration />
+          <h2>No orders in this view.</h2>
+          <p>When customers place an order, it will appear here based on the selected status.</p>
+        </section>
       ) : (
-        <ul className="space-y-5">
+        <ul className="seller-orders-list space-y-5">
           {query.data.map((sub) => (
             <li key={`${sub.orderId}:${sub.id}`}>
               <SellerOrderCard
@@ -105,7 +128,7 @@ export function LiveSellerOrders({ shop }: { shop: ManagedShop }) {
           ))}
         </ul>
       )}
-    </>
+    </div>
   );
 }
 export function SellerOrderCard({
@@ -163,7 +186,10 @@ export function SellerOrderCard({
     }
   }
   return (
-    <article className="space-y-3 rounded-xl border border-border bg-card p-5">
+    <article
+      className="seller-order-card space-y-3 rounded-xl border border-border bg-card p-5"
+      data-order-status={sub.status}
+    >
       {sub.testMode && (
         <p className="font-semibold">
           Test order: no real payment. Do not physically fulfil or collect cash.
@@ -172,7 +198,16 @@ export function SellerOrderCard({
       <h2 className="font-display text-xl">
         Order {sub.orderId.slice(0, 8)} · {sub.shopName}
       </h2>
-      <p className="text-sm">
+      <time className="seller-order-created" dateTime={sub.createdAt}>
+        {Number.isFinite(new Date(sub.createdAt).getTime())
+          ? new Date(sub.createdAt).toLocaleString("en-IN", {
+              timeZone: "Asia/Kolkata",
+              dateStyle: "medium",
+              timeStyle: "short",
+            }) + " · IST"
+          : "Order time unavailable"}
+      </time>
+      <p className="seller-order-state text-sm">
         {sub.status} · {fulfilmentLabel[sub.fulfilment]} ·{" "}
         {sub.paymentMethod === "razorpay" ? "Prepaid online" : "COD"} ·{" "}
         {cashLabel(sub.paymentStatus)}

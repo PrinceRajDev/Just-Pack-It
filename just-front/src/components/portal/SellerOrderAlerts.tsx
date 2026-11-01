@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { sellerOrders } from "@/services/seller-orders";
 import { Button } from "@/components/ui/button";
 import { unseenOrders } from "@/lib/seller-alerts";
+import { PackageCheck, Volume2, VolumeX, Bell, Info } from "lucide-react";
 function play(ctx: AudioContext | null) {
   if (!ctx || ctx.state !== "running") return;
   const oscillator = ctx.createOscillator(),
@@ -56,11 +57,9 @@ export function SellerOrderAlerts({ shopId, onReview }: { shopId: string; onRevi
     }
   }
   return (
-    <section
-      className="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4"
-      aria-label="New order alerts"
-    >
-      <p role="status" className="font-medium">
+    <section className="seller-order-alerts" aria-label="New order alerts">
+      <PackageCheck className="seller-alert-icon" aria-hidden="true" />
+      <p role="status" className="seller-alert-count">
         {query.isError
           ? "New-order checks unavailable"
           : query.isPending
@@ -68,12 +67,19 @@ export function SellerOrderAlerts({ shopId, onReview }: { shopId: string; onRevi
             : `${query.data.length} orders awaiting acceptance`}
       </p>
       <Button variant="outline" onClick={() => void toggle()} aria-pressed={enabled}>
+        {enabled ? (
+          <VolumeX size={18} aria-hidden="true" />
+        ) : (
+          <Volume2 size={18} aria-hidden="true" />
+        )}
         {enabled ? "Turn sound off" : "Enable order sound"}
       </Button>
       <Button variant="outline" onClick={onReview}>
+        <Bell size={18} aria-hidden="true" />
         Review new orders
       </Button>
-      <p className="w-full text-sm text-muted-foreground">
+      <p className="seller-alert-help text-sm text-muted-foreground">
+        <Info size={18} aria-hidden="true" />
         Checks every 15 seconds while this screen is active. Sound needs this page open; background
         alerts are not guaranteed.
       </p>

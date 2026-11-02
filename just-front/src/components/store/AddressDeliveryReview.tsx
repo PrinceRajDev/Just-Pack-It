@@ -128,11 +128,15 @@ function SignedInReview({
               <UiText>{"No saved addresses yet."}</UiText>
             </p>
           )}
-          <Button variant="outline" asChild>
-            <Link to="/account" search={{ tab: "addresses" }}>
-              <UiText>{"Manage saved addresses"}</UiText>
-            </Link>
-          </Button>
+          {!addresses.data.length && (
+            <div className="bag-address-empty-action">
+              <Button variant="outline" asChild>
+                <Link to="/account" search={{ tab: "addresses" }}>
+                  <UiText>{"Manage saved addresses"}</UiText>
+                </Link>
+              </Button>
+            </div>
+          )}
           {!!addresses.data.length && (
             <details className="bag-address-picker" open={!compact}>
               <summary>
@@ -185,6 +189,13 @@ function SignedInReview({
                   </label>
                 ))}
               </fieldset>
+              <div className="bag-address-manage">
+                <Button variant="outline" asChild>
+                  <Link to="/account" search={{ tab: "addresses" }}>
+                    <UiText>{"Manage saved addresses"}</UiText>
+                  </Link>
+                </Button>
+              </div>
             </details>
           )}
         </>

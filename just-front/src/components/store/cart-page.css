@@ -511,3 +511,19 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+.bag-address-manage {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #dfe6ce;
+}
+.bag-address-manage a {
+  max-width: 100%;
+  white-space: normal;
+}
+.bag-address-empty-action {
+  padding: 18px 22px;
+  background: #f1f5e3;
+  border: 1px solid #e4eacb;
+  border-top: 0;
+  border-radius: 0 0 20px 20px;
+}

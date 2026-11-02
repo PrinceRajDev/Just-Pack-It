@@ -1000,3 +1000,34 @@
     gap: 20px;
   }
 }
+/* Align the bill with the packing list; never pull it over the page hero. */
+.packing-desk .bag-columns {
+  align-items: start;
+}
+.packing-desk .packing-receipt {
+  margin-top: 0;
+  width: 100%;
+  min-width: 0;
+  align-self: start;
+  box-sizing: border-box;
+}
+.packing-receipt .packing-receipt-title {
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.packing-bill-preview > div > :first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.packing-bill-preview > div > :last-child {
+  flex-shrink: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.packing-receipt .bag-payable {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}

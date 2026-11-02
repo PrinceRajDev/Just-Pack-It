@@ -1,3 +1,4 @@
+import { productDraftRoutes } from "./ai/product-draft.js";
 import {platformAdminRoutes,platformPublicRoutes} from "./platform/settings.js";
 import {adminReportRoutes} from "./admin/reports.js";
 import {adminUserRoutes} from "./admin/users.js";
@@ -118,6 +119,7 @@ export function createApp(config: Config) {
     sellerReceiptRoutes(config),
     sellerDashboardRoutes(),
     sellerOrderRoutes(config),
+    productDraftRoutes(config),
     imageRoutes(config),
     sellerRoutes(config),
   );

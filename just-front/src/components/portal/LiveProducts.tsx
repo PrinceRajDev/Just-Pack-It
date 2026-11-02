@@ -1,3 +1,4 @@
+import { ProductDraftAssistant } from "./ProductDraftAssistant";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { productImages } from "@/services/product-images";
 import { toast } from "sonner";
@@ -250,6 +251,7 @@ function ProductForm({
   const [preview, setPreview] = useState<string>();
   const [photoError, setPhotoError] = useState("");
   const photoInput = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const capability = useQuery({
     queryKey: ["seller-image-upload"],
     queryFn: productImages.capability,
@@ -269,6 +271,7 @@ function ProductForm({
     <Panel>
       {draft.dialog}
       <form
+        ref={formRef}
         className="seller-listing-form"
         onChange={(event) => {
           if (product && (event.target as HTMLElement).closest(".product-photo-editor")) return;
@@ -518,6 +521,31 @@ function ProductForm({
                 </p>
               )}
             </section>
+          )}
+          {!product && (
+            <ProductDraftAssistant
+              key={photo ? `${photo.name}:${photo.lastModified}:${photo.size}` : "none"}
+              file={photo}
+              disabled={save.isPending}
+              onApply={(suggestion) => {
+                for (const name of ["name", "description", "unit"] as const) {
+                  const field = formRef.current?.elements.namedItem(name) as
+                    HTMLInputElement | HTMLTextAreaElement | null;
+                  if (field && !field.value.trim()) field.value = suggestion[name];
+                }
+                if (
+                  !categoryId &&
+                  categories.some(
+                    (category) =>
+                      category.id === suggestion.categoryId &&
+                      shop.categoryIds.includes(category.id),
+                  )
+                )
+                  setCategoryId(suggestion.categoryId);
+                draft.mark();
+                onDirty(true);
+              }}
+            />
           )}
         </div>
         <fieldset disabled={save.isPending || imageEditing} className="space-y-4">

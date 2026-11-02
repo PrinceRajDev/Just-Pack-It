@@ -27,14 +27,11 @@ export function ProductDraftAssistant({
   }, [file]);
   if (!capability.data?.enabled) return null;
   return (
-    <section
-      className="mt-4 space-y-3 rounded-lg border border-primary/20 p-4"
-      aria-label="AI product assistant"
-    >
-      <h3 className="font-semibold">Let AI help with the details</h3>
+    <section className="seller-ai-assistant mt-4 space-y-3" aria-label="AI product assistant">
+      <h3 className="font-semibold">A little help with the writing</h3>
       <p className="text-sm text-muted-foreground">
-        Your selected photo will be sent to Google Gemini. Review its suggestions before using them.
-        Price and stock stay yours to set.
+        Let Gemini suggest a name and description from your photo. Your photo is sent to Google only
+        when you ask. Review before applying; you set the price and stock.
       </p>
       <Button
         type="button"

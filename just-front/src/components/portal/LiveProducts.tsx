@@ -149,7 +149,7 @@ export function LiveProducts({
           {products.data.map((p) => (
             <Panel key={p.id}>
               <div className="flex items-center gap-4">
-                <div className="w-20 shrink-0">
+                <div className="seller-product-thumbnail w-20 shrink-0">
                   <ProductImage src={p.image} alt={p.name} width={120} />
                 </div>
                 <div>
@@ -160,8 +160,11 @@ export function LiveProducts({
                         "Category unavailable"}
                     </p>
                   )}
-                  <p className="text-sm">
-                    {p.active ? "Active" : "Inactive"} ·{" "}
+                  <p
+                    className="seller-product-status text-sm"
+                    data-active={p.active && !p.moderation?.blocked}
+                  >
+                    {p.moderation?.blocked ? "Blocked" : p.active ? "Active" : "Inactive"} ·{" "}
                     {inr(
                       p.variants?.length ? Math.min(...p.variants.map((v) => v.price)) : p.price,
                     )}{" "}
@@ -174,11 +177,16 @@ export function LiveProducts({
                   </p>
                 </div>
               </div>
-              <Button variant="outline" asChild>
-                <Link to="/seller/products/$id/edit" params={{ id: p.id }}>
-                  Edit listing and stock
-                </Link>
-              </Button>
+              <div className="seller-product-card-actions">
+                <Button variant="outline" asChild>
+                  <Link to="/seller/products/$id/edit" params={{ id: p.id }}>
+                    Edit product
+                  </Link>
+                </Button>
+                <Button variant="ghost" asChild>
+                  <Link to="/seller/inventory">Update stock</Link>
+                </Button>
+              </div>
             </Panel>
           ))}
         </div>
@@ -325,8 +333,11 @@ function ProductForm({
         <fieldset disabled={save.isPending || imageEditing} className="space-y-4">
           <h2 className="seller-listing-title font-display text-2xl">
             <Box aria-hidden="true" />
-            Listing details
+            Product basics
           </h2>
+          <p className="seller-form-intro">
+            A clear name, the right category and your price. Start with these essentials.
+          </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
               label="Product name"
@@ -431,14 +442,10 @@ function ProductForm({
         <div className="product-photo-editor">
           {photoEditor}
           {!product && (
-            <section
-              className="new-listing-photo rounded-xl border border-border bg-secondary/30 p-4"
-              aria-label="Product photo"
-            >
+            <section className="new-listing-photo" aria-label="Product photo">
               <h3 className="font-semibold">Product photo</h3>
               <p className="my-2 text-sm text-muted-foreground">
-                Choose a JPEG, PNG or WebP up to 5 MiB. The photo uploads after your listing is
-                created.
+                Show buyers what they will receive. Choose a clear product or packaging photo.
               </p>
               {capability.isPending ? (
                 <p role="status">Checking photo uploads…</p>
@@ -492,7 +499,7 @@ function ProductForm({
                   {photo && (
                     <div>
                       <p className="mt-2 text-sm">
-                        {photo.name} selected. Add product to save the listing and upload its photo.
+                        Photo ready. It will upload when you add this product.
                       </p>
                       <Button
                         type="button"
@@ -549,7 +556,7 @@ function ProductForm({
           )}
         </div>
         <fieldset disabled={save.isPending || imageEditing} className="space-y-4">
-          <label className="flex items-center gap-2 text-sm">
+          <label className="seller-listing-visibility flex items-center gap-2 text-sm">
             <input type="checkbox" name="active" defaultChecked={product?.active ?? true} />
             Active listing
           </label>

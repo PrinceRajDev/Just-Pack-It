@@ -1,5 +1,5 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Store, Clock3, Camera } from "lucide-react";
+import { Store, Clock3, Camera, MapPin, Tag, Check } from "lucide-react";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { SettlementLedger } from "./SettlementLedger";
 import { LiveSellerDashboard } from "./LiveSellerDashboard";
@@ -10,10 +10,10 @@ import { useQuery } from "@tanstack/react-query";
 import { management } from "@/services/management";
 import type { ManagedShop, ManagedCategory, ManagedArea, OpeningHour } from "@/domain/management";
 import type { FulfilmentMethod } from "@/domain/types";
-import { PortalHeader } from "./PortalShell";
+import { NeighbourhoodIllustration } from "./NeighbourhoodIllustration";
 import { ErrorState, EmptyState } from "@/components/common/states";
 import { Button } from "@/components/ui/button";
-import { Field, Panel, SaveError, useSave, text, number, selected } from "./management-shared";
+import { Field, SaveError, useSave, text, number, selected } from "./management-shared";
 import { LiveProducts } from "./LiveProducts";
 import { useDraftGuard } from "./useDraftGuard";
 import { SellerOnboarding } from "./SellerOnboarding";
@@ -133,12 +133,6 @@ export function LiveSeller() {
     );
   return (
     <>
-      <UiAttributes>
-        <PortalHeader
-          title={shop.data ? "Shop settings" : "Bring your shop online"}
-          sub="Manage your profile, availability and photo. Choose a section below."
-        />
-      </UiAttributes>
       <ShopForm
         key={`${shop.data?.id ?? "new"}:${shop.data?.version ?? 0}`}
         shop={shop.data}
@@ -185,22 +179,29 @@ export function ShopForm({
       </UiAttributes>
     );
   return (
-    <Panel>
+    <div className="seller-settings-page">
       {draft.dialog}
-      <div className="seller-settings-intro">
-        <div>
+      <header className="seller-settings-hero">
+        <div className="seller-settings-hero-copy">
           <p className="workspace-eyebrow">
-            <UiText>Make your shop easy to find</UiText>
+            Just Pack It · <UiText>Workspace</UiText>
           </p>
-          <h2>
-            <UiText>One thing at a time</UiText>
-          </h2>
+          <h1>
+            <UiText>{shop ? "Shop settings" : "Bring your shop online"}</UiText>
+          </h1>
           <p>
-            <UiText>Choose what you want to change. Each section tells you how it saves.</UiText>
+            <UiText>Manage your profile, availability and photo. Choose a section below.</UiText>
           </p>
         </div>
-        {shop && <ShopReviewNotice shop={shop} />}
-      </div>
+        <div className="seller-settings-art" aria-hidden="true">
+          <NeighbourhoodIllustration />
+        </div>
+        {shop?.review && (
+          <div className="seller-settings-review">
+            <ShopReviewNotice shop={shop} />
+          </div>
+        )}
+      </header>
       <Tabs value={settingsTab} onValueChange={setSettingsTab} className="seller-shop-settings">
         <TabsList aria-label="Shop settings sections" className="seller-settings-tabs">
           <TabsTrigger value="details">
@@ -317,6 +318,7 @@ export function ShopForm({
             <fieldset disabled={save.isPending || photoEditing} className="space-y-5">
               <section className="seller-settings-group">
                 <h3>
+                  <Store size={22} aria-hidden="true" />
                   <UiText>Your shop identity</UiText>
                 </h3>
                 <p>
@@ -355,22 +357,6 @@ export function ShopForm({
                     <Field label="Description" name="description" value={shop?.description} />
                   </UiAttributes>
                 </div>
-              </section>
-              <section className="seller-settings-group">
-                <h3>
-                  <UiText>Shop location</UiText>
-                </h3>
-                <p>
-                  <UiText>Stand at your shop when using GPS. Check the pin before saving.</UiText>
-                </p>
-                <ShopGpsPin
-                  coordinates={shop?.location?.coordinates}
-                  locationName={[shopAddress, shopLocality].filter(Boolean).join(", ")}
-                  onChange={() => {
-                    draft.mark();
-                    setProfileEditing(true);
-                  }}
-                />
               </section>
               <details className="seller-settings-advanced">
                 <summary>
@@ -423,13 +409,17 @@ export function ShopForm({
                   </UiAttributes>{" "}
                 </div>
               </details>
-              <fieldset>
+              <fieldset className="seller-settings-taxonomy">
                 <legend className="font-medium">
+                  <Tag size={22} aria-hidden="true" />
                   <UiText>What do you sell?</UiText>
                 </legend>
-                <div className="grid gap-2 sm:grid-cols-2">
+                <div className="seller-category-options">
                   {categories.map((c) => (
-                    <label key={c.id} className="flex items-center gap-2 text-sm">
+                    <label
+                      key={c.id}
+                      className={`seller-category-option ${categoryIds.includes(c.id) ? "is-selected" : ""}`}
+                    >
                       <input
                         type="checkbox"
                         checked={categoryIds.includes(c.id)}
@@ -446,8 +436,10 @@ export function ShopForm({
                   ))}
                 </div>
               </fieldset>
-              <fieldset>
-                <legend className="font-medium">Subcategories (optional)</legend>
+              <fieldset className="seller-settings-choices">
+                <legend className="font-medium">
+                  <UiText>Subcategories (optional)</UiText>
+                </legend>
                 {categories
                   .filter((c) => categoryIds.includes(c.id))
                   .flatMap((c) =>
@@ -464,7 +456,7 @@ export function ShopForm({
                     )),
                   )}
               </fieldset>
-              <fieldset>
+              <fieldset className="seller-settings-choices">
                 <legend className="font-medium">
                   <UiText>{"Service areas"}</UiText>
                 </legend>
@@ -480,6 +472,23 @@ export function ShopForm({
                   </label>
                 ))}
               </fieldset>
+              <details className="seller-settings-advanced seller-settings-location">
+                <summary>
+                  <MapPin size={20} aria-hidden="true" />
+                  <UiText>Shop location</UiText>
+                </summary>
+                <p>
+                  <UiText>Stand at your shop when using GPS. Check the pin before saving.</UiText>
+                </p>
+                <ShopGpsPin
+                  coordinates={shop?.location?.coordinates}
+                  locationName={[shopAddress, shopLocality].filter(Boolean).join(", ")}
+                  onChange={() => {
+                    draft.mark();
+                    setProfileEditing(true);
+                  }}
+                />
+              </details>
               <details className="seller-settings-advanced" open={!shop}>
                 <summary>
                   <UiText>
@@ -627,7 +636,8 @@ export function ShopForm({
                     Review your changes before submitting. Admin approval is required.
                   </UiText>
                 </p>
-                <Button type="submit">
+                <Button type="submit" disabled={!!shop && !profileEditing}>
+                  <Check size={18} aria-hidden="true" />
                   <UiText>{save.isPending ? "Saving…" : "Save and submit for approval"}</UiText>
                 </Button>
               </div>
@@ -678,6 +688,6 @@ export function ShopForm({
           </TabsContent>
         )}
       </Tabs>
-    </Panel>
+    </div>
   );
 }

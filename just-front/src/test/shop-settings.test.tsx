@@ -105,3 +105,20 @@ it("submits preserved categories, areas, hours and methods through the existing 
     ),
   );
 });
+
+it("keeps profile save disabled until edited and preserves edits across the photo tab", () => {
+  mount();
+  expect(screen.getByRole("button", { name: "Save and submit for approval" })).toBeDisabled();
+  fireEvent.change(screen.getByLabelText("Shop name"), { target: { value: "My updated shop" } });
+  expect(screen.getByRole("button", { name: "Save and submit for approval" })).toBeEnabled();
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Shop photo" }), {
+    button: 0,
+    ctrlKey: false,
+  });
+  expect(screen.getByRole("button", { name: "Save shop photo" })).toBeDisabled();
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Shop details" }), {
+    button: 0,
+    ctrlKey: false,
+  });
+  expect(screen.getByLabelText("Shop name")).toHaveValue("My updated shop");
+});

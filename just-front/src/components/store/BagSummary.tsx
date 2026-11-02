@@ -1,7 +1,7 @@
 import { UiText } from "@/lib/i18n/Language";
 import { useMemo } from "react";
 import { productById, shopById } from "@/services/catalog";
-import { deliveryFeeFor, FREE_PLATFORM_DELIVERY_ABOVE } from "@/lib/pricing";
+import { deliveryFeeFor } from "@/lib/pricing";
 import type { CartLine, FulfilmentMethod, Product, Shop } from "@/domain/types";
 import { useCart } from "@/stores/cart";
 import { inr } from "@/lib/image";
@@ -77,7 +77,6 @@ export function useBagGroups() {
       savings,
       total: itemsTotal + delivery,
       blocked,
-      freeAbove: FREE_PLATFORM_DELIVERY_ABOVE,
     };
   }, [lines]);
 }

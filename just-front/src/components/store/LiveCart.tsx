@@ -188,7 +188,7 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
                             </UiText>
                           </p>
                           <p className="text-muted-foreground">
-                            <UiText>{"Listed delivery fee:"}</UiText>{" "}
+                            <UiText>{"Shop-managed delivery fee:"}</UiText>{" "}
                             <UiText>
                               {group.shop.deliveryFee === undefined
                                 ? "Not supplied"

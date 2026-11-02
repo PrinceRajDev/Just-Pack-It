@@ -1,3 +1,4 @@
+import {deliveryFeeCents} from "../common/delivery-fee.js";
 import {deliveryAvailable} from "../delivery/coverage.js";
 import type {Config} from "../config/env.js";
 import {pinCoverage} from "../addresses/serviceability.js";
@@ -38,7 +39,7 @@ export async function readFulfilment(userId:string,input:z.infer<typeof inputSch
         if(method==="platform_delivery" && !riders) return {method,status:"unavailable",listedFee:null,message:"No approved available platform partner in this area."};
         if(method==="platform_delivery" && (!address.location||!shop.location))return {method,status:"unavailable",listedFee:null,message:"Delivery and shop pins are required for platform delivery."};
         const pinIssue=pinCoverage(address.location,shop.location);if(pinIssue)return {method,status:"unavailable",listedFee:null,message:pinIssue.message};
-        return {method,status:"eligible",listedFee:shop.deliveryFeeCents===undefined ? null : shop.deliveryFeeCents/100,message:address.location ? "Pincode and delivery pin pass configured coverage checks (within 6 km straight-line). Final charges are not yet quoted." : "Pincode coverage matches; no delivery pin is saved, so exact location distance has not been checked. Final charges are not yet quoted."};
+        return {method,status:"eligible",listedFee:deliveryFeeCents(method,shop.deliveryFeeCents)===undefined ? null : deliveryFeeCents(method,shop.deliveryFeeCents)!/100,message:address.location ? "Pincode and delivery pin pass configured coverage checks (within 6 km straight-line). Final charges are not yet quoted." : "Pincode coverage matches; no delivery pin is saved, so exact location distance has not been checked. Final charges are not yet quoted."};
       })};
     })};
 }

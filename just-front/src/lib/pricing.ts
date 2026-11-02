@@ -3,14 +3,12 @@ import { productById, shopById } from "@/services/catalog";
 import type { CartLine, FulfilmentMethod, SubOrder } from "@/domain/types";
 
 export const DELIVERY_FEE: Record<FulfilmentMethod, number> = {
-  platform_delivery: 25,
+  platform_delivery: 30,
   seller_delivery: 0,
   pickup: 0,
 };
-export const FREE_PLATFORM_DELIVERY_ABOVE = 299;
 
-export function deliveryFeeFor(method: FulfilmentMethod, itemsTotal: number) {
-  if (method === "platform_delivery" && itemsTotal >= FREE_PLATFORM_DELIVERY_ABOVE) return 0;
+export function deliveryFeeFor(method: FulfilmentMethod, _itemsTotal: number) {
   return DELIVERY_FEE[method];
 }
 

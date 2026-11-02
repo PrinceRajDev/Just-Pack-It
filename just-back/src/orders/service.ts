@@ -1,3 +1,4 @@
+import {deliveryFeeCents} from "../common/delivery-fee.js";
 import {assertNotOwnShop} from "../catalogue/purchase-policy.js";
 import {deliveryAvailable} from "../delivery/coverage.js";
 import {pinCoverage} from "../addresses/serviceability.js";
@@ -50,7 +51,7 @@ export async function createCodOrder(who:Actor,key:string,raw:z.infer<typeof ord
         const pinIssue=pinCoverage(address.location,shop.location);if(pinIssue)fail(409,"ADDRESS_UNSERVICEABLE",pinIssue.message);
         const coverage=await Area.findOneAndUpdate({_id:{$in:shop.areaIds},active:true,pincodes:address.pincode},{$inc:{revision:1}},{session,returnDocument:"after"});
         if(!coverage)fail(409,"ADDRESS_UNSERVICEABLE","A shop does not deliver to your saved pincode");
-        if(shop.deliveryFeeCents===undefined)fail(409,"DELIVERY_FEE_UNKNOWN","A shop has no configured delivery charge");fee=shop.deliveryFeeCents;
+        const charge=deliveryFeeCents(method,shop.deliveryFeeCents);if(charge===undefined)fail(409,"DELIVERY_FEE_UNKNOWN","A shop has no configured delivery charge");fee=charge;
       }
       const lines=[];
       for(const line of hold.lines.filter(line=>line.shopId===shopId)){

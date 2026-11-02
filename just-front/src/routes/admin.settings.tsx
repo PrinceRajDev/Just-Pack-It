@@ -6,7 +6,7 @@ import { PortalHeader } from "@/components/portal/PortalShell";
 import { Switch } from "@/components/ui/switch";
 import { serviceAreas } from "@/mocks/data";
 import { audit } from "@/mocks/admin";
-import { DELIVERY_FEE, FREE_PLATFORM_DELIVERY_ABOVE } from "@/lib/pricing";
+import { DELIVERY_FEE } from "@/lib/pricing";
 import { inr } from "@/lib/image";
 
 export const Route = createFileRoute("/admin/settings")({ component: AdminSettings });
@@ -51,8 +51,8 @@ function AdminSettings() {
             <dd>{inr(DELIVERY_FEE.platform_delivery)}</dd>
           </div>
           <div>
-            <dt className="label-stamp text-muted-foreground">Free above</dt>
-            <dd>{inr(FREE_PLATFORM_DELIVERY_ABOVE)}</dd>
+            <dt className="label-stamp text-muted-foreground">Rider fee policy</dt>
+            <dd>Fixed per shop order</dd>
           </div>
           <div>
             <dt className="label-stamp text-muted-foreground">Seller delivery</dt>

@@ -248,9 +248,11 @@ export function ShopForm({
           </div>
           <form
             onChange={(event) => {
-              const field = event.target as HTMLInputElement;
-              if (field.name === "address") setShopAddress(field.value);
-              if (field.name === "locality") setShopLocality(field.value);
+              const field: EventTarget = event.target;
+              if (field instanceof HTMLInputElement) {
+                if (field.name === "address") setShopAddress(field.value);
+                if (field.name === "locality") setShopLocality(field.value);
+              }
               draft.mark();
               setProfileEditing(true);
             }}

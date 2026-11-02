@@ -745,3 +745,11 @@ Object.assign(hindi, {
   "Could not get a precise shop location. Allow precise GPS while standing at your shop and try again. Your saved location is unchanged.":
     "सटीक लोकेशन नहीं मिली। दुकान पर खड़े होकर सटीक जीपीएस की अनुमति दें और फिर कोशिश करें। सहेजी लोकेशन नहीं बदली है।",
 });
+
+Object.assign(hindi, {
+  "View and process customer orders": "ग्राहकों के ऑर्डर देखें और संभालें",
+  "Manage product quantities": "उत्पाद की मात्रा बदलें",
+  "Availability, hours and delivery": "उपलब्धता, समय और डिलीवरी",
+  "Dashboard updated": "डैशबोर्ड अपडेट हो गया",
+  "Daily shop tasks": "दुकान के रोज़ के काम",
+});

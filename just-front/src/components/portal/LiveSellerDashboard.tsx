@@ -1,3 +1,11 @@
+import {
+  DashboardHero,
+  QuickActionCard,
+  DashboardLoading,
+  DashboardScene,
+} from "./SellerDashboardParts";
+import { OrderBoxIllustration } from "./OrderBoxIllustration";
+import { toast } from "sonner";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -10,7 +18,6 @@ import { ShopReviewNotice } from "./ShopReviewNotice";
 import { Button } from "@/components/ui/button";
 import { ShopAvailability } from "./ShopAvailability";
 import {
-  Plus,
   ShoppingCart,
   Hourglass,
   Package,
@@ -18,9 +25,10 @@ import {
   ClipboardList,
   Truck,
   Settings2,
+  RefreshCw,
+  ArrowRight,
+  ShieldCheck,
 } from "lucide-react";
-import { NeighbourhoodIllustration } from "./NeighbourhoodIllustration";
-import { OpenState } from "@/components/store/ShopMark";
 export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
   const [notice, setNotice] = useState("");
   const [controlsOpen, setControlsOpen] = useState(false);
@@ -45,56 +53,43 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
   });
   const data = query.data;
   return (
-    <>
-      <header className="seller-today-hero">
-        <div className="seller-hero-copy">
-          <p className="workspace-eyebrow">Just Pack It · Workspace</p>
-          <h1>
-            {shop.name} · <UiText>Today</UiText>
-          </h1>
-          <p className="seller-hero-date">
-            {new Intl.DateTimeFormat("en-IN", {
-              dateStyle: "full",
-              timeZone: shop.timezone,
-            }).format(new Date())}
-          </p>
-          <OpenState shop={shop} />
-          <p className="seller-hero-hours">{shop.hours}</p>
-        </div>
-        <NeighbourhoodIllustration className="seller-hero-art" />
-        <Button asChild variant="citrus" className="seller-add-product">
-          <Link to="/seller/products/new">
-            <Plus size={19} aria-hidden="true" />
-            <UiText>{"Add product"}</UiText>
-          </Link>
-        </Button>
-      </header>
-      <ShopReviewNotice shop={shop} />
-      <UiAttributes>
-        <nav className="seller-quick-actions" aria-label="Daily shop tasks">
-          <Button asChild>
-            <Link to="/seller/orders">
-              <ClipboardList aria-hidden="true" size={18} />
-              <UiText>{"Manage orders"}</UiText>
-            </Link>
-          </Button>
+    <div className="seller-today-dashboard">
+      <DashboardHero shop={shop} />
+      {shop.review && (
+        <div className="seller-review-row" data-review-status={shop.review.status}>
+          <ShieldCheck size={27} className="seller-review-shield" aria-hidden="true" />
+          <ShopReviewNotice shop={shop} />
           <Button asChild variant="outline">
-            <Link to="/seller/inventory">
-              <Boxes aria-hidden="true" size={18} />
-              <UiText>{"Update stock"}</UiText>
+            <Link to="/seller/settings">
+              <UiText>View details</UiText>
+              <ArrowRight size={16} aria-hidden="true" />
             </Link>
           </Button>
-          <Button
-            variant="outline"
-            onClick={openControls}
-            aria-expanded={controlsOpen}
-            aria-controls="seller-shop-controls"
-          >
-            <Settings2 aria-hidden="true" size={18} />
-            <UiText>Shop controls</UiText>
-          </Button>
-        </nav>
-      </UiAttributes>
+        </div>
+      )}
+      <nav className="seller-quick-actions seller-quick-card-grid" aria-label="Daily shop tasks">
+        <QuickActionCard
+          title="Manage orders"
+          description="View and process customer orders"
+          icon={ClipboardList}
+          to="/seller/orders"
+          primary
+        />
+        <QuickActionCard
+          title="Update stock"
+          description="Manage product quantities"
+          icon={Package}
+          to="/seller/inventory"
+        />
+        <QuickActionCard
+          title="Shop controls"
+          description="Availability, hours and delivery"
+          icon={Settings2}
+          onClick={openControls}
+          expanded={controlsOpen}
+          controls="seller-shop-controls"
+        />
+      </nav>
       <div className="seller-today-grid">
         <details
           id="seller-shop-controls"
@@ -108,6 +103,7 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
             <span>
               <UiText>{"Pause orders, change fees or update opening hours"}</UiText>
             </span>
+            <DashboardScene kind="hours" />
           </summary>
           <ShopAvailability shop={shop} />
         </details>
@@ -125,12 +121,21 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
               </Link>
             </p>
           )}
-          <div className="mb-5 flex flex-wrap items-center gap-3">
+          <div className="seller-dashboard-refresh mb-5 flex flex-wrap items-center gap-3">
             <Button
               variant="outline"
               disabled={query.isFetching}
-              onClick={() => void query.refetch()}
+              onClick={async () => {
+                const result = await query.refetch();
+                if (result.isError) toast.error("Could not refresh the dashboard.");
+                else toast.success("Dashboard updated");
+              }}
             >
+              <RefreshCw
+                size={17}
+                aria-hidden="true"
+                className={query.isFetching ? "seller-refreshing" : ""}
+              />
               <UiText>{"Refresh dashboard"}</UiText>
             </Button>
             {data && (
@@ -141,7 +146,7 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
               </p>
             )}
           </div>
-          {query.isPending && <p role="status">Loading daily orders and stock…</p>}
+          {query.isPending && <DashboardLoading />}
           {query.isError && (
             <p role="alert">
               Could not refresh the dashboard.{" "}
@@ -209,7 +214,7 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
                   </UiAttributes>
                 </a>
               </div>
-              <details className="my-4 text-sm text-muted-foreground">
+              <details className="seller-count-notes my-4 text-sm text-muted-foreground">
                 <summary className="cursor-pointer">
                   <UiText>{"About these counts"}</UiText>
                 </summary>
@@ -233,7 +238,7 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
                   id="seller-waiting-orders"
                   ref={waiting}
                   tabIndex={-1}
-                  className="seller-counter-card seller-work-section"
+                  className={`seller-counter-card seller-work-section seller-waiting-card${!data.urgent.length ? " seller-waiting-empty" : ""}`}
                   aria-label="Urgent orders"
                 >
                   <h2>
@@ -244,9 +249,14 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
                     {data.counts.placed ?? 0} orders need your response. Oldest orders appear first.
                   </p>
                   {!data.urgent.length && (
-                    <p>
+                    <p className="seller-empty-copy">
                       <UiText>{"No orders awaiting acceptance."}</UiText>
                     </p>
+                  )}
+                  {!data.urgent.length && (
+                    <div className="seller-waiting-art" aria-hidden="true">
+                      <OrderBoxIllustration />
+                    </div>
                   )}
                   {data.urgent.map((sub) => (
                     <UiAttributes key={`${sub.id}:${sub.version}`}>
@@ -271,9 +281,10 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
                     id="seller-handoffs"
                     ref={handoffs}
                     tabIndex={-1}
-                    className="seller-counter-card seller-work-section"
+                    className="seller-counter-card seller-work-section seller-handoff-card"
                     aria-label="Order pipeline"
                   >
+                    <DashboardScene kind="handoff" />
                     <h2>
                       <Truck aria-hidden="true" />
                       <UiText>{"Ready and on the way"}</UiText>
@@ -297,9 +308,10 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
                     id="seller-restock"
                     ref={stock}
                     tabIndex={-1}
-                    className="seller-counter-card seller-work-section"
+                    className="seller-counter-card seller-work-section seller-restock-card"
                     aria-label="Low stock"
                   >
+                    {!data.lowStock.items.length && <DashboardScene kind="stock" />}
                     <h2>
                       <Boxes aria-hidden="true" />
                       <UiText>{"Restock next"}</UiText>
@@ -346,6 +358,6 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }

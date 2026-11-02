@@ -8,7 +8,11 @@ import type { ManagedShop } from "@/domain/management";
 import type { ReactNode } from "react";
 vi.mock("@/services/seller-dashboard", () => ({ sellerDashboard: vi.fn() }));
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
+  Link: ({ children, to, ...props }: { children: ReactNode; to: string; className?: string }) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
 }));
 vi.mock("@/components/portal/LiveSellerOrders", () => ({
   SellerOrderCard: () => <p>Versioned order controls</p>,
@@ -91,9 +95,31 @@ it("keeps the pending-order shortcut and removes the next-step banner", async ()
 it("opens shop controls directly without submitting an availability change", async () => {
   vi.mocked(sellerDashboard).mockResolvedValue(data);
   mount();
-  const action = screen.getByRole("button", { name: "Shop controls" });
+  const action = screen.getByRole("button", { name: /^Shop controls/ });
   expect(action).toHaveAttribute("aria-expanded", "false");
   fireEvent.click(action);
   expect(action).toHaveAttribute("aria-expanded", "true");
   expect(document.getElementById("seller-shop-controls")).toHaveAttribute("open");
+});
+
+it("keeps quick actions routed to existing orders and inventory pages", async () => {
+  vi.mocked(sellerDashboard).mockResolvedValue(data);
+  mount();
+  expect(
+    screen.getByRole("link", { name: /Manage orders View and process customer orders/ }),
+  ).toHaveAttribute("href", "/seller/orders");
+  expect(
+    screen.getByRole("link", { name: /Update stock Manage product quantities/ }),
+  ).toHaveAttribute("href", "/seller/inventory");
+  expect(screen.getByRole("link", { name: "Add product" })).toHaveAttribute(
+    "href",
+    "/seller/products/new",
+  );
+  await screen.findByText("Orders received today");
+});
+it("shows loading feedback without presenting invented order counts", () => {
+  vi.mocked(sellerDashboard).mockReturnValue(new Promise(() => {}));
+  mount();
+  expect(screen.getByRole("status")).toHaveTextContent("Loading daily orders and stock");
+  expect(screen.queryByText("Orders received today")).toBeNull();
 });

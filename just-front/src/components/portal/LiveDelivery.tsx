@@ -1,3 +1,5 @@
+import { NeighbourhoodIllustration } from "./NeighbourhoodIllustration";
+import { Home, CircleHelp, ChartNoAxesCombined, UserRound } from "lucide-react";
 import { RiderOverview } from "./RiderOverview";
 import { Logo } from "@/components/brand/Logo";
 import { Bike, ShieldCheck, MapPin, ClipboardList, Wallet, LogOut, Clock3 } from "lucide-react";
@@ -91,6 +93,49 @@ export function LiveDelivery() {
   }
   return (
     <div className="delivery-workspace rider-workspace min-h-screen bg-background">
+      <aside className="dispatch-sidebar">
+        <Logo inverse />
+        <nav aria-label="Dispatch navigation">
+          <Link to="/delivery" className={!path.includes("earnings") ? "is-active" : ""}>
+            <Home size={21} aria-hidden="true" />
+            <UiText>Overview</UiText>
+          </Link>
+          <a href={path.includes("earnings") ? "/delivery#rider-task-board" : "#rider-task-board"}>
+            <ClipboardList size={21} aria-hidden="true" />
+            <UiText>Delivery tasks</UiText>
+            {tasks.isSuccess && (
+              <span className="dispatch-task-count">
+                {tasks.data.pages.reduce((n, page) => n + page.items.length, 0)}
+                {tasks.hasNextPage ? "+" : ""}
+              </span>
+            )}
+          </a>
+          <Link to="/delivery/earnings" className={path.includes("earnings") ? "is-active" : ""}>
+            <Wallet size={21} aria-hidden="true" />
+            <UiText>Cash handover</UiText>
+          </Link>
+          <span className="dispatch-disabled">
+            <ChartNoAxesCombined size={21} aria-hidden="true" />
+            <span>
+              <UiText>Earnings</UiText>
+              <small>
+                <UiText>Partner payouts not configured</UiText>
+              </small>
+            </span>
+          </span>
+          <a href={path.includes("earnings") ? "/delivery#rider-help" : "#rider-help"}>
+            <CircleHelp size={21} aria-hidden="true" />
+            <UiText>Help & support</UiText>
+          </a>
+        </nav>
+        <div className="dispatch-sidebar-art" aria-hidden="true">
+          <NeighbourhoodIllustration />
+          <Bike size={110} strokeWidth={1} />
+        </div>
+        <Link to="/" className="dispatch-market-link">
+          <UiText>Visit the marketplace</UiText> ↗
+        </Link>
+      </aside>
       <header className="rider-header">
         <Logo />
         <span className="rider-header-label">
@@ -99,7 +144,21 @@ export function LiveDelivery() {
         </span>
         <div className="rider-header-actions">
           <LanguageSwitcher />
-          <span className="rider-profile">{session?.name}</span>
+          <details className="dispatch-profile">
+            <summary>
+              <UserRound size={20} aria-hidden="true" />
+              <span>{session?.name}</span>
+            </summary>
+            <div>
+              <strong>{session?.name}</strong>
+              <p>
+                <UiText>Delivery partner account</UiText>
+              </p>
+              <Link to="/account">
+                <UiText>Manage account</UiText>
+              </Link>
+            </div>
+          </details>
           <Button variant="outline" onClick={signOut}>
             <LogOut size={17} aria-hidden="true" />
             <UiText>Sign out</UiText>
@@ -132,7 +191,16 @@ export function LiveDelivery() {
             )}
           </div>
           <div className="rider-hero-icon" aria-hidden="true">
-            <Bike size={108} strokeWidth={1.3} />
+            <NeighbourhoodIllustration />
+            <svg viewBox="0 0 200 65" fill="none">
+              <path
+                d="M5 45C40 3 70 64 110 34S164 6 190 25"
+                stroke="#8c8a3c"
+                strokeWidth="2"
+                strokeDasharray="5 6"
+              />
+              <circle cx="188" cy="22" r="8" fill="#c5e526" stroke="#426134" />
+            </svg>
           </div>
         </section>
         <nav className="rider-tabs" aria-label="Delivery workspace sections">
@@ -255,7 +323,7 @@ export function LiveDelivery() {
               />
             ) : (
               active.isSuccess && (
-                <section className="rider-tasks-card space-y-3">
+                <section id="rider-task-board" className="rider-tasks-card space-y-3 scroll-mt-6">
                   <h2 className="font-display text-2xl">Ready delivery tasks</h2>
                   {!profile.data?.online ? (
                     <div className="rider-tasks-empty">
@@ -313,9 +381,9 @@ export function LiveDelivery() {
                         ))}
                       {tasks.isSuccess && !tasks.data.pages.some((p) => p.items.length) && (
                         <p>
-                          No ready delivery orders in your assigned areas yet. Shops appear here
-                          only when an order is ready for rider pickup. We check every 15 seconds
-                          while this page is active.
+                          No deliveries waiting right now. New requests from shops in your assigned
+                          area will appear here. We check every 15 seconds while this page is
+                          active.
                         </p>
                       )}
                       {(tasks.hasNextPage || tasks.isFetchNextPageError) && (

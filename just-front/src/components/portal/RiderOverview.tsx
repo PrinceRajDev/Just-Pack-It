@@ -1,6 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { MapPin, PackageCheck, Route, Wallet, RefreshCw, ArrowRight } from "lucide-react";
+import {
+  MapPin,
+  PackageCheck,
+  Route,
+  Wallet,
+  RefreshCw,
+  Store,
+  Bike,
+  CheckCircle2,
+  ClipboardList,
+  ArrowRight,
+} from "lucide-react";
 import { management } from "@/services/management";
 import { UiText } from "@/lib/i18n/Language";
 import type { PartnerProfile, LiveDeliveryTask } from "@/domain/live-delivery";
@@ -27,6 +38,54 @@ export function RiderOverview({
   const assigned = areas.data?.filter((area) => profile.areaIds.includes(area.id));
   return (
     <section className="rider-overview" aria-label="Delivery overview">
+      <section className="dispatch-flow" aria-label="Today’s delivery flow">
+        <h2>
+          <UiText>Today’s delivery flow</UiText>
+        </h2>
+        <p>
+          <UiText>Follow these steps to complete your deliveries.</UiText>
+        </p>
+        <ol>
+          {[
+            { label: "Pick a task", icon: ClipboardList },
+            { label: "Collect from shop", icon: Store },
+            { label: "Deliver to customer", icon: Bike },
+            { label: "Mark as complete", icon: CheckCircle2 },
+          ].map(({ label, icon: Icon }, index) => {
+            const stage = !taskKnown
+              ? -1
+              : !task
+                ? 0
+                : task.status === "claimed"
+                  ? 1
+                  : ["picked_up", "out_for_delivery"].includes(task.status)
+                    ? 2
+                    : task.status === "delivered"
+                      ? 3
+                      : -1;
+            return (
+              <li
+                key={label}
+                aria-current={index === stage ? "step" : undefined}
+                data-progress={
+                  stage < 0
+                    ? "pending"
+                    : index < stage
+                      ? "complete"
+                      : index === stage
+                        ? "current"
+                        : "pending"
+                }
+              >
+                <Icon size={26} aria-hidden="true" />
+                <span>
+                  <UiText>{label}</UiText>
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
       <div className="rider-metrics">
         <article>
           <span>
@@ -136,7 +195,7 @@ export function RiderOverview({
             ? new Date(updatedAt).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" }) + " IST"
             : "Not checked yet")}
       </p>
-      <details className="rider-help-card">
+      <details id="rider-help" className="rider-help-card scroll-mt-6">
         <summary>
           <UiText>How a delivery works</UiText>
         </summary>

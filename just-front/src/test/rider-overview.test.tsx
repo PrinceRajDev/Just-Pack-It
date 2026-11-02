@@ -34,4 +34,9 @@ it("shows only assigned area names and labels loaded task counts without invente
   expect(screen.getByText("2+")).toBeInTheDocument();
   expect(screen.getByText("No active task")).toBeInTheDocument();
   expect(screen.queryByText(/₹/)).toBeNull();
+  expect(screen.getByText("Pick a task").closest("li")).toHaveAttribute("aria-current", "step");
+  expect(screen.getByText("Collect from shop").closest("li")).toHaveAttribute(
+    "data-progress",
+    "pending",
+  );
 });

@@ -66,9 +66,13 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
         </Button>
       </nav>
       <div className="seller-today-grid">
-        <div className="seller-controls-column">
+        <details className="seller-controls-column seller-availability-disclosure">
+          <summary>
+            Shop hours and delivery settings
+            <span>Pause orders, change fees or update opening hours</span>
+          </summary>
           <ShopAvailability shop={shop} />
-        </div>
+        </details>
         <div className="seller-activity-column">
           {!shop.active && (
             <p role="status">

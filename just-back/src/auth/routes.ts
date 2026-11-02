@@ -1,3 +1,4 @@
+import {Partner} from "../delivery/models.js";
 import { Router } from "express";
 import type { Config } from "../config/env.js";
 import { registerInput, loginInput,password } from "./validators.js";
@@ -39,6 +40,17 @@ export function authRoutes(config: Config) {
     const input = sellerRegistrationInput.parse(req.body);
     await throttle(`register:${req.ip}`, config, 10);
     res.status(201).json(await registerSeller(input, config));
+  });
+  router.post("/register/delivery", async (req, res) => {
+    const input = registerInput.parse(req.body);
+    await throttle(`register:${req.ip}`, config, 10);
+    const proof=await verifySignupEmail(input,config),passwordHash=await hashPassword(input.password);
+    await mongoose.connection.transaction(async session=>{
+      const verifiedEmail=await consumeEmailProof(proof,session);
+      const [user]=await User.create([{name:input.name,phone:input.phone,passwordHash,role:"delivery",active:true,...verifiedEmail}],{session});
+      await Partner.create([{_id:user!._id,approved:false,areaIds:[],online:false,seenAt:new Date(),version:0,revision:0}],{session});
+    });
+    res.status(201).json(await login(input, config, req.ip ?? "unknown"));
   });
   router.post("/register", async (req, res) => {
     const input = registerInput.parse(req.body);

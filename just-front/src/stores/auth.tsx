@@ -21,6 +21,12 @@ interface AuthCtx {
     password: string,
     proof?: SignupEmailProof,
   ) => Promise<Session>;
+  registerDelivery: (
+    name: string,
+    phone: string,
+    password: string,
+    proof?: SignupEmailProof,
+  ) => Promise<Session>;
   registerSeller: (input: SellerSignupInput) => Promise<Session>;
   signOut: () => Promise<boolean>;
   clearSession: () => void;
@@ -176,6 +182,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
         registerBuyer: async (name, phone, password, proof) => {
           const s = await authentication.register(name, phone, password, proof);
+          persist(s);
+          return s;
+        },
+        registerDelivery: async (name, phone, password, proof) => {
+          const s = await authentication.registerDelivery(name, phone, password, proof);
           persist(s);
           return s;
         },

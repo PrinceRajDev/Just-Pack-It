@@ -17,7 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { authentication } from "@/services/auth";
 import type { SignupEmailProof } from "@/domain/management";
 import { EmailOtpField } from "./EmailOtpField";
-import { ArrowRight, Eye, EyeOff, Loader2, ShoppingBag, Store } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Loader2, ShoppingBag, Store, Bike } from "lucide-react";
 import { PasswordRecovery } from "./PasswordRecovery";
 import { googleConfigured, googleIdentity } from "@/services/google-auth";
 import { ApiError } from "@/lib/api/client";
@@ -40,10 +40,10 @@ export function LiveAuthForm({
   onModeChange?: (registering: boolean) => void;
   onRecoveryChange?: (recovering: boolean) => void;
 }) {
-  const { loginPassword, loginGoogle, registerBuyer, registerSeller } = useAuth();
+  const { loginPassword, loginGoogle, registerBuyer, registerSeller, registerDelivery } = useAuth();
   const [googleBusy, setGoogleBusy] = useState(false);
   const [googleToken, setGoogleToken] = useState<string>();
-  const [accountType, setAccountType] = useState<"buyer" | "seller">("buyer");
+  const [accountType, setAccountType] = useState<"buyer" | "seller" | "delivery">("buyer");
   const [sellerReady, setSellerReady] = useState(false);
   const [shopPhoto, setShopPhoto] = useState<File | null>(null);
   const formElement = useRef<HTMLFormElement>(null);
@@ -108,9 +108,11 @@ export function LiveAuthForm({
                     ...emailProof,
                     shop: readSellerShop(new FormData(formElement.current!)),
                   })
-                : emailProof
-                  ? await registerBuyer(values.name!, phone, values.password, emailProof)
-                  : await registerBuyer(values.name!, phone, values.password)
+                : accountType === "delivery"
+                  ? await registerDelivery(values.name!, phone, values.password, emailProof)
+                  : emailProof
+                    ? await registerBuyer(values.name!, phone, values.password, emailProof)
+                    : await registerBuyer(values.name!, phone, values.password)
               : googleToken
                 ? await loginGoogle(googleToken, phone, values.password)
                 : await loginPassword(phone, values.password);
@@ -160,12 +162,12 @@ export function LiveAuthForm({
         {registering && (
           <fieldset
             disabled={form.formState.isSubmitting}
-            className="auth-role-options grid grid-cols-2 gap-3"
+            className="auth-role-options grid grid-cols-1 sm:grid-cols-3 gap-3"
           >
             <legend className="mb-2 text-sm font-medium">
               <UiText>{"Choose your place in the market"}</UiText>
             </legend>
-            {(["buyer", "seller"] as const).map((type) => (
+            {(["buyer", "seller", "delivery"] as const).map((type) => (
               <label
                 key={type}
                 className={`auth-role-choice flex cursor-pointer items-center gap-2 rounded-xl border p-4 text-sm ${accountType === type ? "border-primary bg-primary/5" : "border-border"}`}
@@ -184,21 +186,41 @@ export function LiveAuthForm({
                 <span>
                   {type === "buyer" ? (
                     <ShoppingBag className="mb-2 size-5" aria-hidden />
+                  ) : type === "delivery" ? (
+                    <Bike className="mb-2 size-5" aria-hidden />
                   ) : (
                     <Store className="mb-2 size-5" aria-hidden />
                   )}
                   <strong className="block">
-                    <UiText>{type === "buyer" ? "Buyer" : "Seller"}</UiText>
+                    <UiText>
+                      {type === "buyer"
+                        ? "Buyer"
+                        : type === "delivery"
+                          ? "Delivery partner"
+                          : "Seller"}
+                    </UiText>
                   </strong>
                   <span className="text-xs text-muted-foreground">
                     <UiText>
-                      {type === "buyer" ? "Discover local shops & order" : "Bring your shop online"}
+                      {type === "buyer"
+                        ? "Discover local shops & order"
+                        : type === "delivery"
+                          ? "Deliver local orders"
+                          : "Bring your shop online"}
                     </UiText>
                   </span>
                 </span>
               </label>
             ))}
           </fieldset>
+        )}
+        {registering && accountType === "delivery" && (
+          <p className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
+            <UiText>
+              Create your rider account. An admin must approve you and assign service areas before
+              you can go online and accept deliveries.
+            </UiText>
+          </p>
         )}
         <div className="auth-details-section">
           {registering && (
@@ -357,7 +379,9 @@ export function LiveAuthForm({
               : registering
                 ? accountType === "seller"
                   ? "Create account and submit shop"
-                  : "Create buyer account"
+                  : accountType === "delivery"
+                    ? "Create rider account"
+                    : "Create buyer account"
                 : "Sign in"}
           </UiText>
           {!form.formState.isSubmitting && <ArrowRight size={18} aria-hidden="true" />}

@@ -13,6 +13,7 @@ vi.mock("@/services/auth", () => ({
 const auth = vi.hoisted(() => ({
   registerBuyer: vi.fn(),
   registerSeller: vi.fn(),
+  registerDelivery: vi.fn(),
   loginPassword: vi.fn(),
   loginGoogle: vi.fn(),
 }));
@@ -171,9 +172,9 @@ describe("Buyer/seller signup", () => {
       expect(auth.loginPassword).toHaveBeenCalledWith("+919876543210", "QA-only-password-2026");
     },
   );
-  it("offers only buyer and seller registration and keeps buyer signup simple", async () => {
+  it("offers buyer, seller and delivery registration and keeps buyer signup simple", async () => {
     const success = mount();
-    expect(screen.getAllByRole("radio")).toHaveLength(2);
+    expect(screen.getAllByRole("radio")).toHaveLength(3);
     expect(screen.queryByLabelText("Shop name")).not.toBeInTheDocument();
     identity();
     await waitFor(() =>
@@ -269,4 +270,26 @@ describe("Buyer/seller signup", () => {
     );
     expect(screen.getByRole("button", { name: "New here? Create an account" })).toBeDisabled();
   });
+});
+
+it("creates a rider without requiring seller fields and redirects to the delivery role", async () => {
+  auth.registerDelivery.mockResolvedValue({ role: "delivery" });
+  const success = mount();
+  fireEvent.click(screen.getByRole("radio", { name: /Delivery partner/ }));
+  expect(screen.queryByLabelText("Shop name")).toBeNull();
+  expect(screen.getByText(/An admin must approve you/)).toBeInTheDocument();
+  identity();
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Create rider account" })).toBeEnabled(),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Create rider account" }));
+  await waitFor(() =>
+    expect(auth.registerDelivery).toHaveBeenCalledWith(
+      "Test owner",
+      "+919876543210",
+      "Test-only-password-2026",
+      undefined,
+    ),
+  );
+  expect(success).toHaveBeenCalledWith("delivery", true);
 });

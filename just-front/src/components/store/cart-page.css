@@ -876,3 +876,127 @@
     padding-right: 0;
   }
 }
+/* Keep the packing desk compact without trapping the bill in a nested scroll area. */
+.packing-desk {
+  min-height: 0;
+  padding-bottom: 12px;
+}
+.packing-desk .bag-page-heading {
+  min-height: 160px;
+  margin-top: 18px;
+  margin-bottom: 12px;
+}
+.packing-desk .bag-page-heading nav {
+  margin-bottom: 12px;
+}
+.packing-desk .bag-page-heading h1 {
+  margin: 10px 0 12px;
+  font-size: clamp(30px, 3.3vw, 50px);
+}
+.packing-art {
+  width: 185px;
+  bottom: 0;
+}
+.packing-hero-copy {
+  max-width: none !important;
+}
+.packing-desk .bag-page-content {
+  padding-bottom: 16px;
+}
+.packing-desk .bag-shop-list {
+  gap: 14px;
+}
+.packing-count {
+  padding: 12px;
+}
+.packing-desk .bag-shop-card {
+  padding: 16px 20px;
+}
+.packing-desk .bag-shop-heading {
+  padding-bottom: 12px;
+}
+.packing-desk .bag-product-line {
+  padding: 16px 0;
+}
+.packing-desk .bag-add-more {
+  padding-top: 12px;
+  margin-top: 8px;
+}
+.packing-receipt {
+  margin-top: -185px;
+  padding: 20px;
+}
+.packing-receipt-title {
+  font-size: 23px;
+  padding-bottom: 14px;
+  margin-bottom: 12px;
+}
+.packing-bill-preview {
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+}
+.packing-bill-preview > div {
+  margin: 9px 0;
+}
+.packing-receipt .bag-address-picker {
+  padding: 12px 16px;
+}
+.packing-receipt .bag-payable {
+  padding: 12px 16px;
+  font-size: 22px;
+}
+.packing-receipt .bag-trust {
+  padding-top: 8px;
+}
+.packing-receipt .bag-trust span {
+  gap: 5px;
+}
+.packing-street {
+  max-width: 300px;
+  height: 85px;
+  margin-top: 12px;
+}
+.packing-street > svg:first-child {
+  max-height: 85px;
+}
+.packing-street > svg:last-child {
+  max-height: 55px;
+}
+@media (max-width: 1100px) {
+  .packing-receipt {
+    margin-top: 0;
+  }
+  .packing-desk .bag-page-heading {
+    min-height: 140px;
+  }
+  .packing-art {
+    width: 150px;
+  }
+}
+@media (max-width: 600px) {
+  .packing-desk .bag-page-heading {
+    min-height: 0;
+    margin-top: 14px;
+  }
+  .packing-art {
+    display: none;
+  }
+  .packing-desk .bag-page-heading h1 {
+    font-size: 32px;
+  }
+  .packing-street {
+    display: none;
+  }
+  .packing-count {
+    font-size: 13px;
+  }
+  .packing-desk .bag-shop-card {
+    padding: 14px;
+  }
+  .packing-receipt {
+    padding: 16px;
+  }
+  .packing-desk .bag-columns {
+    gap: 20px;
+  }
+}

@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { LoadingState } from "@/components/common/LoadingState";
 import { UiText } from "@/lib/i18n/Language";
 import { DeliveryExceptions } from "./DeliveryExceptions";
@@ -8,6 +9,7 @@ import { management } from "@/services/management";
 import type { AdminPartner } from "@/domain/live-delivery";
 import { Button } from "@/components/ui/button";
 export function DeliveryPartners() {
+  const [savedNotice, setSavedNotice] = useState("");
   const query = useQuery({
       queryKey: ["admin-delivery-partners"],
       queryFn: delivery.partners,
@@ -31,6 +33,11 @@ export function DeliveryPartners() {
           Refresh partners
         </Button>
       </div>
+      {savedNotice && (
+        <p role="status" className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+          {savedNotice}
+        </p>
+      )}
       <DeliveryExceptions />
       <p className="text-sm">
         Delivery partners registered through signup appear here (up to 100 accounts shown). Select
@@ -63,6 +70,7 @@ export function DeliveryPartners() {
             <PartnerForm
               key={`${partner.id}:${partner.version}`}
               partner={partner}
+              onSaved={setSavedNotice}
               areas={areas.data.filter((a) => a.active)}
             />
           ))}
@@ -74,7 +82,9 @@ export function DeliveryPartners() {
 function PartnerForm({
   partner,
   areas,
+  onSaved,
 }: {
+  onSaved: (message: string) => void;
   partner: AdminPartner;
   areas: { id: string; name: string }[];
 }) {
@@ -92,8 +102,24 @@ function PartnerForm({
         setBusy(true);
         setError("");
         try {
-          await delivery.savePartner(partner, approved, selected);
-          await client.invalidateQueries({ queryKey: ["admin-delivery-partners"] });
+          const result = await delivery.savePartner(partner, approved, selected);
+          if (!Number.isInteger(result.version) || result.version <= partner.version)
+            throw new Error(
+              "Approval response could not be verified. Refresh partners before retrying.",
+            );
+          client.setQueryData<AdminPartner[]>(["admin-delivery-partners"], (records) =>
+            records?.map((record) =>
+              record.id === partner.id
+                ? { ...record, approved, areaIds: selected, version: result.version }
+                : record,
+            ),
+          );
+          const message = approved
+            ? `${partner.name} approved. Service areas saved; the rider can now go online.`
+            : `${partner.name}: approval removed and service areas saved.`;
+          onSaved(message);
+          toast.success(message);
+          void client.invalidateQueries({ queryKey: ["admin-delivery-partners"] });
         } catch (cause) {
           setError(
             cause instanceof Error
@@ -139,10 +165,14 @@ function PartnerForm({
             {area.name}
           </label>
         ))}
-        <Button variant="outline" disabled={!selected.length}>
-          Save partner approval
+        <Button type="submit" variant="outline" disabled={busy || !selected.length}>
+          {busy ? "Saving approval…" : "Save partner approval"}
         </Button>
       </fieldset>
+      {busy && <p role="status">Saving approval. Please wait for confirmation.</p>}
+      {partner.activeTask && (
+        <p className="text-sm">Resolve this rider’s active delivery before changing approval.</p>
+      )}
       {error && <p role="alert">{error}</p>}
     </form>
   );

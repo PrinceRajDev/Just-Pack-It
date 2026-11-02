@@ -70,9 +70,10 @@ export const delivery = {
     >("/admin/delivery/issues"),
   report: (task: LiveDeliveryTask, reason: string) =>
     post(`/delivery/tasks/${encodeURIComponent(task.id)}/issue`, { version: task.version, reason }),
-  partners: () => api<AdminPartner[]>("/admin/delivery/partners"),
+  partners: () =>
+    api<AdminPartner[]>("/admin/delivery/partners", { signal: AbortSignal.timeout(30000) }),
   savePartner: (partner: AdminPartner, approved: boolean, areaIds: string[]) =>
-    post(
+    post<{ version: number }>(
       `/admin/delivery/partners/${encodeURIComponent(partner.id)}`,
       { version: partner.version, approved, areaIds },
       "PUT",

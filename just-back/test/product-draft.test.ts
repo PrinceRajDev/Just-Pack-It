@@ -25,9 +25,16 @@ it("rejects price and stock rather than accepting model-generated commerce field
 });
 it("does not leak provider errors or credentials", async () => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("private provider details", { status: 401 })));
-  await expect(generateDraft(config, Buffer.from("photo"), categories)).rejects.toMatchObject({ message: "Could not generate details. Retry later or fill the form manually." });
+  await expect(generateDraft(config, Buffer.from("photo"), categories)).rejects.toMatchObject({ code: "AI_CONFIGURATION" });
 });
 it("rejects malformed and oversized fields", () => {
   expect(draftSchema.safeParse({ name: "x".repeat(161), description: "", unit: "", categoryId: "" }).success).toBe(false);
   expect(draftSchema.safeParse({ name: "Rice" }).success).toBe(false);
+});
+
+it("distinguishes provider quota and model failures", async () => {
+  for (const [status, code] of [[429, "AI_QUOTA_EXCEEDED"], [404, "AI_MODEL_UNAVAILABLE"], [400, "AI_REQUEST_REJECTED"]] as const) {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("private provider body", { status })));
+    await expect(generateDraft(config, Buffer.from("photo"), categories)).rejects.toMatchObject({ code });
+  }
 });

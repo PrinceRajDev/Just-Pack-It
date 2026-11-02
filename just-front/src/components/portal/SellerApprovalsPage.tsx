@@ -264,6 +264,12 @@ export function SellerApprovalsPage() {
           </Button>
         </div>
       )}
+      <a
+        href="#delivery-partners"
+        className="inline-flex min-h-11 items-center rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 font-medium text-primary"
+      >
+        Review delivery partner approvals ↓
+      </a>
       <Tabs value={status} onValueChange={(v) => setStatus(v as typeof status)}>
         <div className="seller-controls">
           <UiAttributes>
@@ -552,8 +558,8 @@ export function SellerApprovalsPage() {
         <summary>Registered seller accounts</summary>
         <SellerDirectory />
       </details>
-      <details className="seller-secondary-tools">
-        <summary>Delivery partner operations</summary>
+      <details id="delivery-partners" open className="seller-secondary-tools scroll-mt-28">
+        <summary>Delivery partner approvals and operations</summary>
         <DeliveryPartners />
       </details>
       {selected && (

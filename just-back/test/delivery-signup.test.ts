@@ -1,3 +1,4 @@
+import {Notification} from "../src/notifications/service.js";
 import { beforeAll, afterAll, it, expect } from "vitest";
 import { MongoMemoryReplSet } from "mongodb-memory-server";
 import { resolve } from "node:path";
@@ -18,6 +19,7 @@ it("registers an unapproved offline rider and rejects going online before approv
  expect(response.body.role).toBe("delivery");
  const user=await User.findOne({phone:input.phone}).lean();
  expect(user?.role).toBe("delivery");
+ expect(await Notification.findOne({admin:true,title:"New delivery partner application"}).lean()).toMatchObject({link:"/admin/partners#delivery-partners"});
  expect(await Partner.findById(user!._id).lean()).toMatchObject({approved:false,online:false,areaIds:[]});
  await api.put("/delivery/availability").set("Authorization",`Bearer ${response.body.token}`).send({online:true}).expect(403);
 });

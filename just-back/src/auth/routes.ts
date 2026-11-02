@@ -1,3 +1,4 @@
+import {notify} from "../notifications/service.js";
 import {Partner} from "../delivery/models.js";
 import { Router } from "express";
 import type { Config } from "../config/env.js";
@@ -49,6 +50,7 @@ export function authRoutes(config: Config) {
       const verifiedEmail=await consumeEmailProof(proof,session);
       const [user]=await User.create([{name:input.name,phone:input.phone,passwordHash,role:"delivery",active:true,...verifiedEmail}],{session});
       await Partner.create([{_id:user!._id,approved:false,areaIds:[],online:false,seenAt:new Date(),version:0,revision:0}],{session});
+      await notify(`delivery-signup:${user!._id}`,{admin:true},"New delivery partner application","A delivery partner registered. Review the account and assign service areas before approval.","/admin/partners#delivery-partners",session);
     });
     res.status(201).json(await login(input, config, req.ip ?? "unknown"));
   });

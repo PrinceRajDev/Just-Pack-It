@@ -12,16 +12,30 @@ export function DeliveryPartners() {
       queryKey: ["admin-delivery-partners"],
       queryFn: delivery.partners,
       retry: false,
+      refetchInterval: 15000,
+      refetchIntervalInBackground: false,
     }),
     areas = useQuery({ queryKey: ["admin-areas"], queryFn: management.adminAreas });
   return (
     <section className="my-8 space-y-4 rounded-xl border border-border bg-card p-5">
-      <h2 className="font-display text-2xl">Delivery partner approval</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-display text-2xl">Delivery partner approval</h2>
+        <Button
+          variant="outline"
+          disabled={query.isFetching || areas.isFetching}
+          onClick={() => {
+            void query.refetch();
+            void areas.refetch();
+          }}
+        >
+          Refresh partners
+        </Button>
+      </div>
       <DeliveryExceptions />
       <p className="text-sm">
-        Existing delivery-role accounts only (up to100 shown). Provision accounts through the
-        backend operator command. Approval and active area assignment allow partners to go online
-        and claim one task. Changes are blocked during an active delivery.
+        Delivery partners registered through signup appear here (up to 100 accounts shown). Select
+        an active service area, approve the partner, then save. The rider can then go online.
+        Changes are blocked during an active delivery.
       </p>
       {query.isPending || areas.isPending ? (
         <LoadingState label="Loading partners…" compact />
@@ -40,6 +54,10 @@ export function DeliveryPartners() {
         </div>
       ) : (
         <>
+          <p role="status">
+            {query.data.filter((partner) => partner.active && !partner.approved).length} delivery
+            accounts awaiting approval
+          </p>
           {!query.data.length && <p>No delivery accounts found.</p>}
           {query.data.map((partner) => (
             <PartnerForm

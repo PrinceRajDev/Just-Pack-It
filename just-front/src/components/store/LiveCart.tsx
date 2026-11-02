@@ -5,7 +5,11 @@ import { useCart, cartLineKey } from "@/stores/cart";
 import { useLocationArea } from "@/stores/location";
 import { reviewCart } from "@/services/cart-review";
 import type { CartReviewLine } from "@/domain/cart-review";
-import { StoreLayout, PageTitle } from "./StoreLayout";
+import { ShoppingBag, Store, Home, ChevronRight, ChevronDown, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import "./cart-page.css";
+import { StoreLayout } from "./StoreLayout";
 import { AreaNotice } from "./AreaNotice";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState } from "@/components/common/states";
@@ -30,24 +34,39 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
   });
   return (
     <StoreLayout>
-      <UiAttributes>
-        <PageTitle title={checkout ? "Review your order" : "Your bag"} eyebrow="Shop by shop">
-          <p className="mt-3 text-sm text-muted-foreground">
-            <UiText>{"Your items, delivery address and payment, all in one place."}</UiText>
-          </p>
-        </PageTitle>
-      </UiAttributes>
+      <header className="bag-page-heading">
+        <nav aria-label="Breadcrumb">
+          <Link to="/">
+            <Home size={17} />
+            <UiText>Home</UiText>
+          </Link>
+          <ChevronRight size={15} />
+          <span>
+            <UiText>Your bag</UiText>
+          </span>
+        </nav>
+        <h1>
+          <ShoppingBag aria-hidden="true" />
+          <UiText>{checkout ? "Review your order" : "Your bag"}</UiText>
+        </h1>
+        <p>
+          <UiText>
+            Review your items, delivery address and get them delivered from your favourite local
+            shops.
+          </UiText>
+        </p>
+      </header>
       <AreaNotice />
-      <div className="mx-auto max-w-7xl space-y-5 px-4 pb-16">
+      <div className="bag-page-content mx-auto max-w-7xl space-y-5 px-4 pb-16">
         {!lines.length ? (
           <UiAttributes>
             <EmptyState
-              title="Your bag is empty"
-              body="Choose a category, open a shop and add its products."
+              title="Your bag is waiting!"
+              body="Discover your neighbourhood shops and add something you love."
               action={
                 <Button asChild>
                   <Link to="/categories">
-                    <UiText>{"Explore categories"}</UiText>
+                    <UiText>{"Explore shops"}</UiText>
                   </Link>
                 </Button>
               }
@@ -102,76 +121,91 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
                   <UiText>{"Refresh prices and stock"}</UiText>
                 </Button>
               </div>
-              {quote.data.shops.map((group) => (
-                <section
-                  key={group.shop.id}
-                  className="space-y-4 rounded-xl border border-border bg-card p-4 md:p-6"
-                >
-                  <h2 className="font-display text-2xl">
-                    <Link to="/shop/$slug" params={{ slug: group.shop.slug }}>
-                      {group.shop.name}
-                    </Link>
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    <UiText>{"Available options:"}</UiText>{" "}
-                    {group.shop.fulfilment.map((method) => fulfilmentLabel[method]).join(", ")}
-                  </p>
-                  {group.issues.map((issue) => (
-                    <p key={issue.code} className="text-sm text-destructive">
-                      {issue.message}
-                    </p>
-                  ))}
-                  <ul className="divide-y divide-border">
-                    {quote
-                      .data!.lines.filter((line) => line.shopId === group.shop.id)
-                      .map((line) => (
-                        <li key={cartLineKey(line.productId, line.variantId)}>
-                          <ReviewLine line={line} />
-                        </li>
+              <div className="bag-columns">
+                <div className="bag-shop-list">
+                  {quote.data.shops.map((group) => (
+                    <details key={group.shop.id} className="bag-shop-card" open>
+                      <summary className="bag-shop-heading">
+                        <Store size={24} aria-hidden="true" />
+                        <h2>
+                          <Link to="/shop/$slug" params={{ slug: group.shop.slug }}>
+                            {group.shop.name}
+                          </Link>
+                        </h2>
+                        <ChevronDown className="bag-collapse-icon" size={20} aria-hidden="true" />
+                      </summary>
+                      <p className="bag-methods text-sm text-muted-foreground">
+                        <UiText>{"Available options:"}</UiText>{" "}
+                        {group.shop.fulfilment.map((method) => fulfilmentLabel[method]).join(", ")}
+                      </p>
+                      {group.issues.map((issue) => (
+                        <p key={issue.code} className="text-sm text-destructive">
+                          {issue.message}
+                        </p>
                       ))}
-                  </ul>
-                  <div className="space-y-1 border-t border-border pt-3 text-sm">
-                    <p className="font-medium">
-                      <UiText>{"Shop item subtotal: "}</UiText>
-                      {inr(group.itemsSubtotal)}
-                    </p>
-                    <p className="text-muted-foreground">
-                      <UiText>{"Minimum:"}</UiText>{" "}
-                      <UiText>
-                        {group.shop.minimumOrderAmount === undefined
-                          ? "Not supplied"
-                          : inr(group.shop.minimumOrderAmount)}
-                      </UiText>
-                    </p>
-                    <p className="text-muted-foreground">
-                      <UiText>{"Listed delivery fee:"}</UiText>{" "}
-                      <UiText>
-                        {group.shop.deliveryFee === undefined
-                          ? "Not supplied"
-                          : inr(group.shop.deliveryFee)}
-                      </UiText>{" "}
-                      · Confirmed in your bill below
-                    </p>
-                  </div>
-                </section>
-              ))}
-              {quote.data.lines
-                .filter((line) => !line.shopId)
-                .map((line) => (
-                  <div
-                    key={cartLineKey(line.productId, line.variantId)}
-                    className="rounded-xl border border-destructive/30 p-4"
-                  >
-                    <ReviewLine line={line} />
-                  </div>
-                ))}
-              {quote.data.shops.length > 0 && (
-                <AddressDeliveryReview
-                  shops={quote.data.shops.map((group) => group.shop)}
-                  lines={lines}
-                  areaId={area.id}
-                />
-              )}
+                      <ul className="divide-y divide-border">
+                        {quote
+                          .data!.lines.filter((line) => line.shopId === group.shop.id)
+                          .map((line) => (
+                            <li key={cartLineKey(line.productId, line.variantId)}>
+                              <ReviewLine line={line} />
+                            </li>
+                          ))}
+                      </ul>
+                      <div className="space-y-1 border-t border-border pt-3 text-sm">
+                        <p className="font-medium">
+                          <UiText>{"Shop item subtotal: "}</UiText>
+                          {inr(group.itemsSubtotal)}
+                        </p>
+                        <p className="text-muted-foreground">
+                          <UiText>{"Minimum:"}</UiText>{" "}
+                          <UiText>
+                            {group.shop.minimumOrderAmount === undefined
+                              ? "Not supplied"
+                              : inr(group.shop.minimumOrderAmount)}
+                          </UiText>
+                        </p>
+                        <p className="text-muted-foreground">
+                          <UiText>{"Listed delivery fee:"}</UiText>{" "}
+                          <UiText>
+                            {group.shop.deliveryFee === undefined
+                              ? "Not supplied"
+                              : inr(group.shop.deliveryFee)}
+                          </UiText>{" "}
+                          · Confirmed in your bill below
+                        </p>
+                      </div>
+                      <Link
+                        className="bag-add-more"
+                        to="/shop/$slug"
+                        params={{ slug: group.shop.slug }}
+                      >
+                        <Plus size={18} aria-hidden="true" />
+                        <UiText>Continue shopping</UiText> � {group.shop.name}
+                      </Link>
+                    </details>
+                  ))}
+                  {quote.data.lines
+                    .filter((line) => !line.shopId)
+                    .map((line) => (
+                      <div
+                        key={cartLineKey(line.productId, line.variantId)}
+                        className="rounded-xl border border-destructive/30 p-4"
+                      >
+                        <ReviewLine line={line} />
+                      </div>
+                    ))}
+                </div>
+                <aside className="bag-checkout-column">
+                  {quote.data.shops.length > 0 && (
+                    <AddressDeliveryReview
+                      shops={quote.data.shops.map((group) => group.shop)}
+                      lines={lines}
+                      areaId={area.id}
+                    />
+                  )}
+                </aside>
+              </div>
               <p className="text-sm text-muted-foreground">
                 Need to check a previous order?{" "}
                 <Link to="/account" className="underline">
@@ -188,6 +222,7 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
 }
 function ReviewLine({ line }: { line: CartReviewLine }) {
   const cart = useCart();
+  const [confirmRemove, setConfirmRemove] = useState(false);
   const saved = cart.lines[cartLineKey(line.productId, line.variantId)];
   const variant = line.product?.variants?.find((variant) => variant.id === line.variantId);
   const changed =
@@ -195,7 +230,7 @@ function ReviewLine({ line }: { line: CartReviewLine }) {
     line.unitPrice !== undefined &&
     saved.acceptedPrice !== line.unitPrice;
   return (
-    <article className="flex flex-wrap items-start gap-3 py-4">
+    <article className="bag-product-line flex flex-wrap items-start gap-3 py-4">
       <div className="w-20 shrink-0">
         <ProductImage
           src={line.product?.image}
@@ -270,9 +305,31 @@ function ReviewLine({ line }: { line: CartReviewLine }) {
               )}
             </>
           )}
-          <Button variant="ghost" onClick={() => cart.remove(line.productId, line.variantId)}>
-            Remove item
-          </Button>
+          {confirmRemove ? (
+            <span className="bag-remove-confirm" role="group" aria-label="Confirm item removal">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  cart.remove(line.productId, line.variantId);
+                  toast.success("Item removed from your bag");
+                }}
+              >
+                <UiText>Remove item</UiText>
+              </Button>
+              <Button variant="ghost" onClick={() => setConfirmRemove(false)}>
+                <UiText>Keep item</UiText>
+              </Button>
+            </span>
+          ) : (
+            <Button
+              variant="ghost"
+              aria-label={`Remove ${line.product?.name ?? "item"}`}
+              onClick={() => setConfirmRemove(true)}
+            >
+              <Trash2 size={17} aria-hidden="true" />
+              <UiText>Remove item</UiText>
+            </Button>
+          )}
         </div>
       </div>
       {line.lineTotal !== undefined && <p className="font-semibold">{inr(line.lineTotal)}</p>}

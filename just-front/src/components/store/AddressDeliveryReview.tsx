@@ -1,3 +1,4 @@
+import { MapPin } from "lucide-react";
 import { UiText } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -26,7 +27,8 @@ export function AddressDeliveryReview({
       aria-labelledby="delivery-check-heading"
     >
       <h2 id="delivery-check-heading" className="font-display text-2xl">
-        <UiText>{"Where should it go?"}</UiText>
+        <MapPin size={22} aria-hidden="true" />
+        <UiText>{"Delivery address"}</UiText>
       </h2>
       <p className="text-sm text-muted-foreground">
         <UiText>{"Choose your saved address and how you want to receive your order."}</UiText>

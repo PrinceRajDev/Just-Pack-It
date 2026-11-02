@@ -138,3 +138,14 @@ describe("Live server-checked bag", () => {
     await waitFor(() => expect(reviewCart).toHaveBeenCalled());
   });
 });
+
+it("confirms removal before changing the exact product and variant", async () => {
+  mount();
+  fireEvent.click(await screen.findByRole("button", { name: "Remove Shop-owned listing" }));
+  expect(state.cart.remove).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Keep item" }));
+  expect(state.cart.remove).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Remove Shop-owned listing" }));
+  fireEvent.click(screen.getByRole("button", { name: "Remove item" }));
+  expect(state.cart.remove).toHaveBeenCalledWith("p", "v");
+});

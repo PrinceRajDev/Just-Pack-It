@@ -12,7 +12,7 @@ const schema = z
       .enum(["development", "test", "production"])
       .default("development"),
     GEMINI_API_KEY: z.preprocess(value => value === "" ? undefined : value, z.string().min(20).optional()),
-    GEMINI_MODEL: z.string().regex(/^[a-z0-9.-]+$/).default("gemini-2.5-flash"),
+    GEMINI_MODEL: z.string().regex(/^[a-z0-9.-]+$/).default("gemini-flash-lite-latest"),
     HOST: z.string().default("127.0.0.1"),
     PORT: z.coerce.number().int().min(1).max(65535).default(4000),
     MONGODB_URI: z.string().regex(/^mongodb(?:\+srv)?:\/\//),

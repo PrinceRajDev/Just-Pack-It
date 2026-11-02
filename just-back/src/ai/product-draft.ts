@@ -27,12 +27,12 @@ export async function generateDraft(config: Config, image: Buffer, categories: {
             name: { type: "STRING" }, description: { type: "STRING" },
             unit: { type: "STRING" }, categoryId: { type: "STRING" },
           }, required: ["name", "description", "unit", "categoryId"],
-        }, maxOutputTokens: 1200, thinkingConfig: { thinkingBudget: 0 } },
+        }, maxOutputTokens: 1200 },
       }),
     });
     if (!response.ok) {
       // Status only: never log provider response bodies, photos or API keys.
-      console.warn(JSON.stringify({ event: "gemini_draft_failure", status: response.status }));
+      console.warn(JSON.stringify({ event: "gemini_draft_failure", model: config.GEMINI_MODEL, status: response.status }));
       if (response.status === 429) fail(503, "AI_QUOTA_EXCEEDED", "Gemini quota is currently exhausted. Check Google AI Studio quota or try later. Manual entry is available.");
       if (response.status === 401 || response.status === 403) fail(503, "AI_CONFIGURATION", "Gemini access is not configured correctly. Ask the platform admin to check the API key and permissions.");
       if (response.status === 404) fail(503, "AI_MODEL_UNAVAILABLE", "Configured Gemini model is unavailable. Ask the platform admin to check GEMINI_MODEL.");

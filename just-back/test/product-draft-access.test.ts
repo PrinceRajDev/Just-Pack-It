@@ -9,7 +9,7 @@ import { AppError, errorHandler } from "../src/common/errors.js";
 import type { Config } from "../src/config/env.js";
 vi.mock("../src/catalogue/service.js", () => ({ ownedShop: vi.fn() }));
 vi.mock("../src/auth/service.js", () => ({ throttle: vi.fn() }));
-const config = { GEMINI_API_KEY: "test-only-key", GEMINI_MODEL: "gemini-2.5-flash" } as Config;
+const config = { GEMINI_API_KEY: "test-only-key", GEMINI_MODEL: "gemini-flash-lite-latest" } as Config;
 function app(role?: "buyer" | "seller", key = true) {
   const app = express();
   app.use((req, _res, next) => { if (role) req.actor = { id: "seller", role }; next(); });

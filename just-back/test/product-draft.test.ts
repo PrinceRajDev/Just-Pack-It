@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { generateDraft, draftSchema } from "../src/ai/product-draft.js";
 import type { Config } from "../src/config/env.js";
-const config = { GEMINI_API_KEY: "test-only-key", GEMINI_MODEL: "gemini-2.5-flash" } as Config;
+const config = { GEMINI_API_KEY: "test-only-key", GEMINI_MODEL: "gemini-flash-lite-latest" } as Config;
 const categories = [{ id: "own-category", name: "Food" }];
 function reply(value: object) {
   const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ candidates: [{ finishReason: "STOP", content: { parts: [{ text: JSON.stringify(value) }] } }] }), { status: 200 }));
@@ -12,6 +12,10 @@ it("returns only a validated draft and sends the key in a header, not URL", asyn
   const draft = { name: "Rice", description: "Rice pack", unit: "", categoryId: "own-category" };
   const fetch = reply(draft);
   expect(await generateDraft(config, Buffer.from("photo"), categories)).toEqual(draft);
+  expect(fetch.mock.calls[0][0]).toBe("https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent");
+  const request = JSON.parse(fetch.mock.calls[0][1].body);
+  expect(request.generationConfig).not.toHaveProperty("thinkingConfig");
+  expect(request.generationConfig.responseSchema.required).toEqual(["name", "description", "unit", "categoryId"]);
   expect(fetch.mock.calls[0][0]).not.toContain(config.GEMINI_API_KEY);
   expect(fetch.mock.calls[0][1].headers["x-goog-api-key"]).toBe(config.GEMINI_API_KEY);
 });

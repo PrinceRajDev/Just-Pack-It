@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { productImages } from "@/services/product-images";
 import { toast } from "sonner";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -8,7 +8,7 @@ import type { ManagedCategory, ManagedProduct, ManagedShop } from "@/domain/mana
 import type { ProductVariant } from "@/domain/types";
 import { PortalHeader } from "./PortalShell";
 import { ErrorState, EmptyState } from "@/components/common/states";
-import { Plus, Package, Tag, Store, Box, ChevronDown } from "lucide-react";
+import { Plus, Package, Tag, Store, Box } from "lucide-react";
 import { NeighbourhoodIllustration } from "./NeighbourhoodIllustration";
 import { OrderBoxIllustration } from "./OrderBoxIllustration";
 import { Button } from "@/components/ui/button";
@@ -108,17 +108,7 @@ export function LiveProducts({
       )}
       {adding || editing ? (
         <>
-          {editing && (
-            <div className="mt-4">
-              <ProductPhotoUpload
-                key={`${editing.id}:${editing.version}`}
-                product={editing}
-                disabled={baseDirty || variantDirty}
-                onEditing={setImageEditing}
-              />
-            </div>
-          )}
-          <fieldset disabled={variantDirty || imageEditing}>
+          <fieldset disabled={variantDirty}>
             {variantDirty && (
               <p className="mb-3 text-sm">Save option changes before editing the listing.</p>
             )}
@@ -127,6 +117,17 @@ export function LiveProducts({
               product={editing ?? undefined}
               shop={shop}
               categories={categories}
+              imageEditing={imageEditing}
+              photoEditor={
+                editing ? (
+                  <ProductPhotoUpload
+                    key={`${editing.id}:${editing.version}`}
+                    product={editing}
+                    disabled={baseDirty || variantDirty}
+                    onEditing={setImageEditing}
+                  />
+                ) : undefined
+              }
               onDirty={(dirty) => setBaseDirty(dirty)}
               onCreated={(product) => {
                 void navigate({ to: "/seller/products/$id/edit", params: { id: product.id } });
@@ -230,8 +231,12 @@ function ProductForm({
   categories,
   onCreated,
   onDirty,
+  photoEditor,
+  imageEditing = false,
 }: {
   product?: ManagedProduct;
+  photoEditor?: ReactNode;
+  imageEditing?: boolean;
   shop: ManagedShop;
   categories: ManagedCategory[];
   onCreated: (product: ManagedProduct) => void;
@@ -240,7 +245,7 @@ function ProductForm({
   const save = useSave();
   const draft = useDraftGuard();
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? "");
-  const [image, setImage] = useState(product?.image ?? "");
+  const image = product?.image ?? "";
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>();
   const [photoError, setPhotoError] = useState("");
@@ -265,7 +270,8 @@ function ProductForm({
       {draft.dialog}
       <form
         className="seller-listing-form"
-        onChange={() => {
+        onChange={(event) => {
+          if (product && (event.target as HTMLElement).closest(".product-photo-editor")) return;
           draft.mark();
           onDirty(true);
         }}
@@ -281,7 +287,7 @@ function ProductForm({
               price: number(data, "price"),
               stock: product?.variants?.length ? product.stock : number(data, "stock"),
               active: data.has("active"),
-              attributes: attributes(data),
+              attributes: product?.attributes ?? [],
               ...(text(data, "subcategoryId")
                 ? { subcategoryId: text(data, "subcategoryId") }
                 : product
@@ -313,104 +319,11 @@ function ProductForm({
           });
         }}
       >
-        <fieldset disabled={save.isPending} className="space-y-4">
+        <fieldset disabled={save.isPending || imageEditing} className="space-y-4">
           <h2 className="seller-listing-title font-display text-2xl">
             <Box aria-hidden="true" />
             Listing details
           </h2>
-          {!product && (
-            <section
-              className="new-listing-photo rounded-xl border border-border bg-secondary/30 p-4"
-              aria-label="Product photo"
-            >
-              <h3 className="font-semibold">Product photo</h3>
-              <p className="my-2 text-sm text-muted-foreground">
-                Choose a JPEG, PNG or WebP up to 5 MiB. The photo uploads after your listing is
-                created.
-              </p>
-              {capability.isPending ? (
-                <p role="status">Checking photo uploads…</p>
-              ) : capability.isError ? (
-                <div>
-                  <p role="alert">Photo upload availability could not be checked.</p>
-                  <Button type="button" variant="outline" onClick={() => void capability.refetch()}>
-                    Check photo uploads
-                  </Button>
-                </div>
-              ) : capability.data?.enabled ? (
-                <>
-                  <label className="block text-sm">
-                    Choose product photo
-                    <input
-                      ref={photoInput}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="mt-2 block w-full"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        setPhoto(null);
-                        setPhotoError("");
-                        if (!file) return;
-                        if (!capability.data.types.includes(file.type)) {
-                          setPhotoError("Choose a JPEG, PNG or WebP photo.");
-                          e.target.value = "";
-                          return;
-                        }
-                        if (
-                          !file.size ||
-                          file.size > Math.min(capability.data.maxBytes, 5 * 1024 * 1024)
-                        ) {
-                          setPhotoError("Choose a non-empty photo no larger than 5 MiB.");
-                          e.target.value = "";
-                          return;
-                        }
-                        setPhoto(file);
-                        setImage("");
-                      }}
-                    />
-                  </label>
-                  {preview && (
-                    <div className="mt-3 w-32">
-                      <ProductImage
-                        src={preview}
-                        alt="Selected product photo preview"
-                        width={200}
-                      />
-                    </div>
-                  )}
-                  {photo && (
-                    <div>
-                      <p className="mt-2 text-sm">
-                        {photo.name} selected. Add product to save the listing and upload its photo.
-                      </p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="mt-2"
-                        onClick={() => {
-                          setPhoto(null);
-                          setPhotoError("");
-                          if (photoInput.current) photoInput.current.value = "";
-                        }}
-                      >
-                        Remove selected photo
-                      </Button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <p className="text-sm">
-                  Photo uploads are not configured yet. You can save the listing and add a photo
-                  after storage is enabled.
-                </p>
-              )}
-              {photoError && (
-                <p role="alert" className="mt-2 text-sm text-destructive">
-                  {photoError}
-                </p>
-              )}
-            </section>
-          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
               label="Product name"
@@ -511,38 +424,103 @@ function ProductForm({
               not added to variant stock.
             </p>
           )}
-          <label className="block text-sm">
-            Image HTTPS URL or durable key
-            <input
-              className="mt-1 block w-full rounded border bg-background p-2"
-              name="image"
-              disabled={!!photo}
-              placeholder="Paste image HTTPS URL or durable key"
-              value={image}
-              onChange={(e) => setImage(e.target.value)}
-            />
-          </label>
-          <p className="text-xs text-muted-foreground">
-            {product
-              ? "Use Product photo above to choose a file, or provide an existing durable image URL/key here."
-              : "Use Choose product photo above, or provide an existing image URL/key if you have one."}
-          </p>
-          {image && (
-            <div className="w-32">
-              <ProductImage src={image} alt="Listing image preview" width={200} />
-            </div>
+        </fieldset>
+        <div className="product-photo-editor">
+          {photoEditor}
+          {!product && (
+            <section
+              className="new-listing-photo rounded-xl border border-border bg-secondary/30 p-4"
+              aria-label="Product photo"
+            >
+              <h3 className="font-semibold">Product photo</h3>
+              <p className="my-2 text-sm text-muted-foreground">
+                Choose a JPEG, PNG or WebP up to 5 MiB. The photo uploads after your listing is
+                created.
+              </p>
+              {capability.isPending ? (
+                <p role="status">Checking photo uploads…</p>
+              ) : capability.isError ? (
+                <div>
+                  <p role="alert">Photo upload availability could not be checked.</p>
+                  <Button type="button" variant="outline" onClick={() => void capability.refetch()}>
+                    Check photo uploads
+                  </Button>
+                </div>
+              ) : capability.data?.enabled ? (
+                <>
+                  <label className="block text-sm">
+                    Choose product photo
+                    <input
+                      ref={photoInput}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="mt-2 block w-full"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        setPhoto(null);
+                        setPhotoError("");
+                        if (!file) return;
+                        if (!capability.data.types.includes(file.type)) {
+                          setPhotoError("Choose a JPEG, PNG or WebP photo.");
+                          e.target.value = "";
+                          return;
+                        }
+                        if (
+                          !file.size ||
+                          file.size > Math.min(capability.data.maxBytes, 5 * 1024 * 1024)
+                        ) {
+                          setPhotoError("Choose a non-empty photo no larger than 5 MiB.");
+                          e.target.value = "";
+                          return;
+                        }
+                        setPhoto(file);
+                      }}
+                    />
+                  </label>
+                  {preview && (
+                    <div className="mt-3 w-32">
+                      <ProductImage
+                        src={preview}
+                        alt="Selected product photo preview"
+                        width={200}
+                      />
+                    </div>
+                  )}
+                  {photo && (
+                    <div>
+                      <p className="mt-2 text-sm">
+                        {photo.name} selected. Add product to save the listing and upload its photo.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="mt-2"
+                        onClick={() => {
+                          setPhoto(null);
+                          setPhotoError("");
+                          if (photoInput.current) photoInput.current.value = "";
+                        }}
+                      >
+                        Remove selected photo
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm">
+                  Photo uploads are not configured yet. You can save the listing and add a photo
+                  after storage is enabled.
+                </p>
+              )}
+              {photoError && (
+                <p role="alert" className="mt-2 text-sm text-destructive">
+                  {photoError}
+                </p>
+              )}
+            </section>
           )}
-          <details
-            className="seller-listing-details"
-            open={product?.attributes?.length ? true : undefined}
-          >
-            <summary>
-              <Tag size={20} aria-hidden="true" />
-              Product details (optional)
-              <ChevronDown size={16} aria-hidden="true" />
-            </summary>
-            <Attributes values={product?.attributes} />
-          </details>
+        </div>
+        <fieldset disabled={save.isPending || imageEditing} className="space-y-4">
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="active" defaultChecked={product?.active ?? true} />
             Active listing

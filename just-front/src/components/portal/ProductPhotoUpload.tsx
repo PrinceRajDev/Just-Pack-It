@@ -118,7 +118,7 @@ export function ProductPhotoUpload({
           <p className="text-sm">
             Photo uploads are not configured yet. Your existing image is unchanged.
           </p>
-          <Button variant="outline" onClick={() => void capability.refetch()}>
+          <Button type="button" variant="outline" onClick={() => void capability.refetch()}>
             Check upload availability
           </Button>
         </div>
@@ -170,17 +170,17 @@ export function ProductPhotoUpload({
                 photo before another upload. This discards the local selection after a successful
                 refresh.
               </p>
-              <Button variant="outline" onClick={() => void refreshSaved()}>
+              <Button type="button" variant="outline" onClick={() => void refreshSaved()}>
                 Refresh saved photo and listing
               </Button>
             </div>
           )}
           <div className="flex flex-wrap gap-3">
-            <Button disabled={!file || needsRefresh} onClick={() => upload.mutate()}>
+            <Button type="button" disabled={!file || needsRefresh} onClick={() => upload.mutate()}>
               {upload.isPending ? "Uploading photo…" : "Upload and save photo"}
             </Button>
             {file && (
-              <Button variant="outline" disabled={needsRefresh} onClick={clear}>
+              <Button type="button" variant="outline" disabled={needsRefresh} onClick={clear}>
                 Discard selected photo
               </Button>
             )}

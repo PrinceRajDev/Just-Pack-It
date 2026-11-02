@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText } from "@/lib/i18n/Language";
 import { DeliveryExceptions } from "./DeliveryExceptions";
 import { useState } from "react";
@@ -23,7 +24,7 @@ export function DeliveryPartners() {
         and claim one task. Changes are blocked during an active delivery.
       </p>
       {query.isPending || areas.isPending ? (
-        <p role="status">Loading partners…</p>
+        <LoadingState label="Loading partners…" compact />
       ) : query.isError || areas.isError ? (
         <div role="alert">
           Could not load partners.{" "}

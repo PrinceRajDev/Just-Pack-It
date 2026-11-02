@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { CatalogueMore } from "@/components/store/CatalogueMore";
 import { Button } from "@/components/ui/button";
@@ -162,7 +163,7 @@ function ShopPage() {
         </aside>
         <div className="md:col-span-9">
           {pages.isPending ? (
-            <p role="status">Loading shop products…</p>
+            <LoadingState label="Loading shop products…" compact />
           ) : pages.isError && !pages.data ? (
             <div role="alert">
               Could not load shop products.{" "}

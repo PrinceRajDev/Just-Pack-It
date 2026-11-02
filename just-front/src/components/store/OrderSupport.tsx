@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText } from "@/lib/i18n/Language";
 import { SupportConversation } from "@/components/common/SupportConversation";
 import { useState } from "react";
@@ -43,7 +44,7 @@ export function OrderSupport({ orderId, suborderId }: { orderId: string; suborde
       <summary className="cursor-pointer font-medium">Help with this shop order</summary>
       <div className="mt-3 space-y-3">
         {query.isPending ? (
-          <p role="status">Loading support…</p>
+          <LoadingState label="Loading support…" compact />
         ) : query.isError ? (
           <div role="alert">
             Could not load support.{" "}

@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useQuery } from "@tanstack/react-query";
 import { management } from "@/services/management";
@@ -13,7 +14,7 @@ export function SellerDirectory() {
         applications below.
       </p>
       {sellers.isPending ? (
-        <p role="status">Loading sellers…</p>
+        <LoadingState label="Loading sellers…" compact />
       ) : sellers.error ? (
         <UiAttributes>
           <ErrorState message={sellers.error.message} onRetry={() => void sellers.refetch()} />

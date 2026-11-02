@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import type { Address } from "@/domain/types";
@@ -125,7 +126,7 @@ export function DeliveryPinEditor({
               with the tile provider.
             </p>
             <DeliveryMapBoundary>
-              <Suspense fallback={<p role="status">Loading map…</p>}>
+              <Suspense fallback={<LoadingState label="Loading map…" compact />}>
                 <Map
                   point={value.coordinates}
                   onChange={([b, a]) => change(String(a), String(b))}

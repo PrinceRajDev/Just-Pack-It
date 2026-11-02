@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
@@ -243,9 +244,7 @@ export function AdminOrders({
         )}
       </div>
       {query.isPending ? (
-        <p role="status">
-          <UiText>{"Loading orders…"}</UiText>
-        </p>
+        <LoadingState label="Loading orders…" compact />
       ) : query.error ? (
         <UiAttributes>
           <ErrorState message={query.error.message} onRetry={() => void query.refetch()} />

@@ -6,7 +6,7 @@ import { Logo } from "@/components/brand/Logo";
 import { NeighbourhoodIllustration } from "@/components/portal/NeighbourhoodIllustration";
 import { useAuth, roleHome } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingState } from "@/components/common/LoadingState";
 import type { Role } from "@/domain/types";
 import "@/styles/access.css";
 
@@ -44,7 +44,7 @@ export function RoleGuard({ role, children }: { role: Role; children: ReactNode 
   if (!ready)
     return (
       <div className="p-8">
-        <Skeleton className="h-40 w-full" />
+        <LoadingState label="Checking your session…" />
       </div>
     );
   if (session?.role === role) return <>{children}</>;

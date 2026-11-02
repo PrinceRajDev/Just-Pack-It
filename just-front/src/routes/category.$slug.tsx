@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { CatalogueMore } from "@/components/store/CatalogueMore";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
@@ -222,7 +223,7 @@ function CategoryPage() {
           </p>
         )}
         {area && shopPages.isPending ? (
-          <p role="status">Loading category shops…</p>
+          <LoadingState label="Loading category shops…" compact />
         ) : area && shopPages.isError && !eligible.length ? (
           <div role="alert">
             Could not load shops.{" "}

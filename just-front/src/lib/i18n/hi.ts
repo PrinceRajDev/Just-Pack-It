@@ -753,3 +753,9 @@ Object.assign(hindi, {
   "Dashboard updated": "डैशबोर्ड अपडेट हो गया",
   "Daily shop tasks": "दुकान के रोज़ के काम",
 });
+
+Object.assign(hindi, {
+  "Loading page…": "पेज खुल रहा है…",
+  "This is taking longer than usual. Please check your connection.":
+    "इसमें सामान्य से अधिक समय लग रहा है। कृपया अपना इंटरनेट कनेक्शन जाँचें।",
+});

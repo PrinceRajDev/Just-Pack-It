@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { financeDate } from "@/lib/finance-date";
 import { FinanceEmpty } from "./FinancePresentation";
@@ -26,9 +27,7 @@ export function AdminRefunds({ orderId }: { orderId: string }) {
           processed or bank-credited.
         </p>
         {query.isPending ? (
-          <p role="status">
-            <UiText>{"Loading refunds…"}</UiText>
-          </p>
+          <LoadingState label="Loading refunds…" compact />
         ) : query.error ? (
           <div role="alert">
             <p>{query.error.message}</p>

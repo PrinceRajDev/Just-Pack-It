@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -83,7 +84,7 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
         ) : !area ? (
           <p role="status">Choose your area to check the items in your bag.</p>
         ) : quote.isPending ? (
-          <p role="status">Checking current prices and stock…</p>
+          <LoadingState label="Checking current prices and stock…" compact />
         ) : quote.error ? (
           <>
             <UiAttributes>

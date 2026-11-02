@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { BuyAgain } from "./BuyAgain";
 import { OrderReceipt } from "./OrderReceipt";
@@ -21,7 +22,7 @@ import { RefundNotice } from "./RefundNotice";
 import { BuyerCancellation } from "./BuyerCancellation";
 function BuyerOrders({ children }: { children: (userId: string) => ReactNode }) {
   const { session, ready } = useAuth();
-  if (!ready) return <p role="status">Checking your session…</p>;
+  if (!ready) return <LoadingState label="Checking your session…" compact />;
   if (!session)
     return (
       <Button asChild>
@@ -49,12 +50,7 @@ function History({ userId }: { userId: string }) {
     queryFn: () => orders.list(),
     retry: false,
   });
-  if (query.isPending)
-    return (
-      <p role="status">
-        <UiText>{"Loading orders…"}</UiText>
-      </p>
-    );
+  if (query.isPending) return <LoadingState label="Loading orders…" compact />;
   if (query.isError)
     return (
       <div role="alert">
@@ -114,7 +110,7 @@ function Detail({ userId, id }: { userId: string; id: string }) {
     refetchIntervalInBackground: false,
     retry: false,
   });
-  if (query.isPending) return <p role="status">Loading order…</p>;
+  if (query.isPending) return <LoadingState label="Loading order…" compact />;
   if (query.isError && !query.data)
     return (
       <div role="alert">

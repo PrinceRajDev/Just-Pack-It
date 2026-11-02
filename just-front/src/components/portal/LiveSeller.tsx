@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Store, Clock3, Camera, MapPin, Tag, Check } from "lucide-react";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
@@ -64,7 +65,7 @@ export function LiveSeller() {
           <ErrorState message={shop.error.message} onRetry={() => void shop.refetch()} />
         </UiAttributes>
       );
-    if (shop.isPending) return <p role="status">Loading your shop…</p>;
+    if (shop.isPending) return <LoadingState label="Loading your shop…" compact />;
     return shop.data ? (
       <LiveSellerOrders shop={shop.data} />
     ) : (
@@ -80,7 +81,7 @@ export function LiveSeller() {
           <ErrorState message={shop.error.message} onRetry={() => void shop.refetch()} />
         </UiAttributes>
       );
-    if (shop.isPending) return <p role="status">Loading your shop…</p>;
+    if (shop.isPending) return <LoadingState label="Loading your shop…" compact />;
     return shop.data ? (
       <LiveInventory />
     ) : (
@@ -104,7 +105,7 @@ export function LiveSeller() {
       </UiAttributes>
     );
   if (shop.isPending || categories.isPending || areas.isPending)
-    return <p role="status">Loading your shop…</p>;
+    return <LoadingState label="Loading your shop…" compact />;
   if ((path === "/seller" || path === "/seller/") && shop.data)
     return <SellerOnboarding shop={shop.data} categories={categories.data} areas={areas.data} />;
   if (path.includes("/products"))

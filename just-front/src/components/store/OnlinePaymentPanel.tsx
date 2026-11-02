@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -87,7 +88,7 @@ export function OnlinePaymentPanel({ id }: { id: string }) {
           separate.
         </p>
         {query.isPending ? (
-          <p role="status">Loading payment…</p>
+          <LoadingState label="Loading payment…" compact />
         ) : query.error ? (
           <p role="alert">{query.error.message}</p>
         ) : query.data.state === "paid" ? (

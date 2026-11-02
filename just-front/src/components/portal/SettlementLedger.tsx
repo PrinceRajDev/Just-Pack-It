@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { financeDate } from "@/lib/finance-date";
 import { FinancialTable, FinanceEmpty } from "./FinancePresentation";
@@ -592,7 +593,7 @@ function LedgerRow({ row, role }: { row: SettlementRow; role: string }) {
           </Button>
           {showJournals &&
             (journals.isPending ? (
-              <p role="status">Loading journal…</p>
+              <LoadingState label="Loading journal…" compact />
             ) : journals.isError ? (
               <p role="alert">Journal unavailable. Refresh the ledger.</p>
             ) : (

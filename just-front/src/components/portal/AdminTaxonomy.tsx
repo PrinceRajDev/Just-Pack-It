@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -22,7 +23,7 @@ export function Taxonomy() {
         <ErrorState message={query.error.message} onRetry={() => void query.refetch()} />
       </UiAttributes>
     );
-  if (query.isPending) return <p role="status">Loading categories…</p>;
+  if (query.isPending) return <LoadingState label="Loading categories…" compact />;
   const term = search.trim().toLowerCase();
   const filtered = query.data.filter(
     (category) =>

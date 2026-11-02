@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { ProductDraftAssistant } from "./ProductDraftAssistant";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -64,11 +65,7 @@ export function LiveProducts({
       </UiAttributes>
     );
   if (products.isPending || (detailId && detail.isPending))
-    return (
-      <p role="status">
-        <UiText>{"Loading catalogue…"}</UiText>
-      </p>
-    );
+    return <LoadingState label="Loading catalogue…" compact />;
   const adding = path === "/seller/products/new";
   const editing = detailId ? detail.data : undefined;
   return (

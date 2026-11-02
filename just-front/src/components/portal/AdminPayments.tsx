@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { financeDate } from "@/lib/finance-date";
 import { FinancialTable, FinanceEmpty } from "./FinancePresentation";
@@ -262,12 +263,7 @@ function PaymentDetail({ id }: { id: string }) {
       lock.current = false;
     }
   }
-  if (query.isPending)
-    return (
-      <p role="status">
-        <UiText>{"Loading payment details…"}</UiText>
-      </p>
-    );
+  if (query.isPending) return <LoadingState label="Loading payment details…" compact />;
   if (query.error)
     return (
       <UiAttributes>

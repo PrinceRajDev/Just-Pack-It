@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { MapPin } from "lucide-react";
 import { UiText } from "@/lib/i18n/Language";
 import { useState } from "react";
@@ -38,7 +39,7 @@ export function AddressDeliveryReview({
         <UiText>{"Choose your saved address and how you want to receive your order."}</UiText>
       </p>
       {!ready ? (
-        <p role="status">Checking your session…</p>
+        <LoadingState label="Checking your session…" compact />
       ) : !session ? (
         <Button asChild>
           <Link to="/login">
@@ -111,9 +112,7 @@ function SignedInReview({
   return (
     <>
       {addresses.isPending ? (
-        <p role="status">
-          <UiText>{"Loading saved addresses…"}</UiText>
-        </p>
+        <LoadingState label="Loading saved addresses…" compact />
       ) : addresses.isError ? (
         <div role="alert">
           <p>Couldn't load saved addresses.</p>

@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -146,7 +147,7 @@ export function SellerAccounts() {
       <div className="border-t border-border pt-4">
         <h3 className="font-medium">Seller accounts</h3>
         {sellers.isPending ? (
-          <p role="status">Loading seller accounts…</p>
+          <LoadingState label="Loading seller accounts…" compact />
         ) : sellers.error ? (
           <UiAttributes>
             <ErrorState message={sellers.error.message} onRetry={() => void sellers.refetch()} />

@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { SettlementLedger } from "./SettlementLedger";
 import { useEffect, useState } from "react";
@@ -108,7 +109,7 @@ export function LiveDelivery() {
         ) : (
           <>
             {profile.isPending ? (
-              <p role="status">Checking delivery approval…</p>
+              <LoadingState label="Checking delivery approval…" compact />
             ) : profile.isError ? (
               <p role="alert">Could not check approval. Refresh below.</p>
             ) : !profile.data?.approved ? (
@@ -134,7 +135,7 @@ export function LiveDelivery() {
             {notice && <p role="status">{notice}</p>}
             {error && <p role="alert">{error}</p>}
             {active.isPending ? (
-              <p role="status">Loading active task…</p>
+              <LoadingState label="Loading active task…" compact />
             ) : active.isError ? (
               <p role="alert">
                 Could not refresh active task.{" "}
@@ -162,7 +163,7 @@ export function LiveDelivery() {
                   {!profile.data?.online ? (
                     <p>Go online after approval to see available tasks.</p>
                   ) : tasks.isPending ? (
-                    <p role="status">Loading available tasks…</p>
+                    <LoadingState label="Loading available tasks…" compact />
                   ) : (
                     <>
                       {tasks.isError && (

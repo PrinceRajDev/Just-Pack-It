@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useRef, useState } from "react";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
@@ -51,7 +52,7 @@ export function DeliveryExceptions() {
           </Button>
         </form>
         {query.isPending ? (
-          <p role="status">Loading delivery exceptions…</p>
+          <LoadingState label="Loading delivery exceptions…" compact />
         ) : (
           <>
             {query.data?.pages

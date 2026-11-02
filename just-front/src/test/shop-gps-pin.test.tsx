@@ -7,37 +7,50 @@ afterEach(() => {
   cleanup();
   vi.resetAllMocks();
 });
-it("requests precise GPS only on click, fills coordinates and marks draft without saving", async () => {
+it("shows a readable address and submits GPS coordinates as hidden fields only", async () => {
   vi.mocked(currentPosition).mockResolvedValue({ lat: 26, lng: 86 });
   const changed = vi.fn();
-  render(<ShopGpsPin onChange={changed} />);
+  const view = render(
+    <form>
+      <ShopGpsPin locationName="Market Road, Town" onChange={changed} />
+    </form>,
+  );
+  expect(screen.getByText("Market Road, Town")).toBeInTheDocument();
+  expect(screen.queryByRole("spinbutton")).toBeNull();
   expect(currentPosition).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Use my current location" }));
-  await screen.findByText(/GPS coordinates filled, not saved/);
+  await screen.findByText(/Shop location selected, not saved/);
   expect(currentPosition).toHaveBeenCalledWith(100);
-  expect(screen.getByLabelText("Shop latitude (map pin)")).toHaveValue(26);
-  expect(screen.getByLabelText("Shop longitude (map pin)")).toHaveValue(86);
+  const data = new FormData(view.container.querySelector("form")!);
+  expect(data.get("latitude")).toBe("26");
+  expect(data.get("longitude")).toBe("86");
   expect(changed).toHaveBeenCalledOnce();
 });
-it("preserves existing pin after failed GPS and allows manual entry", async () => {
+it("preserves the saved pin after GPS fails and does not pretend an address is geocoded", async () => {
   vi.mocked(currentPosition).mockRejectedValue(new Error("denied"));
-  render(<ShopGpsPin coordinates={[86, 26]} onChange={() => {}} />);
+  const view = render(
+    <form>
+      <ShopGpsPin coordinates={[86, 26]} locationName="Shop street" onChange={() => {}} />
+    </form>,
+  );
   fireEvent.click(screen.getByRole("button", { name: "Use my current location" }));
   await screen.findByRole("alert");
-  expect(screen.getByLabelText("Shop latitude (map pin)")).toHaveValue(26);
-  fireEvent.change(screen.getByLabelText("Shop latitude (map pin)"), { target: { value: "27" } });
-  expect(screen.getByLabelText("Shop latitude (map pin)")).toHaveValue(27);
+  expect(new FormData(view.container.querySelector("form")!).get("latitude")).toBe("26");
+  expect(screen.getByText(/Updating the address text does not move the pin/)).toBeInTheDocument();
 });
-it("does not overwrite a manual edit with a late GPS response", async () => {
-  let resolve!: (p: { lat: number; lng: number }) => void;
+it("ignores GPS results after the form unmounts", async () => {
+  let resolve!: (point: { lat: number; lng: number }) => void;
   vi.mocked(currentPosition).mockReturnValue(
     new Promise((r) => {
       resolve = r;
     }),
   );
-  render(<ShopGpsPin onChange={() => {}} />);
+  const changed = vi.fn();
+  const view = render(<ShopGpsPin onChange={changed} />);
   fireEvent.click(screen.getByRole("button", { name: "Use my current location" }));
-  fireEvent.change(screen.getByLabelText("Shop latitude (map pin)"), { target: { value: "27" } });
+  view.unmount();
   resolve({ lat: 26, lng: 86 });
-  await vi.waitFor(() => expect(screen.getByLabelText("Shop latitude (map pin)")).toHaveValue(27));
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(changed).not.toHaveBeenCalled();
 });

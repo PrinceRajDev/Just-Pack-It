@@ -171,6 +171,8 @@ export function ShopForm({
   const settingsTab = tab ?? localTab;
   const setSettingsTab = onTabChange ?? setLocalTab;
   const [photoEditing, setPhotoEditing] = useState(false);
+  const [shopAddress, setShopAddress] = useState(shop?.address ?? "");
+  const [shopLocality, setShopLocality] = useState(shop?.locality ?? "");
   const [categoryIds, setCategoryIds] = useState(shop?.categoryIds ?? []);
   const [hours, setHours] = useState<OpeningHour[]>(shop?.openingHours ?? []);
   if (!categories.length || !areas.length)
@@ -245,7 +247,10 @@ export function ShopForm({
             </p>
           </div>
           <form
-            onChange={() => {
+            onChange={(event) => {
+              const field = event.target as HTMLInputElement;
+              if (field.name === "address") setShopAddress(field.value);
+              if (field.name === "locality") setShopLocality(field.value);
               draft.mark();
               setProfileEditing(true);
             }}
@@ -351,13 +356,14 @@ export function ShopForm({
               </section>
               <section className="seller-settings-group">
                 <h3>
-                  <UiText>Pin your shop on the map</UiText>
+                  <UiText>Shop location</UiText>
                 </h3>
                 <p>
                   <UiText>Stand at your shop when using GPS. Check the pin before saving.</UiText>
                 </p>
                 <ShopGpsPin
                   coordinates={shop?.location?.coordinates}
+                  locationName={[shopAddress, shopLocality].filter(Boolean).join(", ")}
                   onChange={() => {
                     draft.mark();
                     setProfileEditing(true);

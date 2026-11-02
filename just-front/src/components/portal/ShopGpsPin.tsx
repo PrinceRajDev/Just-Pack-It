@@ -2,12 +2,14 @@ import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useEffect, useRef, useState } from "react";
 import { currentPosition } from "@/services/location";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { MapPin } from "lucide-react";
 export function ShopGpsPin({
   coordinates,
+  locationName,
   onChange,
 }: {
   coordinates?: [number, number];
+  locationName?: string;
   onChange: () => void;
 }) {
   const [lat, setLat] = useState(String(coordinates?.[1] ?? "")),
@@ -34,29 +36,23 @@ export function ShopGpsPin({
       setLng(String(point.lng));
       onChange();
       setNotice(
-        "GPS coordinates filled, not saved. Check that you are at your shop, then save the shop profile for admin review.",
+        "Shop location selected, not saved. Check your shop address, then save the profile for admin review.",
       );
     } catch {
       if (attempt === generation.current)
         setError(
-          "Could not get a precise shop location (within 100 m). Allow precise GPS while standing at your shop, retry, or enter verified coordinates manually.",
+          "Could not get a precise shop location. Allow precise GPS while standing at your shop and try again. Your saved location is unchanged.",
         );
     } finally {
       if (attempt === generation.current) setBusy(false);
     }
   }
-  function edit(update: () => void) {
-    generation.current++;
-    setBusy(false);
-    setNotice("");
-    setError("");
-    update();
-    onChange();
-  }
   return (
     <UiAttributes>
       <section className="space-y-3 rounded-lg border p-3 md:col-span-2" aria-label="Shop GPS pin">
-        <p className="text-sm font-medium">Your shop’s map pin</p>
+        <p className="text-sm font-medium">
+          <UiText>Shop location</UiText>
+        </p>
         <p className="text-sm text-muted-foreground">
           Use GPS only while physically at the shop. This pin helps nearby buyers discover you;
           saving a changed profile requires admin approval.
@@ -64,40 +60,34 @@ export function ShopGpsPin({
         <Button type="button" variant="outline" disabled={busy} onClick={() => void detect()}>
           <UiText>{busy ? "Finding shop location…" : "Use my current location"}</UiText>
         </Button>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm">
-            Shop latitude (map pin)
-            <Input
-              type="number"
-              name="latitude"
-              step="any"
-              min={-90}
-              max={90}
-              value={lat}
-              onChange={(e) => edit(() => setLat(e.target.value))}
-            />
-          </label>
-          <label className="text-sm">
-            Shop longitude (map pin)
-            <Input
-              type="number"
-              name="longitude"
-              step="any"
-              min={-180}
-              max={180}
-              value={lng}
-              onChange={(e) => edit(() => setLng(e.target.value))}
-            />
-          </label>
+        <div className="flex items-start gap-3 rounded-lg bg-secondary/50 p-3">
+          <MapPin size={20} className="mt-1 shrink-0 text-primary" aria-hidden="true" />
+          <div>
+            <p className="text-sm font-medium">
+              <UiText>Shop address</UiText>
+            </p>
+            <p className="mt-1 break-words">
+              {locationName?.trim() || <UiText>Add your shop address above</UiText>}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              <UiText>
+                {lat && lng
+                  ? "Map pin available. Updating the address text does not move the pin; use GPS at your shop to update it."
+                  : "Use GPS at your shop to add its map pin."}
+              </UiText>
+            </p>
+          </div>
         </div>
+        <input type="hidden" name="latitude" value={lat} />
+        <input type="hidden" name="longitude" value={lng} />
         {notice && (
           <p role="status" className="text-sm">
-            {notice}
+            <UiText>{notice}</UiText>
           </p>
         )}
         {error && (
           <p role="alert" className="text-sm">
-            {error}
+            <UiText>{error}</UiText>
           </p>
         )}
       </section>

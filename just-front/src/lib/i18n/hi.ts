@@ -731,3 +731,17 @@ Object.assign(hindi, {
   "Manage your profile, availability and photo. Choose a section below.":
     "अपनी जानकारी, उपलब्धता और फ़ोटो संभालें। नीचे कोई हिस्सा चुनें।",
 });
+
+Object.assign(hindi, {
+  "Shop location": "दुकान की लोकेशन",
+  "Shop address": "दुकान का पता",
+  "Add your shop address above": "ऊपर दुकान का पता भरें",
+  "Map pin available. Updating the address text does not move the pin; use GPS at your shop to update it.":
+    "मैप पिन उपलब्ध है। पता लिखने से पिन नहीं बदलता; पिन बदलने के लिए दुकान पर जीपीएस इस्तेमाल करें।",
+  "Use GPS at your shop to add its map pin.":
+    "मैप पिन जोड़ने के लिए दुकान पर जीपीएस इस्तेमाल करें।",
+  "Shop location selected, not saved. Check your shop address, then save the profile for admin review.":
+    "दुकान की लोकेशन चुनी गई है, अभी सहेजी नहीं गई। पता जांचकर प्रोफ़ाइल एडमिन की जांच के लिए सहेजें।",
+  "Could not get a precise shop location. Allow precise GPS while standing at your shop and try again. Your saved location is unchanged.":
+    "सटीक लोकेशन नहीं मिली। दुकान पर खड़े होकर सटीक जीपीएस की अनुमति दें और फिर कोशिश करें। सहेजी लोकेशन नहीं बदली है।",
+});

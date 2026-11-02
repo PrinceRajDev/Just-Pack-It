@@ -1000,6 +1000,11 @@
   background: transparent;
   padding: 0.7rem 0;
 }
+/* This row supplies its own status icon; suppress the legacy badge. */
+.seller-workspace .seller-review-row .shop-review-notice::before {
+  content: none;
+  display: none;
+}
 .seller-review-shield {
   color: #55851c;
   flex-shrink: 0;

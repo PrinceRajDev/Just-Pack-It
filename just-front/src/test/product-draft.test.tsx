@@ -45,3 +45,18 @@ it("keeps manual entry available on provider failure without applying a fake dra
   expect(await screen.findByRole("alert")).toHaveTextContent("Try manually");
   expect(apply).not.toHaveBeenCalled();
 });
+
+it("does not offer to apply an empty AI response", async () => {
+  vi.mocked(productDraft.capability).mockResolvedValue({ enabled: true });
+  vi.mocked(productDraft.generate).mockResolvedValue({
+    name: "",
+    description: "",
+    unit: "",
+    categoryId: "",
+  });
+  const apply = mount(new File(["icon"], "icon.png", { type: "image/png" }));
+  fireEvent.click(await screen.findByRole("button", { name: "AI se details bharo" }));
+  expect(await screen.findByRole("status")).toHaveTextContent("No product details identified");
+  expect(screen.queryByRole("button", { name: "Fill empty fields with this draft" })).toBeNull();
+  expect(apply).not.toHaveBeenCalled();
+});

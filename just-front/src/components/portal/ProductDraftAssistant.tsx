@@ -62,7 +62,7 @@ export function ProductDraftAssistant({
           }
         }}
       >
-        {busy ? "Reading your photo�" : "AI se details bharo"}
+        {busy ? "Reading your photo..." : "AI se details bharo"}
       </Button>
       {!file && <p className="text-sm">Choose a product photo first.</p>}
       {error && (
@@ -70,7 +70,7 @@ export function ProductDraftAssistant({
           {error}
         </p>
       )}
-      {draft && (
+      {draft && (draft.name.trim() || draft.description.trim() || draft.unit.trim()) ? (
         <div className="space-y-2" aria-live="polite">
           <p className="font-medium">Suggested draft: check every detail</p>
           <p>{draft.name || "Product not identified"}</p>
@@ -87,7 +87,12 @@ export function ProductDraftAssistant({
             Fill empty fields with this draft
           </Button>
         </div>
-      )}
+      ) : draft ? (
+        <p role="status" className="text-sm">
+          No product details identified. Try a clear photo of the actual product or its packaging,
+          rather than an icon or illustration. You can also fill the form manually.
+        </p>
+      ) : null}
     </section>
   );
 }

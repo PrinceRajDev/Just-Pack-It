@@ -813,3 +813,105 @@
     scroll-behavior: auto;
   }
 }
+.rider-profile-page {
+  display: grid;
+  gap: 20px;
+}
+.rider-profile-page header h2 {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font:
+    700 28px Georgia,
+    serif;
+  color: #183f2b;
+}
+.rider-profile-page header p {
+  font-size: 14px;
+  color: #687361;
+  margin-top: 8px;
+}
+.rider-profile-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+.rider-profile-identity {
+  background: #fffdf7;
+  border: 1px solid #e1d8c6;
+  padding: 24px;
+  border-radius: 16px;
+}
+.rider-avatar {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: #e9f0ce;
+  color: #14472c;
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.rider-profile-identity h3 {
+  font-size: 21px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.rider-profile-identity p,
+.rider-profile-identity li {
+  font-size: 14px;
+  color: #62705c;
+  line-height: 1.7;
+}
+.rider-profile-identity h4 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 22px 0 6px;
+  font-size: 14px;
+  font-weight: 650;
+  color: #294c35;
+}
+.rider-profile-identity li {
+  padding: 5px 9px;
+  margin: 5px 0;
+  background: #f0f4e4;
+  border-radius: 8px;
+}
+.rider-profile-identity small {
+  display: block;
+  font-size: 12px;
+  color: #77816d;
+  line-height: 1.6;
+  margin-top: 20px;
+}
+.rider-profile-layout section[aria-label="Account profile"] {
+  margin-top: 0 !important;
+  padding: 24px;
+  background: #fffdf7;
+  border-color: #e1d8c6;
+  border-radius: 16px;
+}
+.rider-profile-security {
+  margin-top: 18px;
+  border: 1px solid #e1d8c6;
+  background: #fffdf7;
+  border-radius: 14px;
+  padding: 18px;
+}
+.rider-profile-security summary {
+  cursor: pointer;
+  font-weight: 650;
+  color: #294c35;
+}
+@media (max-width: 850px) {
+  .rider-profile-layout {
+    grid-template-columns: 1fr;
+  }
+  .rider-profile-identity {
+    padding: 18px;
+  }
+}

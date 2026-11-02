@@ -1,3 +1,4 @@
+import { RiderProfile } from "./RiderProfile";
 import { NeighbourhoodIllustration } from "./NeighbourhoodIllustration";
 import { Home, CircleHelp, ChartNoAxesCombined, UserRound } from "lucide-react";
 import { RiderOverview } from "./RiderOverview";
@@ -96,11 +97,20 @@ export function LiveDelivery() {
       <aside className="dispatch-sidebar">
         <Logo inverse />
         <nav aria-label="Dispatch navigation">
-          <Link to="/delivery" className={!path.includes("earnings") ? "is-active" : ""}>
+          <Link
+            to="/delivery"
+            className={path === "/delivery" || path === "/delivery/" ? "is-active" : ""}
+          >
             <Home size={21} aria-hidden="true" />
             <UiText>Overview</UiText>
           </Link>
-          <a href={path.includes("earnings") ? "/delivery#rider-task-board" : "#rider-task-board"}>
+          <a
+            href={
+              path !== "/delivery" && path !== "/delivery/"
+                ? "/delivery#rider-task-board"
+                : "#rider-task-board"
+            }
+          >
             <ClipboardList size={21} aria-hidden="true" />
             <UiText>Delivery tasks</UiText>
             {tasks.isSuccess && (
@@ -114,6 +124,10 @@ export function LiveDelivery() {
             <Wallet size={21} aria-hidden="true" />
             <UiText>Cash handover</UiText>
           </Link>
+          <Link to="/delivery/profile" className={path.includes("profile") ? "is-active" : ""}>
+            <UserRound size={21} aria-hidden="true" />
+            <UiText>Profile</UiText>
+          </Link>
           <span className="dispatch-disabled">
             <ChartNoAxesCombined size={21} aria-hidden="true" />
             <span>
@@ -123,7 +137,11 @@ export function LiveDelivery() {
               </small>
             </span>
           </span>
-          <a href={path.includes("earnings") ? "/delivery#rider-help" : "#rider-help"}>
+          <a
+            href={
+              path !== "/delivery" && path !== "/delivery/" ? "/delivery#rider-help" : "#rider-help"
+            }
+          >
             <CircleHelp size={21} aria-hidden="true" />
             <UiText>Help & support</UiText>
           </a>
@@ -154,7 +172,7 @@ export function LiveDelivery() {
               <p>
                 <UiText>Delivery partner account</UiText>
               </p>
-              <Link to="/account">
+              <Link to="/delivery/profile">
                 <UiText>Manage account</UiText>
               </Link>
             </div>
@@ -204,7 +222,10 @@ export function LiveDelivery() {
           </div>
         </section>
         <nav className="rider-tabs" aria-label="Delivery workspace sections">
-          <Link to="/delivery" className={!path.includes("earnings") ? "is-active" : ""}>
+          <Link
+            to="/delivery"
+            className={path === "/delivery" || path === "/delivery/" ? "is-active" : ""}
+          >
             <ClipboardList size={19} aria-hidden="true" />
             <UiText>Tasks</UiText>
           </Link>
@@ -213,7 +234,13 @@ export function LiveDelivery() {
             <UiText>Cash handover</UiText>
           </Link>
         </nav>
-        {path.includes("earnings") ? (
+        {path.includes("profile") ? (
+          <RiderProfile
+            profile={profile.data}
+            loading={profile.isPending}
+            error={profile.isError}
+          />
+        ) : path.includes("earnings") ? (
           <SettlementLedger />
         ) : (
           <>

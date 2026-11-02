@@ -33,6 +33,7 @@ import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as DeliveryIndexRouteImport } from './routes/delivery.index'
 import { Route as DeliveryIdRouteImport } from './routes/delivery.$id'
 import { Route as DeliveryEarningsRouteImport } from './routes/delivery.earnings'
+import { Route as DeliveryProfileRouteImport } from './routes/delivery.profile'
 import { Route as OrdersIndexRouteImport } from './routes/orders.index'
 import { Route as OrdersIdRouteImport } from './routes/orders.$id'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
@@ -167,6 +168,11 @@ const DeliveryEarningsRoute = DeliveryEarningsRouteImport.update({
   path: '/earnings',
   getParentRoute: () => DeliveryRoute,
 } as any)
+const DeliveryProfileRoute = DeliveryProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => DeliveryRoute,
+} as any)
 const OrdersIndexRoute = OrdersIndexRouteImport.update({
   id: '/orders/',
   path: '/orders/',
@@ -256,6 +262,7 @@ export interface FileRoutesByFullPath {
   '/category/$slug': typeof CategorySlugRoute
   '/delivery/$id': typeof DeliveryIdRoute
   '/delivery/earnings': typeof DeliveryEarningsRoute
+  '/delivery/profile': typeof DeliveryProfileRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
   '/seller/inventory': typeof SellerInventoryRoute
@@ -292,6 +299,7 @@ export interface FileRoutesByTo {
   '/category/$slug': typeof CategorySlugRoute
   '/delivery/$id': typeof DeliveryIdRoute
   '/delivery/earnings': typeof DeliveryEarningsRoute
+  '/delivery/profile': typeof DeliveryProfileRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
   '/seller/inventory': typeof SellerInventoryRoute
@@ -332,6 +340,7 @@ export interface FileRoutesById {
   '/category/$slug': typeof CategorySlugRoute
   '/delivery/$id': typeof DeliveryIdRoute
   '/delivery/earnings': typeof DeliveryEarningsRoute
+  '/delivery/profile': typeof DeliveryProfileRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
   '/seller/inventory': typeof SellerInventoryRoute
@@ -373,6 +382,7 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/delivery/$id'
     | '/delivery/earnings'
+    | '/delivery/profile'
     | '/orders/$id'
     | '/product/$id'
     | '/seller/inventory'
@@ -409,6 +419,7 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/delivery/$id'
     | '/delivery/earnings'
+    | '/delivery/profile'
     | '/orders/$id'
     | '/product/$id'
     | '/seller/inventory'
@@ -448,6 +459,7 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/delivery/$id'
     | '/delivery/earnings'
+    | '/delivery/profile'
     | '/orders/$id'
     | '/product/$id'
     | '/seller/inventory'
@@ -653,6 +665,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DeliveryEarningsRouteImport
       parentRoute: typeof DeliveryRoute
     }
+    '/delivery/profile': {
+      id: '/delivery/profile'
+      path: '/profile'
+      fullPath: '/delivery/profile'
+      preLoaderRoute: typeof DeliveryProfileRouteImport
+      parentRoute: typeof DeliveryRoute
+    }
     '/orders/': {
       id: '/orders/'
       path: '/orders'
@@ -778,12 +797,14 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 interface DeliveryRouteChildren {
   DeliveryIdRoute: typeof DeliveryIdRoute
   DeliveryEarningsRoute: typeof DeliveryEarningsRoute
+  DeliveryProfileRoute: typeof DeliveryProfileRoute
   DeliveryIndexRoute: typeof DeliveryIndexRoute
 }
 
 const DeliveryRouteChildren: DeliveryRouteChildren = {
   DeliveryIdRoute: DeliveryIdRoute,
   DeliveryEarningsRoute: DeliveryEarningsRoute,
+  DeliveryProfileRoute: DeliveryProfileRoute,
   DeliveryIndexRoute: DeliveryIndexRoute,
 }
 

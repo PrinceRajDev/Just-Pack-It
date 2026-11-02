@@ -26,12 +26,13 @@ const address = {
   pincode: "999999",
 };
 const shops = [{ id: "s", name: "Own shop" }] as Shop[];
-function mount(selectable = false) {
+function mount(selectable = false, riderOnly = false) {
   render(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
       <AddressDeliveryReview
+        riderOnly={riderOnly}
         shops={shops}
         lines={selectable ? [{ productId: "p", qty: 1 }] : []}
         areaId={selectable ? "area" : undefined}
@@ -165,3 +166,41 @@ it("preselects eligible delivery but preserves a buyer pickup choice", async () 
   expect(delivery).not.toBeChecked();
   expect(screen.getByRole("radio", { name: /Choose Store pickup/ })).toBeChecked();
 });
+
+it.each(["eligible", "unverified"] as const)(
+  "rider-only checkout respects %s capacity without offering customer pickup",
+  async (status) => {
+    vi.mocked(reviewFulfilment).mockResolvedValue({
+      checkedAt: "now",
+      addressId: "a",
+      addressVersion: 2,
+      checkoutAvailable: false,
+      reserved: false,
+      shops: [
+        {
+          shopId: "s",
+          issues: [],
+          options: [
+            { method: "pickup", status: "eligible", listedFee: 0, message: "Collect at shop" },
+            {
+              method: "platform_delivery",
+              status,
+              listedFee: status === "eligible" ? 30 : null,
+              message: "Rider coverage check",
+            },
+          ],
+        },
+      ],
+    });
+    mount(true, true);
+    await screen.findByText("Rider coverage check");
+    expect(screen.queryByRole("radio", { name: /Choose Store pickup/ })).toBeNull();
+    expect(screen.queryByText("Collect at shop")).toBeNull();
+    if (status === "eligible")
+      expect(await screen.findByText("Full selection review mounted")).toBeInTheDocument();
+    else {
+      expect(screen.queryByText("Full selection review mounted")).toBeNull();
+      expect(screen.getByText(/Rider delivery is not available/)).toBeInTheDocument();
+    }
+  },
+);

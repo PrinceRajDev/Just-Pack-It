@@ -16,7 +16,9 @@ export function AddressDeliveryReview({
   lines = [],
   areaId,
   compact = false,
+  riderOnly = false,
 }: {
+  riderOnly?: boolean;
   compact?: boolean;
   shops: Shop[];
   lines?: CartLine[];
@@ -51,6 +53,7 @@ export function AddressDeliveryReview({
           lines={lines}
           areaId={areaId}
           compact={compact}
+          riderOnly={riderOnly}
         />
       )}
     </section>
@@ -62,7 +65,9 @@ function SignedInReview({
   lines,
   areaId,
   compact,
+  riderOnly,
 }: {
+  riderOnly: boolean;
   compact: boolean;
   userId: string;
   shops: Shop[];
@@ -95,7 +100,9 @@ function SignedInReview({
     for (const group of check.data?.shops ?? []) {
       if (!resolvedChoices[group.shopId]) {
         const delivery = group.options.find(
-          (option) => option.status === "eligible" && option.method !== "pickup",
+          (option) =>
+            option.status === "eligible" &&
+            (riderOnly ? option.method === "platform_delivery" : option.method !== "pickup"),
         );
         if (delivery) resolvedChoices[group.shopId] = delivery.method;
       }
@@ -215,7 +222,7 @@ function SignedInReview({
                 open={!compact || ids.some((id) => !resolvedChoices[id])}
               >
                 <summary>
-                  <UiText>Delivery and pickup options</UiText>
+                  <UiText>{riderOnly ? "Rider delivery" : "Delivery and pickup options"}</UiText>
                 </summary>
                 {check.data.shops.map((group) => (
                   <div key={group.shopId} className="border-t border-border pt-3">
@@ -227,50 +234,67 @@ function SignedInReview({
                         {issue.message}
                       </p>
                     ))}
+                    {riderOnly &&
+                      !group.options.some(
+                        (option) =>
+                          option.method === "platform_delivery" && option.status === "eligible",
+                      ) && (
+                        <p role="status" className="bag-delivery-warning">
+                          <UiText>
+                            Rider delivery is not available for this shop and address. Try another
+                            address or remove this shop to continue.
+                          </UiText>
+                        </p>
+                      )}
                     {!group.options.length && (
                       <p className="text-sm">No delivery or pickup options available.</p>
                     )}
                     <ul className="space-y-2">
-                      {group.options.map((option) => (
-                        <li key={option.method} className="text-sm">
-                          <p className="font-medium">
-                            {fulfilmentLabel[option.method]} ·{" "}
-                            <UiText>
-                              {option.status === "eligible"
-                                ? "Available"
-                                : option.status === "unavailable"
-                                  ? "Unavailable"
-                                  : "Not verified"}
-                            </UiText>
-                          </p>
-                          <p className="text-muted-foreground">{option.message}</p>
-                          {lines.length > 0 && (
-                            <label className="my-2 flex items-center gap-2">
-                              <input
-                                type="radio"
-                                name={`fulfilment-${group.shopId}`}
-                                disabled={option.status !== "eligible" || check.isFetching}
-                                checked={resolvedChoices[group.shopId] === option.method}
-                                onChange={() =>
-                                  setChoices({ ...choices, [group.shopId]: option.method })
-                                }
-                                className="accent-primary"
-                              />
-                              Choose {fulfilmentLabel[option.method]} for{" "}
-                              {shops.find((shop) => shop.id === group.shopId)?.name ?? "shop"}
-                            </label>
-                          )}
-                          {option.status === "eligible" && (
-                            <p>
+                      {group.options
+                        .filter((option) => !riderOnly || option.method === "platform_delivery")
+                        .map((option) => (
+                          <li key={option.method} className="text-sm">
+                            <p className="font-medium">
+                              {riderOnly
+                                ? "Rider collects from shop and delivers to you"
+                                : fulfilmentLabel[option.method]}{" "}
+                              ·{" "}
                               <UiText>
-                                {option.method === "pickup"
-                                  ? "Pickup delivery charge: ₹0"
-                                  : `Listed fee: ${option.listedFee === null ? "Not supplied" : inr(option.listedFee)}`}
+                                {option.status === "eligible"
+                                  ? "Available"
+                                  : option.status === "unavailable"
+                                    ? "Unavailable"
+                                    : "Not verified"}
                               </UiText>
                             </p>
-                          )}
-                        </li>
-                      ))}
+                            <p className="text-muted-foreground">{option.message}</p>
+                            {lines.length > 0 && !riderOnly && (
+                              <label className="my-2 flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  name={`fulfilment-${group.shopId}`}
+                                  disabled={option.status !== "eligible" || check.isFetching}
+                                  checked={resolvedChoices[group.shopId] === option.method}
+                                  onChange={() =>
+                                    setChoices({ ...choices, [group.shopId]: option.method })
+                                  }
+                                  className="accent-primary"
+                                />
+                                Choose {fulfilmentLabel[option.method]} for{" "}
+                                {shops.find((shop) => shop.id === group.shopId)?.name ?? "shop"}
+                              </label>
+                            )}
+                            {option.status === "eligible" && (
+                              <p>
+                                <UiText>
+                                  {option.method === "pickup"
+                                    ? "Pickup delivery charge: ₹0"
+                                    : `Listed fee: ${option.listedFee === null ? "Not supplied" : inr(option.listedFee)}`}
+                                </UiText>
+                              </p>
+                            )}
+                          </li>
+                        ))}
                     </ul>
                   </div>
                 ))}

@@ -449,3 +449,65 @@
     width: 100%;
   }
 }
+/* Delivery-first bag: one clear receipt path, no fulfilment menu. */
+.bag-columns {
+  grid-template-columns: minmax(0, 1.8fr) minmax(340px, 1fr);
+  gap: 28px;
+}
+.bag-shop-heading h2 {
+  font-size: 21px;
+}
+.bag-method-chips > span {
+  background: #f1f5e8;
+  font-weight: 500;
+  font-size: 13px;
+  padding: 8px 12px;
+}
+.bag-product-line > div:nth-child(2) {
+  display: block;
+}
+.bag-product-line .bag-line-actions {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.bag-product-line .bag-line-actions > button {
+  height: 38px;
+  min-height: 38px;
+  min-width: 38px;
+}
+.bag-product-line .bag-quantity {
+  min-height: 38px;
+}
+.bag-product-line > div:nth-child(2) > a {
+  font-size: 17px;
+}
+.bag-shop-conditions {
+  margin-top: 6px;
+}
+.bag-add-more {
+  margin-top: 12px;
+}
+.bag-checkout-column .bag-delivery-options {
+  background: #f4f7eb;
+  border-color: #e2e9d2;
+  padding: 14px 16px;
+}
+.bag-delivery-options li {
+  padding: 10px 0;
+}
+.bag-delivery-warning {
+  margin-top: 10px;
+  color: #a13e22;
+  line-height: 1.6;
+}
+.bag-checkout-column section[aria-labelledby="full-review-title"] > p:last-child {
+  font-size: 12px;
+  line-height: 1.5;
+}
+@media (max-width: 900px) {
+  .bag-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

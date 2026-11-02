@@ -24,7 +24,6 @@ import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState } from "@/components/common/states";
 import { ProductImage } from "./ProductImage";
 import { inr } from "@/lib/image";
-import { fulfilmentLabel } from "./ShopMark";
 import { AddressDeliveryReview } from "./AddressDeliveryReview";
 
 export function LiveCart({ checkout = false }: { checkout?: boolean }) {
@@ -142,16 +141,10 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
                           </Link>
                         </h2>
                         <span className="bag-method-chips">
-                          {group.shop.fulfilment.map((method) => (
-                            <span key={method}>
-                              {method === "pickup" ? (
-                                <Store size={17} aria-hidden="true" />
-                              ) : (
-                                <Truck size={17} aria-hidden="true" />
-                              )}
-                              <UiText>{fulfilmentLabel[method]}</UiText>
-                            </span>
-                          ))}
+                          <span>
+                            <Truck size={17} aria-hidden="true" />
+                            <UiText>Rider delivery</UiText>
+                          </span>
                         </span>
                         <ChevronDown className="bag-collapse-icon" size={20} aria-hidden="true" />
                       </summary>
@@ -223,6 +216,7 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
                       lines={lines}
                       areaId={area.id}
                       compact={!checkout}
+                      riderOnly
                     />
                   )}
                 </aside>

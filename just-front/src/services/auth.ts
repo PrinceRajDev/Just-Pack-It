@@ -40,10 +40,16 @@ export const authentication = {
       "/auth/email-otp/send",
       { method: "POST", body: JSON.stringify({ email }) },
     ),
-  registerDelivery: (name: string, phone: string, password: string, proof?: SignupEmailProof) =>
+  registerDelivery: (
+    name: string,
+    phone: string,
+    password: string,
+    areaId: string,
+    proof?: SignupEmailProof,
+  ) =>
     api<Session>("/auth/register/delivery", {
       method: "POST",
-      body: JSON.stringify({ name, phone, password, ...proof }),
+      body: JSON.stringify({ name, phone, password, areaId, ...proof }),
     }),
   registerSeller: (input: SellerSignupInput) =>
     api<Session>("/auth/register/seller", { method: "POST", body: JSON.stringify(input) }),

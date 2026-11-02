@@ -1,3 +1,4 @@
+import {Area} from "../catalogue/models.js";
 import {notify} from "../notifications/service.js";
 import {Partner} from "../delivery/models.js";
 import { Router } from "express";
@@ -43,14 +44,15 @@ export function authRoutes(config: Config) {
     res.status(201).json(await registerSeller(input, config));
   });
   router.post("/register/delivery", async (req, res) => {
-    const input = registerInput.parse(req.body);
+    const input = registerInput.extend({areaId:z.uuid()}).strict().parse(req.body);
     await throttle(`register:${req.ip}`, config, 10);
     const proof=await verifySignupEmail(input,config),passwordHash=await hashPassword(input.password);
     await mongoose.connection.transaction(async session=>{
+      if(!await Area.findOneAndUpdate({_id:input.areaId,active:true},{$inc:{revision:1}},{session})) fail(400,"INVALID_AREA","Choose an active delivery service area.");
       const verifiedEmail=await consumeEmailProof(proof,session);
       const [user]=await User.create([{name:input.name,phone:input.phone,passwordHash,role:"delivery",active:true,...verifiedEmail}],{session});
-      await Partner.create([{_id:user!._id,approved:false,areaIds:[],online:false,seenAt:new Date(),version:0,revision:0}],{session});
-      await notify(`delivery-signup:${user!._id}`,{admin:true},"New delivery partner application","A delivery partner registered. Review the account and assign service areas before approval.","/admin/partners#delivery-partners",session);
+      await Partner.create([{_id:user!._id,approved:false,areaIds:[input.areaId],online:false,seenAt:new Date(),version:0,revision:0}],{session});
+      await notify(`delivery-signup:${user!._id}`,{admin:true},"New delivery partner application","A delivery partner registered. Review the account and its selected service area before approval.","/admin/partners#delivery-partners",session);
     });
     res.status(201).json(await login(input, config, req.ip ?? "unknown"));
   });

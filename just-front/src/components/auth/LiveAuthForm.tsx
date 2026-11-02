@@ -45,6 +45,13 @@ export function LiveAuthForm({
   const [googleToken, setGoogleToken] = useState<string>();
   const [accountType, setAccountType] = useState<"buyer" | "seller" | "delivery">("buyer");
   const [sellerReady, setSellerReady] = useState(false);
+  const [riderAreaId, setRiderAreaId] = useState("");
+  const riderAreas = useQuery({
+    queryKey: ["areas"],
+    queryFn: management.areas,
+    enabled: accountType === "delivery",
+    retry: false,
+  });
   const [shopPhoto, setShopPhoto] = useState<File | null>(null);
   const formElement = useRef<HTMLFormElement>(null);
   const [registering, setRegistering] = useState(false);
@@ -95,6 +102,15 @@ export function LiveAuthForm({
             );
             return;
           }
+          if (
+            registering &&
+            accountType === "delivery" &&
+            (!riderAreaId ||
+              !riderAreas.data?.some((area) => area.id === riderAreaId && area.active))
+          ) {
+            setError("Choose an available delivery area before creating your account.");
+            return;
+          }
           const phone = values.phone.startsWith("+") ? values.phone : `+91${values.phone}`;
           if (submitLock.current) return;
           submitLock.current = true;
@@ -109,7 +125,13 @@ export function LiveAuthForm({
                     shop: readSellerShop(new FormData(formElement.current!)),
                   })
                 : accountType === "delivery"
-                  ? await registerDelivery(values.name!, phone, values.password, emailProof)
+                  ? await registerDelivery(
+                      values.name!,
+                      phone,
+                      values.password,
+                      riderAreaId,
+                      emailProof,
+                    )
                   : emailProof
                     ? await registerBuyer(values.name!, phone, values.password, emailProof)
                     : await registerBuyer(values.name!, phone, values.password)
@@ -217,10 +239,48 @@ export function LiveAuthForm({
         {registering && accountType === "delivery" && (
           <p className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
             <UiText>
-              Create your rider account. An admin must approve you and assign service areas before
-              you can go online and accept deliveries.
+              Create your rider account and choose your delivery area. An admin must approve your
+              account before you can go online and accept deliveries.
             </UiText>
           </p>
+        )}
+        {registering && accountType === "delivery" && (
+          <div className="rounded-xl border border-border p-4 space-y-2">
+            <label htmlFor="rider-signup-area" className="block text-sm font-medium">
+              <UiText>Delivery service area</UiText>
+            </label>
+            <select
+              id="rider-signup-area"
+              className="w-full min-h-11 rounded-lg border border-border bg-background px-3 py-2"
+              value={riderAreaId}
+              disabled={riderAreas.isPending || riderAreas.isError || form.formState.isSubmitting}
+              onChange={(event) => setRiderAreaId(event.target.value)}
+              required
+            >
+              <option value="">
+                <UiText>Choose your delivery area</UiText>
+              </option>
+              {riderAreas.data
+                ?.filter((area) => area.active)
+                .map((area) => (
+                  <option key={area.id} value={area.id}>
+                    {area.name} · {area.city} {area.pincodes.join(", ")}
+                  </option>
+                ))}
+            </select>
+            {riderAreas.isPending && <p role="status">Loading available areas…</p>}
+            {riderAreas.isError && (
+              <div role="alert">
+                <p>Could not load delivery areas.</p>
+                <Button type="button" variant="outline" onClick={() => void riderAreas.refetch()}>
+                  Retry areas
+                </Button>
+              </div>
+            )}
+            {riderAreas.isSuccess && !riderAreas.data.some((area) => area.active) && (
+              <p role="status">No delivery areas are available yet. Please check again later.</p>
+            )}
+          </div>
         )}
         <div className="auth-details-section">
           {registering && (
@@ -367,7 +427,10 @@ export function LiveAuthForm({
                 (options.data.emailOtpRequired &&
                   ((!options.data.emailOtpAvailable && !emailProof?.googleIdToken) ||
                     !emailProof)))) ||
-            (registering && accountType === "seller" && !sellerReady)
+            (registering && accountType === "seller" && !sellerReady) ||
+            (registering &&
+              accountType === "delivery" &&
+              (!riderAreaId || riderAreas.isPending || riderAreas.isError))
           }
         >
           {form.formState.isSubmitting && (

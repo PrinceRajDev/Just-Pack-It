@@ -277,8 +277,10 @@ it("creates a rider without requiring seller fields and redirects to the deliver
   const success = mount();
   fireEvent.click(screen.getByRole("radio", { name: /Delivery partner/ }));
   expect(screen.queryByLabelText("Shop name")).toBeNull();
-  expect(screen.getByText(/An admin must approve you/)).toBeInTheDocument();
+  expect(screen.getByText(/An admin must approve your account/)).toBeInTheDocument();
   identity();
+  await screen.findByRole("option", { name: /Test locality/ });
+  fireEvent.change(screen.getByLabelText("Delivery service area"), { target: { value: areaId } });
   await waitFor(() =>
     expect(screen.getByRole("button", { name: "Create rider account" })).toBeEnabled(),
   );
@@ -288,6 +290,7 @@ it("creates a rider without requiring seller fields and redirects to the deliver
       "Test owner",
       "+919876543210",
       "Test-only-password-2026",
+      areaId,
       undefined,
     ),
   );

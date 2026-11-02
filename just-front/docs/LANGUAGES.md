@@ -1,6 +1,6 @@
 # Interface languages
 
-English and Hindi are selectable from the global language bar on buyer, authentication and role-workspace screens. Preference is stored as `jpi.language` on this browser and synchronized across tabs. The server render is English; the stored preference is applied after hydration. Selection does not remount the app or clear unsaved forms. No external translation script or service runs in the browser.
+English and Hindi are selectable from the navigation language selector on buyer, authentication and role-workspace screens. Preference is stored as `jpi.language` on this browser and synchronized across tabs. The server render is English; the stored preference is applied after hydration. Selection does not remount the app or clear unsaved forms. No external translation script or service runs in the browser.
 
 Reviewed Hindi interface phrases live in `src/lib/i18n/hi.ts`. `UiText` renders translated text without a DOM wrapper; `UiAttributes` translates display labels, hints, placeholders and accessible names without changing form names, values or IDs. Do not wrap a direct `asChild` child with `UiAttributes`: the slot must retain its event handlers and ref. Dates, backend-generated messages, longer unreviewed help copy and unknown phrases currently retain their original text. Seller/admin-authored shop names, product names and descriptions are not automatically translated. This is shared-interface coverage, not a claim of complete Hindi coverage for every paragraph or server response.
 

@@ -1,4 +1,4 @@
-import { UiText, LanguageProvider, LanguageSwitcher } from "@/lib/i18n/Language";
+import { UiText, LanguageProvider } from "@/lib/i18n/Language";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -151,9 +151,6 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-        <div className="site-language-bar">
-          <LanguageSwitcher />
-        </div>
         <AuthProvider>
           <LocationProvider>
             <AccountCartProvider>

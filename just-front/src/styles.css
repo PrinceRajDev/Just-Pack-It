@@ -1684,13 +1684,6 @@
   }
 }
 
-.site-language-bar {
-  display: flex;
-  justify-content: flex-end;
-  padding: 0.25rem 1rem;
-  background: #eef3df;
-  border-bottom: 1px solid #dce4cd;
-}
 .language-switcher select {
   cursor: pointer;
   border: 1px solid #bdcdb0;

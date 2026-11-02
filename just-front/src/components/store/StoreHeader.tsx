@@ -1,3 +1,4 @@
+import { LanguageSwitcher } from "@/lib/i18n/Language";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState, useEffect, useId } from "react";
 import { recentSearches, rememberSearch, clearSearches } from "@/lib/search";
@@ -369,6 +370,9 @@ export function StoreHeader() {
               </Link>
             </UiAttributes>
             <div className="hidden md:block">
+              <LanguageSwitcher />
+            </div>
+            <div className="hidden md:block">
               <NotificationBell />
             </div>
           </nav>
@@ -376,7 +380,8 @@ export function StoreHeader() {
       </div>
       <div className="market-navbar-mobile-location flex items-center gap-2 border-t border-border px-4 py-2 md:hidden">
         <LocationPicker />
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-3">
+          <LanguageSwitcher />
           <NotificationBell />
         </div>
       </div>

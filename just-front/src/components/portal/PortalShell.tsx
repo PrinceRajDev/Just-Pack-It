@@ -1,3 +1,4 @@
+import { LanguageSwitcher } from "@/lib/i18n/Language";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
@@ -188,6 +189,7 @@ export function PortalShell({
               </Sheet>
               <AdminWorkspaceSearch items={items} />
               <div className="admin-topbar-account">
+                <LanguageSwitcher />
                 <NotificationBell />
                 <span className="admin-avatar" aria-hidden="true">
                   {(session?.name ?? "Admin")
@@ -211,6 +213,7 @@ export function PortalShell({
                 <UiText>{label === "Seller" ? "Seller workspace" : "Operations workspace"}</UiText>
               </span>
               <span className="flex items-center gap-3">
+                <LanguageSwitcher />
                 <NotificationBell />
                 <details className="seller-profile-menu">
                   <summary>

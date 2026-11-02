@@ -1,3 +1,4 @@
+import { LanguageSwitcher } from "@/lib/i18n/Language";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -92,9 +93,12 @@ function Login() {
       </div>
       <div className="login-form-panel flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
-          <Link to="/" className="auth-back-link">
-            ← Back to the market
-          </Link>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <Link to="/" className="auth-back-link">
+              ← Back to the market
+            </Link>
+            <LanguageSwitcher />
+          </div>
           <div className="md:hidden">
             <Logo />
           </div>

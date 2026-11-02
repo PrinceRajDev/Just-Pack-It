@@ -15,7 +15,9 @@ export function AddressDeliveryReview({
   shops,
   lines = [],
   areaId,
+  compact = false,
 }: {
+  compact?: boolean;
   shops: Shop[];
   lines?: CartLine[];
   areaId?: string;
@@ -48,6 +50,7 @@ export function AddressDeliveryReview({
           shops={shops}
           lines={lines}
           areaId={areaId}
+          compact={compact}
         />
       )}
     </section>
@@ -58,7 +61,9 @@ function SignedInReview({
   shops,
   lines,
   areaId,
+  compact,
 }: {
+  compact: boolean;
   userId: string;
   shops: Shop[];
   lines: CartLine[];
@@ -122,43 +127,58 @@ function SignedInReview({
             </Link>
           </Button>
           {!!addresses.data.length && (
-            <fieldset className="space-y-2">
-              <legend className="mb-2 font-medium">
-                <UiText>{"Delivery address"}</UiText>
-              </legend>
-              {addresses.data.map((address) => (
-                <label
-                  key={address.id}
-                  className="flex cursor-pointer gap-3 rounded-lg border border-border p-3 text-sm"
-                >
-                  <input
-                    type="radio"
-                    name="delivery-address"
-                    value={address.id}
-                    checked={current?.id === address.id}
-                    onChange={() => {
-                      setSelected(address.id);
-                      setChoices({});
-                    }}
-                    className="mt-1 accent-primary"
-                  />
-                  <span>
-                    <strong>
-                      <UiText>{address.label}</UiText>
-                    </strong>
-                    <br />
-                    {address.line1}, {address.locality}, {address.city} {address.pincode}
-                    <span className="block text-xs text-muted-foreground">
-                      <UiText>
-                        {address.location
-                          ? "Delivery pin saved; distance is checked per shop."
-                          : "No pin saved: pincode coverage only, exact destination distance not checked."}
-                      </UiText>
+            <details className="bag-address-picker" open={!compact}>
+              <summary>
+                {current && (
+                  <>
+                    <strong>{current.label}</strong>
+                    <span>
+                      {current.line1}, {current.locality}, {current.city} {current.pincode}
                     </span>
-                  </span>
-                </label>
-              ))}
-            </fieldset>
+                  </>
+                )}
+                <span className="bag-edit-address">
+                  <UiText>Edit</UiText>
+                </span>
+              </summary>
+              <fieldset className="space-y-2">
+                <legend className="mb-2 font-medium">
+                  <UiText>{"Delivery address"}</UiText>
+                </legend>
+                {addresses.data.map((address) => (
+                  <label
+                    key={address.id}
+                    className="flex cursor-pointer gap-3 rounded-lg border border-border p-3 text-sm"
+                  >
+                    <input
+                      type="radio"
+                      name="delivery-address"
+                      value={address.id}
+                      checked={current?.id === address.id}
+                      onChange={() => {
+                        setSelected(address.id);
+                        setChoices({});
+                      }}
+                      className="mt-1 accent-primary"
+                    />
+                    <span>
+                      <strong>
+                        <UiText>{address.label}</UiText>
+                      </strong>
+                      <br />
+                      {address.line1}, {address.locality}, {address.city} {address.pincode}
+                      <span className="block text-xs text-muted-foreground">
+                        <UiText>
+                          {address.location
+                            ? "Delivery pin saved; distance is checked per shop."
+                            : "No pin saved: pincode coverage only, exact destination distance not checked."}
+                        </UiText>
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </fieldset>
+            </details>
           )}
         </>
       )}
@@ -190,70 +210,78 @@ function SignedInReview({
         ) : (
           check.data && (
             <div className="space-y-4" aria-live="polite">
-              {check.data.shops.map((group) => (
-                <div key={group.shopId} className="border-t border-border pt-3">
-                  <h3 className="font-semibold">
-                    {shops.find((shop) => shop.id === group.shopId)?.name ?? "Shop"}
-                  </h3>
-                  {group.issues.map((issue) => (
-                    <p key={issue.code} className="text-sm text-destructive">
-                      {issue.message}
-                    </p>
-                  ))}
-                  {!group.options.length && (
-                    <p className="text-sm">No delivery or pickup options available.</p>
-                  )}
-                  <ul className="space-y-2">
-                    {group.options.map((option) => (
-                      <li key={option.method} className="text-sm">
-                        <p className="font-medium">
-                          {fulfilmentLabel[option.method]} ·{" "}
-                          <UiText>
-                            {option.status === "eligible"
-                              ? "Available"
-                              : option.status === "unavailable"
-                                ? "Unavailable"
-                                : "Not verified"}
-                          </UiText>
-                        </p>
-                        <p className="text-muted-foreground">{option.message}</p>
-                        {lines.length > 0 && (
-                          <label className="my-2 flex items-center gap-2">
-                            <input
-                              type="radio"
-                              name={`fulfilment-${group.shopId}`}
-                              disabled={option.status !== "eligible" || check.isFetching}
-                              checked={resolvedChoices[group.shopId] === option.method}
-                              onChange={() =>
-                                setChoices({ ...choices, [group.shopId]: option.method })
-                              }
-                              className="accent-primary"
-                            />
-                            Choose {fulfilmentLabel[option.method]} for{" "}
-                            {shops.find((shop) => shop.id === group.shopId)?.name ?? "shop"}
-                          </label>
-                        )}
-                        {option.status === "eligible" && (
-                          <p>
+              <details
+                className="bag-delivery-options"
+                open={!compact || ids.some((id) => !resolvedChoices[id])}
+              >
+                <summary>
+                  <UiText>Delivery and pickup options</UiText>
+                </summary>
+                {check.data.shops.map((group) => (
+                  <div key={group.shopId} className="border-t border-border pt-3">
+                    <h3 className="font-semibold">
+                      {shops.find((shop) => shop.id === group.shopId)?.name ?? "Shop"}
+                    </h3>
+                    {group.issues.map((issue) => (
+                      <p key={issue.code} className="text-sm text-destructive">
+                        {issue.message}
+                      </p>
+                    ))}
+                    {!group.options.length && (
+                      <p className="text-sm">No delivery or pickup options available.</p>
+                    )}
+                    <ul className="space-y-2">
+                      {group.options.map((option) => (
+                        <li key={option.method} className="text-sm">
+                          <p className="font-medium">
+                            {fulfilmentLabel[option.method]} ·{" "}
                             <UiText>
-                              {option.method === "pickup"
-                                ? "Pickup delivery charge: ₹0"
-                                : `Listed fee: ${option.listedFee === null ? "Not supplied" : inr(option.listedFee)}`}
+                              {option.status === "eligible"
+                                ? "Available"
+                                : option.status === "unavailable"
+                                  ? "Unavailable"
+                                  : "Not verified"}
                             </UiText>
                           </p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-              <Button
-                variant="outline"
-                disabled={check.isFetching}
-                onClick={() => void check.refetch()}
-              >
-                <UiText>{"Refresh delivery check"}</UiText>
-              </Button>
+                          <p className="text-muted-foreground">{option.message}</p>
+                          {lines.length > 0 && (
+                            <label className="my-2 flex items-center gap-2">
+                              <input
+                                type="radio"
+                                name={`fulfilment-${group.shopId}`}
+                                disabled={option.status !== "eligible" || check.isFetching}
+                                checked={resolvedChoices[group.shopId] === option.method}
+                                onChange={() =>
+                                  setChoices({ ...choices, [group.shopId]: option.method })
+                                }
+                                className="accent-primary"
+                              />
+                              Choose {fulfilmentLabel[option.method]} for{" "}
+                              {shops.find((shop) => shop.id === group.shopId)?.name ?? "shop"}
+                            </label>
+                          )}
+                          {option.status === "eligible" && (
+                            <p>
+                              <UiText>
+                                {option.method === "pickup"
+                                  ? "Pickup delivery charge: ₹0"
+                                  : `Listed fee: ${option.listedFee === null ? "Not supplied" : inr(option.listedFee)}`}
+                              </UiText>
+                            </p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  disabled={check.isFetching}
+                  onClick={() => void check.refetch()}
+                >
+                  <UiText>{"Refresh delivery check"}</UiText>
+                </Button>
+              </details>
               {areaId &&
                 lines.length > 0 &&
                 !check.isFetching &&
@@ -266,6 +294,7 @@ function SignedInReview({
                     ),
                 ) && (
                   <CheckoutReviewPanel
+                    compact={compact}
                     userId={userId}
                     areaId={areaId}
                     addressId={current.id}

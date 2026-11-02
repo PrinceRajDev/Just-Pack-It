@@ -1,3 +1,4 @@
+import { ArrowRight, ShieldCheck, Store, Headphones } from "lucide-react";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -14,7 +15,9 @@ export function CheckoutReviewPanel({
   addressVersion,
   lines,
   fulfilments,
+  compact = false,
 }: {
+  compact?: boolean;
   userId: string;
   areaId: string;
   addressId: string;
@@ -22,6 +25,7 @@ export function CheckoutReviewPanel({
   lines: CartLine[];
   fulfilments: { shopId: string; method: FulfilmentMethod }[];
 }) {
+  const [expanded, setExpanded] = useState(false);
   const [payment, setPayment] = useState<"cod" | "razorpay">("cod");
   const items = lines.map(({ productId, variantId, qty }) => ({ productId, variantId, qty }));
   const check = useQuery({
@@ -68,7 +72,7 @@ export function CheckoutReviewPanel({
       aria-labelledby="full-review-title"
     >
       <h3 id="full-review-title" className="font-semibold">
-        <UiText>{"Bill details"}</UiText>
+        <UiText>{compact ? "Order summary" : "Bill details"}</UiText>
       </h3>
       <p>
         <UiText>{"Items: "}</UiText>
@@ -104,7 +108,7 @@ export function CheckoutReviewPanel({
       !issues.length &&
       !check.isFetching ? (
         <>
-          <p className="font-semibold">
+          <p className="bag-payable font-semibold">
             <UiText>
               {(check.data.paymentMethods?.includes(payment)
                 ? payment
@@ -117,58 +121,83 @@ export function CheckoutReviewPanel({
           <p className="text-sm">
             <UiText>{"Includes tax. No extra platform fee."}</UiText>
           </p>
-          <label className="block text-sm">
-            <UiText>{"Payment method"}</UiText>{" "}
-            <select
-              className="ml-2 rounded border bg-background p-2"
-              value={
-                check.data.paymentMethods?.includes(payment)
-                  ? payment
-                  : check.data.paymentMethods?.[0]
-              }
-              onChange={(event) => setPayment(event.target.value as "cod" | "razorpay")}
-            >
-              {check.data.paymentMethods?.map((method) => (
-                <option key={method} value={method}>
-                  <UiText>
-                    {method === "cod"
-                      ? "Cash on delivery / collection"
-                      : "Pay online with Razorpay"}
-                  </UiText>
-                </option>
-              ))}
-            </select>
-          </label>
-          {(check.data.paymentMethods?.includes(payment)
-            ? payment
-            : check.data.paymentMethods?.[0]) === "razorpay" ? (
-            <OnlineOrderAction
-              userId={userId}
-              input={{
-                areaId,
-                addressId,
-                addressVersion,
-                items,
-                fulfilments,
-                expectedTotal: check.data.grandTotal,
-                paymentMethod: "razorpay",
-              }}
-            />
+          {compact && !expanded ? (
+            <>
+              <Button className="bag-proceed" onClick={() => setExpanded(true)}>
+                <UiText>Proceed to checkout</UiText>
+                <ArrowRight size={20} aria-hidden="true" />
+              </Button>
+              <div className="bag-trust">
+                <span>
+                  <ShieldCheck aria-hidden="true" />
+                  <UiText>Review before payment</UiText>
+                </span>
+                <span>
+                  <Store aria-hidden="true" />
+                  <UiText>Local shops</UiText>
+                </span>
+                <span>
+                  <Headphones aria-hidden="true" />
+                  <UiText>Order support</UiText>
+                </span>
+              </div>
+            </>
           ) : (
-            <CodOrderAction
-              key={JSON.stringify([items, fulfilments, check.data.grandTotal, addressVersion])}
-              userId={userId}
-              input={{
-                areaId,
-                addressId,
-                addressVersion,
-                items,
-                fulfilments,
-                expectedTotal: check.data.grandTotal,
-                paymentMethod: "cod",
-              }}
-              onReset={() => void check.refetch()}
-            />
+            <>
+              <label className="block text-sm">
+                <UiText>{"Payment method"}</UiText>{" "}
+                <select
+                  className="ml-2 rounded border bg-background p-2"
+                  value={
+                    check.data.paymentMethods?.includes(payment)
+                      ? payment
+                      : check.data.paymentMethods?.[0]
+                  }
+                  onChange={(event) => setPayment(event.target.value as "cod" | "razorpay")}
+                >
+                  {check.data.paymentMethods?.map((method) => (
+                    <option key={method} value={method}>
+                      <UiText>
+                        {method === "cod"
+                          ? "Cash on delivery / collection"
+                          : "Pay online with Razorpay"}
+                      </UiText>
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {(check.data.paymentMethods?.includes(payment)
+                ? payment
+                : check.data.paymentMethods?.[0]) === "razorpay" ? (
+                <OnlineOrderAction
+                  userId={userId}
+                  input={{
+                    areaId,
+                    addressId,
+                    addressVersion,
+                    items,
+                    fulfilments,
+                    expectedTotal: check.data.grandTotal,
+                    paymentMethod: "razorpay",
+                  }}
+                />
+              ) : (
+                <CodOrderAction
+                  key={JSON.stringify([items, fulfilments, check.data.grandTotal, addressVersion])}
+                  userId={userId}
+                  input={{
+                    areaId,
+                    addressId,
+                    addressVersion,
+                    items,
+                    fulfilments,
+                    expectedTotal: check.data.grandTotal,
+                    paymentMethod: "cod",
+                  }}
+                  onReset={() => void check.refetch()}
+                />
+              )}
+            </>
           )}
         </>
       ) : (

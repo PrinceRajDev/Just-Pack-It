@@ -20,12 +20,16 @@ const response: CheckoutReview = {
   issues: [{ code: "FINAL_QUOTE_PENDING", message: "Final charges are not quoted." }],
   fulfilments: [],
 };
-function mount() {
+vi.mock("@/components/store/CodOrderAction", () => ({
+  CodOrderAction: () => <button>Place reviewed order</button>,
+}));
+function mount(compact = false) {
   render(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
       <CheckoutReviewPanel
+        compact={compact}
         userId="buyer"
         areaId="area"
         addressId="address"
@@ -64,4 +68,21 @@ it("retries failed review requests", async () => {
   mount();
   fireEvent.click(await screen.findByRole("button", { name: "Retry bill" }));
   await screen.findByText("Items: ₹10.5");
+});
+
+it("opens checkout controls only after an eligible server bill and explicit proceed", async () => {
+  vi.mocked(reviewCheckout).mockResolvedValue({
+    ...response,
+    issues: [],
+    checkoutAvailable: true,
+    deliveryTotal: 0,
+    grandTotal: 10.5,
+    paymentMethods: ["cod"],
+    pricingPolicy: "tax_inclusive_listed_delivery_no_extras_v1",
+  });
+  mount(true);
+  const proceed = await screen.findByRole("button", { name: "Proceed to checkout" });
+  expect(screen.queryByRole("button", { name: "Place reviewed order" })).toBeNull();
+  fireEvent.click(proceed);
+  expect(screen.getByRole("button", { name: "Place reviewed order" })).toBeInTheDocument();
 });

@@ -5,7 +5,16 @@ import { useCart, cartLineKey } from "@/stores/cart";
 import { useLocationArea } from "@/stores/location";
 import { reviewCart } from "@/services/cart-review";
 import type { CartReviewLine } from "@/domain/cart-review";
-import { ShoppingBag, Store, Home, ChevronRight, ChevronDown, Plus, Trash2 } from "lucide-react";
+import {
+  ShoppingBag,
+  Store,
+  Home,
+  ChevronRight,
+  ChevronDown,
+  Plus,
+  Trash2,
+  Truck,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import "./cart-page.css";
@@ -132,12 +141,20 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
                             {group.shop.name}
                           </Link>
                         </h2>
+                        <span className="bag-method-chips">
+                          {group.shop.fulfilment.map((method) => (
+                            <span key={method}>
+                              {method === "pickup" ? (
+                                <Store size={17} aria-hidden="true" />
+                              ) : (
+                                <Truck size={17} aria-hidden="true" />
+                              )}
+                              <UiText>{fulfilmentLabel[method]}</UiText>
+                            </span>
+                          ))}
+                        </span>
                         <ChevronDown className="bag-collapse-icon" size={20} aria-hidden="true" />
                       </summary>
-                      <p className="bag-methods text-sm text-muted-foreground">
-                        <UiText>{"Available options:"}</UiText>{" "}
-                        {group.shop.fulfilment.map((method) => fulfilmentLabel[method]).join(", ")}
-                      </p>
                       {group.issues.map((issue) => (
                         <p key={issue.code} className="text-sm text-destructive">
                           {issue.message}
@@ -152,7 +169,10 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
                             </li>
                           ))}
                       </ul>
-                      <div className="space-y-1 border-t border-border pt-3 text-sm">
+                      <details className="bag-shop-conditions">
+                        <summary>
+                          <UiText>Shop totals and delivery conditions</UiText>
+                        </summary>
                         <p className="font-medium">
                           <UiText>{"Shop item subtotal: "}</UiText>
                           {inr(group.itemsSubtotal)}
@@ -174,14 +194,14 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
                           </UiText>{" "}
                           · Confirmed in your bill below
                         </p>
-                      </div>
+                      </details>
                       <Link
                         className="bag-add-more"
                         to="/shop/$slug"
                         params={{ slug: group.shop.slug }}
                       >
                         <Plus size={18} aria-hidden="true" />
-                        <UiText>Continue shopping</UiText> � {group.shop.name}
+                        <UiText>Add more from</UiText> {group.shop.name}
                       </Link>
                     </details>
                   ))}
@@ -202,6 +222,7 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
                       shops={quote.data.shops.map((group) => group.shop)}
                       lines={lines}
                       areaId={area.id}
+                      compact={!checkout}
                     />
                   )}
                 </aside>
@@ -272,7 +293,7 @@ function ReviewLine({ line }: { line: CartReviewLine }) {
             </Button>
           </p>
         )}
-        <div className="flex flex-wrap gap-2">
+        <div className="bag-line-actions flex flex-wrap gap-2">
           {line.availableStock !== undefined && line.availableStock > 0 && (
             <>
               <UiAttributes>
@@ -285,6 +306,9 @@ function ReviewLine({ line }: { line: CartReviewLine }) {
                   −
                 </Button>
               </UiAttributes>
+              <span className="bag-quantity" aria-live="polite">
+                {line.qty}
+              </span>
               <UiAttributes>
                 <Button
                   variant="outline"
@@ -327,7 +351,9 @@ function ReviewLine({ line }: { line: CartReviewLine }) {
               onClick={() => setConfirmRemove(true)}
             >
               <Trash2 size={17} aria-hidden="true" />
-              <UiText>Remove item</UiText>
+              <span className="sr-only">
+                <UiText>Remove item</UiText>
+              </span>
             </Button>
           )}
         </div>

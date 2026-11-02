@@ -17,9 +17,7 @@ import {
   Boxes,
   ClipboardList,
   Truck,
-  ArrowRight,
   Settings2,
-  CircleCheck,
 } from "lucide-react";
 import { NeighbourhoodIllustration } from "./NeighbourhoodIllustration";
 import { OpenState } from "@/components/store/ShopMark";
@@ -46,65 +44,6 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
     retry: false,
   });
   const data = query.data;
-  const nextStep: {
-    title: string;
-    body: string;
-    action: "settings" | "waiting" | "handoffs" | "stock" | "orders" | "controls" | null;
-  } = (() => {
-    if (!shop.active || shop.status !== "approved")
-      return {
-        title: "Check your shop status",
-        body: "Review your shop profile and admin approval before taking new orders.",
-        action: "settings",
-      };
-    if (!data || query.isError)
-      return {
-        title: query.isError ? "Refresh before taking action" : "Your shop, at a glance",
-        body: "Your latest orders and stock appear below. No changes are made automatically.",
-        action: null,
-      };
-    if ((data.counts.placed ?? 0) > 0)
-      return {
-        title: "New orders are waiting for you",
-        body: "Check the oldest request first. Accept only what your shop can fulfil.",
-        action: "waiting",
-      };
-    if ((data.counts.ready ?? 0) > 0)
-      return {
-        title: "Packed orders are ready to go",
-        body: "Open handoffs to check the delivery method and confirm the right next step.",
-        action: "handoffs",
-      };
-    if ((data.counts.accepted ?? 0) + (data.counts.preparing ?? 0) > 0)
-      return {
-        title: "Orders are being prepared",
-        body: "Open your orders to continue preparation and mark packed items ready.",
-        action: "orders",
-      };
-    if (!shop.isOpen)
-      return {
-        title: "Your shop is currently closed",
-        body: "Check your saved hours and availability. Existing orders still need attention.",
-        action: "controls",
-      };
-    if (data.lowStock.count > 0)
-      return {
-        title: "A few items need restocking",
-        body: "Check the remaining quantities before your next order arrives.",
-        action: "stock",
-      };
-    if (data.pendingPayment > 0)
-      return {
-        title: "Some orders are waiting for payment",
-        body: "Wait for verified payment before preparing these orders.",
-        action: "orders",
-      };
-    return {
-      title: "You are up to date",
-      body: "No new orders awaiting acceptance. You can add products or check your shop settings.",
-      action: null,
-    };
-  })();
   return (
     <>
       <header className="seller-today-hero">
@@ -131,62 +70,6 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
         </Button>
       </header>
       <ShopReviewNotice shop={shop} />
-      <section className="seller-next-step" aria-labelledby="seller-next-step-heading">
-        <div>
-          <p className="seller-next-step-eyebrow">
-            <UiText>Your next step</UiText>
-          </p>
-          <h2 id="seller-next-step-heading">
-            <UiText>{nextStep.title}</UiText>
-          </h2>
-          <p>
-            <UiText>{nextStep.body}</UiText>
-          </p>
-        </div>
-        {nextStep.action === "settings" ? (
-          <Button asChild variant="outline">
-            <Link to="/seller/settings">
-              <UiText>Shop settings</UiText>
-              <ArrowRight size={17} aria-hidden="true" />
-            </Link>
-          </Button>
-        ) : nextStep.action === "orders" ? (
-          <Button asChild variant="outline">
-            <Link to="/seller/orders">
-              <UiText>Manage orders</UiText>
-              <ArrowRight size={17} aria-hidden="true" />
-            </Link>
-          </Button>
-        ) : nextStep.action ? (
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (nextStep.action === "controls") openControls();
-              else
-                jump(
-                  nextStep.action === "waiting"
-                    ? waiting.current
-                    : nextStep.action === "handoffs"
-                      ? handoffs.current
-                      : stock.current,
-                );
-            }}
-          >
-            <UiText>
-              {nextStep.action === "waiting"
-                ? "Review waiting orders"
-                : nextStep.action === "handoffs"
-                  ? "Manage handoffs"
-                  : nextStep.action === "controls"
-                    ? "Shop controls"
-                    : "Check low stock"}
-            </UiText>
-            <ArrowRight size={17} aria-hidden="true" />
-          </Button>
-        ) : data && !query.isError ? (
-          <CircleCheck className="seller-next-step-mark" aria-hidden="true" />
-        ) : null}
-      </section>
       <UiAttributes>
         <nav className="seller-quick-actions" aria-label="Daily shop tasks">
           <Button asChild>

@@ -80,13 +80,11 @@ it("initial errors do not become invented zero statistics; retry recovers", asyn
   await waitFor(() => expect(screen.getByText("Orders received today")).toBeInTheDocument());
 });
 
-it("guides the seller to pending orders and focuses the real order section", async () => {
+it("keeps the pending-order shortcut and removes the next-step banner", async () => {
   vi.mocked(sellerDashboard).mockResolvedValue(data);
   mount();
-  const action = await screen.findByRole("button", { name: "Review waiting orders" });
-  expect(
-    screen.getByRole("heading", { name: "New orders are waiting for you" }),
-  ).toBeInTheDocument();
+  const action = await screen.findByRole("link", { name: /Awaiting acceptance/ });
+  expect(screen.queryByText("Your next step")).toBeNull();
   fireEvent.click(action);
   expect(screen.getByRole("region", { name: "Urgent orders" })).toHaveFocus();
 });

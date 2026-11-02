@@ -766,3 +766,148 @@
     height: 1.2rem;
   }
 }
+
+.seller-settings-intro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: start;
+  justify-content: space-between;
+}
+.seller-settings-intro h2 {
+  font-family: var(--seller-serif);
+  font-size: 1.8rem;
+  color: #16472f;
+}
+.seller-settings-intro p {
+  max-width: 40rem;
+  line-height: 1.6;
+  color: #64705d;
+}
+.seller-settings-tabs {
+  display: flex;
+  height: auto;
+  gap: 0.5rem;
+  padding: 0.4rem;
+  justify-content: start;
+  background: #f0f3e4;
+  border: 1px solid #dfe5d0;
+  border-radius: 0.9rem;
+}
+.seller-settings-tabs > button {
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding: 0.6rem 1rem;
+  flex: 1;
+  white-space: normal;
+  line-height: 1.5;
+}
+.seller-settings-tabs > button[data-state="active"] {
+  background: #16472f;
+  color: #fffdf5;
+  box-shadow: none;
+}
+.seller-settings-tabs svg {
+  flex-shrink: 0;
+}
+.seller-settings-content {
+  margin-top: 1.25rem;
+}
+.seller-settings-content[data-state="inactive"] {
+  display: none;
+}
+.seller-settings-note {
+  background: #f1f5e7;
+  border-left: 3px solid #86a95e;
+  border-radius: 0.6rem;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+.seller-settings-note strong {
+  color: #16472f;
+}
+.seller-settings-note p {
+  margin-top: 0.25rem;
+  color: #65705e;
+}
+.seller-settings-draft {
+  margin-top: 1rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid #e4c88e;
+  background: #fff7e6;
+  border-radius: 0.6rem;
+  font-size: 0.9rem;
+}
+.seller-settings-group {
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #e5e5d6;
+}
+.seller-settings-group h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #16472f;
+}
+.seller-settings-group > p {
+  margin: 0.3rem 0 1rem;
+  color: #65705e;
+  font-size: 0.9rem;
+}
+.seller-settings-advanced {
+  padding: 1rem;
+  border: 1px solid #e4e6d8;
+  border-radius: 0.75rem;
+}
+.seller-settings-advanced summary {
+  cursor: pointer;
+  font-weight: 600;
+  line-height: 1.6;
+}
+.seller-settings-advanced[open] > summary {
+  margin-bottom: 1rem;
+}
+.seller-shop-settings form > fieldset > fieldset {
+  padding: 1rem;
+  border: 1px solid #e4e6d8;
+  border-radius: 0.75rem;
+}
+.seller-shop-settings fieldset legend {
+  padding-inline: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+.seller-shop-settings form > fieldset > fieldset label:has(input[type="checkbox"]) {
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.5rem;
+  background: #f5f6ee;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.seller-shop-settings label:has(input[type="checkbox"]:checked) {
+  color: #16472f;
+  background: #ebf2d9;
+}
+.seller-settings-save {
+  border-top: 1px solid #e3e6d6;
+  padding-top: 1rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+.seller-settings-save > p {
+  color: #65705e;
+  font-size: 0.85rem;
+  max-width: 27rem;
+}
+@media (max-width: 600px) {
+  .seller-settings-tabs > button {
+    flex-direction: column;
+    padding: 0.55rem 0.35rem;
+    font-size: 0.85rem;
+  }
+  .seller-settings-save {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

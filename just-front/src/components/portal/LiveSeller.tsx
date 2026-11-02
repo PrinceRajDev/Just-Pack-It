@@ -1,3 +1,5 @@
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Store, Clock3, Camera } from "lucide-react";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { SettlementLedger } from "./SettlementLedger";
 import { LiveSellerDashboard } from "./LiveSellerDashboard";
@@ -22,6 +24,7 @@ import { ShopAvailability } from "./ShopAvailability";
 import { LiveInventory } from "./LiveInventory";
 
 export function LiveSeller() {
+  const [settingsTab, setSettingsTab] = useState("details");
   const path = useRouterState({ select: (state) => state.location.pathname });
   const settlementPath = path.replace(/\/+$/, "") === "/seller/settlements";
   const homePath = path === "/seller" || path === "/seller/";
@@ -132,8 +135,8 @@ export function LiveSeller() {
     <>
       <UiAttributes>
         <PortalHeader
-          title={shop.data ? "Your shop profile" : "Bring your shop online"}
-          sub="Save your real details. New shops and profile changes require admin approval."
+          title={shop.data ? "Shop settings" : "Bring your shop online"}
+          sub="Manage your profile, availability and photo. Choose a section below."
         />
       </UiAttributes>
       <ShopForm
@@ -141,16 +144,22 @@ export function LiveSeller() {
         shop={shop.data}
         categories={categories.data}
         areas={areas.data}
+        tab={settingsTab}
+        onTabChange={setSettingsTab}
       />
     </>
   );
 }
 
-function ShopForm({
+export function ShopForm({
   shop,
   categories,
   areas,
+  tab,
+  onTabChange,
 }: {
+  tab?: string;
+  onTabChange?: (value: string) => void;
   shop: ManagedShop | null;
   categories: ManagedCategory[];
   areas: ManagedArea[];
@@ -158,6 +167,9 @@ function ShopForm({
   const save = useSave();
   const draft = useDraftGuard();
   const [profileEditing, setProfileEditing] = useState(false);
+  const [localTab, setLocalTab] = useState("details");
+  const settingsTab = tab ?? localTab;
+  const setSettingsTab = onTabChange ?? setLocalTab;
   const [photoEditing, setPhotoEditing] = useState(false);
   const [categoryIds, setCategoryIds] = useState(shop?.categoryIds ?? []);
   const [hours, setHours] = useState<OpeningHour[]>(shop?.openingHours ?? []);
@@ -173,336 +185,491 @@ function ShopForm({
   return (
     <Panel>
       {draft.dialog}
-      {shop && <ShopAvailability shop={shop} disabled={profileEditing || photoEditing} />}
-      {shop && (
-        <ShopPhotoUpload
-          shop={shop}
-          disabled={save.isPending || profileEditing}
-          onEditing={setPhotoEditing}
-        />
-      )}
-      {shop && <ShopReviewNotice shop={shop} />}
-      {shop && (
-        <p className="rounded-lg bg-secondary p-3 text-sm">
-          Approval:{" "}
-          <strong>
-            <UiText>{shop.status}</UiText>
-          </strong>{" "}
-          · <UiText>{shop.isOpen ? "Open" : "Closed"}</UiText>. Profile updates return the shop to
-          pending review.
-        </p>
-      )}
-      <form
-        onChange={() => {
-          draft.mark();
-          setProfileEditing(true);
-        }}
-        onSubmit={(event) => {
-          event.preventDefault();
-          const data = new FormData(event.currentTarget);
-          save.mutate(async () => {
-            if (Boolean(text(data, "latitude")) !== Boolean(text(data, "longitude")))
-              throw new Error("Enter both shop latitude and longitude, or leave both unchanged.");
-            const input = {
-              name: text(data, "name"),
-              ...(text(data, "latitude") && text(data, "longitude")
-                ? {
-                    location: {
-                      type: "Point" as const,
-                      coordinates: [number(data, "longitude"), number(data, "latitude")] as [
-                        number,
-                        number,
-                      ],
-                    },
-                  }
-                : {}),
-              locality: text(data, "locality"),
-              ...(text(data, "address") ? { address: text(data, "address") } : {}),
-              tagline: text(data, "tagline"),
-              description: text(data, "description"),
-              categoryIds,
-              subcategoryIds: selected(data, "subcategoryIds"),
-              serviceAreaIds: selected(data, "serviceAreaIds"),
-              fulfilment: selected(data, "fulfilment") as FulfilmentMethod[],
-              since: number(data, "since"),
-              initials: text(data, "initials"),
-              timezone: text(data, "timezone"),
-              openingHours: hours,
-              temporarilyClosed: data.has("temporarilyClosed"),
-              hours: text(data, "hours"),
-              pickupNote: text(data, "pickupNote"),
-              ...(text(data, "coverImage") ? { coverImage: text(data, "coverImage") } : {}),
-              ...(text(data, "deliveryFee") ? { deliveryFee: number(data, "deliveryFee") } : {}),
-              ...(text(data, "minimumOrderAmount")
-                ? { minimumOrderAmount: number(data, "minimumOrderAmount") }
-                : {}),
-              ...(!shop ? { slug: text(data, "slug") } : {}),
-            };
-            if (
-              !input.categoryIds.length ||
-              !input.serviceAreaIds.length ||
-              !input.fulfilment.length
-            )
-              throw new Error("Choose at least one category, service area and fulfilment method.");
-            await management.saveShop(input, shop?.version);
-            draft.reset();
-          });
-        }}
-      >
-        <fieldset disabled={save.isPending || photoEditing} className="space-y-5">
-          <div className="grid gap-4 md:grid-cols-2">
-            <UiAttributes>
-              <Field label="Shop name" name="name" value={shop?.name} required />
-            </UiAttributes>
-            <ShopGpsPin
-              coordinates={shop?.location?.coordinates}
-              onChange={() => {
-                draft.mark();
-                setProfileEditing(true);
-              }}
-            />
-            {!shop && (
-              <UiAttributes>
-                <Field label="Shop URL slug (lowercase-with-hyphens)" name="slug" required />
-              </UiAttributes>
-            )}
-            <UiAttributes>
-              <Field label="Locality / address" name="locality" value={shop?.locality} required />
-            </UiAttributes>
-            <UiAttributes>
-              <Field
-                label="Full shop address (blank keeps existing)"
-                name="address"
-                value={shop?.address}
-              />
-            </UiAttributes>
-            <UiAttributes>
-              <Field label="Short initials" name="initials" value={shop?.initials} required />
-            </UiAttributes>
-            <UiAttributes>
-              <Field
-                label="Trading since (year)"
-                name="since"
-                type="number"
-                min={1900}
-                max={new Date().getFullYear()}
-                value={shop?.since}
-                required
-              />
-            </UiAttributes>
-            <UiAttributes>
-              <Field label="Tagline" name="tagline" value={shop?.tagline} />
-            </UiAttributes>
-            <UiAttributes>
-              <Field label="Description" name="description" value={shop?.description} />
-            </UiAttributes>
-            <UiAttributes>
-              <Field
-                label="Cover image HTTPS URL or durable key (optional)"
-                name="coverImage"
-                value={shop?.coverImage}
-              />
-            </UiAttributes>
-            <UiAttributes>
-              <Field
-                label="Listed delivery fee ₹ (blank keeps existing)"
-                name="deliveryFee"
-                type="number"
-                min={0}
-                step="0.01"
-                value={shop?.deliveryFee}
-              />
-            </UiAttributes>
-            <UiAttributes>
-              <Field
-                label="Minimum order ₹ (blank keeps existing)"
-                name="minimumOrderAmount"
-                type="number"
-                min={0}
-                step="0.01"
-                value={shop?.minimumOrderAmount}
-              />
-            </UiAttributes>
-            <UiAttributes>
-              <Field label="Pickup instructions" name="pickupNote" value={shop?.pickupNote} />
-            </UiAttributes>
+      <div className="seller-settings-intro">
+        <div>
+          <p className="workspace-eyebrow">
+            <UiText>Make your shop easy to find</UiText>
+          </p>
+          <h2>
+            <UiText>One thing at a time</UiText>
+          </h2>
+          <p>
+            <UiText>Choose what you want to change. Each section tells you how it saves.</UiText>
+          </p>
+        </div>
+        {shop && <ShopReviewNotice shop={shop} />}
+      </div>
+      <Tabs value={settingsTab} onValueChange={setSettingsTab} className="seller-shop-settings">
+        <TabsList aria-label="Shop settings sections" className="seller-settings-tabs">
+          <TabsTrigger value="details">
+            <Store size={18} aria-hidden="true" />
+            <UiText>Shop details</UiText>
+          </TabsTrigger>
+          {shop && (
+            <TabsTrigger value="availability">
+              <Clock3 size={18} aria-hidden="true" />
+              <UiText>Hours & delivery</UiText>
+            </TabsTrigger>
+          )}
+          {shop && (
+            <TabsTrigger value="photo">
+              <Camera size={18} aria-hidden="true" />
+              <UiText>Shop photo</UiText>
+            </TabsTrigger>
+          )}
+        </TabsList>
+        {(profileEditing || photoEditing) && (
+          <p role="status" className="seller-settings-draft">
+            <UiText>
+              {profileEditing
+                ? "You have unsaved shop details. Save them before updating another section."
+                : "You have a selected shop photo. Save or discard it before editing shop details."}
+            </UiText>
+          </p>
+        )}
+        <TabsContent
+          value="details"
+          forceMount
+          hidden={settingsTab !== "details"}
+          className="seller-settings-content"
+        >
+          <div className="seller-settings-note">
+            <strong>
+              <UiText>Shown to your customers</UiText>
+            </strong>
+            <p>
+              <UiText>
+                Changes to your shop profile need admin review. Hours and delivery have their own
+                save button in the next tab.
+              </UiText>
+            </p>
           </div>
-          <fieldset>
-            <legend className="font-medium">Shop categories</legend>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {categories.map((c) => (
-                <label key={c.id} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={categoryIds.includes(c.id)}
-                    onChange={(e) =>
-                      setCategoryIds(
-                        e.target.checked
-                          ? [...categoryIds, c.id]
-                          : categoryIds.filter((id) => id !== c.id),
-                      )
-                    }
-                  />
-                  {c.name}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend className="font-medium">Subcategories (optional)</legend>
-            {categories
-              .filter((c) => categoryIds.includes(c.id))
-              .flatMap((c) =>
-                c.subcategories.map((sub) => (
-                  <label key={sub.id} className="mr-4 inline-flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      name="subcategoryIds"
-                      value={sub.id}
-                      defaultChecked={shop?.subcategoryIds.includes(sub.id)}
-                    />
-                    {c.name}: {sub.name}
-                  </label>
-                )),
-              )}
-          </fieldset>
-          <fieldset>
-            <legend className="font-medium">
-              <UiText>{"Service areas"}</UiText>
-            </legend>
-            {areas.map((a) => (
-              <label key={a.id} className="mr-4 inline-flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  name="serviceAreaIds"
-                  value={a.id}
-                  defaultChecked={shop?.serviceAreaIds.includes(a.id)}
-                />
-                {a.name} · {a.pincodes.join(", ")}
-              </label>
-            ))}
-          </fieldset>
-          <fieldset>
-            <legend className="font-medium">Fulfilment options</legend>
-            {(["pickup", "seller_delivery", "platform_delivery"] as const).map((method) => (
-              <label key={method} className="mr-4 inline-flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  name="fulfilment"
-                  value={method}
-                  defaultChecked={shop?.fulfilment.includes(method)}
-                />
-                {method.replaceAll("_", " ")}
-              </label>
-            ))}
-            <p className="text-xs text-muted-foreground">
-              Delivery requires a configured fee and eligible address. Platform delivery also
-              depends on platform coverage and partner availability.
-            </p>
-          </fieldset>
-          <UiAttributes>
-            <Field
-              label="Timezone (IANA)"
-              name="timezone"
-              value={shop?.timezone ?? "Asia/Kolkata"}
-              required
-            />
-          </UiAttributes>
-          <UiAttributes>
-            <Field label="Hours description (optional)" name="hours" value={shop?.hours} />
-          </UiAttributes>
-          <fieldset className="space-y-3">
-            <legend className="font-medium">
-              <UiText>{"Operating hours"}</UiText>
-            </legend>
-            <p className="text-xs text-muted-foreground">
-              Add each open day. No intervals means closed; overnight closing times are supported.
-            </p>
-            {hours.map((hour, index) => (
-              <div className="flex flex-wrap items-end gap-2" key={index}>
-                <label className="text-sm">
-                  Day
-                  <UiAttributes>
-                    <select
-                      aria-label={`Day for interval ${index + 1}`}
-                      className="ml-2 rounded border bg-background p-2"
-                      value={hour.day}
-                      onChange={(e) =>
-                        setHours(
-                          hours.map((h, i) =>
-                            i === index ? { ...h, day: Number(e.target.value) } : h,
-                          ),
-                        )
+          <form
+            onChange={() => {
+              draft.mark();
+              setProfileEditing(true);
+            }}
+            onSubmit={(event) => {
+              event.preventDefault();
+              const data = new FormData(event.currentTarget);
+              save.mutate(async () => {
+                if (Boolean(text(data, "latitude")) !== Boolean(text(data, "longitude")))
+                  throw new Error(
+                    "Enter both shop latitude and longitude, or leave both unchanged.",
+                  );
+                const input = {
+                  name: text(data, "name"),
+                  ...(text(data, "latitude") && text(data, "longitude")
+                    ? {
+                        location: {
+                          type: "Point" as const,
+                          coordinates: [number(data, "longitude"), number(data, "latitude")] as [
+                            number,
+                            number,
+                          ],
+                        },
                       }
-                    >
-                      {[
-                        "Sunday",
-                        "Monday",
-                        "Tuesday",
-                        "Wednesday",
-                        "Thursday",
-                        "Friday",
-                        "Saturday",
-                      ].map((day, i) => (
-                        <option key={day} value={i}>
-                          {day}
-                        </option>
-                      ))}
-                    </select>
+                    : {}),
+                  locality: text(data, "locality"),
+                  ...(text(data, "address") ? { address: text(data, "address") } : {}),
+                  tagline: text(data, "tagline"),
+                  description: text(data, "description"),
+                  categoryIds,
+                  subcategoryIds: selected(data, "subcategoryIds"),
+                  serviceAreaIds: selected(data, "serviceAreaIds"),
+                  fulfilment: selected(data, "fulfilment") as FulfilmentMethod[],
+                  since: number(data, "since"),
+                  initials: text(data, "initials"),
+                  timezone: text(data, "timezone"),
+                  openingHours: hours,
+                  temporarilyClosed: data.has("temporarilyClosed"),
+                  hours: text(data, "hours"),
+                  pickupNote: text(data, "pickupNote"),
+                  ...(text(data, "coverImage") ? { coverImage: text(data, "coverImage") } : {}),
+                  ...(text(data, "deliveryFee")
+                    ? { deliveryFee: number(data, "deliveryFee") }
+                    : {}),
+                  ...(text(data, "minimumOrderAmount")
+                    ? { minimumOrderAmount: number(data, "minimumOrderAmount") }
+                    : {}),
+                  ...(!shop ? { slug: text(data, "slug") } : {}),
+                };
+                if (
+                  !input.categoryIds.length ||
+                  !input.serviceAreaIds.length ||
+                  !input.fulfilment.length
+                )
+                  throw new Error(
+                    "Choose at least one category, service area and fulfilment method.",
+                  );
+                await management.saveShop(input, shop?.version);
+                draft.reset();
+              });
+            }}
+          >
+            <fieldset disabled={save.isPending || photoEditing} className="space-y-5">
+              <section className="seller-settings-group">
+                <h3>
+                  <UiText>Your shop identity</UiText>
+                </h3>
+                <p>
+                  <UiText>Use the name and address customers know.</UiText>
+                </p>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <UiAttributes>
+                    <Field label="Shop name" name="name" value={shop?.name} required />
                   </UiAttributes>
-                </label>
-                {(["opens", "closes"] as const).map((key) => (
-                  <label key={key} className="text-sm">
-                    {key}
+
+                  {!shop && (
                     <UiAttributes>
+                      <Field label="Shop URL slug (lowercase-with-hyphens)" name="slug" required />
+                    </UiAttributes>
+                  )}
+                  <UiAttributes>
+                    <Field
+                      label="Locality / address"
+                      name="locality"
+                      value={shop?.locality}
+                      required
+                    />
+                  </UiAttributes>
+                  <UiAttributes>
+                    <Field
+                      label="Full shop address (blank keeps existing)"
+                      name="address"
+                      value={shop?.address}
+                    />
+                  </UiAttributes>
+
+                  <UiAttributes>
+                    <Field label="Tagline" name="tagline" value={shop?.tagline} />
+                  </UiAttributes>
+                  <UiAttributes>
+                    <Field label="Description" name="description" value={shop?.description} />
+                  </UiAttributes>
+                </div>
+              </section>
+              <section className="seller-settings-group">
+                <h3>
+                  <UiText>Pin your shop on the map</UiText>
+                </h3>
+                <p>
+                  <UiText>Stand at your shop when using GPS. Check the pin before saving.</UiText>
+                </p>
+                <ShopGpsPin
+                  coordinates={shop?.location?.coordinates}
+                  onChange={() => {
+                    draft.mark();
+                    setProfileEditing(true);
+                  }}
+                />
+              </section>
+              <details className="seller-settings-advanced">
+                <summary>
+                  <UiText>More profile options</UiText>
+                </summary>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <UiAttributes>
+                    <Field label="Short initials" name="initials" value={shop?.initials} required />
+                  </UiAttributes>{" "}
+                  <UiAttributes>
+                    <Field
+                      label="Trading since (year)"
+                      name="since"
+                      type="number"
+                      min={1900}
+                      max={new Date().getFullYear()}
+                      value={shop?.since}
+                      required
+                    />
+                  </UiAttributes>{" "}
+                  <UiAttributes>
+                    <Field
+                      label="Cover image HTTPS URL or durable key (optional)"
+                      name="coverImage"
+                      value={shop?.coverImage}
+                    />
+                  </UiAttributes>{" "}
+                  <UiAttributes>
+                    <Field
+                      label="Listed delivery fee ₹ (blank keeps existing)"
+                      name="deliveryFee"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={shop?.deliveryFee}
+                    />
+                  </UiAttributes>{" "}
+                  <UiAttributes>
+                    <Field
+                      label="Minimum order ₹ (blank keeps existing)"
+                      name="minimumOrderAmount"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={shop?.minimumOrderAmount}
+                    />
+                  </UiAttributes>{" "}
+                  <UiAttributes>
+                    <Field label="Pickup instructions" name="pickupNote" value={shop?.pickupNote} />
+                  </UiAttributes>{" "}
+                </div>
+              </details>
+              <fieldset>
+                <legend className="font-medium">
+                  <UiText>What do you sell?</UiText>
+                </legend>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {categories.map((c) => (
+                    <label key={c.id} className="flex items-center gap-2 text-sm">
                       <input
-                        aria-label={`${key} for interval ${index + 1}`}
-                        className="ml-2 rounded border bg-background p-2"
-                        type="time"
-                        required
-                        value={hour[key]}
+                        type="checkbox"
+                        checked={categoryIds.includes(c.id)}
                         onChange={(e) =>
-                          setHours(
-                            hours.map((h, i) =>
-                              i === index ? { ...h, [key]: e.target.value } : h,
-                            ),
+                          setCategoryIds(
+                            e.target.checked
+                              ? [...categoryIds, c.id]
+                              : categoryIds.filter((id) => id !== c.id),
                           )
                         }
                       />
-                    </UiAttributes>
+                      {c.name}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <fieldset>
+                <legend className="font-medium">Subcategories (optional)</legend>
+                {categories
+                  .filter((c) => categoryIds.includes(c.id))
+                  .flatMap((c) =>
+                    c.subcategories.map((sub) => (
+                      <label key={sub.id} className="mr-4 inline-flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          name="subcategoryIds"
+                          value={sub.id}
+                          defaultChecked={shop?.subcategoryIds.includes(sub.id)}
+                        />
+                        {c.name}: {sub.name}
+                      </label>
+                    )),
+                  )}
+              </fieldset>
+              <fieldset>
+                <legend className="font-medium">
+                  <UiText>{"Service areas"}</UiText>
+                </legend>
+                {areas.map((a) => (
+                  <label key={a.id} className="mr-4 inline-flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      name="serviceAreaIds"
+                      value={a.id}
+                      defaultChecked={shop?.serviceAreaIds.includes(a.id)}
+                    />
+                    {a.name} · {a.pincodes.join(", ")}
                   </label>
                 ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setHours(hours.filter((_, i) => i !== index))}
-                >
-                  Remove interval {index + 1}
+              </fieldset>
+              <details className="seller-settings-advanced" open={!shop}>
+                <summary>
+                  <UiText>
+                    {shop
+                      ? "Profile delivery values and advanced hours"
+                      : "Set your opening hours and order methods"}
+                  </UiText>
+                </summary>
+                <p className="text-sm text-muted-foreground">
+                  <UiText>
+                    {shop
+                      ? "For daily changes, use Hours & delivery instead. Saving this profile submits all its values for admin review."
+                      : "Choose how customers receive their order and when the shop is open."}
+                  </UiText>
+                </p>
+                <fieldset>
+                  <legend className="font-medium">Fulfilment options</legend>
+                  {(["pickup", "seller_delivery", "platform_delivery"] as const).map((method) => (
+                    <label key={method} className="mr-4 inline-flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        name="fulfilment"
+                        value={method}
+                        defaultChecked={shop?.fulfilment.includes(method)}
+                      />
+                      <UiText>
+                        {method === "pickup"
+                          ? "Store pickup"
+                          : method === "seller_delivery"
+                            ? "Shop delivers"
+                            : "Just Pack It rider"}
+                      </UiText>
+                    </label>
+                  ))}
+                  <p className="text-xs text-muted-foreground">
+                    Delivery requires a configured fee and eligible address. Platform delivery also
+                    depends on platform coverage and partner availability.
+                  </p>
+                </fieldset>
+                <UiAttributes>
+                  <Field
+                    label="Timezone (IANA)"
+                    name="timezone"
+                    value={shop?.timezone ?? "Asia/Kolkata"}
+                    required
+                  />
+                </UiAttributes>
+                <UiAttributes>
+                  <Field label="Hours description (optional)" name="hours" value={shop?.hours} />
+                </UiAttributes>
+                <fieldset className="space-y-3">
+                  <legend className="font-medium">
+                    <UiText>{"Operating hours"}</UiText>
+                  </legend>
+                  <p className="text-xs text-muted-foreground">
+                    Add each open day. No intervals means closed; overnight closing times are
+                    supported.
+                  </p>
+                  {hours.map((hour, index) => (
+                    <div className="flex flex-wrap items-end gap-2" key={index}>
+                      <label className="text-sm">
+                        Day
+                        <UiAttributes>
+                          <select
+                            aria-label={`Day for interval ${index + 1}`}
+                            className="ml-2 rounded border bg-background p-2"
+                            value={hour.day}
+                            onChange={(e) =>
+                              setHours(
+                                hours.map((h, i) =>
+                                  i === index ? { ...h, day: Number(e.target.value) } : h,
+                                ),
+                              )
+                            }
+                          >
+                            {[
+                              "Sunday",
+                              "Monday",
+                              "Tuesday",
+                              "Wednesday",
+                              "Thursday",
+                              "Friday",
+                              "Saturday",
+                            ].map((day, i) => (
+                              <option key={day} value={i}>
+                                {day}
+                              </option>
+                            ))}
+                          </select>
+                        </UiAttributes>
+                      </label>
+                      {(["opens", "closes"] as const).map((key) => (
+                        <label key={key} className="text-sm">
+                          {key}
+                          <UiAttributes>
+                            <input
+                              aria-label={`${key} for interval ${index + 1}`}
+                              className="ml-2 rounded border bg-background p-2"
+                              type="time"
+                              required
+                              value={hour[key]}
+                              onChange={(e) =>
+                                setHours(
+                                  hours.map((h, i) =>
+                                    i === index ? { ...h, [key]: e.target.value } : h,
+                                  ),
+                                )
+                              }
+                            />
+                          </UiAttributes>
+                        </label>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setHours(hours.filter((_, i) => i !== index))}
+                      >
+                        Remove interval {index + 1}
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      setHours([...hours, { day: 1, opens: "09:00", closes: "18:00" }])
+                    }
+                  >
+                    Add operating interval
+                  </Button>
+                </fieldset>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    name="temporarilyClosed"
+                    type="checkbox"
+                    defaultChecked={shop?.temporarilyClosed}
+                  />
+                  Temporarily closed
+                </label>
+              </details>
+              <SaveError error={save.error} />
+              <div className="seller-settings-save">
+                <p>
+                  <UiText>
+                    Review your changes before submitting. Admin approval is required.
+                  </UiText>
+                </p>
+                <Button type="submit">
+                  <UiText>{save.isPending ? "Saving…" : "Save and submit for approval"}</UiText>
                 </Button>
               </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setHours([...hours, { day: 1, opens: "09:00", closes: "18:00" }])}
-            >
-              Add operating interval
-            </Button>
-          </fieldset>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              name="temporarilyClosed"
-              type="checkbox"
-              defaultChecked={shop?.temporarilyClosed}
+            </fieldset>
+          </form>
+        </TabsContent>
+        {shop && (
+          <TabsContent
+            value="availability"
+            forceMount
+            hidden={settingsTab !== "availability"}
+            className="seller-settings-content"
+          >
+            <div className="seller-settings-note">
+              <strong>
+                <UiText>Daily shop controls</UiText>
+              </strong>
+              <p>
+                <UiText>
+                  Change your hours, pause new orders or update delivery. Save availability here;
+                  profile approval stays unchanged.
+                </UiText>
+              </p>
+            </div>
+            <ShopAvailability shop={shop} disabled={profileEditing || photoEditing} />
+          </TabsContent>
+        )}
+        {shop && (
+          <TabsContent
+            value="photo"
+            forceMount
+            hidden={settingsTab !== "photo"}
+            className="seller-settings-content"
+          >
+            <div className="seller-settings-note">
+              <strong>
+                <UiText>Help customers recognise your shop</UiText>
+              </strong>
+              <p>
+                <UiText>Upload a clear storefront photo. A photo change needs admin review.</UiText>
+              </p>
+            </div>
+            <ShopPhotoUpload
+              shop={shop}
+              disabled={save.isPending || profileEditing}
+              onEditing={setPhotoEditing}
             />
-            Temporarily closed
-          </label>
-          <SaveError error={save.error} />
-          <Button type="submit">
-            <UiText>{save.isPending ? "Saving…" : "Save and submit for approval"}</UiText>
-          </Button>
-        </fieldset>
-      </form>
+          </TabsContent>
+        )}
+      </Tabs>
     </Panel>
   );
 }

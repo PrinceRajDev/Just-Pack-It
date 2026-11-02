@@ -688,3 +688,46 @@ Object.assign(hindi, {
   "Check your saved hours and availability. Existing orders still need attention.":
     "सहेजा समय और उपलब्धता जांचें। पुराने ऑर्डर संभालना जारी रखें।",
 });
+
+Object.assign(hindi, {
+  "Make your shop easy to find": "अपनी दुकान आसानी से खोजने लायक बनाएं",
+  "One thing at a time": "एक समय पर एक काम",
+  "Choose what you want to change. Each section tells you how it saves.":
+    "जो बदलना है वह चुनें। हर हिस्से में सहेजने का तरीका दिया है।",
+  "Shop details": "दुकान की जानकारी",
+  "Hours & delivery": "समय और डिलीवरी",
+  "Shop photo": "दुकान की फ़ोटो",
+  "You have unsaved shop details. Save them before updating another section.":
+    "दुकान की जानकारी में बदलाव बाकी हैं। दूसरा हिस्सा बदलने से पहले इन्हें सहेजें।",
+  "You have a selected shop photo. Save or discard it before editing shop details.":
+    "दुकान की फ़ोटो चुनी है। जानकारी बदलने से पहले फ़ोटो सहेजें या हटाएं।",
+  "Shown to your customers": "ग्राहकों को दिखने वाली जानकारी",
+  "Changes to your shop profile need admin review. Hours and delivery have their own save button in the next tab.":
+    "दुकान की जानकारी बदलने पर एडमिन की जांच चाहिए। समय और डिलीवरी अगले टैब में अलग सहेजें।",
+  "Your shop identity": "दुकान की पहचान",
+  "Use the name and address customers know.": "वही नाम और पता भरें जिसे ग्राहक जानते हैं।",
+  "Pin your shop on the map": "मैप पर दुकान का पिन लगाएं",
+  "Stand at your shop when using GPS. Check the pin before saving.":
+    "जीपीएस इस्तेमाल करते समय दुकान पर रहें। सहेजने से पहले पिन जांचें।",
+  "More profile options": "प्रोफ़ाइल के और विकल्प",
+  "Profile delivery values and advanced hours": "प्रोफ़ाइल की डिलीवरी और समय के विकल्प",
+  "Set your opening hours and order methods": "दुकान का समय और ऑर्डर के तरीके चुनें",
+  "For daily changes, use Hours & delivery instead. Saving this profile submits all its values for admin review.":
+    "रोज़ के बदलाव समय और डिलीवरी में करें। प्रोफ़ाइल सहेजने पर पूरी जानकारी एडमिन की जांच में जाती है।",
+  "Choose how customers receive their order and when the shop is open.":
+    "ऑर्डर मिलने का तरीका और दुकान खुलने का समय चुनें।",
+  "Review your changes before submitting. Admin approval is required.":
+    "भेजने से पहले बदलाव जांचें। एडमिन की स्वीकृति ज़रूरी है।",
+  "Daily shop controls": "रोज़ की दुकान सेटिंग",
+  "Change your hours, pause new orders or update delivery. Save availability here; profile approval stays unchanged.":
+    "समय बदलें, नए ऑर्डर रोकें या डिलीवरी बदलें। यहां सहेजने से प्रोफ़ाइल की स्वीकृति नहीं बदलेगी।",
+  "Help customers recognise your shop": "ग्राहकों को अपनी दुकान पहचानने में मदद करें",
+  "Upload a clear storefront photo. A photo change needs admin review.":
+    "दुकान के सामने की साफ़ फ़ोटो डालें। फ़ोटो बदलने पर एडमिन की जांच होगी।",
+  "What do you sell?": "आप क्या बेचते हैं?",
+});
+
+Object.assign(hindi, {
+  "Manage your profile, availability and photo. Choose a section below.":
+    "अपनी जानकारी, उपलब्धता और फ़ोटो संभालें। नीचे कोई हिस्सा चुनें।",
+});

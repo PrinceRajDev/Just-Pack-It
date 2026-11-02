@@ -527,3 +527,352 @@
   border-top: 0;
   border-radius: 0 0 20px 20px;
 }
+/* The neighbourhood packing desk. Scoped to the connected cart and checkout. */
+.packing-desk {
+  background-color: #fbf4e7;
+  background-image:
+    radial-gradient(#96784b0b 0.7px, transparent 0.8px),
+    linear-gradient(110deg, #fffdf65c, #f5ead54a);
+  background-size:
+    5px 5px,
+    100% 100%;
+  padding: 1px 0 28px;
+  min-height: 80vh;
+}
+.packing-desk .bag-page-heading {
+  position: relative;
+  min-height: 210px;
+  padding-right: 26%;
+  margin-bottom: 22px;
+}
+.packing-desk .bag-page-heading nav {
+  margin-bottom: 24px;
+}
+.packing-eyebrow {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 650;
+  color: #354233;
+}
+.packing-desk .bag-page-heading h1 {
+  font-family: Georgia, "Nirmala UI", serif;
+  font-style: italic;
+  font-size: clamp(32px, 3.9vw, 62px);
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+  margin: 16px 0 20px;
+  position: relative;
+  display: inline-block;
+}
+.packing-desk .bag-page-heading h1::after {
+  content: "";
+  position: absolute;
+  width: 40%;
+  height: 7px;
+  background: #bfd628;
+  right: -10px;
+  bottom: -5px;
+  border-radius: 70% 30% 60% 40%;
+  transform: rotate(-2deg);
+}
+.packing-hero-copy > p:last-child {
+  font-size: 15px;
+  color: #626254;
+  max-width: 620px;
+  line-height: 1.65;
+}
+.packing-art {
+  position: absolute;
+  width: 245px;
+  right: 35%;
+  bottom: -8px;
+  pointer-events: none;
+}
+.packing-art > svg {
+  width: 100%;
+  height: auto;
+}
+.packing-art-brand {
+  position: absolute;
+  left: 35%;
+  top: 48%;
+  width: 65px;
+  height: 65px;
+  transform: rotate(-4deg);
+}
+.packing-desk .bag-columns {
+  grid-template-columns: minmax(0, 1.9fr) minmax(340px, 1fr);
+  gap: 30px;
+}
+.packing-count {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  border-top: 1px solid #bfb394;
+  border-bottom: 1px solid #d8cdb6;
+  padding: 18px 12px;
+  font-size: 16px;
+  border-radius: 9px;
+}
+.packing-count a {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #064b32;
+  font-weight: 650;
+}
+.packing-desk .bag-shop-card {
+  border-color: #d6c8ac;
+  border-radius: 10px;
+  background: #fff9ee55;
+  box-shadow: 0 5px 15px #8f683009;
+}
+.packing-shop-number {
+  background: #064b32;
+  color: #fff9ed;
+  border-radius: 5px;
+  padding: 11px 14px;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+}
+.packing-desk .bag-shop-heading > svg:first-of-type {
+  background: transparent;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+}
+.packing-desk .bag-shop-heading h2 {
+  font-family: Georgia, "Nirmala UI", serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: 21px;
+}
+.packing-desk .bag-method-chips {
+  margin-left: auto;
+}
+.packing-desk .bag-method-chips > span {
+  background: #e9edc1;
+  border-color: #e1e5b6;
+  border-radius: 9px;
+}
+.packing-desk .bag-product-line {
+  padding: 26px 0;
+}
+.packing-desk .bag-line-actions > button,
+.packing-desk .bag-line-actions > span:not(.bag-remove-confirm) {
+  background: #f6e9cf;
+  border-color: #dfcba9;
+}
+.packing-desk .bag-line-actions > button:last-child {
+  background: transparent;
+}
+.packing-desk .bag-add-more {
+  border: 0;
+  border-top: 1px solid #ded2bb;
+  border-radius: 0;
+  background: transparent;
+  padding: 20px 0 0;
+  font-size: 15px;
+}
+.packing-receipt {
+  background: #fffaf0;
+  border: 1px solid #d7c7aa;
+  box-shadow: 0 5px 16px #78531e17;
+  padding: 26px 22px;
+  margin-top: -235px;
+  position: sticky;
+  top: 130px;
+  isolation: isolate;
+}
+.packing-receipt::before,
+.packing-receipt::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  height: 10px;
+  background: linear-gradient(135deg, transparent 50%, #fffaf0 50%) 0 0/20px 10px repeat-x;
+  top: -10px;
+}
+.packing-receipt::after {
+  top: auto;
+  bottom: -10px;
+  transform: rotate(180deg);
+}
+.packing-receipt-title {
+  font-family: Georgia, "Nirmala UI", serif;
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  border-bottom: 2px dotted #b4aa90;
+  padding-bottom: 22px;
+  margin-bottom: 20px;
+}
+.packing-bill-preview {
+  border-bottom: 2px dotted #b4aa90;
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+}
+.packing-bill-preview > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin: 14px 0;
+  font-size: 15px;
+}
+.packing-bill-preview > p {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #76705e;
+}
+.packing-receipt .bag-checkout-column {
+  position: static;
+}
+.packing-receipt > section > h2 {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  font-family: Georgia, "Nirmala UI", serif;
+  font-size: 21px;
+  text-transform: uppercase;
+}
+.packing-receipt .bag-address-picker {
+  background: #f6efdf;
+  border: 1px solid #e6dbc7 !important;
+  border-left: 5px solid #285a3d !important;
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 12px;
+}
+.packing-receipt .bag-delivery-options {
+  background: transparent;
+  border-color: #ddd0b7;
+  font-size: 12px;
+}
+.packing-receipt section[aria-labelledby="full-review-title"] {
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+.packing-receipt .bag-payable {
+  background: #e9efb3;
+  border-radius: 4px;
+  font-family: Georgia, "Nirmala UI", serif;
+  font-size: 24px;
+  padding: 18px;
+}
+.packing-receipt .bag-proceed {
+  border-radius: 17px;
+  min-height: 60px;
+  font-size: 18px;
+}
+.packing-street {
+  display: flex;
+  align-items: end;
+  width: 65%;
+  max-width: 650px;
+  opacity: 0.45;
+  filter: sepia(0.85);
+  margin: 30px 0 0;
+  pointer-events: none;
+}
+.packing-street > svg:first-child {
+  width: 65%;
+  height: auto;
+}
+.packing-street > svg:last-child {
+  width: 25%;
+  height: auto;
+  stroke: #927d46;
+  stroke-width: 1.4;
+}
+@media (max-width: 1100px) {
+  .packing-art {
+    width: 190px;
+    right: 0;
+  }
+  .packing-desk .bag-page-heading {
+    padding-right: 190px;
+  }
+  .packing-receipt {
+    margin-top: 0;
+  }
+  .packing-desk .bag-columns {
+    grid-template-columns: minmax(0, 1.5fr) minmax(310px, 1fr);
+    gap: 20px;
+  }
+}
+@media (max-width: 900px) {
+  .packing-desk .bag-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .packing-receipt {
+    position: static;
+  }
+  .packing-street {
+    width: 100%;
+  }
+}
+@media (max-width: 600px) {
+  .packing-art {
+    width: 135px;
+    opacity: 0.3;
+    bottom: 0;
+  }
+  .packing-desk .bag-page-heading {
+    padding-right: 0;
+    min-height: 0;
+  }
+  .packing-hero-copy {
+    position: relative;
+    z-index: 1;
+  }
+  .packing-desk .bag-page-heading h1 {
+    font-size: 36px;
+  }
+  .packing-count {
+    font-size: 14px;
+  }
+  .packing-shop-number {
+    padding: 8px;
+    font-size: 10px;
+  }
+  .packing-desk .bag-method-chips {
+    width: auto;
+    margin-left: 0;
+  }
+  .packing-receipt {
+    padding: 22px 16px;
+    margin-bottom: 20px;
+  }
+  .packing-receipt .bag-proceed {
+    position: sticky;
+    bottom: 12px;
+    z-index: 2;
+    box-shadow: 0 4px 20px #173b2525;
+  }
+}
+@media (min-width: 1101px) {
+  .packing-hero-copy {
+    max-width: calc(100% - 230px);
+  }
+}
+.packing-desk .bag-page-heading {
+  padding-right: 34%;
+}
+@media (max-width: 1100px) {
+  .packing-desk .bag-page-heading {
+    padding-right: 190px;
+  }
+}
+@media (max-width: 600px) {
+  .packing-desk .bag-page-heading {
+    padding-right: 0;
+  }
+}

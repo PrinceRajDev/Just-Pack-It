@@ -109,7 +109,7 @@ afterEach(() => {
 describe("Live server-checked bag", () => {
   it("shows server prices with paise and closed/stock issues while keeping checkout disabled", async () => {
     mount();
-    expect(await screen.findByText("Independent shop")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Independent shop" })).toBeInTheDocument();
     expect(screen.getByText("This shop is currently closed.")).toBeInTheDocument();
     expect(screen.getByText("Only 2 available; reduce the quantity.")).toBeInTheDocument();
     expect(screen.getByText("Shop item subtotal: ₹31.5")).toBeInTheDocument();

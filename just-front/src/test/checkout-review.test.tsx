@@ -81,7 +81,7 @@ it("opens checkout controls only after an eligible server bill and explicit proc
     pricingPolicy: "tax_inclusive_listed_delivery_no_extras_v1",
   });
   mount(true);
-  const proceed = await screen.findByRole("button", { name: "Proceed to checkout" });
+  const proceed = await screen.findByRole("button", { name: "Confirm & continue" });
   expect(screen.queryByRole("button", { name: "Place reviewed order" })).toBeNull();
   fireEvent.click(proceed);
   expect(screen.getByRole("button", { name: "Place reviewed order" })).toBeInTheDocument();

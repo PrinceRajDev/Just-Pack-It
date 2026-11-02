@@ -110,11 +110,13 @@ export function CheckoutReviewPanel({
         <>
           <p className="bag-payable font-semibold">
             <UiText>
-              {(check.data.paymentMethods?.includes(payment)
-                ? payment
-                : check.data.paymentMethods?.[0]) === "razorpay"
-                ? "Payable online"
-                : "Payable on delivery / collection"}
+              {compact
+                ? "Total to pay"
+                : (check.data.paymentMethods?.includes(payment)
+                      ? payment
+                      : check.data.paymentMethods?.[0]) === "razorpay"
+                  ? "Payable online"
+                  : "Payable on delivery / collection"}
             </UiText>
             : {inr(check.data.grandTotal)}
           </p>
@@ -124,7 +126,7 @@ export function CheckoutReviewPanel({
           {compact && !expanded ? (
             <>
               <Button className="bag-proceed" onClick={() => setExpanded(true)}>
-                <UiText>Proceed to checkout</UiText>
+                <UiText>Confirm &amp; continue</UiText>
                 <ArrowRight size={20} aria-hidden="true" />
               </Button>
               <div className="bag-trust">

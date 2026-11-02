@@ -1,3 +1,5 @@
+import { PackingDeskArt } from "./PackingDeskArt";
+import { NeighbourhoodIllustration } from "@/components/portal/NeighbourhoodIllustration";
 import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { Link } from "@tanstack/react-router";
@@ -6,16 +8,7 @@ import { useCart, cartLineKey } from "@/stores/cart";
 import { useLocationArea } from "@/stores/location";
 import { reviewCart } from "@/services/cart-review";
 import type { CartReviewLine } from "@/domain/cart-review";
-import {
-  ShoppingBag,
-  Store,
-  Home,
-  ChevronRight,
-  ChevronDown,
-  Plus,
-  Trash2,
-  Truck,
-} from "lucide-react";
+import { Store, Home, ChevronRight, ChevronDown, Plus, Trash2, Truck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import "./cart-page.css";
@@ -43,195 +36,244 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
   });
   return (
     <StoreLayout>
-      <header className="bag-page-heading">
-        <nav aria-label="Breadcrumb">
-          <Link to="/">
-            <Home size={17} />
-            <UiText>Home</UiText>
-          </Link>
-          <ChevronRight size={15} />
-          <span>
-            <UiText>Your bag</UiText>
-          </span>
-        </nav>
-        <h1>
-          <ShoppingBag aria-hidden="true" />
-          <UiText>{checkout ? "Review your order" : "Your bag"}</UiText>
-        </h1>
-        <p>
-          <UiText>
-            Review your items, delivery address and get them delivered from your favourite local
-            shops.
-          </UiText>
-        </p>
-      </header>
-      <AreaNotice />
-      <div className="bag-page-content mx-auto max-w-7xl space-y-5 px-4 pb-16">
-        {!lines.length ? (
-          <UiAttributes>
-            <EmptyState
-              title="Your bag is waiting!"
-              body="Discover your neighbourhood shops and add something you love."
-              action={
-                <Button asChild>
-                  <Link to="/categories">
-                    <UiText>{"Explore shops"}</UiText>
-                  </Link>
-                </Button>
-              }
-            />
-          </UiAttributes>
-        ) : !area ? (
-          <p role="status">Choose your area to check the items in your bag.</p>
-        ) : quote.isPending ? (
-          <LoadingState label="Checking current prices and stock…" compact />
-        ) : quote.error ? (
-          <>
+      <div className="packing-desk">
+        <header className="bag-page-heading">
+          <nav aria-label="Breadcrumb">
+            <Link to="/">
+              <Home size={17} />
+              <UiText>Home</UiText>
+            </Link>
+            <ChevronRight size={15} />
+            <span>
+              <UiText>Your bag</UiText>
+            </span>
+          </nav>
+          <div className="packing-hero-copy">
+            <p className="packing-eyebrow">
+              <UiText>Your neighbourhood</UiText> / <UiText>Order desk No. 01</UiText>
+            </p>
+            <h1>
+              <UiText>{checkout ? "Review your order" : "Let’s pack your bag."}</UiText>
+            </h1>
+            <p>
+              <UiText>
+                Everything you’ve picked from the neighbourhood, gathered in one place.
+              </UiText>
+            </p>
+          </div>
+          <PackingDeskArt />
+        </header>
+        <AreaNotice />
+        <div className="bag-page-content mx-auto max-w-7xl space-y-5 px-4 pb-16">
+          {!lines.length ? (
             <UiAttributes>
-              <ErrorState
-                message="Your bag could not be checked. Its contents have been kept."
-                onRetry={() => void quote.refetch()}
+              <EmptyState
+                title="Your bag is waiting!"
+                body="Discover your neighbourhood shops and add something you love."
+                action={
+                  <Button asChild>
+                    <Link to="/categories">
+                      <UiText>{"Explore shops"}</UiText>
+                    </Link>
+                  </Button>
+                }
               />
             </UiAttributes>
-            <ul className="space-y-2">
-              {lines.map((line) => (
-                <li
-                  key={cartLineKey(line.productId, line.variantId)}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3 text-sm"
-                >
-                  <span>Saved item · {line.productId}</span>
+          ) : !area ? (
+            <p role="status">Choose your area to check the items in your bag.</p>
+          ) : quote.isPending ? (
+            <LoadingState label="Checking current prices and stock…" compact />
+          ) : quote.error ? (
+            <>
+              <UiAttributes>
+                <ErrorState
+                  message="Your bag could not be checked. Its contents have been kept."
+                  onRetry={() => void quote.refetch()}
+                />
+              </UiAttributes>
+              <ul className="space-y-2">
+                {lines.map((line) => (
+                  <li
+                    key={cartLineKey(line.productId, line.variantId)}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3 text-sm"
+                  >
+                    <span>Saved item · {line.productId}</span>
+                    <Button
+                      variant="outline"
+                      onClick={() => cart.remove(line.productId, line.variantId)}
+                    >
+                      <UiText>{"Remove saved item"}</UiText>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            quote.data && (
+              <>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    Checked:{" "}
+                    {new Date(quote.data.checkedAt).toLocaleTimeString("en-IN", {
+                      timeZone: "Asia/Kolkata",
+                    })}{" "}
+                    <UiText>{"· India time"}</UiText>
+                    <UiText>{quote.isFetching ? " · Refreshing…" : ""}</UiText>
+                  </p>
                   <Button
                     variant="outline"
-                    onClick={() => cart.remove(line.productId, line.variantId)}
+                    disabled={quote.isFetching}
+                    onClick={() => void quote.refetch()}
                   >
-                    <UiText>{"Remove saved item"}</UiText>
+                    <UiText>{"Refresh prices and stock"}</UiText>
                   </Button>
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : (
-          quote.data && (
-            <>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-muted-foreground">
-                  Checked:{" "}
-                  {new Date(quote.data.checkedAt).toLocaleTimeString("en-IN", {
-                    timeZone: "Asia/Kolkata",
-                  })}{" "}
-                  <UiText>{"· India time"}</UiText>
-                  <UiText>{quote.isFetching ? " · Refreshing…" : ""}</UiText>
-                </p>
-                <Button
-                  variant="outline"
-                  disabled={quote.isFetching}
-                  onClick={() => void quote.refetch()}
-                >
-                  <UiText>{"Refresh prices and stock"}</UiText>
-                </Button>
-              </div>
-              <div className="bag-columns">
-                <div className="bag-shop-list">
-                  {quote.data.shops.map((group) => (
-                    <details key={group.shop.id} className="bag-shop-card" open>
-                      <summary className="bag-shop-heading">
-                        <Store size={24} aria-hidden="true" />
-                        <h2>
-                          <Link to="/shop/$slug" params={{ slug: group.shop.slug }}>
-                            {group.shop.name}
-                          </Link>
-                        </h2>
-                        <span className="bag-method-chips">
-                          <span>
-                            <Truck size={17} aria-hidden="true" />
-                            <UiText>Rider delivery</UiText>
-                          </span>
-                        </span>
-                        <ChevronDown className="bag-collapse-icon" size={20} aria-hidden="true" />
-                      </summary>
-                      {group.issues.map((issue) => (
-                        <p key={issue.code} className="text-sm text-destructive">
-                          {issue.message}
-                        </p>
-                      ))}
-                      <ul className="divide-y divide-border">
-                        {quote
-                          .data!.lines.filter((line) => line.shopId === group.shop.id)
-                          .map((line) => (
-                            <li key={cartLineKey(line.productId, line.variantId)}>
-                              <ReviewLine line={line} />
-                            </li>
-                          ))}
-                      </ul>
-                      <details className="bag-shop-conditions">
-                        <summary>
-                          <UiText>Shop totals and delivery conditions</UiText>
-                        </summary>
-                        <p className="font-medium">
-                          <UiText>{"Shop item subtotal: "}</UiText>
-                          {inr(group.itemsSubtotal)}
-                        </p>
-                        <p className="text-muted-foreground">
-                          <UiText>{"Minimum:"}</UiText>{" "}
-                          <UiText>
-                            {group.shop.minimumOrderAmount === undefined
-                              ? "Not supplied"
-                              : inr(group.shop.minimumOrderAmount)}
-                          </UiText>
-                        </p>
-                        <p className="text-muted-foreground">
-                          <UiText>{"Listed delivery fee:"}</UiText>{" "}
-                          <UiText>
-                            {group.shop.deliveryFee === undefined
-                              ? "Not supplied"
-                              : inr(group.shop.deliveryFee)}
-                          </UiText>{" "}
-                          · Confirmed in your bill below
-                        </p>
-                      </details>
-                      <Link
-                        className="bag-add-more"
-                        to="/shop/$slug"
-                        params={{ slug: group.shop.slug }}
-                      >
-                        <Plus size={18} aria-hidden="true" />
-                        <UiText>Add more from</UiText> {group.shop.name}
-                      </Link>
-                    </details>
-                  ))}
-                  {quote.data.lines
-                    .filter((line) => !line.shopId)
-                    .map((line) => (
-                      <div
-                        key={cartLineKey(line.productId, line.variantId)}
-                        className="rounded-xl border border-destructive/30 p-4"
-                      >
-                        <ReviewLine line={line} />
-                      </div>
-                    ))}
                 </div>
-                <aside className="bag-checkout-column">
-                  {quote.data.shops.length > 0 && (
-                    <AddressDeliveryReview
-                      shops={quote.data.shops.map((group) => group.shop)}
-                      lines={lines}
-                      areaId={area.id}
-                      compact={!checkout}
-                      riderOnly
-                    />
-                  )}
-                </aside>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Need to check a previous order?{" "}
-                <Link to="/account" className="underline">
-                  Open your account
-                </Link>{" "}
-                before ordering again.
-              </p>
-            </>
-          )
-        )}
+                <div className="bag-columns">
+                  <div className="bag-shop-list">
+                    <div className="packing-count">
+                      <span>
+                        {lines.reduce((n, line) => n + line.qty, 0)} <UiText>items</UiText> ·{" "}
+                        {quote.data.shops.length} <UiText>shops</UiText>
+                      </span>
+                      <Link to="/categories">
+                        <UiText>Add more items</UiText>
+                        <Plus size={18} aria-hidden="true" />
+                      </Link>
+                    </div>
+                    {quote.data.shops.map((group, shopIndex) => (
+                      <details key={group.shop.id} className="bag-shop-card" open>
+                        <summary className="bag-shop-heading">
+                          <span className="packing-shop-number">
+                            SHOP {String(shopIndex + 1).padStart(2, "0")}
+                          </span>
+                          <Store size={24} aria-hidden="true" />
+                          <h2>
+                            <Link to="/shop/$slug" params={{ slug: group.shop.slug }}>
+                              {group.shop.name}
+                            </Link>
+                          </h2>
+                          <span className="bag-method-chips">
+                            <span>
+                              <Truck size={17} aria-hidden="true" />
+                              <UiText>Rider delivery</UiText>
+                            </span>
+                          </span>
+                          <ChevronDown className="bag-collapse-icon" size={20} aria-hidden="true" />
+                        </summary>
+                        {group.issues.map((issue) => (
+                          <p key={issue.code} className="text-sm text-destructive">
+                            {issue.message}
+                          </p>
+                        ))}
+                        <ul className="divide-y divide-border">
+                          {quote
+                            .data!.lines.filter((line) => line.shopId === group.shop.id)
+                            .map((line) => (
+                              <li key={cartLineKey(line.productId, line.variantId)}>
+                                <ReviewLine line={line} />
+                              </li>
+                            ))}
+                        </ul>
+                        <details className="bag-shop-conditions">
+                          <summary>
+                            <UiText>Shop totals and delivery conditions</UiText>
+                          </summary>
+                          <p className="font-medium">
+                            <UiText>{"Shop item subtotal: "}</UiText>
+                            {inr(group.itemsSubtotal)}
+                          </p>
+                          <p className="text-muted-foreground">
+                            <UiText>{"Minimum:"}</UiText>{" "}
+                            <UiText>
+                              {group.shop.minimumOrderAmount === undefined
+                                ? "Not supplied"
+                                : inr(group.shop.minimumOrderAmount)}
+                            </UiText>
+                          </p>
+                          <p className="text-muted-foreground">
+                            <UiText>{"Listed delivery fee:"}</UiText>{" "}
+                            <UiText>
+                              {group.shop.deliveryFee === undefined
+                                ? "Not supplied"
+                                : inr(group.shop.deliveryFee)}
+                            </UiText>{" "}
+                            · Confirmed in your bill below
+                          </p>
+                        </details>
+                        <Link
+                          className="bag-add-more"
+                          to="/shop/$slug"
+                          params={{ slug: group.shop.slug }}
+                        >
+                          <Plus size={18} aria-hidden="true" />
+                          <UiText>Add more from</UiText> {group.shop.name}
+                        </Link>
+                      </details>
+                    ))}
+                    {quote.data.lines
+                      .filter((line) => !line.shopId)
+                      .map((line) => (
+                        <div
+                          key={cartLineKey(line.productId, line.variantId)}
+                          className="rounded-xl border border-destructive/30 p-4"
+                        >
+                          <ReviewLine line={line} />
+                        </div>
+                      ))}
+                  </div>
+                  <aside className="bag-checkout-column packing-receipt">
+                    <h2 className="packing-receipt-title">
+                      <UiText>Your market bill</UiText>
+                    </h2>
+                    <div className="packing-bill-preview">
+                      <div>
+                        <span>
+                          <UiText>Items</UiText> ({lines.reduce((n, line) => n + line.qty, 0)})
+                        </span>
+                        <strong>{inr(quote.data.itemsSubtotal)}</strong>
+                      </div>
+                      {quote.data.shops.map((group) => (
+                        <div key={group.shop.id}>
+                          <span>{group.shop.name}</span>
+                          <span>{inr(group.itemsSubtotal)}</span>
+                        </div>
+                      ))}
+                      <p>
+                        <UiText>
+                          Delivery charges and total are confirmed after the address check.
+                        </UiText>
+                      </p>
+                    </div>
+                    {quote.data.shops.length > 0 && (
+                      <AddressDeliveryReview
+                        shops={quote.data.shops.map((group) => group.shop)}
+                        lines={lines}
+                        areaId={area.id}
+                        compact={!checkout}
+                        riderOnly
+                      />
+                    )}
+                  </aside>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Need to check a previous order?{" "}
+                  <Link to="/account" className="underline">
+                    Open your account
+                  </Link>{" "}
+                  before ordering again.
+                </p>
+              </>
+            )
+          )}
+          <div className="packing-street" aria-hidden="true">
+            <NeighbourhoodIllustration />
+            <svg viewBox="0 0 180 100" fill="none">
+              <circle cx="35" cy="70" r="23" />
+              <circle cx="145" cy="70" r="23" />
+              <path d="M35 70L65 25L100 70H35L77 42L145 70L128 18H112M55 24H78M0 98H180" />
+            </svg>
+          </div>
+        </div>
       </div>
     </StoreLayout>
   );

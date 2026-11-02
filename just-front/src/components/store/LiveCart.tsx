@@ -140,12 +140,9 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
                         <Plus size={18} aria-hidden="true" />
                       </Link>
                     </div>
-                    {quote.data.shops.map((group, shopIndex) => (
+                    {quote.data.shops.map((group) => (
                       <details key={group.shop.id} className="bag-shop-card" open>
                         <summary className="bag-shop-heading">
-                          <span className="packing-shop-number">
-                            SHOP {String(shopIndex + 1).padStart(2, "0")}
-                          </span>
                           <Store size={24} aria-hidden="true" />
                           <h2>
                             <Link to="/shop/$slug" params={{ slug: group.shop.slug }}>

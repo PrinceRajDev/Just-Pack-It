@@ -51,11 +51,12 @@ export function UiAttributes({ children }: { children: ReactElement }) {
   if (!isValidElement(children)) return children;
   const props = children.props as Record<string, unknown>;
   const translated: Record<string, unknown> = {};
+  // `label` can be an internal discriminator (e.g. PortalShell's Seller/Admin).
+  // Translate visible labels in UiText, never rewrite their component inputs.
   for (const key of [
     "placeholder",
     "title",
     "aria-label",
-    "label",
     "body",
     "hint",
     "message",

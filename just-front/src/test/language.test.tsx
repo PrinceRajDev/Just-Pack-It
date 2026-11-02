@@ -65,3 +65,29 @@ it("reflects preference changes from another tab without remounting fields", () 
   expect(screen.getByRole("textbox")).toHaveValue("Unfinished listing");
   expect(screen.getByRole("button", { name: "उत्पाद जोड़ें" })).toBeInTheDocument();
 });
+
+it("keeps internal workspace labels stable while translating visible text", () => {
+  function Workspace({ label }: { label: string }) {
+    return (
+      <section
+        data-testid="workspace"
+        className={label === "Seller" ? "seller-workspace" : "other-workspace"}
+      >
+        <UiText>{label}</UiText>
+      </section>
+    );
+  }
+  render(
+    <LanguageProvider>
+      <LanguageSwitcher />
+      <UiAttributes>
+        <Workspace label="Seller" />
+      </UiAttributes>
+    </LanguageProvider>,
+  );
+  fireEvent.change(screen.getByRole("combobox", { name: "Language / भाषा" }), {
+    target: { value: "hi" },
+  });
+  expect(screen.getByTestId("workspace")).toHaveClass("seller-workspace");
+  expect(screen.getByTestId("workspace")).toHaveTextContent("विक्रेता");
+});

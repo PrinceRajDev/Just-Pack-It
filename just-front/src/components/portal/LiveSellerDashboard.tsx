@@ -1,5 +1,5 @@
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import type { ManagedShop } from "@/domain/management";
@@ -9,11 +9,35 @@ import { SellerOrderCard } from "./LiveSellerOrders";
 import { ShopReviewNotice } from "./ShopReviewNotice";
 import { Button } from "@/components/ui/button";
 import { ShopAvailability } from "./ShopAvailability";
-import { Plus, ShoppingCart, Hourglass, Package, Boxes, ClipboardList, Truck } from "lucide-react";
+import {
+  Plus,
+  ShoppingCart,
+  Hourglass,
+  Package,
+  Boxes,
+  ClipboardList,
+  Truck,
+  ArrowRight,
+  Settings2,
+  CircleCheck,
+} from "lucide-react";
 import { NeighbourhoodIllustration } from "./NeighbourhoodIllustration";
 import { OpenState } from "@/components/store/ShopMark";
 export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
   const [notice, setNotice] = useState("");
+  const [controlsOpen, setControlsOpen] = useState(false);
+  const controls = useRef<HTMLDetailsElement>(null);
+  const waiting = useRef<HTMLElement>(null);
+  const handoffs = useRef<HTMLElement>(null);
+  const stock = useRef<HTMLElement>(null);
+  function jump(target: HTMLElement | null) {
+    target?.scrollIntoView?.({ block: "start", behavior: "auto" });
+    target?.focus({ preventScroll: true });
+  }
+  function openControls() {
+    setControlsOpen(true);
+    requestAnimationFrame(() => jump(controls.current?.querySelector("summary") ?? null));
+  }
   const query = useQuery({
     queryKey: ["seller-dashboard", shop.id],
     queryFn: sellerDashboard,
@@ -22,12 +46,73 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
     retry: false,
   });
   const data = query.data;
+  const nextStep: {
+    title: string;
+    body: string;
+    action: "settings" | "waiting" | "handoffs" | "stock" | "orders" | "controls" | null;
+  } = (() => {
+    if (!shop.active || shop.status !== "approved")
+      return {
+        title: "Check your shop status",
+        body: "Review your shop profile and admin approval before taking new orders.",
+        action: "settings",
+      };
+    if (!data || query.isError)
+      return {
+        title: query.isError ? "Refresh before taking action" : "Your shop, at a glance",
+        body: "Your latest orders and stock appear below. No changes are made automatically.",
+        action: null,
+      };
+    if ((data.counts.placed ?? 0) > 0)
+      return {
+        title: "New orders are waiting for you",
+        body: "Check the oldest request first. Accept only what your shop can fulfil.",
+        action: "waiting",
+      };
+    if ((data.counts.ready ?? 0) > 0)
+      return {
+        title: "Packed orders are ready to go",
+        body: "Open handoffs to check the delivery method and confirm the right next step.",
+        action: "handoffs",
+      };
+    if ((data.counts.accepted ?? 0) + (data.counts.preparing ?? 0) > 0)
+      return {
+        title: "Orders are being prepared",
+        body: "Open your orders to continue preparation and mark packed items ready.",
+        action: "orders",
+      };
+    if (!shop.isOpen)
+      return {
+        title: "Your shop is currently closed",
+        body: "Check your saved hours and availability. Existing orders still need attention.",
+        action: "controls",
+      };
+    if (data.lowStock.count > 0)
+      return {
+        title: "A few items need restocking",
+        body: "Check the remaining quantities before your next order arrives.",
+        action: "stock",
+      };
+    if (data.pendingPayment > 0)
+      return {
+        title: "Some orders are waiting for payment",
+        body: "Wait for verified payment before preparing these orders.",
+        action: "orders",
+      };
+    return {
+      title: "You are up to date",
+      body: "No new orders awaiting acceptance. You can add products or check your shop settings.",
+      action: null,
+    };
+  })();
   return (
     <>
       <header className="seller-today-hero">
         <div className="seller-hero-copy">
           <p className="workspace-eyebrow">Just Pack It · Workspace</p>
-          <h1>{shop.name} · Today</h1>
+          <h1>
+            {shop.name} · <UiText>Today</UiText>
+          </h1>
           <p className="seller-hero-date">
             {new Intl.DateTimeFormat("en-IN", {
               dateStyle: "full",
@@ -46,6 +131,62 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
         </Button>
       </header>
       <ShopReviewNotice shop={shop} />
+      <section className="seller-next-step" aria-labelledby="seller-next-step-heading">
+        <div>
+          <p className="seller-next-step-eyebrow">
+            <UiText>Your next step</UiText>
+          </p>
+          <h2 id="seller-next-step-heading">
+            <UiText>{nextStep.title}</UiText>
+          </h2>
+          <p>
+            <UiText>{nextStep.body}</UiText>
+          </p>
+        </div>
+        {nextStep.action === "settings" ? (
+          <Button asChild variant="outline">
+            <Link to="/seller/settings">
+              <UiText>Shop settings</UiText>
+              <ArrowRight size={17} aria-hidden="true" />
+            </Link>
+          </Button>
+        ) : nextStep.action === "orders" ? (
+          <Button asChild variant="outline">
+            <Link to="/seller/orders">
+              <UiText>Manage orders</UiText>
+              <ArrowRight size={17} aria-hidden="true" />
+            </Link>
+          </Button>
+        ) : nextStep.action ? (
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (nextStep.action === "controls") openControls();
+              else
+                jump(
+                  nextStep.action === "waiting"
+                    ? waiting.current
+                    : nextStep.action === "handoffs"
+                      ? handoffs.current
+                      : stock.current,
+                );
+            }}
+          >
+            <UiText>
+              {nextStep.action === "waiting"
+                ? "Review waiting orders"
+                : nextStep.action === "handoffs"
+                  ? "Manage handoffs"
+                  : nextStep.action === "controls"
+                    ? "Shop controls"
+                    : "Check low stock"}
+            </UiText>
+            <ArrowRight size={17} aria-hidden="true" />
+          </Button>
+        ) : data && !query.isError ? (
+          <CircleCheck className="seller-next-step-mark" aria-hidden="true" />
+        ) : null}
+      </section>
       <UiAttributes>
         <nav className="seller-quick-actions" aria-label="Daily shop tasks">
           <Button asChild>
@@ -60,16 +201,25 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
               <UiText>{"Update stock"}</UiText>
             </Link>
           </Button>
-          <Button asChild variant="outline">
-            <Link to="/seller/products/new">
-              <Plus aria-hidden="true" size={18} />
-              <UiText>{"Add product"}</UiText>
-            </Link>
+          <Button
+            variant="outline"
+            onClick={openControls}
+            aria-expanded={controlsOpen}
+            aria-controls="seller-shop-controls"
+          >
+            <Settings2 aria-hidden="true" size={18} />
+            <UiText>Shop controls</UiText>
           </Button>
         </nav>
       </UiAttributes>
       <div className="seller-today-grid">
-        <details className="seller-controls-column seller-availability-disclosure">
+        <details
+          id="seller-shop-controls"
+          ref={controls}
+          open={controlsOpen}
+          onToggle={(event) => setControlsOpen(event.currentTarget.open)}
+          className="seller-controls-column seller-availability-disclosure"
+        >
           <summary>
             <UiText>{"Shop hours and delivery settings"}</UiText>
             <span>
@@ -131,15 +281,24 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
                     hint={`${data.date} · shop orders`}
                   />
                 </UiAttributes>
-                <UiAttributes>
-                  <Kpi
-                    icon={Hourglass}
-                    label="Awaiting acceptance"
-                    value={data.counts.placed ?? 0}
-                    hint="All dates"
-                    tone={data.counts.placed ? "warn" : undefined}
-                  />
-                </UiAttributes>
+                <a
+                  className="seller-metric-action"
+                  href="#seller-waiting-orders"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    jump(waiting.current);
+                  }}
+                >
+                  <UiAttributes>
+                    <Kpi
+                      icon={Hourglass}
+                      label="Awaiting acceptance"
+                      value={data.counts.placed ?? 0}
+                      hint="All dates"
+                      tone={data.counts.placed ? "warn" : undefined}
+                    />
+                  </UiAttributes>
+                </a>
                 <UiAttributes>
                   <Kpi
                     icon={Package}
@@ -148,15 +307,24 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
                     hint="All dates"
                   />
                 </UiAttributes>
-                <UiAttributes>
-                  <Kpi
-                    icon={Boxes}
-                    label="Low-stock options"
-                    value={data.lowStock.count}
-                    hint={`${data.lowStock.outOfStock} out of stock`}
-                    tone={data.lowStock.count ? "warn" : undefined}
-                  />
-                </UiAttributes>
+                <a
+                  className="seller-metric-action"
+                  href="#seller-restock"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    jump(stock.current);
+                  }}
+                >
+                  <UiAttributes>
+                    <Kpi
+                      icon={Boxes}
+                      label="Low-stock options"
+                      value={data.lowStock.count}
+                      hint={`${data.lowStock.outOfStock} out of stock`}
+                      tone={data.lowStock.count ? "warn" : undefined}
+                    />
+                  </UiAttributes>
+                </a>
               </div>
               <details className="my-4 text-sm text-muted-foreground">
                 <summary className="cursor-pointer">
@@ -178,7 +346,13 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
                 </p>
               )}
               <UiAttributes>
-                <section className="seller-counter-card" aria-label="Urgent orders">
+                <section
+                  id="seller-waiting-orders"
+                  ref={waiting}
+                  tabIndex={-1}
+                  className="seller-counter-card seller-work-section"
+                  aria-label="Urgent orders"
+                >
                   <h2>
                     <ClipboardList aria-hidden="true" />
                     <UiText>{"Waiting at your counter"}</UiText>
@@ -210,7 +384,13 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
               </UiAttributes>
               <div className="seller-secondary-grid">
                 <UiAttributes>
-                  <section className="seller-counter-card" aria-label="Order pipeline">
+                  <section
+                    id="seller-handoffs"
+                    ref={handoffs}
+                    tabIndex={-1}
+                    className="seller-counter-card seller-work-section"
+                    aria-label="Order pipeline"
+                  >
                     <h2>
                       <Truck aria-hidden="true" />
                       <UiText>{"Ready and on the way"}</UiText>
@@ -230,7 +410,13 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
                   </section>
                 </UiAttributes>
                 <UiAttributes>
-                  <section className="seller-counter-card" aria-label="Low stock">
+                  <section
+                    id="seller-restock"
+                    ref={stock}
+                    tabIndex={-1}
+                    className="seller-counter-card seller-work-section"
+                    aria-label="Low stock"
+                  >
                     <h2>
                       <Boxes aria-hidden="true" />
                       <UiText>{"Restock next"}</UiText>

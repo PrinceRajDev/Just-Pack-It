@@ -79,3 +79,23 @@ it("initial errors do not become invented zero statistics; retry recovers", asyn
   fireEvent.click(screen.getByRole("button", { name: "Refresh dashboard" }));
   await waitFor(() => expect(screen.getByText("Orders received today")).toBeInTheDocument());
 });
+
+it("guides the seller to pending orders and focuses the real order section", async () => {
+  vi.mocked(sellerDashboard).mockResolvedValue(data);
+  mount();
+  const action = await screen.findByRole("button", { name: "Review waiting orders" });
+  expect(
+    screen.getByRole("heading", { name: "New orders are waiting for you" }),
+  ).toBeInTheDocument();
+  fireEvent.click(action);
+  expect(screen.getByRole("region", { name: "Urgent orders" })).toHaveFocus();
+});
+it("opens shop controls directly without submitting an availability change", async () => {
+  vi.mocked(sellerDashboard).mockResolvedValue(data);
+  mount();
+  const action = screen.getByRole("button", { name: "Shop controls" });
+  expect(action).toHaveAttribute("aria-expanded", "false");
+  fireEvent.click(action);
+  expect(action).toHaveAttribute("aria-expanded", "true");
+  expect(document.getElementById("seller-shop-controls")).toHaveAttribute("open");
+});

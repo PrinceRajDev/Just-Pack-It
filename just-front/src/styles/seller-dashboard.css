@@ -675,3 +675,91 @@
 .seller-activity-column > .mb-5 p {
   font-size: 0.875rem;
 }
+
+.seller-next-step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin: 1rem 0;
+  padding: 1.4rem 1.6rem;
+  border-radius: 1rem;
+  border: 1px solid #19523d;
+  background: #12452f;
+  color: #fffdf2;
+}
+.seller-next-step-eyebrow {
+  color: #d5eb98;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+.seller-next-step h2 {
+  font-family: var(--seller-serif);
+  font-size: clamp(1.4rem, 2.1vw, 1.9rem);
+  line-height: 1.3;
+}
+.seller-next-step h2 + p {
+  max-width: 48rem;
+  margin-top: 0.5rem;
+  color: #e3ead8;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.seller-next-step > a,
+.seller-next-step > button {
+  flex-shrink: 0;
+  color: #16452f;
+  background: #edf5d5;
+  border-color: #d0e3ad;
+}
+.seller-next-step-mark {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: #c9e58e;
+  flex-shrink: 0;
+}
+.seller-metric-action {
+  display: block;
+  border-radius: 1rem;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 150ms ease;
+}
+.seller-metric-action .portal-kpi {
+  height: 100%;
+}
+.seller-metric-action:hover {
+  box-shadow: 0 0 0 2px #9ab977;
+}
+.seller-metric-action:focus-visible {
+  outline: 3px solid #357650;
+  outline-offset: 3px;
+}
+.seller-work-section {
+  scroll-margin-top: 6rem;
+}
+.seller-work-section:focus {
+  outline: 2px solid #81a957;
+  outline-offset: 4px;
+}
+#seller-shop-controls summary {
+  scroll-margin-top: 6rem;
+}
+@media (max-width: 640px) {
+  .seller-next-step {
+    align-items: start;
+    flex-direction: column;
+    padding: 1.15rem;
+    gap: 1rem;
+  }
+  .seller-next-step > button,
+  .seller-next-step > a {
+    width: 100%;
+  }
+  .seller-next-step-mark {
+    display: none;
+  }
+}

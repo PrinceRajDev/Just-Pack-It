@@ -650,3 +650,41 @@ Object.assign(hindi, {
   "Checking shop delivery options…": "दुकान के डिलीवरी तरीके जांचे जा रहे हैं…",
   "Loading catalogue…": "उत्पाद सूची लोड हो रही है…",
 });
+
+Object.assign(hindi, {
+  "Your next step": "अभी क्या करें",
+  "Check your shop status": "दुकान की स्थिति जांचें",
+  "Your shop, at a glance": "एक नज़र में आपकी दुकान",
+  "Refresh before taking action": "कार्रवाई से पहले जानकारी अपडेट करें",
+  "New orders are waiting for you": "नए ऑर्डर आपके जवाब का इंतज़ार कर रहे हैं",
+  "Packed orders are ready to go": "पैक किए ऑर्डर भेजने के लिए तैयार हैं",
+  "A few items need restocking": "कुछ सामान का स्टॉक भरना है",
+  "Some orders are waiting for payment": "कुछ ऑर्डर का भुगतान बाकी है",
+  "You are up to date": "अभी सब अपडेट है",
+  "Review your shop profile and admin approval before taking new orders.":
+    "नए ऑर्डर लेने से पहले दुकान की प्रोफ़ाइल और एडमिन की स्वीकृति जांचें।",
+  "Your latest orders and stock appear below. No changes are made automatically.":
+    "नीचे नए ऑर्डर और स्टॉक देखें। कोई बदलाव अपने आप नहीं होगा।",
+  "Check the oldest request first. Accept only what your shop can fulfil.":
+    "पहले सबसे पुराना ऑर्डर देखें। वही स्वीकार करें जिसे पूरा कर सकें।",
+  "Open handoffs to check the delivery method and confirm the right next step.":
+    "डिलीवरी का तरीका जांचने और आगे की कार्रवाई के लिए हैंडऑफ़ खोलें।",
+  "Check the remaining quantities before your next order arrives.":
+    "अगला ऑर्डर आने से पहले बची मात्रा जांचें।",
+  "Wait for verified payment before preparing these orders.":
+    "इन ऑर्डर की तैयारी से पहले पक्के भुगतान का इंतज़ार करें।",
+  "No new orders awaiting acceptance. You can add products or check your shop settings.":
+    "कोई नया ऑर्डर स्वीकार करना बाकी नहीं है। उत्पाद जोड़ें या दुकान की सेटिंग जांचें।",
+  "Review waiting orders": "इंतज़ार वाले ऑर्डर देखें",
+  "Check low stock": "कम स्टॉक जांचें",
+  "Shop controls": "दुकान की सेटिंग",
+});
+
+Object.assign(hindi, {
+  "Orders are being prepared": "ऑर्डर तैयार हो रहे हैं",
+  "Open your orders to continue preparation and mark packed items ready.":
+    "तैयारी जारी रखने और पैक सामान तैयार चिह्नित करने के लिए ऑर्डर खोलें।",
+  "Your shop is currently closed": "आपकी दुकान अभी बंद है",
+  "Check your saved hours and availability. Existing orders still need attention.":
+    "सहेजा समय और उपलब्धता जांचें। पुराने ऑर्डर संभालना जारी रखें।",
+});

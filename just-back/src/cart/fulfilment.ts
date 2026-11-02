@@ -28,6 +28,7 @@ export async function readFulfilment(userId:string,input:z.infer<typeof inputSch
     return {checkedAt:now.toISOString(),addressId:address._id,addressVersion:address.version,checkoutAvailable:false,reserved:false,shops:input.shopIds.map(shopId=>{
       const shop=shops.find(shop=>shop._id===shopId);
       if(!shop) return {shopId,options:[],issues:[{code:"SHOP_UNAVAILABLE",message:"This shop is unavailable."}]};
+      if(shop.ownerId===userId) return {shopId,options:[],issues:[{code:"OWN_SHOP_PURCHASE",message:"You cannot buy from your own shop."}]};
       const open=isOpen(shop,now),covered=areas.some(area=>shop.areaIds.includes(area._id));
       return {shopId,issues:open ? [] : [{code:"SHOP_CLOSED",message:"This shop is currently closed."}],options:shop.fulfilment.map(method=>{
         if(!open) return {method,status:"unavailable",listedFee:null,message:"Shop is closed."};

@@ -1,3 +1,4 @@
+import {assertNotOwnShop} from "../catalogue/purchase-policy.js";
 import {deliveryAvailable} from "../delivery/coverage.js";
 import {pinCoverage} from "../addresses/serviceability.js";
 import {createHash,randomUUID} from "node:crypto";
@@ -38,6 +39,7 @@ export async function createCodOrder(who:Actor,key:string,raw:z.infer<typeof ord
     const subOrders:SubOrderRecord[]=[];
     for(const shopId of shopIds){
       const shop=await Shop.findById(shopId).session(session);if(!shop || !shop.areaIds.includes(area._id))fail(409,"SHOP_UNAVAILABLE","A shop is unavailable in the browsing area");
+      assertNotOwnShop(who.id,shop.ownerId);
       // Also check reused holds; replaying an already-created order remains read-only.
       await fenceSellerPurchase(shop.ownerId,session);
       const method=fulfilments.find(choice=>choice.shopId===shopId)!.method;

@@ -1,3 +1,4 @@
+import {assertNotOwnShop} from "../catalogue/purchase-policy.js";
 import {createHash} from "node:crypto";
 import {z} from "zod";
 import {InventoryReservation,type ReservationRecord,type HeldLine} from "./models.js";
@@ -34,6 +35,7 @@ export async function reserveInventory(who:Actor,raw:z.infer<typeof inputSchema>
         if(!product)fail(409,"LISTING_UNAVAILABLE","A listing is no longer available");
         const shop=await Shop.findOne({_id:product.shopId,active:true,status:"approved"}).session(session);
         if(!shop || !isOpen(shop,now) || !shop.categoryIds.includes(product.categoryId))fail(409,"SHOP_UNAVAILABLE","A shop cannot accept inventory holds");
+        assertNotOwnShop(who.id,shop.ownerId);
         await fenceSellerPurchase(shop.ownerId,session);
         const category=await Category.findOne({_id:product.categoryId,active:true}).session(session);
         if(!category || (product.subcategoryId && !category.subcategories.some(sub=>sub._id===product.subcategoryId && sub.active)))fail(409,"LISTING_UNAVAILABLE","A listing category is unavailable");

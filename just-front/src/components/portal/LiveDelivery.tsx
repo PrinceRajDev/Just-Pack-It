@@ -1,3 +1,4 @@
+import { RiderOverview } from "./RiderOverview";
 import { Logo } from "@/components/brand/Logo";
 import { Bike, ShieldCheck, MapPin, ClipboardList, Wallet, LogOut, Clock3 } from "lucide-react";
 import { LanguageSwitcher } from "@/lib/i18n/Language";
@@ -148,69 +149,86 @@ export function LiveDelivery() {
           <SettlementLedger />
         ) : (
           <>
-            {profile.isPending ? (
-              <LoadingState label="Checking delivery approval…" compact />
-            ) : profile.isError ? (
-              <p role="alert">Could not check approval. Refresh below.</p>
-            ) : !profile.data?.approved ? (
-              <section className="rider-approval-card" aria-labelledby="rider-approval-heading">
-                <span className="rider-section-icon">
-                  <ShieldCheck size={25} aria-hidden="true" />
-                </span>
-                <div>
-                  <h2 id="rider-approval-heading">
-                    <UiText>Your account is ready for review</UiText>
-                  </h2>
-                  <p>
-                    Admin must approve your delivery account and assign service areas before you can
-                    claim tasks.
-                  </p>
-                  <ol className="rider-setup-steps">
-                    <li>
-                      <ShieldCheck size={18} aria-hidden="true" />
-                      <span>
-                        <strong>
-                          <UiText>Account created</UiText>
-                        </strong>
-                        <UiText>You can sign in to this workspace.</UiText>
-                      </span>
-                    </li>
-                    <li>
-                      <Clock3 size={18} aria-hidden="true" />
-                      <span>
-                        <strong>
-                          <UiText>Admin approval</UiText>
-                        </strong>
-                        <UiText>Waiting for your account review.</UiText>
-                      </span>
-                    </li>
-                    <li>
-                      <MapPin size={18} aria-hidden="true" />
-                      <span>
-                        <strong>
-                          <UiText>Service area assignment</UiText>
-                        </strong>
-                        <UiText>Your admin will assign where you deliver.</UiText>
-                      </span>
-                    </li>
-                  </ol>
-                </div>
-              </section>
-            ) : (
-              <Button disabled={busy} onClick={() => void availability(!profile.data?.online)}>
-                <UiText>{profile.data.online ? "Go offline" : "Go online"}</UiText>
-              </Button>
+            {profile.data?.approved && (
+              <RiderOverview
+                profile={profile.data}
+                task={active.data}
+                taskKnown={active.isSuccess}
+                loadedTasks={
+                  profile.data.online && tasks.isSuccess && !active.data
+                    ? tasks.data.pages.reduce((n, page) => n + page.items.length, 0)
+                    : undefined
+                }
+                hasMore={!!tasks.hasNextPage}
+                updatedAt={Math.max(active.dataUpdatedAt, tasks.dataUpdatedAt)}
+                refreshing={active.isFetching || tasks.isFetching}
+              />
             )}
-            <Button
-              variant="outline"
-              onClick={() => {
-                void profile.refetch();
-                void active.refetch();
-                if (!active.data && profile.data?.online) void tasks.refetch();
-              }}
-            >
-              Refresh tasks
-            </Button>
+            <div className="rider-work-controls">
+              {profile.isPending ? (
+                <LoadingState label="Checking delivery approval…" compact />
+              ) : profile.isError ? (
+                <p role="alert">Could not check approval. Refresh below.</p>
+              ) : !profile.data?.approved ? (
+                <section className="rider-approval-card" aria-labelledby="rider-approval-heading">
+                  <span className="rider-section-icon">
+                    <ShieldCheck size={25} aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h2 id="rider-approval-heading">
+                      <UiText>Your account is ready for review</UiText>
+                    </h2>
+                    <p>
+                      Admin must approve your delivery account and assign service areas before you
+                      can claim tasks.
+                    </p>
+                    <ol className="rider-setup-steps">
+                      <li>
+                        <ShieldCheck size={18} aria-hidden="true" />
+                        <span>
+                          <strong>
+                            <UiText>Account created</UiText>
+                          </strong>
+                          <UiText>You can sign in to this workspace.</UiText>
+                        </span>
+                      </li>
+                      <li>
+                        <Clock3 size={18} aria-hidden="true" />
+                        <span>
+                          <strong>
+                            <UiText>Admin approval</UiText>
+                          </strong>
+                          <UiText>Waiting for your account review.</UiText>
+                        </span>
+                      </li>
+                      <li>
+                        <MapPin size={18} aria-hidden="true" />
+                        <span>
+                          <strong>
+                            <UiText>Service area assignment</UiText>
+                          </strong>
+                          <UiText>Your admin will assign where you deliver.</UiText>
+                        </span>
+                      </li>
+                    </ol>
+                  </div>
+                </section>
+              ) : (
+                <Button disabled={busy} onClick={() => void availability(!profile.data?.online)}>
+                  <UiText>{profile.data.online ? "Go offline" : "Go online"}</UiText>
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={() => {
+                  void profile.refetch();
+                  void active.refetch();
+                  if (!active.data && profile.data?.online) void tasks.refetch();
+                }}
+              >
+                Refresh tasks
+              </Button>
+            </div>
             {notice && <p role="status">{notice}</p>}
             {error && <p role="alert">{error}</p>}
             {active.isPending ? (
@@ -238,7 +256,7 @@ export function LiveDelivery() {
             ) : (
               active.isSuccess && (
                 <section className="rider-tasks-card space-y-3">
-                  <h2 className="font-display text-2xl">Available shop pickups</h2>
+                  <h2 className="font-display text-2xl">Ready delivery tasks</h2>
                   {!profile.data?.online ? (
                     <div className="rider-tasks-empty">
                       <Bike size={45} aria-hidden="true" />
@@ -295,8 +313,9 @@ export function LiveDelivery() {
                         ))}
                       {tasks.isSuccess && !tasks.data.pages.some((p) => p.items.length) && (
                         <p>
-                          No ready tasks available in your assigned areas. Availability is checked
-                          every 15 seconds while active.
+                          No ready delivery orders in your assigned areas yet. Shops appear here
+                          only when an order is ready for rider pickup. We check every 15 seconds
+                          while this page is active.
                         </p>
                       )}
                       {(tasks.hasNextPage || tasks.isFetchNextPageError) && (

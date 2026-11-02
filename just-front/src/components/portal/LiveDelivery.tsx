@@ -1,3 +1,7 @@
+import { Logo } from "@/components/brand/Logo";
+import { Bike, ShieldCheck, MapPin, ClipboardList, Wallet, LogOut, Clock3 } from "lucide-react";
+import { LanguageSwitcher } from "@/lib/i18n/Language";
+import "@/styles/delivery-workspace.css";
 import { LoadingState } from "@/components/common/LoadingState";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { SettlementLedger } from "./SettlementLedger";
@@ -85,25 +89,61 @@ export function LiveDelivery() {
     }
   }
   return (
-    <div className="delivery-workspace min-h-screen bg-background">
-      <header className="flex flex-wrap items-center justify-between gap-3 bg-primary p-4 text-primary-foreground">
-        <p className="font-semibold">{session?.name} · Delivery desk</p>
-        <Button variant="outline" className="text-foreground" onClick={signOut}>
-          <UiText>{"Sign out"}</UiText>
-        </Button>
+    <div className="delivery-workspace rider-workspace min-h-screen bg-background">
+      <header className="rider-header">
+        <Logo />
+        <span className="rider-header-label">
+          <Bike size={20} aria-hidden="true" />
+          <UiText>Delivery workspace</UiText>
+        </span>
+        <div className="rider-header-actions">
+          <LanguageSwitcher />
+          <span className="rider-profile">{session?.name}</span>
+          <Button variant="outline" onClick={signOut}>
+            <LogOut size={17} aria-hidden="true" />
+            <UiText>Sign out</UiText>
+          </Button>
+        </div>
       </header>
-      <main className="mx-auto max-w-3xl space-y-5 p-4 pb-16">
-        <h1 className="font-display text-3xl">Your delivery desk</h1>
-        <p className="text-sm">
-          Claim one ready shop order at a time. No guaranteed task availability, arrival estimate or
-          payout is implied.
-        </p>
-        <Link to="/delivery" className="underline">
-          Tasks
-        </Link>
-        <Link to="/delivery/earnings" className="ml-4 underline">
-          Cash handover
-        </Link>
+      <main className="rider-main">
+        <section className="rider-hero">
+          <div>
+            <p className="rider-eyebrow">
+              JUST PACK IT · <UiText>Delivery partner</UiText>
+            </p>
+            <h1>
+              <UiText>Your delivery desk</UiText>
+            </h1>
+            <p>
+              <UiText>From a local counter to someone’s doorstep.</UiText>
+            </p>
+            {profile.isSuccess && (
+              <span className={`rider-state ${profile.data?.approved ? "is-approved" : ""}`}>
+                <span aria-hidden="true" />{" "}
+                <UiText>
+                  {!profile.data?.approved
+                    ? "Awaiting admin approval"
+                    : profile.data.online
+                      ? "Online"
+                      : "Offline"}
+                </UiText>
+              </span>
+            )}
+          </div>
+          <div className="rider-hero-icon" aria-hidden="true">
+            <Bike size={108} strokeWidth={1.3} />
+          </div>
+        </section>
+        <nav className="rider-tabs" aria-label="Delivery workspace sections">
+          <Link to="/delivery" className={!path.includes("earnings") ? "is-active" : ""}>
+            <ClipboardList size={19} aria-hidden="true" />
+            <UiText>Tasks</UiText>
+          </Link>
+          <Link to="/delivery/earnings" className={path.includes("earnings") ? "is-active" : ""}>
+            <Wallet size={19} aria-hidden="true" />
+            <UiText>Cash handover</UiText>
+          </Link>
+        </nav>
         {path.includes("earnings") ? (
           <SettlementLedger />
         ) : (
@@ -113,10 +153,49 @@ export function LiveDelivery() {
             ) : profile.isError ? (
               <p role="alert">Could not check approval. Refresh below.</p>
             ) : !profile.data?.approved ? (
-              <p>
-                Admin must approve your delivery account and assign service areas before you can
-                claim tasks.
-              </p>
+              <section className="rider-approval-card" aria-labelledby="rider-approval-heading">
+                <span className="rider-section-icon">
+                  <ShieldCheck size={25} aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 id="rider-approval-heading">
+                    <UiText>Your account is ready for review</UiText>
+                  </h2>
+                  <p>
+                    Admin must approve your delivery account and assign service areas before you can
+                    claim tasks.
+                  </p>
+                  <ol className="rider-setup-steps">
+                    <li>
+                      <ShieldCheck size={18} aria-hidden="true" />
+                      <span>
+                        <strong>
+                          <UiText>Account created</UiText>
+                        </strong>
+                        <UiText>You can sign in to this workspace.</UiText>
+                      </span>
+                    </li>
+                    <li>
+                      <Clock3 size={18} aria-hidden="true" />
+                      <span>
+                        <strong>
+                          <UiText>Admin approval</UiText>
+                        </strong>
+                        <UiText>Waiting for your account review.</UiText>
+                      </span>
+                    </li>
+                    <li>
+                      <MapPin size={18} aria-hidden="true" />
+                      <span>
+                        <strong>
+                          <UiText>Service area assignment</UiText>
+                        </strong>
+                        <UiText>Your admin will assign where you deliver.</UiText>
+                      </span>
+                    </li>
+                  </ol>
+                </div>
+              </section>
             ) : (
               <Button disabled={busy} onClick={() => void availability(!profile.data?.online)}>
                 <UiText>{profile.data.online ? "Go offline" : "Go online"}</UiText>
@@ -158,10 +237,25 @@ export function LiveDelivery() {
               />
             ) : (
               active.isSuccess && (
-                <section className="space-y-3">
+                <section className="rider-tasks-card space-y-3">
                   <h2 className="font-display text-2xl">Available shop pickups</h2>
                   {!profile.data?.online ? (
-                    <p>Go online after approval to see available tasks.</p>
+                    <div className="rider-tasks-empty">
+                      <Bike size={45} aria-hidden="true" />
+                      <h3>
+                        <UiText>
+                          {profile.data?.approved
+                            ? "You’re offline"
+                            : "Your first delivery starts here"}
+                        </UiText>
+                      </h3>
+                      <p>Go online after approval to see available tasks.</p>
+                      <p className="rider-help">
+                        <UiText>
+                          Task availability depends on ready orders in your assigned areas.
+                        </UiText>
+                      </p>
+                    </div>
                   ) : tasks.isPending ? (
                     <LoadingState label="Loading available tasks…" compact />
                   ) : (
@@ -202,7 +296,7 @@ export function LiveDelivery() {
                       {tasks.isSuccess && !tasks.data.pages.some((p) => p.items.length) && (
                         <p>
                           No ready tasks available in your assigned areas. Availability is checked
-                          every15seconds while active.
+                          every 15 seconds while active.
                         </p>
                       )}
                       {(tasks.hasNextPage || tasks.isFetchNextPageError) && (

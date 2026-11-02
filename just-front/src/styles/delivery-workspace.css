@@ -1,0 +1,263 @@
+.rider-workspace {
+  background: #fbf7ef;
+}
+.rider-header {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 16px 4%;
+  background: #fffdf8;
+  border-bottom: 1px solid #e4ddce;
+}
+.rider-header .brand-logo {
+  max-width: 230px;
+}
+.rider-header-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #24503b;
+  font-size: 14px;
+  border-left: 1px solid #e4ddce;
+  padding-left: 24px;
+}
+.rider-header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.rider-profile {
+  font-weight: 650;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rider-header-actions button {
+  gap: 8px;
+}
+.rider-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 24px 50px;
+  display: grid;
+  gap: 20px;
+}
+.rider-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: #edf3db;
+  border: 1px solid #e2e9cc;
+  border-radius: 22px;
+  padding: 28px 32px;
+}
+.rider-eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #376349;
+}
+.rider-hero h1 {
+  font-family: Georgia, "Nirmala UI", serif;
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.15;
+  color: #083f2b;
+  margin: 10px 0;
+}
+.rider-hero p:not(.rider-eyebrow) {
+  color: #526354;
+  font-size: 15px;
+}
+.rider-hero-icon {
+  color: #0b5637;
+  background: #dce9b9;
+  border-radius: 50%;
+  padding: 18px;
+  flex-shrink: 0;
+}
+.rider-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: #76571f;
+  background: #fff4d6;
+  border: 1px solid #ecdcb0;
+  border-radius: 30px;
+  padding: 7px 12px;
+}
+.rider-state > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.rider-state.is-approved {
+  color: #1d6039;
+  background: #e0efd9;
+  border-color: #c8dfbe;
+}
+.rider-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #e4ddce;
+  padding-bottom: 12px;
+}
+.rider-tabs a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+  border-radius: 11px;
+  color: #385241;
+  min-height: 44px;
+}
+.rider-tabs a.is-active {
+  background: #064b35;
+  color: #fffdf5;
+}
+.rider-approval-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 24px;
+  border: 1px solid #e3dccb;
+  border-radius: 18px;
+  background: #fffdf8;
+}
+.rider-section-icon {
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: #eef4d8;
+  color: #306537;
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+.rider-approval-card h2,
+.rider-tasks-card > h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #173b29;
+}
+.rider-approval-card p {
+  margin-top: 7px;
+  color: #617063;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.rider-setup-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 22px;
+}
+.rider-setup-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13px;
+  color: #657362;
+}
+.rider-setup-steps svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #57783d;
+}
+.rider-setup-steps strong {
+  display: block;
+  color: #294d35;
+  margin-bottom: 4px;
+}
+.rider-tasks-card {
+  border: 1px solid #e3dccb;
+  border-radius: 18px;
+  padding: 24px;
+  background: #fffdf8;
+}
+.rider-tasks-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 28px 16px;
+  color: #617063;
+  gap: 10px;
+}
+.rider-tasks-empty > svg {
+  color: #628743;
+}
+.rider-tasks-empty h3 {
+  font-size: 19px;
+  color: #203e2b;
+  font-weight: 650;
+}
+.rider-tasks-empty p {
+  font-size: 14px;
+}
+.rider-help {
+  font-size: 12px !important;
+}
+.rider-main > button {
+  justify-self: start;
+}
+.rider-main > [role="alert"] {
+  padding: 14px;
+  background: #fff0e8;
+  border: 1px solid #e9cbbb;
+  border-radius: 12px;
+}
+@media (max-width: 750px) {
+  .rider-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .rider-header-label {
+    display: none;
+  }
+  .rider-header .brand-logo {
+    max-width: 180px;
+  }
+  .rider-header-actions {
+    gap: 8px;
+  }
+  .rider-profile {
+    display: none;
+  }
+  .rider-main {
+    padding: 18px 16px 32px;
+    gap: 16px;
+  }
+  .rider-hero {
+    padding: 22px;
+  }
+  .rider-hero-icon {
+    padding: 10px;
+  }
+  .rider-hero-icon svg {
+    width: 64px;
+    height: 64px;
+  }
+  .rider-setup-steps {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .rider-approval-card {
+    padding: 18px;
+    gap: 12px;
+  }
+  .rider-section-icon {
+    padding: 9px;
+  }
+}
+@media (max-width: 400px) {
+  .rider-hero-icon {
+    display: none;
+  }
+  .rider-header .brand-logo {
+    max-width: 145px;
+  }
+}

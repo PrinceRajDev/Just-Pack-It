@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import type { Order } from "@/domain/types";
@@ -50,59 +51,69 @@ export function BuyAgain({ order }: { order: Order }) {
     }
   }
   return (
-    <section
-      className="space-y-3 rounded-xl border border-border bg-card p-4"
-      aria-label="Buy again"
-    >
-      <h2 className="font-display text-xl">Buy again</h2>
-      <p className="text-sm text-muted-foreground">
-        Same shop and exact options, at current prices. Existing bag items stay. Delivery charges
-        and minimums are reviewed at checkout.
-      </p>
-      {!area && <p role="status">Choose your area in the header to check these items.</p>}
-      <Button variant="outline" disabled={!area || !ready || busy} onClick={() => void check()}>
-        {busy ? "Checking current items…" : "Check items to buy again"}
-      </Button>
-      {review && !valid && <p role="status">Your bag or area changed. Check items again.</p>}
-      {valid && (
-        <>
-          <ul className="divide-y divide-border">
-            {review.plan.map((item) => (
-              <li className="py-2 text-sm" key={`${item.productId}:${item.variantId ?? ""}`}>
-                <p className="font-semibold">
-                  {item.name}
-                  {item.variantLabel ? ` · ${item.variantLabel}` : ""}
-                </p>
-                <p>
-                  {item.shopName} · Requested {item.requested} · Add {item.qty}
-                </p>
-                {item.price !== undefined && (
-                  <p>
-                    Current unit price {inr(item.price)}
-                    {item.oldPrice !== item.price && item.oldPrice !== undefined
-                      ? ` (previously ${inr(item.oldPrice)})`
-                      : ""}
+    <UiAttributes>
+      <section
+        className="space-y-3 rounded-xl border border-border bg-card p-4"
+        aria-label="Buy again"
+      >
+        <h2 className="font-display text-xl">
+          <UiText>{"Buy again"}</UiText>
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Same shop and exact options, at current prices. Existing bag items stay. Delivery charges
+          and minimums are reviewed at checkout.
+        </p>
+        {!area && <p role="status">Choose your area in the header to check these items.</p>}
+        <Button variant="outline" disabled={!area || !ready || busy} onClick={() => void check()}>
+          <UiText>{busy ? "Checking current items…" : "Check items to buy again"}</UiText>
+        </Button>
+        {review && !valid && <p role="status">Your bag or area changed. Check items again.</p>}
+        {valid && (
+          <>
+            <ul className="divide-y divide-border">
+              {review.plan.map((item) => (
+                <li className="py-2 text-sm" key={`${item.productId}:${item.variantId ?? ""}`}>
+                  <p className="font-semibold">
+                    {item.name}
+                    <UiText>{item.variantLabel ? ` · ${item.variantLabel}` : ""}</UiText>
                   </p>
-                )}
-                <p>{item.note}</p>
-              </li>
-            ))}
-          </ul>
-          <Button
-            disabled={busy || !review.plan.some((item) => item.qty > 0)}
-            onClick={() => void check(true)}
-          >
-            Add available items to bag
-          </Button>
-          <p className="text-sm text-muted-foreground">
-            Availability is checked again when adding. Stock is not reserved.
+                  <p>
+                    {item.shopName} · Requested {item.requested} · Add {item.qty}
+                  </p>
+                  {item.price !== undefined && (
+                    <p>
+                      Current unit price {inr(item.price)}
+                      <UiText>
+                        {item.oldPrice !== item.price && item.oldPrice !== undefined
+                          ? ` (previously ${inr(item.oldPrice)})`
+                          : ""}
+                      </UiText>
+                    </p>
+                  )}
+                  <p>{item.note}</p>
+                </li>
+              ))}
+            </ul>
+            <Button
+              disabled={busy || !review.plan.some((item) => item.qty > 0)}
+              onClick={() => void check(true)}
+            >
+              Add available items to bag
+            </Button>
+            <p className="text-sm text-muted-foreground">
+              Availability is checked again when adding. Stock is not reserved.
+            </p>
+          </>
+        )}
+        {message && (
+          <p role="status">
+            <UiText>{message}</UiText>
           </p>
-        </>
-      )}
-      {message && <p role="status">{message}</p>}
-      <Link to="/cart" className="ml-3 inline-block text-sm underline">
-        Review your bag
-      </Link>
-    </section>
+        )}
+        <Link to="/cart" className="ml-3 inline-block text-sm underline">
+          Review your bag
+        </Link>
+      </section>
+    </UiAttributes>
   );
 }

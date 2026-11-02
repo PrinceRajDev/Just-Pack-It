@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { AccountProfile } from "./AccountProfile";
 import { ConnectedWishlist } from "@/components/store/ConnectedWishlist";
 import { Link } from "@tanstack/react-router";
@@ -47,36 +48,44 @@ export function LiveAccount({ tab }: { tab?: string }) {
       <div className="account-dashboard">
         <section className="account-welcome" aria-labelledby="account-welcome-title">
           <div>
-            <p>My account</p>
+            <p>
+              <UiText>{"My account"}</UiText>
+            </p>
             <h1 id="account-welcome-title">
-              {ready
-                ? session
-                  ? `Hello, ${session.name}`
-                  : "Make yourself at home."
-                : "Checking your session…"}
+              <UiText>
+                {ready
+                  ? session
+                    ? `Hello, ${session.name}`
+                    : "Make yourself at home."
+                  : "Checking your session…"}
+              </UiText>
             </h1>
-            <span>Manage your profile, addresses and account security.</span>
+            <span>
+              <UiText>{"Manage your profile, addresses and account security."}</UiText>
+            </span>
           </div>
           <NeighbourhoodIllustration className="account-welcome-art" />
         </section>
-        <nav aria-label="Account sections" className="account-overview-tabs">
-          <Button asChild variant={tab === "wishlist" ? "outline" : "default"}>
-            <Link to="/account" search={{}} aria-current={tab !== "wishlist" ? "page" : false}>
-              <UserRound size={18} aria-hidden="true" />
-              Account overview
-            </Link>
-          </Button>
-          <Button asChild variant={tab === "wishlist" ? "default" : "outline"}>
-            <Link
-              to="/account"
-              search={{ tab: "wishlist" }}
-              aria-current={tab === "wishlist" ? "page" : false}
-            >
-              <Heart size={18} aria-hidden="true" />
-              Wishlist
-            </Link>
-          </Button>
-        </nav>
+        <UiAttributes>
+          <nav aria-label="Account sections" className="account-overview-tabs">
+            <Button asChild variant={tab === "wishlist" ? "outline" : "default"}>
+              <Link to="/account" search={{}} aria-current={tab !== "wishlist" ? "page" : false}>
+                <UserRound size={18} aria-hidden="true" />
+                <UiText>{"Account overview"}</UiText>
+              </Link>
+            </Button>
+            <Button asChild variant={tab === "wishlist" ? "default" : "outline"}>
+              <Link
+                to="/account"
+                search={{ tab: "wishlist" }}
+                aria-current={tab === "wishlist" ? "page" : false}
+              >
+                <Heart size={18} aria-hidden="true" />
+                <UiText>{"Wishlist"}</UiText>
+              </Link>
+            </Button>
+          </nav>
+        </UiAttributes>
         <div className={`account-dashboard-grid ${session ? "" : "account-dashboard-guest"}`}>
           {ready && session && (
             <aside className="account-identity-card">
@@ -94,34 +103,36 @@ export function LiveAccount({ tab }: { tab?: string }) {
                   {accountLabels[session.role]}
                 </span>
               </div>
-              <nav aria-label="Your account settings">
-                {[
-                  { id: "profile", label: "Profile & account", Icon: UserRound },
-                  { id: "addresses", label: "Saved addresses", Icon: MapPin },
-                  { id: "security", label: "Account security", Icon: LockKeyhole },
-                ].map(({ id, label, Icon }) => (
-                  <a
-                    key={id}
-                    href={tab === "wishlist" ? `/account#account-${id}` : `#account-${id}`}
-                    aria-current={tab !== "wishlist" && active === id ? "location" : undefined}
-                    onClick={() => setActive(id)}
-                  >
-                    <Icon size={19} aria-hidden="true" />
-                    {label}
-                  </a>
-                ))}
-                {session.role === "buyer" ? (
-                  <Link to="/orders">
-                    <ShoppingBag size={19} aria-hidden="true" />
-                    Your orders
-                  </Link>
-                ) : (
-                  <Link to={roleHome[session.role]}>
-                    <ArrowUpRight size={19} aria-hidden="true" />
-                    Open my workspace
-                  </Link>
-                )}
-              </nav>
+              <UiAttributes>
+                <nav aria-label="Your account settings">
+                  {[
+                    { id: "profile", label: "Profile & account", Icon: UserRound },
+                    { id: "addresses", label: "Saved addresses", Icon: MapPin },
+                    { id: "security", label: "Account security", Icon: LockKeyhole },
+                  ].map(({ id, label, Icon }) => (
+                    <a
+                      key={id}
+                      href={tab === "wishlist" ? `/account#account-${id}` : `#account-${id}`}
+                      aria-current={tab !== "wishlist" && active === id ? "location" : undefined}
+                      onClick={() => setActive(id)}
+                    >
+                      <Icon size={19} aria-hidden="true" />
+                      <UiText>{label}</UiText>
+                    </a>
+                  ))}
+                  {session.role === "buyer" ? (
+                    <Link to="/orders">
+                      <ShoppingBag size={19} aria-hidden="true" />
+                      <UiText>{"Your orders"}</UiText>
+                    </Link>
+                  ) : (
+                    <Link to={roleHome[session.role]}>
+                      <ArrowUpRight size={19} aria-hidden="true" />
+                      <UiText>{"Open my workspace"}</UiText>
+                    </Link>
+                  )}
+                </nav>
+              </UiAttributes>
               <Button
                 variant="outline"
                 disabled={signingOut}
@@ -136,7 +147,7 @@ export function LiveAccount({ tab }: { tab?: string }) {
                 }}
               >
                 <LogOut size={18} aria-hidden="true" />
-                {signingOut ? "Signing out…" : "Sign out"}
+                <UiText>{signingOut ? "Signing out…" : "Sign out"}</UiText>
               </Button>
             </aside>
           )}
@@ -174,11 +185,13 @@ export function LiveAccount({ tab }: { tab?: string }) {
                   ready && (
                     <div className="account-guest-card">
                       <UserRound size={28} aria-hidden="true" />
-                      <h2>Your account, all in one place.</h2>
+                      <h2>
+                        <UiText>{"Your account, all in one place."}</UiText>
+                      </h2>
                       <p>Sign in to manage your details and saved delivery addresses.</p>
                       <Button asChild>
                         <Link to="/login" search={{ redirect: "/account" }}>
-                          Sign in
+                          <UiText>{"Sign in"}</UiText>
                         </Link>
                       </Button>
                     </div>

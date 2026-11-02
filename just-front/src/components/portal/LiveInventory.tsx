@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,15 +27,21 @@ export function LiveInventory() {
     [filter, setFilter] = useState("all");
   if (query.isPending)
     return (
-      <div className="seller-stock-loading" role="status" aria-label="Loading stock">
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="mt-5 h-24 w-full" />
-        <Skeleton className="mt-5 h-64 w-full" />
-        <span className="sr-only">Loading stock…</span>
-      </div>
+      <UiAttributes>
+        <div className="seller-stock-loading" role="status" aria-label="Loading stock">
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="mt-5 h-24 w-full" />
+          <Skeleton className="mt-5 h-64 w-full" />
+          <span className="sr-only">Loading stock…</span>
+        </div>
+      </UiAttributes>
     );
   if (query.isError)
-    return <ErrorState message={query.error.message} onRetry={() => void query.refetch()} />;
+    return (
+      <UiAttributes>
+        <ErrorState message={query.error.message} onRetry={() => void query.refetch()} />
+      </UiAttributes>
+    );
   const options = query.data.flatMap((p) =>
     p.variants?.length ? p.variants.map((v) => v.stock) : [p.stock],
   );
@@ -52,13 +59,15 @@ export function LiveInventory() {
       <header className="seller-stock-hero">
         <div>
           <p className="workspace-eyebrow">Just Pack It · Workspace</p>
-          <h1>Stock room</h1>
+          <h1>
+            <UiText>{"Stock room"}</UiText>
+          </h1>
           <p>Manage quantities here. Use Products to change listing details, photos and prices.</p>
         </div>
         <StockRoomIllustration />
         <Button disabled={query.isFetching} onClick={() => void query.refetch()}>
           <RefreshCw size={17} aria-hidden="true" />
-          Refresh stock
+          <UiText>{"Refresh stock"}</UiText>
         </Button>
       </header>
       <div className="seller-stock-summary">
@@ -66,43 +75,55 @@ export function LiveInventory() {
           <Boxes aria-hidden="true" />
           <div>
             <strong>{options.length}</strong>
-            <p>Stock options</p>
+            <p>
+              <UiText>{"Stock options"}</UiText>
+            </p>
           </div>
         </div>
         <div className="stock-metric stock-metric-low">
           <Tag aria-hidden="true" />
           <div>
             <strong>{options.filter((n) => n > 0 && n <= 5).length}</strong>
-            <p>Low stock</p>
+            <p>
+              <UiText>{"Low stock"}</UiText>
+            </p>
           </div>
         </div>
         <div className="stock-metric stock-metric-out">
           <TriangleAlert aria-hidden="true" />
           <div>
             <strong>{options.filter((n) => n === 0).length}</strong>
-            <p>Out of stock</p>
+            <p>
+              <UiText>{"Out of stock"}</UiText>
+            </p>
           </div>
         </div>
       </div>
       <div className="seller-stock-toolbar">
         <label className="grid gap-1 text-sm">
-          Search stock
+          <UiText>{"Search stock"}</UiText>
           <span className="seller-stock-search">
             <Search size={20} aria-hidden="true" />
-            <input
-              className="rounded-lg border p-3"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Product name"
-            />
+            <UiAttributes>
+              <input
+                className="rounded-lg border p-3"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Product name"
+              />
+            </UiAttributes>
           </span>
         </label>
         <label className="grid gap-1 text-sm">
-          Stock status
+          <UiText>{"Stock status"}</UiText>
           <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-            <option value="all">All stock</option>
+            <option value="all">
+              <UiText>{"All stock"}</UiText>
+            </option>
             <option value="low">Low stock (1 to 5)</option>
-            <option value="out">Out of stock</option>
+            <option value="out">
+              <UiText>{"Out of stock"}</UiText>
+            </option>
           </select>
         </label>
       </div>
@@ -115,17 +136,21 @@ export function LiveInventory() {
         <section className="seller-stock-empty">
           <OrderBoxIllustration />
           <h2 className="font-semibold">
-            {query.data.length ? "No stock matches these filters" : "No stock to manage yet"}
+            <UiText>
+              {query.data.length ? "No stock matches these filters" : "No stock to manage yet"}
+            </UiText>
           </h2>
           <p className="mt-2 text-sm">
-            {query.data.length
-              ? "Try another product name or stock status."
-              : "Add a listing in Products, then manage its quantities here."}
+            <UiText>
+              {query.data.length
+                ? "Try another product name or stock status."
+                : "Add a listing in Products, then manage its quantities here."}
+            </UiText>
           </p>
           <Button asChild className="mt-3">
             <Link to="/seller/products">
               <Package size={18} aria-hidden="true" />
-              Open Products
+              <UiText>{"Open Products"}</UiText>
             </Link>
           </Button>
         </section>
@@ -140,11 +165,11 @@ export function LiveInventory() {
       )}
       {query.isSuccess && (
         <p className="seller-stock-updated text-xs text-muted-foreground">
-          Last refreshed{" "}
+          <UiText>{"Last refreshed"}</UiText>{" "}
           <time dateTime={new Date(query.dataUpdatedAt).toISOString()}>
             {new Date(query.dataUpdatedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
           </time>{" "}
-          · IST
+          <UiText>{"· IST"}</UiText>
         </p>
       )}
     </div>
@@ -169,8 +194,8 @@ function InventoryRow({ product }: { product: ManagedProduct }) {
         <div>
           <h2 className="font-semibold">{product.name}</h2>
           <p className="text-sm text-muted-foreground">
-            {product.unit} · {product.active ? "Active" : "Inactive"}
-            {product.moderation?.blocked ? " · Blocked by admin" : ""}
+            {product.unit} · <UiText>{product.active ? "Active" : "Inactive"}</UiText>
+            <UiText>{product.moderation?.blocked ? " · Blocked by admin" : ""}</UiText>
           </p>
           {!variants.length && (
             <span
@@ -187,7 +212,9 @@ function InventoryRow({ product }: { product: ManagedProduct }) {
           <ul className="space-y-2 text-sm">
             {variants.map((v) => (
               <li key={v.id} className="flex justify-between gap-4">
-                <span>{v.label}</span>
+                <span>
+                  <UiText>{v.label}</UiText>
+                </span>
                 <strong>
                   {v.stock}{" "}
                   {v.stock === 0 ? "(out of stock)" : v.stock <= 5 ? "(low stock)" : "available"}
@@ -250,25 +277,27 @@ function InventoryRow({ product }: { product: ManagedProduct }) {
         >
           <label className="grid gap-1 text-sm">
             Available quantity
-            <input
-              aria-label={`Stock for ${product.name}`}
-              type="number"
-              min={0}
-              max={100000000}
-              step={1}
-              onWheel={(event) => event.currentTarget.blur()}
-              required
-              value={stock}
-              disabled={busy}
-              onChange={(e) => {
-                setStock(e.target.value);
-                setSaved(false);
-                draft.mark();
-              }}
-            />
+            <UiAttributes>
+              <input
+                aria-label={`Stock for ${product.name}`}
+                type="number"
+                min={0}
+                max={100000000}
+                step={1}
+                onWheel={(event) => event.currentTarget.blur()}
+                required
+                value={stock}
+                disabled={busy}
+                onChange={(e) => {
+                  setStock(e.target.value);
+                  setSaved(false);
+                  draft.mark();
+                }}
+              />
+            </UiAttributes>
           </label>
           <Button type="submit" disabled={busy || stock === String(product.stock)}>
-            {busy ? "Saving…" : "Save stock"}
+            <UiText>{busy ? "Saving…" : "Save stock"}</UiText>
           </Button>
           <div className="seller-stock-feedback">
             {stock !== String(product.stock) && !saved && (

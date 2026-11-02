@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import type { ReactNode } from "react";
 import {
   AlertDialog,
@@ -29,11 +30,15 @@ export function ConfirmAction({
       <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogTitle>
+            <UiText>{title}</UiText>
+          </AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Keep it</AlertDialogCancel>
+          <AlertDialogCancel>
+            <UiText>{"Keep it"}</UiText>
+          </AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm}>{confirmLabel}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

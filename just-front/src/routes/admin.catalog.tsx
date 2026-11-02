@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -36,10 +37,12 @@ function Catalog() {
   };
   return (
     <>
-      <PortalHeader
-        title="Catalogue moderation"
-        sub={`${taxonomy.length} categories · ${products.length} products`}
-      />
+      <UiAttributes>
+        <PortalHeader
+          title="Catalogue moderation"
+          sub={`${taxonomy.length} categories · ${products.length} products`}
+        />
+      </UiAttributes>
       <section className="mb-10 border border-border bg-card p-5">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -51,15 +54,19 @@ function Catalog() {
             </p>
           </div>
           <div className="taxonomy-add flex gap-2">
-            <input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              onKeyDown={(event) => event.key === "Enter" && addCategory()}
-              placeholder="New category name"
-              aria-label="New category name"
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-            />
-            <Button onClick={addCategory}>Add category</Button>
+            <UiAttributes>
+              <input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                onKeyDown={(event) => event.key === "Enter" && addCategory()}
+                placeholder="New category name"
+                aria-label="New category name"
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+              />
+            </UiAttributes>
+            <Button onClick={addCategory}>
+              <UiText>{"Add category"}</UiText>
+            </Button>
           </div>
         </div>
         <ul className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -74,19 +81,21 @@ function Catalog() {
                   {category.subcategories?.length ?? 0} subcategories
                 </span>
               </span>
-              <ConfirmAction
-                title={`Remove ${category.name}?`}
-                description="This only removes the category from the current admin demo session. Marketplace categories are persisted through the backend category API."
-                confirmLabel="Remove from preview"
-                onConfirm={() => {
-                  setTaxonomy((current) => current.filter((item) => item.slug !== category.slug));
-                  toast("Removed from this demo session");
-                }}
-              >
-                <Button size="sm" variant="ghost">
-                  Remove
-                </Button>
-              </ConfirmAction>
+              <UiAttributes>
+                <ConfirmAction
+                  title={`Remove ${category.name}?`}
+                  description="This only removes the category from the current admin demo session. Marketplace categories are persisted through the backend category API."
+                  confirmLabel="Remove from preview"
+                  onConfirm={() => {
+                    setTaxonomy((current) => current.filter((item) => item.slug !== category.slug));
+                    toast("Removed from this demo session");
+                  }}
+                >
+                  <Button size="sm" variant="ghost">
+                    <UiText>{"Remove"}</UiText>
+                  </Button>
+                </ConfirmAction>
+              </UiAttributes>
             </li>
           ))}
         </ul>
@@ -111,10 +120,12 @@ function Catalog() {
             key: "st",
             header: "Stock",
             cell: (r) => (
-              <StatusBadge
-                status={r.stock === 0 ? "out" : r.stock <= 5 ? "low" : "active"}
-                label={String(r.stock)}
-              />
+              <UiAttributes>
+                <StatusBadge
+                  status={r.stock === 0 ? "out" : r.stock <= 5 ? "low" : "active"}
+                  label={String(r.stock)}
+                />
+              </UiAttributes>
             ),
           },
           {

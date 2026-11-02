@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { reviewCheckout } from "@/services/checkout-review";
@@ -37,7 +38,7 @@ export function CheckoutReviewPanel({
       <div role="alert">
         <p>Couldn't complete the review. Your bag and selections are kept.</p>
         <Button variant="outline" onClick={() => void check.refetch()}>
-          Retry bill
+          <UiText>{"Retry bill"}</UiText>
         </Button>
       </div>
     );
@@ -67,25 +68,33 @@ export function CheckoutReviewPanel({
       aria-labelledby="full-review-title"
     >
       <h3 id="full-review-title" className="font-semibold">
-        Bill details
+        <UiText>{"Bill details"}</UiText>
       </h3>
-      <p>Items: {inr(check.data.itemsSubtotal)}</p>
+      <p>
+        <UiText>{"Items: "}</UiText>
+        {inr(check.data.itemsSubtotal)}
+      </p>
       <ul className="space-y-2 text-sm">
         {check.data.fulfilments.map((selection) => (
           <li key={selection.shopId}>
             {check.data.shops.find((group) => group.shop.id === selection.shopId)?.shop.name ??
               "Shop"}{" "}
-            · Delivery: {selection.listedFee === null ? "Not verified" : inr(selection.listedFee)}
+            · Delivery:{" "}
+            <UiText>
+              {selection.listedFee === null ? "Not verified" : inr(selection.listedFee)}
+            </UiText>
           </li>
         ))}
       </ul>
-      <ul className="space-y-2 text-sm text-muted-foreground" aria-label="Review issues">
-        {issues.map((issue, index) => (
-          <li key={`${issue.code}-${index}`}>{issue.message}</li>
-        ))}
-      </ul>
+      <UiAttributes>
+        <ul className="space-y-2 text-sm text-muted-foreground" aria-label="Review issues">
+          {issues.map((issue, index) => (
+            <li key={`${issue.code}-${index}`}>{issue.message}</li>
+          ))}
+        </ul>
+      </UiAttributes>
       <Button variant="outline" disabled={check.isFetching} onClick={() => void check.refetch()}>
-        Refresh bill
+        <UiText>{"Refresh bill"}</UiText>
       </Button>
       {check.data.checkoutAvailable &&
       check.data.grandTotal !== null &&
@@ -96,16 +105,20 @@ export function CheckoutReviewPanel({
       !check.isFetching ? (
         <>
           <p className="font-semibold">
-            {(check.data.paymentMethods?.includes(payment)
-              ? payment
-              : check.data.paymentMethods?.[0]) === "razorpay"
-              ? "Payable online"
-              : "Payable on delivery / collection"}
+            <UiText>
+              {(check.data.paymentMethods?.includes(payment)
+                ? payment
+                : check.data.paymentMethods?.[0]) === "razorpay"
+                ? "Payable online"
+                : "Payable on delivery / collection"}
+            </UiText>
             : {inr(check.data.grandTotal)}
           </p>
-          <p className="text-sm">Includes tax. No extra platform fee.</p>
+          <p className="text-sm">
+            <UiText>{"Includes tax. No extra platform fee."}</UiText>
+          </p>
           <label className="block text-sm">
-            Payment method{" "}
+            <UiText>{"Payment method"}</UiText>{" "}
             <select
               className="ml-2 rounded border bg-background p-2"
               value={
@@ -117,7 +130,11 @@ export function CheckoutReviewPanel({
             >
               {check.data.paymentMethods?.map((method) => (
                 <option key={method} value={method}>
-                  {method === "cod" ? "Cash on delivery / collection" : "Pay online with Razorpay"}
+                  <UiText>
+                    {method === "cod"
+                      ? "Cash on delivery / collection"
+                      : "Pay online with Razorpay"}
+                  </UiText>
                 </option>
               ))}
             </select>
@@ -155,7 +172,9 @@ export function CheckoutReviewPanel({
           )}
         </>
       ) : (
-        <Button disabled>Ordering is not available yet</Button>
+        <Button disabled>
+          <UiText>{"Ordering is not available yet"}</UiText>
+        </Button>
       )}
       <p className="text-xs text-muted-foreground">
         Stock is not reserved by this review. No order or payment has been created by reviewing.

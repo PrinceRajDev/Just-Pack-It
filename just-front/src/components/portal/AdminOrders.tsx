@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { useRef, useState } from "react";
@@ -50,12 +51,20 @@ export function AdminOrders({
     <div className="admin-orders-page">
       <section className="orders-hero">
         <div>
-          <nav aria-label="Breadcrumb">
-            <a href="/admin">Operations</a>
-            <ChevronRight size={13} aria-hidden="true" />
-            <span>Orders & cash records</span>
-          </nav>
-          <h1>Orders & cash records</h1>
+          <UiAttributes>
+            <nav aria-label="Breadcrumb">
+              <a href="/admin">
+                <UiText>{"Operations"}</UiText>
+              </a>
+              <ChevronRight size={13} aria-hidden="true" />
+              <span>
+                <UiText>{"Orders & cash records"}</UiText>
+              </span>
+            </nav>
+          </UiAttributes>
+          <h1>
+            <UiText>{"Orders & cash records"}</UiText>
+          </h1>
           <p>
             Monitor marketplace orders and view cash collection records. Order payments and cash
             settlements are tracked separately.
@@ -66,48 +75,66 @@ export function AdminOrders({
           <div>
             <Truck size={30} aria-hidden="true" />
             <h2>
-              Orders delivered.
+              <UiText>{"Orders delivered."}</UiText>
               <br />
-              Communities grow.
+              <UiText>{"Communities grow."}</UiText>
             </h2>
             <p>Track orders and cash records for a transparent marketplace.</p>
           </div>
         </div>
       </section>
-      <section className="orders-metrics" aria-label="Order reporting">
-        <article className="orders-tone-green">
-          <ShoppingCart aria-hidden="true" />
-          <div>
-            <h2>Total orders</h2>
-            <strong>N/A</strong>
-            <p>Reporting unavailable</p>
-          </div>
-        </article>
-        <article className="orders-tone-yellow">
-          <IndianRupee aria-hidden="true" />
-          <div>
-            <h2>Total order value</h2>
-            <strong>N/A</strong>
-            <p>Reporting unavailable</p>
-          </div>
-        </article>
-        <article className="orders-tone-orange">
-          <Banknote aria-hidden="true" />
-          <div>
-            <h2>COD collections</h2>
-            <strong>N/A</strong>
-            <p>Reporting unavailable</p>
-          </div>
-        </article>
-        <article className="orders-tone-blue">
-          <CreditCard aria-hidden="true" />
-          <div>
-            <h2>Online payments</h2>
-            <strong>N/A</strong>
-            <p>Reporting unavailable</p>
-          </div>
-        </article>
-      </section>
+      <UiAttributes>
+        <section className="orders-metrics" aria-label="Order reporting">
+          <article className="orders-tone-green">
+            <ShoppingCart aria-hidden="true" />
+            <div>
+              <h2>
+                <UiText>{"Total orders"}</UiText>
+              </h2>
+              <strong>N/A</strong>
+              <p>
+                <UiText>{"Reporting unavailable"}</UiText>
+              </p>
+            </div>
+          </article>
+          <article className="orders-tone-yellow">
+            <IndianRupee aria-hidden="true" />
+            <div>
+              <h2>
+                <UiText>{"Total order value"}</UiText>
+              </h2>
+              <strong>N/A</strong>
+              <p>
+                <UiText>{"Reporting unavailable"}</UiText>
+              </p>
+            </div>
+          </article>
+          <article className="orders-tone-orange">
+            <Banknote aria-hidden="true" />
+            <div>
+              <h2>
+                <UiText>{"COD collections"}</UiText>
+              </h2>
+              <strong>N/A</strong>
+              <p>
+                <UiText>{"Reporting unavailable"}</UiText>
+              </p>
+            </div>
+          </article>
+          <article className="orders-tone-blue">
+            <CreditCard aria-hidden="true" />
+            <div>
+              <h2>
+                <UiText>{"Online payments"}</UiText>
+              </h2>
+              <strong>N/A</strong>
+              <p>
+                <UiText>{"Reporting unavailable"}</UiText>
+              </p>
+            </div>
+          </article>
+        </section>
+      </UiAttributes>
       <p className="orders-reporting-note">
         Read-only order monitoring. Cash reports and captured online payments are separate; neither
         implies seller settlement. Platform-wide totals and historical comparisons are unavailable.
@@ -129,24 +156,26 @@ export function AdminOrders({
         }}
       >
         <label className="w-full min-w-0 text-sm sm:flex-1" htmlFor="admin-order-id">
-          Find an order by ID
-          <Input
-            id="admin-order-id"
-            ref={lookupInput}
-            className="mt-1"
-            value={draftId}
-            maxLength={100}
-            autoComplete="off"
-            spellCheck={false}
-            placeholder="Paste the full Order ID"
-            aria-invalid={!!searchError}
-            aria-describedby="admin-order-id-help"
-            onChange={(event) => setDraftId(event.target.value)}
-          />
+          <UiText>{"Find an order by ID"}</UiText>
+          <UiAttributes>
+            <Input
+              id="admin-order-id"
+              ref={lookupInput}
+              className="mt-1"
+              value={draftId}
+              maxLength={100}
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="Paste the full Order ID"
+              aria-invalid={!!searchError}
+              aria-describedby="admin-order-id-help"
+              onChange={(event) => setDraftId(event.target.value)}
+            />
+          </UiAttributes>
         </label>
         <Button type="submit" disabled={query.isFetching}>
           <Search size={16} />
-          Find order
+          <UiText>{"Find order"}</UiText>
         </Button>
         <Button
           type="button"
@@ -161,7 +190,7 @@ export function AdminOrders({
             lookupInput.current?.focus();
           }}
         >
-          Clear lookup
+          <UiText>{"Clear lookup"}</UiText>
         </Button>
         <p id="admin-order-id-help" className="w-full text-sm text-muted-foreground">
           Exact ID lookup searches all orders. Applying a lookup resets the cash filter.
@@ -174,12 +203,13 @@ export function AdminOrders({
       </form>
       {orderId && (
         <p role="status" className="mb-3 break-all text-sm">
-          Looking up order {orderId}
+          <UiText>{"Looking up order "}</UiText>
+          {orderId}
         </p>
       )}
       <div className="orders-cash-toolbar">
         <label>
-          Cash filter{" "}
+          <UiText>{"Cash filter"}</UiText>{" "}
           <select
             className="ml-2 rounded border bg-background p-2"
             disabled={query.isFetching}
@@ -189,32 +219,43 @@ export function AdminOrders({
               setCursors([undefined]);
             }}
           >
-            <option value="all">All orders</option>
-            <option value="outstanding">Has outstanding COD cash</option>
-            <option value="recorded">Has recorded COD cash</option>
+            <option value="all">
+              <UiText>{"All orders"}</UiText>
+            </option>
+            <option value="outstanding">
+              <UiText>{"Has outstanding COD cash"}</UiText>
+            </option>
+            <option value="recorded">
+              <UiText>{"Has recorded COD cash"}</UiText>
+            </option>
           </select>
         </label>
         <Button variant="outline" disabled={query.isFetching} onClick={() => void query.refetch()}>
           <RefreshCw size={16} className={query.isFetching ? "animate-spin" : ""} />
-          Refresh
+          <UiText>{"Refresh"}</UiText>
         </Button>
         {query.dataUpdatedAt > 0 && (
           <p>
-            Last refreshed{" "}
-            {new Date(query.dataUpdatedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} ·
-            IST
+            <UiText>{"Last refreshed"}</UiText>{" "}
+            {new Date(query.dataUpdatedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
+            <UiText>{"· IST"}</UiText>
           </p>
         )}
       </div>
       {query.isPending ? (
-        <p role="status">Loading orders…</p>
+        <p role="status">
+          <UiText>{"Loading orders…"}</UiText>
+        </p>
       ) : query.error ? (
-        <ErrorState message={query.error.message} onRetry={() => void query.refetch()} />
+        <UiAttributes>
+          <ErrorState message={query.error.message} onRetry={() => void query.refetch()} />
+        </UiAttributes>
       ) : (
         <>
           <p className="mb-4 text-sm text-muted-foreground">
-            Showing {query.data.orders.length} orders on this page. Filters can overlap for
-            partially collected orders. Amounts below are per order, not platform-wide totals.
+            <UiText>{"Showing "}</UiText>
+            {query.data.orders.length} orders on this page. Filters can overlap for partially
+            collected orders. Amounts below are per order, not platform-wide totals.
           </p>
           {!query.data.orders.length && (
             <section className="orders-empty">
@@ -222,22 +263,28 @@ export function AdminOrders({
                 <PackageOpen size={90} aria-hidden="true" />
                 <ReceiptText size={43} aria-hidden="true" />
               </div>
-              <h2>No matching orders</h2>
+              <h2>
+                <UiText>{"No matching orders"}</UiText>
+              </h2>
               <p>
-                {orderId
-                  ? "No order matches this ID and cash filter. Check the full ID or clear the lookup."
-                  : "Try adjusting your cash filter or search for a different Order ID. New orders appear when customers place them."}
+                <UiText>
+                  {orderId
+                    ? "No order matches this ID and cash filter. Check the full ID or clear the lookup."
+                    : "Try adjusting your cash filter or search for a different Order ID. New orders appear when customers place them."}
+                </UiText>
               </p>
               <Button disabled={query.isFetching} onClick={() => void query.refetch()}>
                 <RefreshCw size={16} />
-                Refresh data
+                <UiText>{"Refresh data"}</UiText>
               </Button>
             </section>
           )}
           {!!query.data.orders.length && (
             <div className="orders-table-wrap">
               <table>
-                <caption className="sr-only">Order records</caption>
+                <caption className="sr-only">
+                  <UiText>{"Order records"}</UiText>
+                </caption>
                 <thead>
                   <tr>
                     {[
@@ -264,10 +311,12 @@ export function AdminOrders({
                           {new Date(order.createdAt).toLocaleString("en-IN", {
                             timeZone: "Asia/Kolkata",
                           })}{" "}
-                          · IST
+                          <UiText>{"· IST"}</UiText>
                         </small>
                         {order.testMode && (
-                          <span className="orders-status orders-test">Test · do not fulfil</span>
+                          <span className="orders-status orders-test">
+                            <UiText>{"Test · do not fulfil"}</UiText>
+                          </span>
                         )}
                       </td>
                       <td>
@@ -281,11 +330,15 @@ export function AdminOrders({
                         ))}
                       </td>
                       <td>
-                        {order.paymentMethod === "razorpay" ? "Razorpay online" : "COD"}
+                        <UiText>
+                          {order.paymentMethod === "razorpay" ? "Razorpay online" : "COD"}
+                        </UiText>
                         <small>
-                          {order.paymentStatus === "paid"
-                            ? "Captured online"
-                            : order.paymentStatus.replaceAll("_", " ")}
+                          <UiText>
+                            {order.paymentStatus === "paid"
+                              ? "Captured online"
+                              : order.paymentStatus.replaceAll("_", " ")}
+                          </UiText>
                         </small>
                       </td>
                       <td>{money(order.total)}</td>
@@ -293,7 +346,7 @@ export function AdminOrders({
                       <td>{money(order.amountDue)}</td>
                       <td>
                         <Button variant="outline" size="sm" onClick={() => view(order)}>
-                          View details
+                          <UiText>{"View details"}</UiText>
                         </Button>
                       </td>
                     </tr>
@@ -308,16 +361,22 @@ export function AdminOrders({
                 {order.testMode && (
                   <p className="font-semibold">Test order: no real payment. Do not fulfil.</p>
                 )}
-                <h2 className="break-all font-semibold">Order {order.id}</h2>
+                <h2 className="break-all font-semibold">
+                  <UiText>{"Order "}</UiText>
+                  {order.id}
+                </h2>
                 <p className="text-sm text-muted-foreground">
                   {new Date(order.createdAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}{" "}
-                  · IST
+                  <UiText>{"· IST"}</UiText>
                 </p>
                 <p className="text-sm">
-                  {order.paymentMethod === "razorpay" ? "Razorpay online" : "COD"} ·{" "}
-                  {order.paymentStatus === "paid"
-                    ? "Captured online"
-                    : order.paymentStatus.replaceAll("_", " ")}
+                  <UiText>{order.paymentMethod === "razorpay" ? "Razorpay online" : "COD"}</UiText>{" "}
+                  ·{" "}
+                  <UiText>
+                    {order.paymentStatus === "paid"
+                      ? "Captured online"
+                      : order.paymentStatus.replaceAll("_", " ")}
+                  </UiText>
                 </p>
                 <dl className="my-4 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
                   {[
@@ -327,7 +386,9 @@ export function AdminOrders({
                     ["Cancelled", order.cancelledAmount],
                   ].map(([label, amount]) => (
                     <div key={label}>
-                      <dt>{label}</dt>
+                      <dt>
+                        <UiText>{label}</UiText>
+                      </dt>
                       <dd className="font-semibold">{money(amount as number)}</dd>
                     </div>
                   ))}
@@ -338,45 +399,53 @@ export function AdminOrders({
                       <h3 className="font-semibold">{sub.shopName}</h3>
                       <p className="text-sm">
                         {sub.status.replaceAll("_", " ")} ·{" "}
-                        {sub.fulfilment === "pickup"
-                          ? "Pickup"
-                          : sub.fulfilment === "platform_delivery"
-                            ? "Platform delivery"
-                            : "Seller delivery"}
+                        <UiText>
+                          {sub.fulfilment === "pickup"
+                            ? "Pickup"
+                            : sub.fulfilment === "platform_delivery"
+                              ? "Platform delivery"
+                              : "Seller delivery"}
+                        </UiText>
                       </p>
                       <p className="text-sm">
-                        Remaining: {money(sub.amountDue)}
+                        <UiText>{"Remaining: "}</UiText>
+                        {money(sub.amountDue)}
                         {sub.cashCollection &&
                           ` · Cash recorded: ${money(sub.cashCollection.amount)} on ${new Date(sub.cashCollection.recordedAt).toLocaleString("en-IN")}`}
                       </p>
                       {sub.cancelReason && (
-                        <p className="text-sm">Cancellation reason: {sub.cancelReason}</p>
+                        <p className="text-sm">
+                          <UiText>{"Cancellation reason: "}</UiText>
+                          {sub.cancelReason}
+                        </p>
                       )}
                     </li>
                   ))}
                 </ul>
                 <Button variant="outline" onClick={() => view(order)}>
-                  View details
+                  <UiText>{"View details"}</UiText>
                 </Button>
               </article>
             ))}
           </div>
-          <nav aria-label="Order pages" className="mt-6 flex gap-3">
-            <Button
-              variant="outline"
-              disabled={cursors.length === 1 || query.isFetching}
-              onClick={() => setCursors(cursors.slice(0, -1))}
-            >
-              Previous page
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!query.data.next || query.isFetching}
-              onClick={() => setCursors([...cursors, query.data.next])}
-            >
-              Next page
-            </Button>
-          </nav>
+          <UiAttributes>
+            <nav aria-label="Order pages" className="mt-6 flex gap-3">
+              <Button
+                variant="outline"
+                disabled={cursors.length === 1 || query.isFetching}
+                onClick={() => setCursors(cursors.slice(0, -1))}
+              >
+                <UiText>{"Previous page"}</UiText>
+              </Button>
+              <Button
+                variant="outline"
+                disabled={!query.data.next || query.isFetching}
+                onClick={() => setCursors([...cursors, query.data.next])}
+              >
+                <UiText>{"Next page"}</UiText>
+              </Button>
+            </nav>
+          </UiAttributes>
         </>
       )}
       {selected && (
@@ -394,13 +463,15 @@ export function AdminOrders({
               else lookupInput.current?.focus();
             }}
           >
-            <SheetTitle>Order details</SheetTitle>
+            <SheetTitle>
+              <UiText>{"Order details"}</UiText>
+            </SheetTitle>
             <SheetDescription>
               Read-only saved order snapshot. Refresh the order list for later updates.
             </SheetDescription>
             <OrderDetails order={selected} />
             <Button variant="outline" onClick={() => setSelected(null)}>
-              Return to orders
+              <UiText>{"Return to orders"}</UiText>
             </Button>
           </SheetContent>
         </Sheet>
@@ -414,13 +485,21 @@ function OrderDetails({ order }: { order: AdminOrder }) {
       {order.testMode && (
         <p className="orders-test">Test order · no real payment. Do not fulfil.</p>
       )}
-      <h3>Order {order.id}</h3>
-      <p>{new Date(order.createdAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} · IST</p>
+      <h3>
+        <UiText>{"Order "}</UiText>
+        {order.id}
+      </h3>
       <p>
-        {order.paymentMethod === "razorpay" ? "Razorpay online" : "COD"} ·{" "}
-        {order.paymentStatus === "paid"
-          ? "Captured online"
-          : order.paymentStatus.replaceAll("_", " ")}
+        {new Date(order.createdAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
+        <UiText>{"· IST"}</UiText>
+      </p>
+      <p>
+        <UiText>{order.paymentMethod === "razorpay" ? "Razorpay online" : "COD"}</UiText> ·{" "}
+        <UiText>
+          {order.paymentStatus === "paid"
+            ? "Captured online"
+            : order.paymentStatus.replaceAll("_", " ")}
+        </UiText>
       </p>
       <dl>
         {[
@@ -430,7 +509,9 @@ function OrderDetails({ order }: { order: AdminOrder }) {
           ["Cancelled amount", order.cancelledAmount],
         ].map(([label, value]) => (
           <div key={label}>
-            <dt>{label}</dt>
+            <dt>
+              <UiText>{label}</UiText>
+            </dt>
             <dd>{money(value as number)}</dd>
           </div>
         ))}
@@ -439,38 +520,54 @@ function OrderDetails({ order }: { order: AdminOrder }) {
         Order value is not collected cash. Captured online payments and cash records do not
         establish remittance or seller settlement.
       </p>
-      <h3>Shop-wise records</h3>
+      <h3>
+        <UiText>{"Shop-wise records"}</UiText>
+      </h3>
       {order.subOrders.map((sub) => (
         <section key={sub.id}>
           <h4>{sub.shopName}</h4>
-          <p className="orders-id">Shop part {sub.id}</p>
+          <p className="orders-id">
+            <UiText>{"Shop part "}</UiText>
+            {sub.id}
+          </p>
           <p>
             <span className={`orders-status orders-status-${sub.status}`}>
               {sub.status.replaceAll("_", " ")}
             </span>{" "}
             · {sub.fulfilment.replaceAll("_", " ")}
           </p>
-          <p>Remaining: {money(sub.amountDue)}</p>
+          <p>
+            <UiText>{"Remaining: "}</UiText>
+            {money(sub.amountDue)}
+          </p>
           {sub.cashCollection && (
             <>
-              <p>Cash recorded: {money(sub.cashCollection.amount)}</p>
               <p>
-                Recorded{" "}
+                <UiText>{"Cash recorded: "}</UiText>
+                {money(sub.cashCollection.amount)}
+              </p>
+              <p>
+                <UiText>{"Recorded"}</UiText>{" "}
                 {new Date(sub.cashCollection.recordedAt).toLocaleString("en-IN", {
                   timeZone: "Asia/Kolkata",
                 })}{" "}
-                · IST
+                <UiText>{"· IST"}</UiText>
               </p>
               <p>
-                Buyer receipt confirmed{" "}
+                <UiText>{"Buyer receipt confirmed"}</UiText>{" "}
                 {new Date(sub.cashCollection.buyerConfirmedAt).toLocaleString("en-IN", {
                   timeZone: "Asia/Kolkata",
                 })}{" "}
-                · IST
+                <UiText>{"· IST"}</UiText>
               </p>
             </>
           )}
-          {sub.cancelReason && <p>Cancellation reason: {sub.cancelReason}</p>}
+          {sub.cancelReason && (
+            <p>
+              <UiText>{"Cancellation reason: "}</UiText>
+              {sub.cancelReason}
+            </p>
+          )}
         </section>
       ))}
       <p className="orders-detail-unavailable">

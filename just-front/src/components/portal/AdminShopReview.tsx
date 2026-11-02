@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -105,7 +106,9 @@ export function AdminShopReview({
         }}
       >
         <div className="seller-detail-heading">
-          <span className={`seller-status seller-status-${shop.status}`}>{shop.status}</span>
+          <span className={`seller-status seller-status-${shop.status}`}>
+            <UiText>{shop.status}</UiText>
+          </span>
           <SheetTitle>{shop.name}</SheetTitle>
           <SheetDescription>
             Review the supplied application before saving an admin decision.
@@ -135,7 +138,9 @@ export function AdminShopReview({
           </h3>
           <dl>
             <div>
-              <dt>Name</dt>
+              <dt>
+                <UiText>{"Name"}</UiText>
+              </dt>
               <dd>{owner?.name ?? "Owner unavailable"}</dd>
             </div>
             <div>
@@ -143,8 +148,12 @@ export function AdminShopReview({
               <dd>{owner?.phone ?? "Not supplied by the seller API"}</dd>
             </div>
             <div>
-              <dt>Account</dt>
-              <dd>{owner ? (owner.active ? "Active" : "Inactive") : "Unavailable"}</dd>
+              <dt>
+                <UiText>{"Account"}</UiText>
+              </dt>
+              <dd>
+                <UiText>{owner ? (owner.active ? "Active" : "Inactive") : "Unavailable"}</UiText>
+              </dd>
             </div>
             <div>
               <dt>Email / account creation date</dt>
@@ -160,7 +169,9 @@ export function AdminShopReview({
           <p>{shop.description || shop.tagline || "No description supplied"}</p>
           <dl>
             <div>
-              <dt>Categories</dt>
+              <dt>
+                <UiText>{"Categories"}</UiText>
+              </dt>
               <dd>
                 {shop.categoryIds
                   .map((id) => categories.find((c) => c.id === id)?.name ?? "Unavailable category")
@@ -172,7 +183,9 @@ export function AdminShopReview({
               <dd>{shop.address || shop.locality || "Not supplied"}</dd>
             </div>
             <div>
-              <dt>Service areas</dt>
+              <dt>
+                <UiText>{"Service areas"}</UiText>
+              </dt>
               <dd>
                 {shop.serviceAreaIds
                   .map((id) => areas.find((a) => a.id === id)?.name ?? "Unavailable area")
@@ -182,9 +195,9 @@ export function AdminShopReview({
             <div>
               <dt>Availability</dt>
               <dd>
-                {shop.active ? "Active profile" : "Inactive profile"} ·{" "}
-                {shop.isOpen ? "Open now" : "Closed now"}. Approval alone does not guarantee public
-                availability.
+                <UiText>{shop.active ? "Active profile" : "Inactive profile"}</UiText> ·{" "}
+                <UiText>{shop.isOpen ? "Open now" : "Closed now"}</UiText>. Approval alone does not
+                guarantee public availability.
               </dd>
             </div>
             <div>
@@ -196,10 +209,15 @@ export function AdminShopReview({
             <div>
               <dt>Listed delivery fee / minimum</dt>
               <dd>
-                {shop.deliveryFee === undefined ? "Not supplied" : inr(shop.deliveryFee)} /{" "}
-                {shop.minimumOrderAmount === undefined
-                  ? "Not supplied"
-                  : inr(shop.minimumOrderAmount)}
+                <UiText>
+                  {shop.deliveryFee === undefined ? "Not supplied" : inr(shop.deliveryFee)}
+                </UiText>{" "}
+                /{" "}
+                <UiText>
+                  {shop.minimumOrderAmount === undefined
+                    ? "Not supplied"
+                    : inr(shop.minimumOrderAmount)}
+                </UiText>
               </dd>
             </div>
             <div>
@@ -227,9 +245,11 @@ export function AdminShopReview({
             Location check
           </h3>
           <p>
-            {shop.location
-              ? `Map pin: ${shop.location.coordinates[1]}, ${shop.location.coordinates[0]}. Verify it against the written address before approval.`
-              : "Map pin missing: this shop cannot appear in GPS nearby results."}
+            <UiText>
+              {shop.location
+                ? `Map pin: ${shop.location.coordinates[1]}, ${shop.location.coordinates[0]}. Verify it against the written address before approval.`
+                : "Map pin missing: this shop cannot appear in GPS nearby results."}
+            </UiText>
           </p>
         </section>
         <section className="seller-detail-section">
@@ -273,7 +293,9 @@ export function AdminShopReview({
             </label>
             <label>
               Reason for seller{" "}
-              {decision === "rejected" || decision === "suspended" ? "(required)" : "(optional)"}
+              <UiText>
+                {decision === "rejected" || decision === "suspended" ? "(required)" : "(optional)"}
+              </UiText>
               <textarea
                 ref={reasonInput}
                 value={reason}
@@ -289,7 +311,9 @@ export function AdminShopReview({
               Visible to the shop owner. Explain what needs fixing; do not include private
               operational details.
             </p>
-            <Button type="submit">{save.isPending ? "Saving…" : "Review and save decision"}</Button>
+            <Button type="submit">
+              <UiText>{save.isPending ? "Saving…" : "Review and save decision"}</UiText>
+            </Button>
           </fieldset>
         </form>
         <SaveError error={save.error} />
@@ -303,12 +327,17 @@ export function AdminShopReview({
           }}
         >
           <AlertDialogContent>
-            <AlertDialogTitle>Confirm {confirmation?.decision} decision?</AlertDialogTitle>
+            <AlertDialogTitle>
+              <UiText>{"Confirm "}</UiText>
+              {confirmation?.decision} decision?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               This saves the review for {shop.name}.{" "}
-              {confirmation?.reason
-                ? "The reason will be visible to the seller."
-                : "Availability still depends on the shop profile, categories and service area."}
+              <UiText>
+                {confirmation?.reason
+                  ? "The reason will be visible to the seller."
+                  : "Availability still depends on the shop profile, categories and service area."}
+              </UiText>
             </AlertDialogDescription>
             {save.error && <p role="alert">{save.error.message}</p>}
             <AlertDialogFooter>
@@ -320,7 +349,7 @@ export function AdminShopReview({
                   void commit();
                 }}
               >
-                {save.isPending ? "Saving…" : "Confirm decision"}
+                <UiText>{save.isPending ? "Saving…" : "Confirm decision"}</UiText>
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

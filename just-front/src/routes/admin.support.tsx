@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { isDemoMode } from "@/lib/config";
 import { LiveSupport } from "@/components/portal/LiveSupport";
 import { createFileRoute } from "@tanstack/react-router";
@@ -16,7 +17,9 @@ function Support() {
   if (!isDemoMode) return <LiveSupport />;
   return (
     <>
-      <PortalHeader title="Support & disputes" />
+      <UiAttributes>
+        <PortalHeader title="Support & disputes" />
+      </UiAttributes>
       <DataTable
         rows={rows}
         searchText={(r) => `${r.order} ${r.raisedBy} ${r.type}`}
@@ -41,7 +44,7 @@ function Support() {
                     toast.success("Marked resolved (demo)");
                   }}
                 >
-                  Resolve
+                  <UiText>{"Resolve"}</UiText>
                 </Button>
               ),
           },

@@ -1,3 +1,4 @@
+import { UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, Navigation, Phone, Loader2 } from "lucide-react";
@@ -95,14 +96,16 @@ function TaskDetail() {
                   <Navigation /> Navigate
                 </a>
               </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => toast.info("Masked calling is connected via the backend.")}
-                aria-label={`Call ${s.name}`}
-              >
-                <Phone />
-              </Button>
+              <UiAttributes>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => toast.info("Masked calling is connected via the backend.")}
+                  aria-label={`Call ${s.name}`}
+                >
+                  <Phone />
+                </Button>
+              </UiAttributes>
             </div>
           </li>
         ))}
@@ -154,13 +157,19 @@ function TaskDetail() {
           <div className="delivery-otp-panel border border-border bg-card p-4">
             <p className="font-semibold">Ask the customer for their 6-digit code</p>
             <div className="mt-3 flex justify-center">
-              <InputOTP maxLength={6} value={otp} onChange={setOtp} aria-label="Delivery code">
-                <InputOTPGroup>
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <InputOTPSlot key={i} index={i} className="delivery-otp-slot size-11 text-lg" />
-                  ))}
-                </InputOTPGroup>
-              </InputOTP>
+              <UiAttributes>
+                <InputOTP maxLength={6} value={otp} onChange={setOtp} aria-label="Delivery code">
+                  <InputOTPGroup>
+                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                      <InputOTPSlot
+                        key={i}
+                        index={i}
+                        className="delivery-otp-slot size-11 text-lg"
+                      />
+                    ))}
+                  </InputOTPGroup>
+                </InputOTP>
+              </UiAttributes>
             </div>
             {otpError && (
               <p role="alert" className="mt-2 text-sm text-destructive">

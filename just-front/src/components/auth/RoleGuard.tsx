@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import { useState, useRef, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, LockKeyhole, ShieldCheck } from "lucide-react";
@@ -52,21 +53,28 @@ export function RoleGuard({ role, children }: { role: Role; children: ReactNode 
       <header className="workspace-access-header">
         <Logo />
         <Link to="/" className="workspace-access-back">
-          <ArrowLeft size={16} aria-hidden="true" /> Back to market
+          <ArrowLeft size={16} aria-hidden="true" />
+          <UiText>{"Back to market"}</UiText>
         </Link>
       </header>
       <div className="workspace-access-layout">
         <div className="workspace-access-story">
-          <span className="workspace-access-eyebrow">Local shops. Real people.</span>
+          <span className="workspace-access-eyebrow">
+            <UiText>{"Local shops. Real people."}</UiText>
+          </span>
           <h2>
-            Good neighbourhoods
+            <UiText>{"Good neighbourhoods"}</UiText>
             <br />
-            start with <em>good people.</em>
+            <UiText>{"start with "}</UiText>
+            <em>
+              <UiText>{"good people."}</UiText>
+            </em>
           </h2>
           <NeighbourhoodIllustration className="workspace-access-illustration" />
           <p>
-            A little care behind every counter.
-            <br />A better market for everyone.
+            <UiText>{"A little care behind every counter."}</UiText>
+            <br />
+            <UiText>{"A better market for everyone."}</UiText>
           </p>
         </div>
         <div className="workspace-access-card">
@@ -75,15 +83,19 @@ export function RoleGuard({ role, children }: { role: Role; children: ReactNode 
           </span>
           <p className="workspace-access-eyebrow">{workspaces[role].name}</p>
           <h1 id="workspace-access-title">
-            {session ? "Let's get you to the right place." : "Your workspace awaits."}
+            <UiText>
+              {session ? "Let's get you to the right place." : "Your workspace awaits."}
+            </UiText>
           </h1>
           <p className="workspace-access-description">{workspaces[role].description}</p>
           <div className="workspace-access-note">
             <ShieldCheck size={20} aria-hidden="true" />
             <p>
-              {session
-                ? `You're signed in to ${workspaces[session.role].name.toLowerCase()}. Use an authorised ${role === "delivery" ? "delivery partner" : role} account to access this workspace.`
-                : `Sign in with your ${role === "delivery" ? "delivery partner" : role} account to continue. This workspace is for authorised accounts.`}
+              <UiText>
+                {session
+                  ? `You're signed in to ${workspaces[session.role].name.toLowerCase()}. Use an authorised ${role === "delivery" ? "delivery partner" : role} account to access this workspace.`
+                  : `Sign in with your ${role === "delivery" ? "delivery partner" : role} account to continue. This workspace is for authorised accounts.`}
+              </UiText>
             </p>
           </div>
           <div className="workspace-access-actions">
@@ -103,30 +115,36 @@ export function RoleGuard({ role, children }: { role: Role; children: ReactNode 
                   }
                 }}
               >
-                {switching ? "Signing out…" : "Switch account"}
+                <UiText>{switching ? "Signing out…" : "Switch account"}</UiText>
               </Button>
             ) : (
               <Button asChild>
                 <Link to="/login" search={{ redirect: returnTo }}>
-                  Sign in to continue
+                  <UiText>{"Sign in to continue"}</UiText>
                   <ArrowRight size={18} aria-hidden="true" />
                 </Link>
               </Button>
             )}
             {session && (
               <Button variant="outline" asChild>
-                <Link to={roleHome[session.role]}>Go to my area</Link>
+                <Link to={roleHome[session.role]}>
+                  <UiText>{"Go to my area"}</UiText>
+                </Link>
               </Button>
             )}
           </div>
           <p className="workspace-access-help">
-            {role === "admin"
-              ? "Need access? Ask the marketplace administrator."
-              : "Already have access? Use the account registered for this workspace."}
+            <UiText>
+              {role === "admin"
+                ? "Need access? Ask the marketplace administrator."
+                : "Already have access? Use the account registered for this workspace."}
+            </UiText>
           </p>
         </div>
       </div>
-      <footer className="workspace-access-footer">Your neighbourhood, packed with care.</footer>
+      <footer className="workspace-access-footer">
+        <UiText>{"Your neighbourhood, packed with care."}</UiText>
+      </footer>
     </section>
   );
 }

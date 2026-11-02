@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -40,36 +41,40 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
         <Button asChild variant="citrus" className="seller-add-product">
           <Link to="/seller/products/new">
             <Plus size={19} aria-hidden="true" />
-            Add product
+            <UiText>{"Add product"}</UiText>
           </Link>
         </Button>
       </header>
       <ShopReviewNotice shop={shop} />
-      <nav className="seller-quick-actions" aria-label="Daily shop tasks">
-        <Button asChild>
-          <Link to="/seller/orders">
-            <ClipboardList aria-hidden="true" size={18} />
-            Manage orders
-          </Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link to="/seller/inventory">
-            <Boxes aria-hidden="true" size={18} />
-            Update stock
-          </Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link to="/seller/products/new">
-            <Plus aria-hidden="true" size={18} />
-            Add product
-          </Link>
-        </Button>
-      </nav>
+      <UiAttributes>
+        <nav className="seller-quick-actions" aria-label="Daily shop tasks">
+          <Button asChild>
+            <Link to="/seller/orders">
+              <ClipboardList aria-hidden="true" size={18} />
+              <UiText>{"Manage orders"}</UiText>
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/seller/inventory">
+              <Boxes aria-hidden="true" size={18} />
+              <UiText>{"Update stock"}</UiText>
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/seller/products/new">
+              <Plus aria-hidden="true" size={18} />
+              <UiText>{"Add product"}</UiText>
+            </Link>
+          </Button>
+        </nav>
+      </UiAttributes>
       <div className="seller-today-grid">
         <details className="seller-controls-column seller-availability-disclosure">
           <summary>
-            Shop hours and delivery settings
-            <span>Pause orders, change fees or update opening hours</span>
+            <UiText>{"Shop hours and delivery settings"}</UiText>
+            <span>
+              <UiText>{"Pause orders, change fees or update opening hours"}</UiText>
+            </span>
           </summary>
           <ShopAvailability shop={shop} />
         </details>
@@ -83,7 +88,7 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
             <p className="mb-4 text-sm">
               Your shop is closed for new checkout. Existing orders still need attention.{" "}
               <Link to="/seller/settings" className="underline">
-                Check hours and profile
+                <UiText>{"Check hours and profile"}</UiText>
               </Link>
             </p>
           )}
@@ -93,7 +98,7 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
               disabled={query.isFetching}
               onClick={() => void query.refetch()}
             >
-              Refresh dashboard
+              <UiText>{"Refresh dashboard"}</UiText>
             </Button>
             {data && (
               <p className="text-sm text-muted-foreground">
@@ -107,44 +112,56 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
           {query.isError && (
             <p role="alert">
               Could not refresh the dashboard.{" "}
-              {data
-                ? "Showing last loaded figures; refresh before acting on changed orders."
-                : "Retry with Refresh dashboard. No zero counts are assumed."}
+              <UiText>
+                {data
+                  ? "Showing last loaded figures; refresh before acting on changed orders."
+                  : "Retry with Refresh dashboard. No zero counts are assumed."}
+              </UiText>
             </p>
           )}
           {notice && <p role="status">{notice}</p>}
           {data && (
             <>
               <div className="seller-today-metrics">
-                <Kpi
-                  icon={ShoppingCart}
-                  label="Orders received today"
-                  value={data.todayOrders}
-                  hint={`${data.date} · shop orders`}
-                />
-                <Kpi
-                  icon={Hourglass}
-                  label="Awaiting acceptance"
-                  value={data.counts.placed ?? 0}
-                  hint="All dates"
-                  tone={data.counts.placed ? "warn" : undefined}
-                />
-                <Kpi
-                  icon={Package}
-                  label="Preparing / accepted"
-                  value={(data.counts.accepted ?? 0) + (data.counts.preparing ?? 0)}
-                  hint="All dates"
-                />
-                <Kpi
-                  icon={Boxes}
-                  label="Low-stock options"
-                  value={data.lowStock.count}
-                  hint={`${data.lowStock.outOfStock} out of stock`}
-                  tone={data.lowStock.count ? "warn" : undefined}
-                />
+                <UiAttributes>
+                  <Kpi
+                    icon={ShoppingCart}
+                    label="Orders received today"
+                    value={data.todayOrders}
+                    hint={`${data.date} · shop orders`}
+                  />
+                </UiAttributes>
+                <UiAttributes>
+                  <Kpi
+                    icon={Hourglass}
+                    label="Awaiting acceptance"
+                    value={data.counts.placed ?? 0}
+                    hint="All dates"
+                    tone={data.counts.placed ? "warn" : undefined}
+                  />
+                </UiAttributes>
+                <UiAttributes>
+                  <Kpi
+                    icon={Package}
+                    label="Preparing / accepted"
+                    value={(data.counts.accepted ?? 0) + (data.counts.preparing ?? 0)}
+                    hint="All dates"
+                  />
+                </UiAttributes>
+                <UiAttributes>
+                  <Kpi
+                    icon={Boxes}
+                    label="Low-stock options"
+                    value={data.lowStock.count}
+                    hint={`${data.lowStock.outOfStock} out of stock`}
+                    tone={data.lowStock.count ? "warn" : undefined}
+                  />
+                </UiAttributes>
               </div>
               <details className="my-4 text-sm text-muted-foreground">
-                <summary className="cursor-pointer">About these counts</summary>
+                <summary className="cursor-pointer">
+                  <UiText>{"About these counts"}</UiText>
+                </summary>
                 <p>
                   Daily count excludes test orders and online orders awaiting payment;
                   later-cancelled orders remain counted. These figures are not earnings or payout
@@ -160,79 +177,101 @@ export function LiveSellerDashboard({ shop }: { shop: ManagedShop }) {
                   </Link>
                 </p>
               )}
-              <section className="seller-counter-card" aria-label="Urgent orders">
-                <h2>
-                  <ClipboardList aria-hidden="true" />
-                  Waiting at your counter
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {data.counts.placed ?? 0} orders need your response. Oldest orders appear first.
-                </p>
-                {!data.urgent.length && <p>No orders awaiting acceptance.</p>}
-                {data.urgent.map((sub) => (
-                  <SellerOrderCard
-                    key={`${sub.id}:${sub.version}`}
-                    sub={sub}
-                    canProcess={shop.active && shop.status === "approved"}
-                    onSaved={(status) => setNotice(`Order updated: ${status}.`)}
-                  />
-                ))}
-                <Button asChild variant="outline">
-                  <Link to="/seller/orders">All orders and handoffs</Link>
-                </Button>
-              </section>
-              <div className="seller-secondary-grid">
-                <section className="seller-counter-card" aria-label="Order pipeline">
+              <UiAttributes>
+                <section className="seller-counter-card" aria-label="Urgent orders">
                   <h2>
-                    <Truck aria-hidden="true" />
-                    Ready and on the way
+                    <ClipboardList aria-hidden="true" />
+                    <UiText>{"Waiting at your counter"}</UiText>
                   </h2>
-                  <p className="mt-3">
-                    Ready: {data.counts.ready ?? 0} · Out for delivery:{" "}
-                    {data.counts.out_for_delivery ?? 0}
+                  <p className="text-sm text-muted-foreground">
+                    {data.counts.placed ?? 0} orders need your response. Oldest orders appear first.
                   </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Open orders to confirm handoff, receipt and cash collection.
-                  </p>
-                  <Button asChild className="mt-4" variant="outline">
-                    <Link to="/seller/orders">Manage handoffs</Link>
-                  </Button>
-                </section>
-                <section className="seller-counter-card" aria-label="Low stock">
-                  <h2>
-                    <Boxes aria-hidden="true" />
-                    Restock next
-                  </h2>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Active listings and individual options with {data.lowStock.threshold} or fewer
-                    units. Showing {data.lowStock.items.length} of {data.lowStock.count}.
-                  </p>
-                  <ul className="divide-y divide-border">
-                    {data.lowStock.items.map((item) => (
-                      <li
-                        key={`${item.productId}:${item.variantId ?? "base"}`}
-                        className="flex items-center justify-between gap-3 py-3 text-sm"
-                      >
-                        <span>
-                          {item.name}
-                          {item.label ? ` · ${item.label}` : ""}
-                          <span className="block text-muted-foreground">
-                            {item.stock === 0 ? "Out of stock" : `${item.stock} remaining`}
-                          </span>
-                        </span>
-                        <Link to="/seller/inventory" className="shrink-0 underline">
-                          Edit stock
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                  {!data.lowStock.count && (
-                    <p className="mt-3">No active listing options below the threshold.</p>
+                  {!data.urgent.length && (
+                    <p>
+                      <UiText>{"No orders awaiting acceptance."}</UiText>
+                    </p>
                   )}
-                  <Button asChild variant="outline" className="mt-4">
-                    <Link to="/seller/inventory">All inventory</Link>
+                  {data.urgent.map((sub) => (
+                    <UiAttributes key={`${sub.id}:${sub.version}`}>
+                      <SellerOrderCard
+                        key={`${sub.id}:${sub.version}`}
+                        sub={sub}
+                        canProcess={shop.active && shop.status === "approved"}
+                        onSaved={(status) => setNotice(`Order updated: ${status}.`)}
+                      />
+                    </UiAttributes>
+                  ))}
+                  <Button asChild variant="outline">
+                    <Link to="/seller/orders">
+                      <UiText>{"All orders and handoffs"}</UiText>
+                    </Link>
                   </Button>
                 </section>
+              </UiAttributes>
+              <div className="seller-secondary-grid">
+                <UiAttributes>
+                  <section className="seller-counter-card" aria-label="Order pipeline">
+                    <h2>
+                      <Truck aria-hidden="true" />
+                      <UiText>{"Ready and on the way"}</UiText>
+                    </h2>
+                    <p className="mt-3">
+                      Ready: {data.counts.ready ?? 0} · Out for delivery:{" "}
+                      {data.counts.out_for_delivery ?? 0}
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Open orders to confirm handoff, receipt and cash collection.
+                    </p>
+                    <Button asChild className="mt-4" variant="outline">
+                      <Link to="/seller/orders">
+                        <UiText>{"Manage handoffs"}</UiText>
+                      </Link>
+                    </Button>
+                  </section>
+                </UiAttributes>
+                <UiAttributes>
+                  <section className="seller-counter-card" aria-label="Low stock">
+                    <h2>
+                      <Boxes aria-hidden="true" />
+                      <UiText>{"Restock next"}</UiText>
+                    </h2>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Active listings and individual options with {data.lowStock.threshold} or fewer
+                      units. Showing {data.lowStock.items.length} of {data.lowStock.count}.
+                    </p>
+                    <ul className="divide-y divide-border">
+                      {data.lowStock.items.map((item) => (
+                        <li
+                          key={`${item.productId}:${item.variantId ?? "base"}`}
+                          className="flex items-center justify-between gap-3 py-3 text-sm"
+                        >
+                          <span>
+                            {item.name}
+                            <UiText>{item.label ? ` · ${item.label}` : ""}</UiText>
+                            <span className="block text-muted-foreground">
+                              <UiText>
+                                {item.stock === 0 ? "Out of stock" : `${item.stock} remaining`}
+                              </UiText>
+                            </span>
+                          </span>
+                          <Link to="/seller/inventory" className="shrink-0 underline">
+                            <UiText>{"Edit stock"}</UiText>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                    {!data.lowStock.count && (
+                      <p className="mt-3">
+                        <UiText>{"No active listing options below the threshold."}</UiText>
+                      </p>
+                    )}
+                    <Button asChild variant="outline" className="mt-4">
+                      <Link to="/seller/inventory">
+                        <UiText>{"All inventory"}</UiText>
+                      </Link>
+                    </Button>
+                  </section>
+                </UiAttributes>
               </div>
             </>
           )}

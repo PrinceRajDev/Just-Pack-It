@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useQuery } from "@tanstack/react-query";
 import { Package, ShoppingBag, Ban, Store, ChevronRight } from "lucide-react";
 import { management } from "@/services/management";
@@ -26,10 +27,18 @@ export function AdminCatalogue() {
     <div className="admin-catalogue">
       <header className="catalog-hero">
         <div>
-          <nav aria-label="Breadcrumb">
-            OPERATIONS <ChevronRight size={13} /> <b>CATALOGUE</b>
-          </nav>
-          <h1>Catalogue</h1>
+          <UiAttributes>
+            <nav aria-label="Breadcrumb">
+              <UiText>{"OPERATIONS "}</UiText>
+              <ChevronRight size={13} />{" "}
+              <b>
+                <UiText>{"CATALOGUE"}</UiText>
+              </b>
+            </nav>
+          </UiAttributes>
+          <h1>
+            <UiText>{"Catalogue"}</UiText>
+          </h1>
           <p>
             Manage products and categories across all shops. Keep the marketplace organised,
             relevant and safe for local communities.
@@ -40,30 +49,36 @@ export function AdminCatalogue() {
           <aside>
             <Package />
             <h2>
-              Safe products.
+              <UiText>{"Safe products."}</UiText>
               <br />
-              Trusted neighbourhoods.
+              <UiText>{"Trusted neighbourhoods."}</UiText>
             </h2>
             <p>Keep the marketplace clean, relevant and helpful for local communities.</p>
           </aside>
         </div>
       </header>
-      <section className="catalog-metrics" aria-label="Catalogue statistics">
-        {cards.map(({ title, icon: Icon, note }, i) => (
-          <article key={title}>
-            <Icon />
-            <div>
-              <p>{title}</p>
-              <strong>
-                {i === 3 && categories.isSuccess
-                  ? categories.data.filter((c) => c.active !== false).length
-                  : "N/A"}
-              </strong>
-              <small>{i === 3 && categories.isPending ? "Loading categories…" : note}</small>
-            </div>
-          </article>
-        ))}
-      </section>
+      <UiAttributes>
+        <section className="catalog-metrics" aria-label="Catalogue statistics">
+          {cards.map(({ title, icon: Icon, note }, i) => (
+            <article key={title}>
+              <Icon />
+              <div>
+                <p>
+                  <UiText>{title}</UiText>
+                </p>
+                <strong>
+                  {i === 3 && categories.isSuccess
+                    ? categories.data.filter((c) => c.active !== false).length
+                    : "N/A"}
+                </strong>
+                <small>
+                  <UiText>{i === 3 && categories.isPending ? "Loading categories…" : note}</UiText>
+                </small>
+              </div>
+            </article>
+          ))}
+        </section>
+      </UiAttributes>
       <p className="catalog-report-note">
         Product totals are not supplied by the current API. Seller-active does not guarantee
         purchasability: shop approval, availability, stock and admin blocks still apply.

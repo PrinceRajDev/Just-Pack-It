@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { z } from "zod";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -28,23 +29,35 @@ function AdminOrders() {
   const rows = sellerOrders.filter((o) => status === "all" || o.status === status);
   return (
     <>
-      <PortalHeader title="Orders & delivery" sub="Sub-orders across all shops." />
+      <UiAttributes>
+        <PortalHeader title="Orders & delivery" sub="Sub-orders across all shops." />
+      </UiAttributes>
       <DataTable
         rows={rows}
         searchText={(r) => `${r.id} ${r.customer}`}
         toolbar={
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="h-9 rounded-md border border-input bg-card px-2 text-sm"
-            aria-label="Status filter"
-          >
-            <option value="all">All statuses</option>
-            <option value="placed">New</option>
-            <option value="accepted">Accepted</option>
-            <option value="preparing">Preparing</option>
-            <option value="ready">Ready</option>
-          </select>
+          <UiAttributes>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="h-9 rounded-md border border-input bg-card px-2 text-sm"
+              aria-label="Status filter"
+            >
+              <option value="all">All statuses</option>
+              <option value="placed">
+                <UiText>{"New"}</UiText>
+              </option>
+              <option value="accepted">
+                <UiText>{"Accepted"}</UiText>
+              </option>
+              <option value="preparing">
+                <UiText>{"Preparing"}</UiText>
+              </option>
+              <option value="ready">
+                <UiText>{"Ready"}</UiText>
+              </option>
+            </select>
+          </UiAttributes>
         }
         columns={[
           {
@@ -86,28 +99,30 @@ function AdminOrders() {
             className: "text-right",
             cell: (r) =>
               r.status === "available" ? (
-                <select
-                  defaultValue=""
-                  onChange={(e) => toast.success(`Assigned to ${e.target.value} (demo)`)}
-                  className="h-8 rounded-md border border-input bg-card px-2 text-xs"
-                  aria-label="Assign rider"
-                >
-                  <option value="" disabled>
-                    Assign rider…
-                  </option>
-                  {riders
-                    .filter((x) => x.status === "approved")
-                    .map((x) => (
-                      <option key={x.id}>{x.name}</option>
-                    ))}
-                </select>
+                <UiAttributes>
+                  <select
+                    defaultValue=""
+                    onChange={(e) => toast.success(`Assigned to ${e.target.value} (demo)`)}
+                    className="h-8 rounded-md border border-input bg-card px-2 text-xs"
+                    aria-label="Assign rider"
+                  >
+                    <option value="" disabled>
+                      Assign rider…
+                    </option>
+                    {riders
+                      .filter((x) => x.status === "approved")
+                      .map((x) => (
+                        <option key={x.id}>{x.name}</option>
+                      ))}
+                  </select>
+                </UiAttributes>
               ) : r.status === "failed" ? (
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => toast.info("Opens exception workflow")}
                 >
-                  Resolve
+                  <UiText>{"Resolve"}</UiText>
                 </Button>
               ) : null,
           },

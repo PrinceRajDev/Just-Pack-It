@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Users, ShieldCheck, ChevronRight } from "lucide-react";
@@ -39,10 +40,13 @@ export function AdminUsers() {
   return (
     <div className="admin-users">
       <header className="users-hero">
-        <nav aria-label="Breadcrumb">
-          OPERATIONS <ChevronRight size={13} />
-          <b>USERS &amp; ROLES</b>
-        </nav>
+        <UiAttributes>
+          <nav aria-label="Breadcrumb">
+            <UiText>{"OPERATIONS "}</UiText>
+            <ChevronRight size={13} />
+            <b>USERS &amp; ROLES</b>
+          </nav>
+        </UiAttributes>
         <div>
           <section>
             <h1>People behind the market.</h1>
@@ -56,7 +60,7 @@ export function AdminUsers() {
             <h2>
               Responsible access.
               <br />
-              Trusted neighbourhoods.
+              <UiText>{"Trusted neighbourhoods."}</UiText>
             </h2>
             <p>Roles are read-only. Admin accounts are protected.</p>
           </aside>
@@ -71,41 +75,55 @@ export function AdminUsers() {
       >
         <label>
           Search accounts
-          <Input
-            value={draft}
-            maxLength={100}
-            placeholder="Name, phone or exact account ID"
-            onChange={(e) => setDraft(e.target.value)}
-          />
+          <UiAttributes>
+            <Input
+              value={draft}
+              maxLength={100}
+              placeholder="Name, phone or exact account ID"
+              onChange={(e) => setDraft(e.target.value)}
+            />
+          </UiAttributes>
         </label>
         <label>
           Account role
-          <select
-            aria-label="Account role"
-            value={filters.role}
-            onChange={(e) => change({ role: e.target.value as UserFilters["role"] })}
-          >
-            <option value="all">All roles</option>
-            {Object.entries(roleLabel).map(([v, label]) => (
-              <option value={v} key={v}>
-                {label}
+          <UiAttributes>
+            <select
+              aria-label="Account role"
+              value={filters.role}
+              onChange={(e) => change({ role: e.target.value as UserFilters["role"] })}
+            >
+              <option value="all">
+                <UiText>{"All roles"}</UiText>
               </option>
-            ))}
-          </select>
+              {Object.entries(roleLabel).map(([v, label]) => (
+                <option value={v} key={v}>
+                  <UiText>{label}</UiText>
+                </option>
+              ))}
+            </select>
+          </UiAttributes>
         </label>
         <label>
           Account status
-          <select
-            aria-label="Account status"
-            value={filters.state}
-            onChange={(e) => change({ state: e.target.value as UserFilters["state"] })}
-          >
-            <option value="all">All accounts</option>
-            <option value="active">Active</option>
-            <option value="blocked">Blocked</option>
-          </select>
+          <UiAttributes>
+            <select
+              aria-label="Account status"
+              value={filters.state}
+              onChange={(e) => change({ state: e.target.value as UserFilters["state"] })}
+            >
+              <option value="all">All accounts</option>
+              <option value="active">
+                <UiText>{"Active"}</UiText>
+              </option>
+              <option value="blocked">
+                <UiText>{"Blocked"}</UiText>
+              </option>
+            </select>
+          </UiAttributes>
         </label>
-        <Button>Search</Button>
+        <Button>
+          <UiText>{"Search"}</UiText>
+        </Button>
         <Button
           type="button"
           variant="outline"
@@ -115,7 +133,7 @@ export function AdminUsers() {
             setPages([undefined]);
           }}
         >
-          Clear
+          <UiText>{"Clear"}</UiText>
         </Button>
         <Button
           type="button"
@@ -126,88 +144,94 @@ export function AdminUsers() {
           Refresh accounts
         </Button>
       </form>
-      <section className="users-panel" aria-label="Account directory">
-        {query.isPending ? (
-          <div role="status" aria-label="Loading accounts">
-            <Skeleton className="h-32 w-full" />
-          </div>
-        ) : query.isError ? (
-          <div role="alert">
-            <h2>Could not load accounts</h2>
-            <p>{query.error.message}</p>
-            <Button variant="outline" onClick={() => void query.refetch()}>
-              Retry accounts
-            </Button>
-          </div>
-        ) : (
-          <>
-            <p className="users-result-count">
-              {query.data.total} matching accounts · {query.data.items.length} on this page. Account
-              access does not indicate shop approval or delivery eligibility.
-            </p>
-            <div className="users-table">
-              <table>
-                <thead>
-                  <tr>
-                    {["Account", "Role", "Access", "Email verification", "Actions"].map((t) => (
-                      <th scope="col" key={t}>
-                        {t}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {query.data.items.map((u) => (
-                    <tr key={u.id}>
-                      <td data-label="Account">
-                        <b>{u.name}</b>
-                        <small>{u.phone}</small>
-                      </td>
-                      <td data-label="Role">{roleLabel[u.role]}</td>
-                      <td data-label="Access">
-                        <span className={u.active ? "users-badge" : "users-badge blocked"}>
-                          {u.active ? "Active" : "Blocked"}
-                        </span>
-                      </td>
-                      <td data-label="Email verification">
-                        {u.emailVerified ? "Verified" : "Not recorded"}
-                      </td>
-                      <td data-label="Actions">
-                        <Button variant="outline" onClick={() => setSelected(u.id)}>
-                          Review account
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {!query.data.items.length && (
-              <div className="users-empty">
-                <Users size={44} />
-                <h2>No matching accounts</h2>
-                <p>Change your filters or search another name, phone or account ID.</p>
+      <UiAttributes>
+        <section className="users-panel" aria-label="Account directory">
+          {query.isPending ? (
+            <UiAttributes>
+              <div role="status" aria-label="Loading accounts">
+                <Skeleton className="h-32 w-full" />
               </div>
-            )}
-            <nav aria-label="Account pages">
-              <Button
-                variant="outline"
-                disabled={query.isFetching || pages.length === 1}
-                onClick={() => setPages((p) => p.slice(0, -1))}
-              >
-                Previous accounts
+            </UiAttributes>
+          ) : query.isError ? (
+            <div role="alert">
+              <h2>Could not load accounts</h2>
+              <p>{query.error.message}</p>
+              <Button variant="outline" onClick={() => void query.refetch()}>
+                Retry accounts
               </Button>
-              <Button
-                variant="outline"
-                disabled={query.isFetching || !query.data.next}
-                onClick={() => setPages((p) => [...p, query.data.next])}
-              >
-                Next accounts
-              </Button>
-            </nav>
-          </>
-        )}
-      </section>
+            </div>
+          ) : (
+            <>
+              <p className="users-result-count">
+                {query.data.total} matching accounts · {query.data.items.length} on this page.
+                Account access does not indicate shop approval or delivery eligibility.
+              </p>
+              <div className="users-table">
+                <table>
+                  <thead>
+                    <tr>
+                      {["Account", "Role", "Access", "Email verification", "Actions"].map((t) => (
+                        <th scope="col" key={t}>
+                          {t}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {query.data.items.map((u) => (
+                      <tr key={u.id}>
+                        <td data-label="Account">
+                          <b>{u.name}</b>
+                          <small>{u.phone}</small>
+                        </td>
+                        <td data-label="Role">{roleLabel[u.role]}</td>
+                        <td data-label="Access">
+                          <span className={u.active ? "users-badge" : "users-badge blocked"}>
+                            <UiText>{u.active ? "Active" : "Blocked"}</UiText>
+                          </span>
+                        </td>
+                        <td data-label="Email verification">
+                          <UiText>{u.emailVerified ? "Verified" : "Not recorded"}</UiText>
+                        </td>
+                        <td data-label="Actions">
+                          <Button variant="outline" onClick={() => setSelected(u.id)}>
+                            Review account
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {!query.data.items.length && (
+                <div className="users-empty">
+                  <Users size={44} />
+                  <h2>No matching accounts</h2>
+                  <p>Change your filters or search another name, phone or account ID.</p>
+                </div>
+              )}
+              <UiAttributes>
+                <nav aria-label="Account pages">
+                  <Button
+                    variant="outline"
+                    disabled={query.isFetching || pages.length === 1}
+                    onClick={() => setPages((p) => p.slice(0, -1))}
+                  >
+                    Previous accounts
+                  </Button>
+                  <Button
+                    variant="outline"
+                    disabled={query.isFetching || !query.data.next}
+                    onClick={() => setPages((p) => [...p, query.data.next])}
+                  >
+                    Next accounts
+                  </Button>
+                </nav>
+              </UiAttributes>
+            </>
+          )}
+        </section>
+      </UiAttributes>
       <Sheet
         open={selected !== null}
         onOpenChange={(open) => {
@@ -289,11 +313,17 @@ function AccountAccess({
         <dd>{user.id}</dd>
         <dt>Phone</dt>
         <dd>{user.phone}</dd>
-        <dt>Role</dt>
+        <dt>
+          <UiText>{"Role"}</UiText>
+        </dt>
         <dd>{roleLabel[user.role]}</dd>
         <dt>Access</dt>
-        <dd>{user.active ? "Active" : "Blocked"}</dd>
-        <dt>Created (IST)</dt>
+        <dd>
+          <UiText>{user.active ? "Active" : "Blocked"}</UiText>
+        </dd>
+        <dt>
+          <UiText>{"Created (IST)"}</UiText>
+        </dt>
         <dd>{financeDate(user.createdAt)}</dd>
       </dl>
       <p>
@@ -317,16 +347,20 @@ function AccountAccess({
               disabled={busy}
             />
           </label>
-          <ConfirmAction
-            title={user.active ? `Block ${user.name}?` : `Restore ${user.name}?`}
-            description={`${reason.trim()} Existing orders and financial records remain unchanged. Fresh sign-in is required after restoration.`}
-            confirmLabel="Confirm access change"
-            onConfirm={() => void run()}
-          >
-            <Button disabled={busy || disabled || needsRefresh || reason.trim().length < 10}>
-              {busy ? "Saving…" : user.active ? "Block account" : "Restore account"}
-            </Button>
-          </ConfirmAction>
+          <UiAttributes>
+            <ConfirmAction
+              title={user.active ? `Block ${user.name}?` : `Restore ${user.name}?`}
+              description={`${reason.trim()} Existing orders and financial records remain unchanged. Fresh sign-in is required after restoration.`}
+              confirmLabel="Confirm access change"
+              onConfirm={() => void run()}
+            >
+              <Button disabled={busy || disabled || needsRefresh || reason.trim().length < 10}>
+                <UiText>
+                  {busy ? "Saving…" : user.active ? "Block account" : "Restore account"}
+                </UiText>
+              </Button>
+            </ConfirmAction>
+          </UiAttributes>
         </>
       )}
       {error && (

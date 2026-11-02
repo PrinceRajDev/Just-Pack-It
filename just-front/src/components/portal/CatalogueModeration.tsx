@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useRef, useState } from "react";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Package, PackageOpen, RefreshCw } from "lucide-react";
@@ -31,7 +32,7 @@ export function ProductModeration() {
         <div>
           <h2>
             <Package />
-            All-shop product moderation
+            <UiText>{"All-shop product moderation"}</UiText>
           </h2>
           <p>
             Blocking prevents new purchases of the listing. Seller price/stock edits cannot remove
@@ -40,7 +41,7 @@ export function ProductModeration() {
         </div>
         <Button variant="outline" disabled={query.isFetching} onClick={() => void query.refetch()}>
           <RefreshCw size={16} />
-          Refresh records
+          <UiText>{"Refresh records"}</UiText>
         </Button>
       </header>
       <form
@@ -51,35 +52,43 @@ export function ProductModeration() {
         }}
       >
         <label>
-          Product name
-          <Input
-            value={draft}
-            maxLength={100}
-            placeholder="Search products by name…"
-            onChange={(e) => setDraft(e.target.value)}
-          />
+          <UiText>{"Product name"}</UiText>
+          <UiAttributes>
+            <Input
+              value={draft}
+              maxLength={100}
+              placeholder="Search products by name…"
+              onChange={(e) => setDraft(e.target.value)}
+            />
+          </UiAttributes>
         </label>
         <label>
           Listing status
-          <select
-            aria-label="Listing status"
-            value={state}
-            onChange={(e) => setState(e.target.value)}
-          >
-            {["all", "active", "blocked", "inactive"].map((s) => (
-              <option key={s} value={s}>
-                {s === "all"
-                  ? "All products"
-                  : s === "active"
-                    ? "Seller active"
-                    : s === "inactive"
-                      ? "Seller inactive"
-                      : "Blocked"}
-              </option>
-            ))}
-          </select>
+          <UiAttributes>
+            <select
+              aria-label="Listing status"
+              value={state}
+              onChange={(e) => setState(e.target.value)}
+            >
+              {["all", "active", "blocked", "inactive"].map((s) => (
+                <option key={s} value={s}>
+                  <UiText>
+                    {s === "all"
+                      ? "All products"
+                      : s === "active"
+                        ? "Seller active"
+                        : s === "inactive"
+                          ? "Seller inactive"
+                          : "Blocked"}
+                  </UiText>
+                </option>
+              ))}
+            </select>
+          </UiAttributes>
         </label>
-        <Button type="submit">Search products</Button>
+        <Button type="submit">
+          <UiText>{"Search products"}</UiText>
+        </Button>
         <Button
           type="button"
           variant="outline"
@@ -89,7 +98,7 @@ export function ProductModeration() {
             setState("all");
           }}
         >
-          Clear
+          <UiText>{"Clear"}</UiText>
         </Button>
       </form>
       {query.isError && (
@@ -102,11 +111,13 @@ export function ProductModeration() {
         </div>
       )}
       {query.isPending ? (
-        <div role="status" aria-label="Loading listings">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="my-3 h-16 w-full" />
-          ))}
-        </div>
+        <UiAttributes>
+          <div role="status" aria-label="Loading listings">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="my-3 h-16 w-full" />
+            ))}
+          </div>
+        </UiAttributes>
       ) : (
         <>
           <div className="catalog-table-wrap">
@@ -140,16 +151,23 @@ export function ProductModeration() {
                           p.moderation?.blocked ? "catalog-badge blocked" : "catalog-badge"
                         }
                       >
-                        {p.moderation?.blocked ? "Blocked by admin" : "No admin block"}
+                        <UiText>
+                          {p.moderation?.blocked ? "Blocked by admin" : "No admin block"}
+                        </UiText>
                       </span>
-                      <small>Seller {p.active ? "active" : "inactive"}</small>
+                      <small>
+                        <UiText>{"Seller "}</UiText>
+                        <UiText>{p.active ? "active" : "inactive"}</UiText>
+                      </small>
                     </td>
                     <td>
-                      {p.moderation?.updatedAt
-                        ? new Date(p.moderation.updatedAt).toLocaleString("en-IN", {
-                            timeZone: "Asia/Kolkata",
-                          })
-                        : "Not recorded"}
+                      <UiText>
+                        {p.moderation?.updatedAt
+                          ? new Date(p.moderation.updatedAt).toLocaleString("en-IN", {
+                              timeZone: "Asia/Kolkata",
+                            })
+                          : "Not recorded"}
+                      </UiText>
                     </td>
                     <td>
                       <Button variant="outline" onClick={() => setSelected(p.id)}>
@@ -170,8 +188,8 @@ export function ProductModeration() {
                   {p.shopName} · {inr(p.price)}
                 </p>
                 <p>
-                  {p.moderation?.blocked ? "Blocked by admin" : "No admin block"} · Seller{" "}
-                  {p.active ? "active" : "inactive"}
+                  <UiText>{p.moderation?.blocked ? "Blocked by admin" : "No admin block"}</UiText> ·
+                  Seller <UiText>{p.active ? "active" : "inactive"}</UiText>
                 </p>
                 <Button variant="outline" onClick={() => setSelected(p.id)}>
                   View / moderate
@@ -182,7 +200,9 @@ export function ProductModeration() {
           {query.isSuccess && !rows.length && (
             <div className="catalog-empty">
               <PackageOpen size={62} />
-              <h3>No matching products</h3>
+              <h3>
+                <UiText>{"No matching products"}</UiText>
+              </h3>
               <p>Try adjusting your search or filters. Products from all shops will appear here.</p>
             </div>
           )}
@@ -204,7 +224,9 @@ export function ProductModeration() {
         }}
       >
         <SheetContent className="catalog-drawer">
-          <SheetTitle>Product details</SheetTitle>
+          <SheetTitle>
+            <UiText>{"Product details"}</UiText>
+          </SheetTitle>
           <SheetDescription>
             Authorised listing summary. Moderation changes require confirmation.
           </SheetDescription>
@@ -267,9 +289,13 @@ function ModerationDetail({
         <dt>Variant options</dt>
         <dd>{product.variantCount}</dd>
         <dt>Seller listing</dt>
-        <dd>{product.active ? "Active" : "Inactive"}</dd>
+        <dd>
+          <UiText>{product.active ? "Active" : "Inactive"}</UiText>
+        </dd>
         <dt>Admin moderation</dt>
-        <dd>{product.moderation?.blocked ? "Blocked by admin" : "No admin block"}</dd>
+        <dd>
+          <UiText>{product.moderation?.blocked ? "Blocked by admin" : "No admin block"}</UiText>
+        </dd>
       </dl>
       {product.moderation && <p>Last decision: {product.moderation.reason}</p>}
       <p className="text-sm text-muted-foreground">
@@ -286,16 +312,24 @@ function ModerationDetail({
           disabled={busy}
         />
       </label>
-      <ConfirmAction
-        title={product.moderation?.blocked ? "Remove this admin block?" : "Block this listing?"}
-        description={`Listing: ${product.name} at ${product.shopName}. Reason: ${reason.trim()}. Existing orders remain unchanged.`}
-        confirmLabel="Confirm moderation"
-        onConfirm={() => void submit()}
-      >
-        <Button disabled={busy || disabled || reason.trim().length < 3}>
-          {busy ? "Saving…" : product.moderation?.blocked ? "Remove admin block" : "Block listing"}
-        </Button>
-      </ConfirmAction>
+      <UiAttributes>
+        <ConfirmAction
+          title={product.moderation?.blocked ? "Remove this admin block?" : "Block this listing?"}
+          description={`Listing: ${product.name} at ${product.shopName}. Reason: ${reason.trim()}. Existing orders remain unchanged.`}
+          confirmLabel="Confirm moderation"
+          onConfirm={() => void submit()}
+        >
+          <Button disabled={busy || disabled || reason.trim().length < 3}>
+            <UiText>
+              {busy
+                ? "Saving…"
+                : product.moderation?.blocked
+                  ? "Remove admin block"
+                  : "Block listing"}
+            </UiText>
+          </Button>
+        </ConfirmAction>
+      </UiAttributes>
       {error && <p role="alert">{error}</p>}
     </div>
   );

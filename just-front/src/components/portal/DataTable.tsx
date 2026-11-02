@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useMemo, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,15 +45,17 @@ export function DataTable<T>({
           <label className="relative">
             <span className="sr-only">Search records</span>
             <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={q}
-              onChange={(e) => {
-                setQ(e.target.value);
-                setPage(0);
-              }}
-              placeholder="Filter…"
-              className="h-9 w-56 rounded-md border border-input bg-card pl-8 pr-3 text-sm"
-            />
+            <UiAttributes>
+              <input
+                value={q}
+                onChange={(e) => {
+                  setQ(e.target.value);
+                  setPage(0);
+                }}
+                placeholder="Filter…"
+                className="h-9 w-56 rounded-md border border-input bg-card pl-8 pr-3 text-sm"
+              />
+            </UiAttributes>
           </label>
         )}
         {toolbar}
@@ -70,7 +73,11 @@ export function DataTable<T>({
                   key={c.key}
                   className={`p-2.5 font-medium text-muted-foreground ${c.className ?? ""}`}
                 >
-                  {c.header || <span className="sr-only">Actions</span>}
+                  {c.header || (
+                    <span className="sr-only">
+                      <UiText>{"Actions"}</UiText>
+                    </span>
+                  )}
                 </th>
               ))}
             </tr>
@@ -129,7 +136,7 @@ export function DataTable<T>({
             disabled={currentPage >= pages - 1}
             onClick={() => setPage(currentPage + 1)}
           >
-            Next
+            <UiText>{"Next"}</UiText>
           </Button>
         </div>
       )}

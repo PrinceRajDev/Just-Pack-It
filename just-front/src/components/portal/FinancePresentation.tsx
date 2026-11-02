@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import type { ReactNode } from "react";
 import { BookOpen, CreditCard, RotateCcw } from "lucide-react";
 
@@ -17,7 +18,7 @@ export function FinancialTable<T>({
           <tr>
             {columns.map((c) => (
               <th key={c.title} scope="col">
-                {c.title}
+                <UiText>{c.title}</UiText>
               </th>
             ))}
           </tr>
@@ -51,7 +52,9 @@ export function FinanceEmpty({
     <div className="finance-empty">
       <Icon aria-hidden="true" />
       <div>
-        <h3>{title}</h3>
+        <h3>
+          <UiText>{title}</UiText>
+        </h3>
         <p>{children}</p>
       </div>
     </div>

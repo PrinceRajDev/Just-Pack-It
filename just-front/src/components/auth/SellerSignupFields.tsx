@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
@@ -39,16 +40,22 @@ export function SellerSignupFields({ onReady }: { onReady: (ready: boolean) => v
   }, [ready, onReady]);
   if (categories.error || areas.error)
     return (
-      <ErrorState
-        message="Shop setup options could not be loaded. Retry to register as a seller."
-        onRetry={() => {
-          void categories.refetch();
-          void areas.refetch();
-        }}
-      />
+      <UiAttributes>
+        <ErrorState
+          message="Shop setup options could not be loaded. Retry to register as a seller."
+          onRetry={() => {
+            void categories.refetch();
+            void areas.refetch();
+          }}
+        />
+      </UiAttributes>
     );
   if (categories.isPending || areas.isPending)
-    return <p role="status">Loading shop types and service areas…</p>;
+    return (
+      <p role="status">
+        <UiText>{"Loading shop types and service areas…"}</UiText>
+      </p>
+    );
   if (!ready)
     return (
       <p role="alert" className="text-sm">
@@ -57,10 +64,16 @@ export function SellerSignupFields({ onReady }: { onReady: (ready: boolean) => v
     );
   return (
     <fieldset className="auth-shop-fields space-y-4 rounded-xl border border-border bg-secondary/30 p-4">
-      <legend className="px-1 font-display text-xl">Your shop</legend>
-      <Field label="Shop name" name="shopName" required />
+      <legend className="px-1 font-display text-xl">
+        <UiText>{"Your shop"}</UiText>
+      </legend>
+      <UiAttributes>
+        <Field label="Shop name" name="shopName" required />
+      </UiAttributes>
       <label className="block space-y-1 text-sm">
-        <span>Full shop address</span>
+        <span>
+          <UiText>{"Full shop address"}</UiText>
+        </span>
         <textarea
           name="shopAddress"
           required
@@ -71,7 +84,9 @@ export function SellerSignupFields({ onReady }: { onReady: (ready: boolean) => v
         />
       </label>
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Shop type / categories</legend>
+        <legend className="text-sm font-medium">
+          <UiText>{"Shop type / categories"}</UiText>
+        </legend>
         <div className="grid gap-2 sm:grid-cols-2">
           {categories.data.map((category) => (
             <label key={category.id} className="flex items-center gap-2 text-sm">
@@ -82,14 +97,18 @@ export function SellerSignupFields({ onReady }: { onReady: (ready: boolean) => v
         </div>
       </fieldset>
       <label className="block space-y-1 text-sm">
-        <span>Service area</span>
+        <span>
+          <UiText>{"Service area"}</UiText>
+        </span>
         <select
           name="shopAreaIds"
           required
           defaultValue=""
           className="block w-full rounded-md border border-input bg-background p-2"
         >
-          <option value="">Choose your area</option>
+          <option value="">
+            <UiText>{"Choose your area"}</UiText>
+          </option>
           {areas.data.map((area) => (
             <option key={area.id} value={area.id}>
               {area.name} · {area.pincodes.join(", ")}
@@ -97,16 +116,20 @@ export function SellerSignupFields({ onReady }: { onReady: (ready: boolean) => v
           ))}
         </select>
       </label>
-      <Field
-        label="Year your shop opened"
-        name="shopSince"
-        type="number"
-        min={1900}
-        max={new Date().getFullYear()}
-        required
-      />
+      <UiAttributes>
+        <Field
+          label="Year your shop opened"
+          name="shopSince"
+          type="number"
+          min={1900}
+          max={new Date().getFullYear()}
+          required
+        />
+      </UiAttributes>
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">How will customers receive items?</legend>
+        <legend className="text-sm font-medium">
+          <UiText>{"How will customers receive items?"}</UiText>
+        </legend>
         {(
           [
             ["pickup", "Pickup from shop"],
@@ -116,7 +139,7 @@ export function SellerSignupFields({ onReady }: { onReady: (ready: boolean) => v
         ).map(([value, label]) => (
           <label key={value} className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="shopFulfilment" value={value} />
-            {label}
+            <UiText>{label}</UiText>
           </label>
         ))}
       </fieldset>

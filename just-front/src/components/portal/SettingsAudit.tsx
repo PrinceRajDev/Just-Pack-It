@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { FileText, RefreshCw } from "lucide-react";
@@ -25,7 +26,7 @@ export function AuditExplorer() {
         <div>
           <h2>
             <FileText />
-            Audit log
+            <UiText>{"Audit log"}</UiText>
           </h2>
           <p>
             Records new moderation, taxonomy reactivation and support actions from this release. No
@@ -35,7 +36,7 @@ export function AuditExplorer() {
         </div>
         <Button variant="outline" disabled={query.isFetching} onClick={() => void query.refetch()}>
           <RefreshCw size={16} />
-          Refresh records
+          <UiText>{"Refresh records"}</UiText>
         </Button>
       </header>
       <form
@@ -50,24 +51,30 @@ export function AuditExplorer() {
         }}
       >
         <label>
-          Exact action
-          <Input
-            maxLength={80}
-            value={action}
-            onChange={(e) => setAction(e.target.value)}
-            placeholder="e.g. product.block"
-          />
+          <UiText>{"Exact action"}</UiText>
+          <UiAttributes>
+            <Input
+              maxLength={80}
+              value={action}
+              onChange={(e) => setAction(e.target.value)}
+              placeholder="e.g. product.block"
+            />
+          </UiAttributes>
         </label>
         <label>
-          Target ID
-          <Input
-            value={target}
-            onChange={(e) => setTarget(e.target.value.trim())}
-            aria-invalid={!!target && !uuid.test(target)}
-            placeholder="Exact target UUID"
-          />
+          <UiText>{"Target ID"}</UiText>
+          <UiAttributes>
+            <Input
+              value={target}
+              onChange={(e) => setTarget(e.target.value.trim())}
+              aria-invalid={!!target && !uuid.test(target)}
+              placeholder="Exact target UUID"
+            />
+          </UiAttributes>
         </label>
-        <Button disabled={!!target && !uuid.test(target)}>Filter audit</Button>
+        <Button disabled={!!target && !uuid.test(target)}>
+          <UiText>{"Filter audit"}</UiText>
+        </Button>
         <Button
           type="button"
           variant="outline"
@@ -94,9 +101,11 @@ export function AuditExplorer() {
         </div>
       )}
       {query.isPending ? (
-        <div role="status" aria-label="Loading audit records">
-          <Skeleton className="h-24 w-full" />
-        </div>
+        <UiAttributes>
+          <div role="status" aria-label="Loading audit records">
+            <Skeleton className="h-24 w-full" />
+          </div>
+        </UiAttributes>
       ) : (
         <>
           <div className="settings-table">

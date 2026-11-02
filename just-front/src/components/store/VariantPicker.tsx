@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useId } from "react";
 import { Check } from "lucide-react";
 import type { ProductVariant } from "@/domain/types";
@@ -21,7 +22,7 @@ export function VariantPicker({
       aria-describedby={`${id}-hint`}
     >
       <legend className="px-1 font-semibold">
-        {fields.length ? `Choose ${fields.join(" / ")}` : "Choose your option"}
+        <UiText>{fields.length ? `Choose ${fields.join(" / ")}` : "Choose your option"}</UiText>
       </legend>
       <p id={`${id}-hint`} className="text-muted-foreground">
         Select one option. Each has its own price and stock at this shop.
@@ -39,20 +40,24 @@ export function VariantPicker({
                 unavailable && "cursor-not-allowed opacity-60",
               )}
             >
-              <input
-                type="radio"
-                name={`${id}-variant`}
-                value={variant.id}
-                checked={selected}
-                disabled={unavailable}
-                onChange={() => onSelect(variant.id)}
-                className="peer sr-only"
-                aria-label={`${variant.label}${variant.attributes?.length ? `, ${variant.attributes.map((a) => `${a.label}: ${a.value}`).join(", ")}` : ""}, ₹${variant.price}, ${unavailable ? "Unavailable" : `${variant.stock} available`}`}
-              />
+              <UiAttributes>
+                <input
+                  type="radio"
+                  name={`${id}-variant`}
+                  value={variant.id}
+                  checked={selected}
+                  disabled={unavailable}
+                  onChange={() => onSelect(variant.id)}
+                  className="peer sr-only"
+                  aria-label={`${variant.label}${variant.attributes?.length ? `, ${variant.attributes.map((a) => `${a.label}: ${a.value}`).join(", ")}` : ""}, ₹${variant.price}, ${unavailable ? "Unavailable" : `${variant.stock} available`}`}
+                />
+              </UiAttributes>
               <span className="pointer-events-none absolute inset-0 rounded-xl peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-primary" />
               <span className="min-w-0 flex-1">
                 <span className="flex items-start justify-between gap-2 font-semibold">
-                  <span className="break-words">{variant.label}</span>
+                  <span className="break-words">
+                    <UiText>{variant.label}</UiText>
+                  </span>
                   {selected && <Check className="size-4 shrink-0 text-primary" aria-hidden />}
                 </span>
                 {!!variant.attributes?.length && (
@@ -62,7 +67,7 @@ export function VariantPicker({
                         key={`${a.label}-${i}`}
                         className="rounded-md bg-muted px-2 py-1 text-xs"
                       >
-                        {a.label}: {a.value}
+                        <UiText>{a.label}</UiText>: {a.value}
                       </span>
                     ))}
                   </span>
@@ -77,7 +82,7 @@ export function VariantPicker({
                       unavailable ? "text-destructive" : "text-muted-foreground",
                     )}
                   >
-                    {unavailable ? "Unavailable" : `${variant.stock} available`}
+                    <UiText>{unavailable ? "Unavailable" : `${variant.stock} available`}</UiText>
                   </span>
                 </span>
               </span>

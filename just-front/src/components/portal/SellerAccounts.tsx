@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
@@ -96,14 +97,16 @@ export function SellerAccounts() {
             </label>
             <label className="block space-y-1 text-sm">
               <span>Seller mobile number</span>
-              <input
-                name="phone"
-                required
-                inputMode="tel"
-                autoComplete="off"
-                placeholder="+91…"
-                className="block w-full rounded-md border border-input bg-background px-3 py-2"
-              />
+              <UiAttributes>
+                <input
+                  name="phone"
+                  required
+                  inputMode="tel"
+                  autoComplete="off"
+                  placeholder="+91…"
+                  className="block w-full rounded-md border border-input bg-background px-3 py-2"
+                />
+              </UiAttributes>
             </label>
             <label className="block space-y-1 text-sm">
               <span>Seller password</span>
@@ -131,7 +134,7 @@ export function SellerAccounts() {
           )}
           <SaveError error={requestError} />
           <Button type="submit">
-            {create.isPending ? "Creating seller…" : "Create seller account"}
+            <UiText>{create.isPending ? "Creating seller…" : "Create seller account"}</UiText>
           </Button>
         </fieldset>
       </form>
@@ -145,7 +148,9 @@ export function SellerAccounts() {
         {sellers.isPending ? (
           <p role="status">Loading seller accounts…</p>
         ) : sellers.error ? (
-          <ErrorState message={sellers.error.message} onRetry={() => void sellers.refetch()} />
+          <UiAttributes>
+            <ErrorState message={sellers.error.message} onRetry={() => void sellers.refetch()} />
+          </UiAttributes>
         ) : sellers.data.length ? (
           <ul className="mt-3 divide-y divide-border">
             {[...sellers.data]
@@ -156,7 +161,9 @@ export function SellerAccounts() {
                     <strong>{account.name}</strong>
                     <span className="ml-3 text-muted-foreground">{account.phone}</span>
                   </span>
-                  <span>{account.active ? "Active login" : "Inactive login"}</span>
+                  <span>
+                    <UiText>{account.active ? "Active login" : "Inactive login"}</UiText>
+                  </span>
                 </li>
               ))}
           </ul>

@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { Link } from "@tanstack/react-router";
 import { Heart } from "lucide-react";
 import type { Product } from "@/domain/types";
@@ -78,30 +79,34 @@ export function ProductCard({
   return (
     <article className={cn("product-card group flex flex-col", product.stock <= 0 && "opacity-70")}>
       <div className="product-card-photo relative overflow-hidden rounded-sm bg-paper">
-        <Link to="/product/$id" params={{ id: product.id }} aria-label={product.name}>
-          <ProductImage
-            src={product.image}
-            alt={product.name}
-            className="transition-transform duration-500 group-hover:scale-[1.03]"
-          />
-        </Link>
+        <UiAttributes>
+          <Link to="/product/$id" params={{ id: product.id }} aria-label={product.name}>
+            <ProductImage
+              src={product.image}
+              alt={product.name}
+              className="transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+          </Link>
+        </UiAttributes>
         {validOffer(product.offer) && (
           <span className="label-stamp absolute left-2 top-2 rounded-sm bg-promo px-1.5 py-1 text-promo-foreground">
-            {product.offer.label}
+            <UiText>{product.offer.label}</UiText>
           </span>
         )}
-        <button
-          disabled={!wishlistEnabled}
-          title={!wishlistEnabled ? "Wishlist is not available yet" : undefined}
-          onClick={() => toggleWish(product.id)}
-          aria-label={
-            wished ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`
-          }
-          aria-pressed={wished}
-          className="absolute right-2 top-2 flex size-9 items-center justify-center rounded-full bg-card/90 text-foreground hover:bg-card"
-        >
-          <Heart className={cn("size-4", wished && "fill-promo text-promo")} />
-        </button>
+        <UiAttributes>
+          <button
+            disabled={!wishlistEnabled}
+            title={!wishlistEnabled ? "Wishlist is not available yet" : undefined}
+            onClick={() => toggleWish(product.id)}
+            aria-label={
+              wished ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`
+            }
+            aria-pressed={wished}
+            className="absolute right-2 top-2 flex size-9 items-center justify-center rounded-full bg-card/90 text-foreground hover:bg-card"
+          >
+            <Heart className={cn("size-4", wished && "fill-promo text-promo")} />
+          </button>
+        </UiAttributes>
       </div>
       <div className="product-card-body flex flex-1 flex-col">
         {shop && (

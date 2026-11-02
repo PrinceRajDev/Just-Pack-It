@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useQuery } from "@tanstack/react-query";
 import { management } from "@/services/management";
 import { Panel } from "./management-shared";
@@ -14,7 +15,9 @@ export function SellerDirectory() {
       {sellers.isPending ? (
         <p role="status">Loading sellers…</p>
       ) : sellers.error ? (
-        <ErrorState message={sellers.error.message} onRetry={() => void sellers.refetch()} />
+        <UiAttributes>
+          <ErrorState message={sellers.error.message} onRetry={() => void sellers.refetch()} />
+        </UiAttributes>
       ) : sellers.data.length ? (
         <ul className="divide-y divide-border">
           {sellers.data.map((seller) => (
@@ -22,7 +25,9 @@ export function SellerDirectory() {
               <span>
                 <strong>{seller.name}</strong> · {seller.phone}
               </span>
-              <span>{seller.active ? "Active account" : "Inactive account"}</span>
+              <span>
+                <UiText>{seller.active ? "Active account" : "Inactive account"}</UiText>
+              </span>
             </li>
           ))}
         </ul>

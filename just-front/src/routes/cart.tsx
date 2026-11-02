@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, ShieldCheck, Trash2 } from "lucide-react";
 import { StoreLayout, PageTitle } from "@/components/store/StoreLayout";
@@ -38,14 +39,16 @@ function CartPage() {
 
   return (
     <StoreLayout>
-      <PageTitle
-        eyebrow={`${groups.length} shop${groups.length === 1 ? "" : "s"}`}
-        title="Your bag"
-      >
-        <div className="mt-5 max-w-lg">
-          <CheckoutProgress current="bag" />
-        </div>
-      </PageTitle>
+      <UiAttributes>
+        <PageTitle
+          eyebrow={`${groups.length} shop${groups.length === 1 ? "" : "s"}`}
+          title="Your bag"
+        >
+          <div className="mt-5 max-w-lg">
+            <CheckoutProgress current="bag" />
+          </div>
+        </PageTitle>
+      </UiAttributes>
       <div className="cart-page-content mx-auto max-w-7xl px-4 pb-24 lg:pb-0">
         <BagIssues issues={issues} />
         <CartRecovery />
@@ -69,126 +72,136 @@ function CartPage() {
             </Button>
           ))}
         {groups.length === 0 ? (
-          <EmptyState
-            title="Your bag is empty"
-            body="Browse the shops near you and add a few things."
-            action={
-              <Button asChild>
-                <Link to="/">Start shopping</Link>
-              </Button>
-            }
-          />
+          <UiAttributes>
+            <EmptyState
+              title="Your bag is empty"
+              body="Browse the shops near you and add a few things."
+              action={
+                <Button asChild>
+                  <Link to="/">Start shopping</Link>
+                </Button>
+              }
+            />
+          </UiAttributes>
         ) : (
           <div className="grid gap-10 lg:grid-cols-12">
             <div className="space-y-8 lg:col-span-8">
               <div className="border border-primary/20 bg-secondary/50 p-4 text-sm">
                 <p className="font-medium">
-                  One bag, {groups.length} local shop{groups.length === 1 ? "" : "s"}
+                  One bag, {groups.length} local shop
+                  <UiText>{groups.length === 1 ? "" : "s"}</UiText>
                 </p>
                 <p className="mt-1 text-muted-foreground">
                   Each shop accepts, packs and delivers its own part. They may arrive separately.
                 </p>
               </div>
-              <nav
-                aria-label="Shop totals in your bag"
-                className="rounded-xl border border-border bg-card p-4"
-              >
-                <h2 className="font-display text-xl">Your shop totals</h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Estimated totals including delivery. Tap a shop to review its items.
-                </p>
-                <ul className="mt-3 divide-y divide-border">
-                  {groups.map((g) => (
-                    <li key={g.shop.id}>
-                      <a
-                        href={`#bag-shop-${g.shop.id}`}
-                        className="flex min-h-11 items-center justify-between gap-3 py-3 text-sm hover:text-primary"
-                      >
-                        <span className="min-w-0">
-                          <span className="block font-medium">{g.shop.name}</span>
-                          <span className="block text-xs text-muted-foreground">
-                            {g.items.reduce((n, item) => n + item.qty, 0)} items · Delivery{" "}
-                            {g.deliveryFee ? inr(g.deliveryFee) : "Free"}
-                            {!g.shop.isOpen ? " · Closed" : ""}
-                          </span>
-                        </span>
-                        <span className="shrink-0 font-semibold tabular-nums">
-                          {inr(g.itemsTotal + g.deliveryFee)}
-                        </span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-              {groups.map((g) => (
-                <section
-                  key={g.shop.id}
-                  id={`bag-shop-${g.shop.id}`}
-                  aria-label={`${g.shop.name} items and totals`}
-                  className="cart-shop-panel scroll-mt-48 border border-border bg-card"
+              <UiAttributes>
+                <nav
+                  aria-label="Shop totals in your bag"
+                  className="rounded-xl border border-border bg-card p-4"
                 >
-                  <header className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3">
-                    <ShopInitials shop={g.shop} className="size-9 text-sm" />
-                    <Link
-                      to="/shop/$slug"
-                      params={{ slug: g.shop.slug }}
-                      className="font-display text-lg hover:underline"
-                    >
-                      {g.shop.name}
-                    </Link>
-                    <span className="label-stamp ml-auto text-muted-foreground">
-                      {fulfilmentLabel[g.fulfilment]}
-                    </span>
-                  </header>
-                  {!g.shop.isOpen && (
-                    <p className="bg-warning/10 px-4 py-2 text-sm">
-                      Closed now: remove these items or wait until the shop reopens to check out.
-                      Hours: {g.shop.hours}.
-                    </p>
-                  )}
-                  <ul className="divide-y divide-border">
-                    {g.items.map(({ product, variantId, variantLabel, unitPrice, qty }) => (
-                      <li
-                        key={`${product.id}-${variantId ?? "base"}`}
-                        className="cart-line-item flex flex-wrap gap-3 p-4 sm:flex-nowrap"
-                      >
-                        <ProductImage
-                          src={product.image}
-                          alt={product.name}
-                          width={160}
-                          className="size-20 shrink-0 rounded-sm"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="line-clamp-2 font-medium">{product.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {variantLabel ?? product.unit} · {inr(unitPrice)} each
-                          </p>
-                          <div className="mt-3 flex flex-wrap items-center gap-3">
-                            <div className="w-28">
-                              <AddToBag product={product} variantId={variantId} />
-                            </div>
-                            <button
-                              onClick={() => remove(product.id, variantId)}
-                              className="inline-flex min-h-11 items-center gap-1 px-2 text-sm text-muted-foreground hover:text-destructive"
-                              aria-label={`Remove ${product.name}`}
-                            >
-                              <Trash2 className="size-4" /> Remove
-                            </button>
-                          </div>
-                        </div>
-                        <p className="font-semibold tabular-nums">{inr(unitPrice * qty)}</p>
+                  <h2 className="font-display text-xl">Your shop totals</h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Estimated totals including delivery. Tap a shop to review its items.
+                  </p>
+                  <ul className="mt-3 divide-y divide-border">
+                    {groups.map((g) => (
+                      <li key={g.shop.id}>
+                        <a
+                          href={`#bag-shop-${g.shop.id}`}
+                          className="flex min-h-11 items-center justify-between gap-3 py-3 text-sm hover:text-primary"
+                        >
+                          <span className="min-w-0">
+                            <span className="block font-medium">{g.shop.name}</span>
+                            <span className="block text-xs text-muted-foreground">
+                              {g.items.reduce((n, item) => n + item.qty, 0)} items · Delivery{" "}
+                              <UiText>{g.deliveryFee ? inr(g.deliveryFee) : "Free"}</UiText>
+                              <UiText>{!g.shop.isOpen ? " · Closed" : ""}</UiText>
+                            </span>
+                          </span>
+                          <span className="shrink-0 font-semibold tabular-nums">
+                            {inr(g.itemsTotal + g.deliveryFee)}
+                          </span>
+                        </a>
                       </li>
                     ))}
                   </ul>
-                  <ShopCheckoutDetails group={g} />
-                  <footer className="flex flex-wrap justify-between gap-y-2 border-t border-dashed border-border px-4 py-3 text-sm text-muted-foreground">
-                    <span>
-                      {g.fulfilment === "platform_delivery" && g.itemsTotal < freeAbove
-                        ? `Add ${inr(freeAbove - g.itemsTotal)} more for free rider delivery`
-                        : "Final availability and charges are confirmed at checkout."}
-                    </span>
-                  </footer>
-                </section>
+                </nav>
+              </UiAttributes>
+              {groups.map((g) => (
+                <UiAttributes key={g.shop.id}>
+                  <section
+                    key={g.shop.id}
+                    id={`bag-shop-${g.shop.id}`}
+                    aria-label={`${g.shop.name} items and totals`}
+                    className="cart-shop-panel scroll-mt-48 border border-border bg-card"
+                  >
+                    <header className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3">
+                      <ShopInitials shop={g.shop} className="size-9 text-sm" />
+                      <Link
+                        to="/shop/$slug"
+                        params={{ slug: g.shop.slug }}
+                        className="font-display text-lg hover:underline"
+                      >
+                        {g.shop.name}
+                      </Link>
+                      <span className="label-stamp ml-auto text-muted-foreground">
+                        {fulfilmentLabel[g.fulfilment]}
+                      </span>
+                    </header>
+                    {!g.shop.isOpen && (
+                      <p className="bg-warning/10 px-4 py-2 text-sm">
+                        Closed now: remove these items or wait until the shop reopens to check out.
+                        Hours: {g.shop.hours}.
+                      </p>
+                    )}
+                    <ul className="divide-y divide-border">
+                      {g.items.map(({ product, variantId, variantLabel, unitPrice, qty }) => (
+                        <li
+                          key={`${product.id}-${variantId ?? "base"}`}
+                          className="cart-line-item flex flex-wrap gap-3 p-4 sm:flex-nowrap"
+                        >
+                          <ProductImage
+                            src={product.image}
+                            alt={product.name}
+                            width={160}
+                            className="size-20 shrink-0 rounded-sm"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="line-clamp-2 font-medium">{product.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {variantLabel ?? product.unit} · {inr(unitPrice)} each
+                            </p>
+                            <div className="mt-3 flex flex-wrap items-center gap-3">
+                              <div className="w-28">
+                                <AddToBag product={product} variantId={variantId} />
+                              </div>
+                              <UiAttributes>
+                                <button
+                                  onClick={() => remove(product.id, variantId)}
+                                  className="inline-flex min-h-11 items-center gap-1 px-2 text-sm text-muted-foreground hover:text-destructive"
+                                  aria-label={`Remove ${product.name}`}
+                                >
+                                  <Trash2 className="size-4" />
+                                  <UiText>{"Remove"}</UiText>
+                                </button>
+                              </UiAttributes>
+                            </div>
+                          </div>
+                          <p className="font-semibold tabular-nums">{inr(unitPrice * qty)}</p>
+                        </li>
+                      ))}
+                    </ul>
+                    <ShopCheckoutDetails group={g} />
+                    <footer className="flex flex-wrap justify-between gap-y-2 border-t border-dashed border-border px-4 py-3 text-sm text-muted-foreground">
+                      <span>
+                        {g.fulfilment === "platform_delivery" && g.itemsTotal < freeAbove
+                          ? `Add ${inr(freeAbove - g.itemsTotal)} more for free rider delivery`
+                          : "Final availability and charges are confirmed at checkout."}
+                      </span>
+                    </footer>
+                  </section>
+                </UiAttributes>
               ))}
             </div>
             <aside className="lg:col-span-4">
@@ -231,13 +244,15 @@ function CartPage() {
               <p className="label-stamp text-muted-foreground">Estimated total</p>
               <p className="font-semibold tabular-nums">{inr(total)}</p>
               <a href="#main" className="text-xs text-primary underline">
-                {groups.length} shop{groups.length === 1 ? "" : "s"} · Review totals
+                {groups.length} shop<UiText>{groups.length === 1 ? "" : "s"}</UiText> · Review
+                totals
               </a>
             </div>
             {canCheckout ? (
               <Button asChild variant="citrus">
                 <Link to="/checkout">
-                  Checkout <ArrowRight />
+                  <UiText>{"Checkout "}</UiText>
+                  <ArrowRight />
                 </Link>
               </Button>
             ) : (

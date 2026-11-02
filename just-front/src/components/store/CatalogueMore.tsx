@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import { Button } from "@/components/ui/button";
 export function CatalogueMore({
   hasMore,
@@ -17,7 +18,7 @@ export function CatalogueMore({
     <div className="my-6 space-y-3">
       {error && (
         <p role="alert" className="text-sm">
-          Could not load more {label}. Items already shown are kept.
+          Could not load more <UiText>{label}</UiText>. Items already shown are kept.
         </p>
       )}
       <Button variant="outline" disabled={busy} onClick={onMore}>

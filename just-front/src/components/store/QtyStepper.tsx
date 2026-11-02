@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { Minus, Plus } from "lucide-react";
 import { useCart } from "@/stores/cart";
 import { cn } from "@/lib/utils";
@@ -24,7 +25,9 @@ export function AddToBag({
   if (disabled) {
     return (
       <Button variant="outline" disabled size={size} className={cn("w-full", className)}>
-        {product.variants?.length && !variant ? "Select an option" : "Out of stock"}
+        <UiText>
+          {product.variants?.length && !variant ? "Select an option" : "Out of stock"}
+        </UiText>
       </Button>
     );
   }
@@ -39,38 +42,45 @@ export function AddToBag({
         )}
         onClick={() => add(product.id, variantId)}
       >
-        Add <Plus />
+        <UiText>{"Add "}</UiText>
+        <Plus />
       </Button>
     );
   }
   return (
-    <div
-      className={cn(
-        "flex w-full items-center justify-between rounded-md bg-primary text-primary-foreground",
-        size === "lg" ? "h-12" : "h-11",
-        className,
-      )}
-      role="group"
-      aria-label={`Quantity of ${product.name}${variant ? `, ${variant.label}` : ""}`}
-    >
-      <button
-        className="flex h-full w-11 items-center justify-center rounded-l-md hover:bg-foreground/15"
-        onClick={() => setQty(product.id, qty - 1, variantId)}
-        aria-label="Decrease quantity"
+    <UiAttributes>
+      <div
+        className={cn(
+          "flex w-full items-center justify-between rounded-md bg-primary text-primary-foreground",
+          size === "lg" ? "h-12" : "h-11",
+          className,
+        )}
+        role="group"
+        aria-label={`Quantity of ${product.name}${variant ? `, ${variant.label}` : ""}`}
       >
-        <Minus className="size-4" />
-      </button>
-      <span className="font-mono text-sm tabular-nums" aria-live="polite">
-        {qty}
-      </span>
-      <button
-        className="flex h-full w-11 items-center justify-center rounded-r-md hover:bg-foreground/15 disabled:opacity-40"
-        disabled={qty >= Math.min(stock, 999)}
-        onClick={() => setQty(product.id, qty + 1, variantId)}
-        aria-label="Increase quantity"
-      >
-        <Plus className="size-4" />
-      </button>
-    </div>
+        <UiAttributes>
+          <button
+            className="flex h-full w-11 items-center justify-center rounded-l-md hover:bg-foreground/15"
+            onClick={() => setQty(product.id, qty - 1, variantId)}
+            aria-label="Decrease quantity"
+          >
+            <Minus className="size-4" />
+          </button>
+        </UiAttributes>
+        <span className="font-mono text-sm tabular-nums" aria-live="polite">
+          {qty}
+        </span>
+        <UiAttributes>
+          <button
+            className="flex h-full w-11 items-center justify-center rounded-r-md hover:bg-foreground/15 disabled:opacity-40"
+            disabled={qty >= Math.min(stock, 999)}
+            onClick={() => setQty(product.id, qty + 1, variantId)}
+            aria-label="Increase quantity"
+          >
+            <Plus className="size-4" />
+          </button>
+        </UiAttributes>
+      </div>
+    </UiAttributes>
   );
 }

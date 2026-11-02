@@ -1,3 +1,4 @@
+import { UiAttributes } from "@/lib/i18n/Language";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { imageUrl } from "@/lib/image";
@@ -29,23 +30,25 @@ export function Logo({
   inverse?: boolean;
 }) {
   return (
-    <Link
-      to={to}
-      className={cn("brand-logo flex items-center gap-2 shrink-0", className)}
-      aria-label="Just Pack It home"
-    >
-      <img
-        src={imageUrl(`/brand/just-pack-it-logo${inverse ? "-inverse" : ""}-v1.webp`)}
-        width={1200}
-        height={320}
-        alt=""
-        className="brand-logo-image"
-      />
-      {suffix && (
-        <span className="label-stamp rounded-sm border border-current/30 px-1.5 py-0.5 opacity-80">
-          {suffix}
-        </span>
-      )}
-    </Link>
+    <UiAttributes>
+      <Link
+        to={to}
+        className={cn("brand-logo flex items-center gap-2 shrink-0", className)}
+        aria-label="Just Pack It home"
+      >
+        <img
+          src={imageUrl(`/brand/just-pack-it-logo${inverse ? "-inverse" : ""}-v1.webp`)}
+          width={1200}
+          height={320}
+          alt=""
+          className="brand-logo-image"
+        />
+        {suffix && (
+          <span className="label-stamp rounded-sm border border-current/30 px-1.5 py-0.5 opacity-80">
+            {suffix}
+          </span>
+        )}
+      </Link>
+    </UiAttributes>
   );
 }

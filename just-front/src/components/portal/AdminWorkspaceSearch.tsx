@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Search, ArrowUpRight } from "lucide-react";
@@ -19,28 +20,31 @@ export function AdminWorkspaceSearch({ items }: { items: NavItem[] }) {
       <label className="sr-only" htmlFor="admin-workspace-search">
         Search admin workspaces
       </label>
-      <input
-        id="admin-workspace-search"
-        type="search"
-        autoComplete="off"
-        placeholder="Find an admin workspace…"
-        value={q}
-        onFocus={() => setFocused(true)}
-        onChange={(e) => setQ(e.target.value)}
-        onKeyDown={(e) => {
-          if (q.trim() && matches.length && (e.key === "Enter" || e.key === "ArrowDown")) {
-            e.preventDefault();
-            const first = root.current?.querySelector<HTMLAnchorElement>(".admin-search-results a");
-            if (e.key === "Enter") first?.click();
-            else first?.focus();
-          }
-          if (e.key === "Escape") {
-            setQ("");
-            setFocused(false);
-          }
-        }}
-        aria-describedby="admin-search-hint"
-      />
+      <UiAttributes>
+        <input
+          id="admin-workspace-search"
+          type="search"
+          autoComplete="off"
+          placeholder="Find an admin workspace…"
+          value={q}
+          onFocus={() => setFocused(true)}
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => {
+            if (q.trim() && matches.length && (e.key === "Enter" || e.key === "ArrowDown")) {
+              e.preventDefault();
+              const first =
+                root.current?.querySelector<HTMLAnchorElement>(".admin-search-results a");
+              if (e.key === "Enter") first?.click();
+              else first?.focus();
+            }
+            if (e.key === "Escape") {
+              setQ("");
+              setFocused(false);
+            }
+          }}
+          aria-describedby="admin-search-hint"
+        />
+      </UiAttributes>
       <span id="admin-search-hint" className="sr-only">
         Search navigation sections. Record search is available within each workspace.
       </span>
@@ -58,7 +62,7 @@ export function AdminWorkspaceSearch({ items }: { items: NavItem[] }) {
                       setFocused(false);
                     }}
                   >
-                    {i.label}
+                    <UiText>{i.label}</UiText>
                     <ArrowUpRight size={15} aria-hidden="true" />
                   </Link>
                 </li>

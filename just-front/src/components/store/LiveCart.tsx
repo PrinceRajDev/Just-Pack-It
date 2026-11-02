@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useCart, cartLineKey } from "@/stores/cart";
@@ -29,33 +30,41 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
   });
   return (
     <StoreLayout>
-      <PageTitle title={checkout ? "Review your order" : "Your bag"} eyebrow="Shop by shop">
-        <p className="mt-3 text-sm text-muted-foreground">
-          Your items, delivery address and payment, all in one place.
-        </p>
-      </PageTitle>
+      <UiAttributes>
+        <PageTitle title={checkout ? "Review your order" : "Your bag"} eyebrow="Shop by shop">
+          <p className="mt-3 text-sm text-muted-foreground">
+            <UiText>{"Your items, delivery address and payment, all in one place."}</UiText>
+          </p>
+        </PageTitle>
+      </UiAttributes>
       <AreaNotice />
       <div className="mx-auto max-w-7xl space-y-5 px-4 pb-16">
         {!lines.length ? (
-          <EmptyState
-            title="Your bag is empty"
-            body="Choose a category, open a shop and add its products."
-            action={
-              <Button asChild>
-                <Link to="/categories">Explore categories</Link>
-              </Button>
-            }
-          />
+          <UiAttributes>
+            <EmptyState
+              title="Your bag is empty"
+              body="Choose a category, open a shop and add its products."
+              action={
+                <Button asChild>
+                  <Link to="/categories">
+                    <UiText>{"Explore categories"}</UiText>
+                  </Link>
+                </Button>
+              }
+            />
+          </UiAttributes>
         ) : !area ? (
           <p role="status">Choose your area to check the items in your bag.</p>
         ) : quote.isPending ? (
           <p role="status">Checking current prices and stock…</p>
         ) : quote.error ? (
           <>
-            <ErrorState
-              message="Your bag could not be checked. Its contents have been kept."
-              onRetry={() => void quote.refetch()}
-            />
+            <UiAttributes>
+              <ErrorState
+                message="Your bag could not be checked. Its contents have been kept."
+                onRetry={() => void quote.refetch()}
+              />
+            </UiAttributes>
             <ul className="space-y-2">
               {lines.map((line) => (
                 <li
@@ -67,7 +76,7 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
                     variant="outline"
                     onClick={() => cart.remove(line.productId, line.variantId)}
                   >
-                    Remove saved item
+                    <UiText>{"Remove saved item"}</UiText>
                   </Button>
                 </li>
               ))}
@@ -82,14 +91,15 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
                   {new Date(quote.data.checkedAt).toLocaleTimeString("en-IN", {
                     timeZone: "Asia/Kolkata",
                   })}{" "}
-                  · India time{quote.isFetching ? " · Refreshing…" : ""}
+                  <UiText>{"· India time"}</UiText>
+                  <UiText>{quote.isFetching ? " · Refreshing…" : ""}</UiText>
                 </p>
                 <Button
                   variant="outline"
                   disabled={quote.isFetching}
                   onClick={() => void quote.refetch()}
                 >
-                  Refresh prices and stock
+                  <UiText>{"Refresh prices and stock"}</UiText>
                 </Button>
               </div>
               {quote.data.shops.map((group) => (
@@ -103,7 +113,7 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
                     </Link>
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Available options:{" "}
+                    <UiText>{"Available options:"}</UiText>{" "}
                     {group.shop.fulfilment.map((method) => fulfilmentLabel[method]).join(", ")}
                   </p>
                   {group.issues.map((issue) => (
@@ -121,18 +131,25 @@ export function LiveCart({ checkout = false }: { checkout?: boolean }) {
                       ))}
                   </ul>
                   <div className="space-y-1 border-t border-border pt-3 text-sm">
-                    <p className="font-medium">Shop item subtotal: {inr(group.itemsSubtotal)}</p>
-                    <p className="text-muted-foreground">
-                      Minimum:{" "}
-                      {group.shop.minimumOrderAmount === undefined
-                        ? "Not supplied"
-                        : inr(group.shop.minimumOrderAmount)}
+                    <p className="font-medium">
+                      <UiText>{"Shop item subtotal: "}</UiText>
+                      {inr(group.itemsSubtotal)}
                     </p>
                     <p className="text-muted-foreground">
-                      Listed delivery fee:{" "}
-                      {group.shop.deliveryFee === undefined
-                        ? "Not supplied"
-                        : inr(group.shop.deliveryFee)}{" "}
+                      <UiText>{"Minimum:"}</UiText>{" "}
+                      <UiText>
+                        {group.shop.minimumOrderAmount === undefined
+                          ? "Not supplied"
+                          : inr(group.shop.minimumOrderAmount)}
+                      </UiText>
+                    </p>
+                    <p className="text-muted-foreground">
+                      <UiText>{"Listed delivery fee:"}</UiText>{" "}
+                      <UiText>
+                        {group.shop.deliveryFee === undefined
+                          ? "Not supplied"
+                          : inr(group.shop.deliveryFee)}
+                      </UiText>{" "}
                       · Confirmed in your bill below
                     </p>
                   </div>
@@ -194,15 +211,15 @@ function ReviewLine({ line }: { line: CartReviewLine }) {
             className="font-medium hover:underline"
           >
             {line.product.name}
-            {variant ? ` · ${variant.label}` : ""}
+            <UiText>{variant ? ` · ${variant.label}` : ""}</UiText>
           </Link>
         ) : (
           <h3 className="font-medium">Unavailable listing</h3>
         )}
         <p className="text-sm text-muted-foreground">
           {line.product?.unit ?? ""}
-          {line.unitPrice !== undefined ? ` · ${inr(line.unitPrice)} each` : ""} · Quantity{" "}
-          {line.qty}
+          <UiText>{line.unitPrice !== undefined ? ` · ${inr(line.unitPrice)} each` : ""}</UiText> ·
+          Quantity {line.qty}
         </p>
         {line.issues.map((issue) => (
           <p key={issue.code} className="text-sm text-destructive">
@@ -216,29 +233,33 @@ function ReviewLine({ line }: { line: CartReviewLine }) {
               variant="outline"
               onClick={() => cart.acceptPrice(line.productId, line.variantId)}
             >
-              Accept current price
+              <UiText>{"Accept current price"}</UiText>
             </Button>
           </p>
         )}
         <div className="flex flex-wrap gap-2">
           {line.availableStock !== undefined && line.availableStock > 0 && (
             <>
-              <Button
-                variant="outline"
-                disabled={line.qty <= 1}
-                onClick={() => cart.setQty(line.productId, line.qty - 1, line.variantId)}
-                aria-label={`Decrease ${line.product?.name ?? "item"} quantity`}
-              >
-                −
-              </Button>
-              <Button
-                variant="outline"
-                disabled={line.qty >= Math.min(line.availableStock, 999)}
-                onClick={() => cart.setQty(line.productId, line.qty + 1, line.variantId)}
-                aria-label={`Increase ${line.product?.name ?? "item"} quantity`}
-              >
-                +
-              </Button>
+              <UiAttributes>
+                <Button
+                  variant="outline"
+                  disabled={line.qty <= 1}
+                  onClick={() => cart.setQty(line.productId, line.qty - 1, line.variantId)}
+                  aria-label={`Decrease ${line.product?.name ?? "item"} quantity`}
+                >
+                  −
+                </Button>
+              </UiAttributes>
+              <UiAttributes>
+                <Button
+                  variant="outline"
+                  disabled={line.qty >= Math.min(line.availableStock, 999)}
+                  onClick={() => cart.setQty(line.productId, line.qty + 1, line.variantId)}
+                  aria-label={`Increase ${line.product?.name ?? "item"} quantity`}
+                >
+                  +
+                </Button>
+              </UiAttributes>
               {line.qty > line.availableStock && (
                 <Button
                   variant="outline"

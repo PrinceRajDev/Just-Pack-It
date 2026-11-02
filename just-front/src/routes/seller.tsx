@@ -1,3 +1,4 @@
+import { UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import {
   LayoutDashboard,
@@ -40,26 +41,30 @@ export const Route = createFileRoute("/seller")({
     <RoleGuard role="seller">
       {isDemoMode ? (
         <SellerProvider>
-          <PortalShell label="Seller" items={nav}>
-            <Outlet />
-          </PortalShell>
+          <UiAttributes>
+            <PortalShell label="Seller" items={nav}>
+              <Outlet />
+            </PortalShell>
+          </UiAttributes>
         </SellerProvider>
       ) : (
-        <PortalShell
-          label="Seller"
-          items={nav.filter((item) =>
-            [
-              "/seller",
-              "/seller/orders",
-              "/seller/products",
-              "/seller/inventory",
-              "/seller/settlements",
-              "/seller/settings",
-            ].includes(item.to),
-          )}
-        >
-          <LiveSeller />
-        </PortalShell>
+        <UiAttributes>
+          <PortalShell
+            label="Seller"
+            items={nav.filter((item) =>
+              [
+                "/seller",
+                "/seller/orders",
+                "/seller/products",
+                "/seller/inventory",
+                "/seller/settlements",
+                "/seller/settings",
+              ].includes(item.to),
+            )}
+          >
+            <LiveSeller />
+          </PortalShell>
+        </UiAttributes>
       )}
     </RoleGuard>
   ),

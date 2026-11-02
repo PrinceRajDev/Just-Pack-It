@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import type { RefundSummary } from "@/domain/refunds";
 import { inr } from "@/lib/image";
 const refundLabel = {
@@ -12,9 +13,11 @@ export function RefundNotice({ refund }: { refund: RefundSummary }) {
   return (
     <p role="status" className="rounded border border-primary/20 bg-secondary/30 p-3 text-sm">
       {refundLabel[refund.state]} · {inr(refund.amount)}.{" "}
-      {refund.state === "processed"
-        ? "Bank credit timing depends on the original payment method; this is not a seller settlement."
-        : "Cancellation does not mean money has been returned. Do not pay this amount again."}
+      <UiText>
+        {refund.state === "processed"
+          ? "Bank credit timing depends on the original payment method; this is not a seller settlement."
+          : "Cancellation does not mean money has been returned. Do not pay this amount again."}
+      </UiText>
     </p>
   );
 }

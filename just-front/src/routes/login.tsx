@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
@@ -67,11 +68,13 @@ function Login() {
         <div className="auth-brand-story">
           <span className="auth-brand-kicker">Your local market, a little closer.</span>
           <p className="font-display text-5xl leading-tight">
-            Your market.
+            <UiText>{"Your market."}</UiText>
             <br />
-            Your people.
+            <UiText>{"Your people."}</UiText>
             <br />
-            <em>One familiar place.</em>
+            <em>
+              <UiText>{"One familiar place."}</UiText>
+            </em>
           </p>
           <NeighbourhoodIllustration className="auth-brand-illustration" />
         </div>
@@ -97,16 +100,20 @@ function Login() {
           </div>
           <p className="auth-eyebrow">
             <span aria-hidden="true" />
-            {registering ? "A new face in the neighbourhood" : "Your neighbourhood is waiting"}
+            <UiText>
+              {registering ? "A new face in the neighbourhood" : "Your neighbourhood is waiting"}
+            </UiText>
           </p>
           <h1 className="mt-8 font-display text-4xl md:mt-0">
-            {session
-              ? "You’re already home."
-              : recovering
-                ? "Let’s get you back in."
-                : registering
-                  ? "Make yourself local."
-                  : "Good to have you back."}
+            <UiText>
+              {session
+                ? "You’re already home."
+                : recovering
+                  ? "Let’s get you back in."
+                  : registering
+                    ? "Make yourself local."
+                    : "Good to have you back."}
+            </UiText>
           </h1>
           {!ready ? (
             <p role="status" className="mt-6">
@@ -135,7 +142,7 @@ function Login() {
                   }
                 }}
               >
-                {switching ? "Signing out…" : "Use a different account"}
+                <UiText>{switching ? "Signing out…" : "Use a different account"}</UiText>
               </Button>
             </div>
           ) : !isDemoMode ? (
@@ -163,15 +170,19 @@ function Login() {
               noValidate
             >
               <div>
-                <Label htmlFor="phone">Mobile number</Label>
-                <Input
-                  id="phone"
-                  inputMode="numeric"
-                  placeholder="98XXXXXXXX"
-                  className="mt-1 h-11"
-                  aria-invalid={!!form.formState.errors.phone}
-                  {...form.register("phone")}
-                />
+                <Label htmlFor="phone">
+                  <UiText>{"Mobile number"}</UiText>
+                </Label>
+                <UiAttributes>
+                  <Input
+                    id="phone"
+                    inputMode="numeric"
+                    placeholder="98XXXXXXXX"
+                    className="mt-1 h-11"
+                    aria-invalid={!!form.formState.errors.phone}
+                    {...form.register("phone")}
+                  />
+                </UiAttributes>
                 {form.formState.errors.phone && (
                   <p className="mt-1 text-sm text-destructive">
                     {form.formState.errors.phone.message}
@@ -180,15 +191,17 @@ function Login() {
               </div>
               <div>
                 <Label htmlFor="otp">One-time code</Label>
-                <Input
-                  id="otp"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="6-digit code"
-                  className="mt-1 h-11"
-                  aria-invalid={!!form.formState.errors.otp}
-                  {...form.register("otp")}
-                />
+                <UiAttributes>
+                  <Input
+                    id="otp"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="6-digit code"
+                    className="mt-1 h-11"
+                    aria-invalid={!!form.formState.errors.otp}
+                    {...form.register("otp")}
+                  />
+                </UiAttributes>
                 {form.formState.errors.otp && (
                   <p className="mt-1 text-sm text-destructive">
                     {form.formState.errors.otp.message}
@@ -206,7 +219,8 @@ function Login() {
                 className="w-full"
                 disabled={form.formState.isSubmitting}
               >
-                {form.formState.isSubmitting && <Loader2 className="animate-spin" />} Continue
+                {form.formState.isSubmitting && <Loader2 className="animate-spin" />}
+                <UiText>{"Continue"}</UiText>
               </Button>
             </form>
           )}
@@ -228,8 +242,12 @@ function Login() {
                       className="flex h-full w-full flex-col items-start gap-1 border border-border bg-card p-3 text-left hover:border-primary"
                     >
                       <Icon className="size-5 text-primary" />
-                      <span className="font-semibold">{label}</span>
-                      <span className="text-xs text-muted-foreground">{body}</span>
+                      <span className="font-semibold">
+                        <UiText>{label}</UiText>
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        <UiText>{body}</UiText>
+                      </span>
                     </button>
                   </li>
                 ))}
@@ -239,15 +257,17 @@ function Login() {
           <div className="mt-6 flex items-center justify-center gap-3 text-sm text-muted-foreground">
             <p>
               Developed by{" "}
-              <a
-                href="https://prince-newportfolio.vercel.app/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-sm font-semibold text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
-                aria-label="Prince’s portfolio (opens in a new tab)"
-              >
-                Prince
-              </a>
+              <UiAttributes>
+                <a
+                  href="https://prince-newportfolio.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-sm font-semibold text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+                  aria-label="Prince’s portfolio (opens in a new tab)"
+                >
+                  Prince
+                </a>
+              </UiAttributes>
             </p>
             <img
               src={imageUrl("/brand/prince-developer.jpg")}

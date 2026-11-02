@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { CatalogueMore } from "@/components/store/CatalogueMore";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
@@ -51,11 +52,16 @@ function Home() {
       <div className="marketplace-home">
         <section className="hero-market overflow-hidden" aria-labelledby="market-hero-title">
           <div className="hero-market-copy flex flex-col justify-center">
-            <p className="eyebrow text-primary">Local shops. Real people.</p>
+            <p className="eyebrow text-primary">
+              <UiText>{"Local shops. Real people."}</UiText>
+            </p>
             <h1 id="market-hero-title" className="mt-3 font-display font-medium leading-[0.95]">
-              Your market,
+              <UiText>{"Your market,"}</UiText>
               <br />
-              now <em className="hero-script text-primary">at your door.</em>
+              <UiText>{"now "}</UiText>
+              <em className="hero-script text-primary">
+                <UiText>{"at your door."}</UiText>
+              </em>
             </h1>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-foreground/85 md:text-lg">
               Fresh groceries, daily essentials and everything from your neighbourhood shops: packed
@@ -67,12 +73,15 @@ function Home() {
                 hash="shops-h"
                 className="inline-flex min-h-11 items-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:-translate-y-0.5 hover:bg-primary/90"
               >
-                Explore shops <ArrowRight className="size-4" aria-hidden />
+                <UiText>{"Explore shops "}</UiText>
+                <ArrowRight className="size-4" aria-hidden />
               </Link>
               <span className="max-w-52 border-l-2 border-citrus pl-3 text-caption text-muted-foreground">
-                {area
-                  ? `Browsing the ${area.name} pilot area.`
-                  : "Choose an area to see local shops."}
+                <UiText>
+                  {area
+                    ? `Browsing the ${area.name} pilot area.`
+                    : "Choose an area to see local shops."}
+                </UiText>
               </span>
             </div>
           </div>
@@ -108,41 +117,46 @@ function Home() {
               {categories.length} neighbourhood lanes
             </span>
           </div>
-          <ul className="category-ribbon no-scrollbar" aria-label="Marketplace categories">
-            {categories.map((category, index) => (
-              <li key={category.slug}>
-                <Link
-                  to="/category/$slug"
-                  params={{ slug: category.slug }}
-                  className="category-tile group"
-                >
-                  <CategoryArtwork
-                    category={category}
-                    className={`category-tile-image category-visual-${index}`}
-                    width={240}
-                  />
-                  <span className="category-tile-name">{category.name}</span>
-                  <ArrowUpRight className="category-tile-arrow size-4" aria-hidden />
+          <UiAttributes>
+            <ul className="category-ribbon no-scrollbar" aria-label="Marketplace categories">
+              {categories.map((category, index) => (
+                <li key={category.slug}>
+                  <Link
+                    to="/category/$slug"
+                    params={{ slug: category.slug }}
+                    className="category-tile group"
+                  >
+                    <CategoryArtwork
+                      category={category}
+                      className={`category-tile-image category-visual-${index}`}
+                      width={240}
+                    />
+                    <span className="category-tile-name">{category.name}</span>
+                    <ArrowUpRight className="category-tile-arrow size-4" aria-hidden />
+                  </Link>
+                </li>
+              ))}
+              <li>
+                <Link to="/categories" className="category-tile category-tile-more">
+                  <Grid2X2 className="size-7" aria-hidden />
+                  <span className="category-tile-name">
+                    <UiText>{"More categories"}</UiText>
+                  </span>
                 </Link>
               </li>
-            ))}
-            <li>
-              <Link to="/categories" className="category-tile category-tile-more">
-                <Grid2X2 className="size-7" aria-hidden />
-                <span className="category-tile-name">More categories</span>
-              </Link>
-            </li>
-          </ul>
+            </ul>
+          </UiAttributes>
         </section>
 
         <section className="market-section home-shops" aria-labelledby="shops-h">
           <div className="section-heading">
             <div>
               <h2 id="shops-h" className="font-display text-3xl md:text-4xl">
-                {area ? `Shops in ${area.name}` : "Your neighbourhood shops"}
+                <UiText>{area ? `Shops in ${area.name}` : "Your neighbourhood shops"}</UiText>
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Independent counters. One neighbourhood.{isDemoMode ? " Demo catalogue." : ""}
+                Independent counters. One neighbourhood.
+                <UiText>{isDemoMode ? " Demo catalogue." : ""}</UiText>
               </p>
             </div>
             <Link to="/search" className="market-link">
@@ -159,9 +173,11 @@ function Home() {
             )}
             {!shops.length && !shopPages.isPending && !shopPages.isError && (
               <li className="rounded-xl border border-border bg-card p-6 text-sm">
-                {area
-                  ? "No shops are available in this area yet. Try another available area."
-                  : "Choose your area above to see shops and their products."}
+                <UiText>
+                  {area
+                    ? "No shops are available in this area yet. Try another available area."
+                    : "Choose your area above to see shops and their products."}
+                </UiText>
               </li>
             )}
             {shops.map((shop, index) => {
@@ -223,13 +239,15 @@ function Home() {
             })}
           </ul>
           {area && (
-            <CatalogueMore
-              label="shops"
-              hasMore={!!shopPages.hasNextPage}
-              busy={shopPages.isFetching}
-              error={shopPages.isFetchNextPageError}
-              onMore={() => void shopPages.fetchNextPage()}
-            />
+            <UiAttributes>
+              <CatalogueMore
+                label="shops"
+                hasMore={!!shopPages.hasNextPage}
+                busy={shopPages.isFetching}
+                error={shopPages.isFetchNextPageError}
+                onMore={() => void shopPages.fetchNextPage()}
+              />
+            </UiAttributes>
           )}
           {area && previews.isError && (
             <p role="alert">
@@ -240,31 +258,43 @@ function Home() {
         </section>
 
         {isDemoMode && (
-          <section className="market-section" aria-label="Explore marketplace collections">
-            <div className="promo-grid">
-              <PromoCard
-                title="Fresher every day"
-                copy="Seasonal fruits and vegetables from local shops."
-                category="fruits-vegetables"
-                image={categories.find((category) => category.slug === "fruits-vegetables")?.image}
-                tone="produce"
-              />
-              <PromoCard
-                title="Hot & tasty from nearby kitchens"
-                copy="Explore prepared meals and snacks from local food businesses."
-                category="fast-food-snacks"
-                image={categories.find((category) => category.slug === "fast-food-snacks")?.image}
-                tone="food"
-              />
-              <PromoCard
-                title="Everything for your daily needs"
-                copy="Discover everyday products from neighbourhood shops."
-                category="grocery-kirana"
-                image={categories.find((category) => category.slug === "grocery-kirana")?.image}
-                tone="daily"
-              />
-            </div>
-          </section>
+          <UiAttributes>
+            <section className="market-section" aria-label="Explore marketplace collections">
+              <div className="promo-grid">
+                <UiAttributes>
+                  <PromoCard
+                    title="Fresher every day"
+                    copy="Seasonal fruits and vegetables from local shops."
+                    category="fruits-vegetables"
+                    image={
+                      categories.find((category) => category.slug === "fruits-vegetables")?.image
+                    }
+                    tone="produce"
+                  />
+                </UiAttributes>
+                <UiAttributes>
+                  <PromoCard
+                    title="Hot & tasty from nearby kitchens"
+                    copy="Explore prepared meals and snacks from local food businesses."
+                    category="fast-food-snacks"
+                    image={
+                      categories.find((category) => category.slug === "fast-food-snacks")?.image
+                    }
+                    tone="food"
+                  />
+                </UiAttributes>
+                <UiAttributes>
+                  <PromoCard
+                    title="Everything for your daily needs"
+                    copy="Discover everyday products from neighbourhood shops."
+                    category="grocery-kirana"
+                    image={categories.find((category) => category.slug === "grocery-kirana")?.image}
+                    tone="daily"
+                  />
+                </UiAttributes>
+              </div>
+            </section>
+          </UiAttributes>
         )}
 
         {area && products.length > 0 && (
@@ -274,7 +304,7 @@ function Home() {
                 <div>
                   <p className="eyebrow text-success">Picked for today</p>
                   <h2 id="fresh-h" className="font-display text-3xl md:text-4xl">
-                    Fresh picks for today
+                    <UiText>{"Fresh picks for today"}</UiText>
                   </h2>
                 </div>
                 <Link
@@ -286,7 +316,7 @@ function Home() {
                   }}
                   className="market-link"
                 >
-                  {isDemoMode ? "See produce" : "Explore an aisle"}{" "}
+                  <UiText>{isDemoMode ? "See produce" : "Explore an aisle"}</UiText>{" "}
                   <ArrowRight className="size-4" aria-hidden />
                 </Link>
               </div>
@@ -305,7 +335,9 @@ function Home() {
               <div className="pantry-layout">
                 <div className="essentials-panel">
                   <p className="eyebrow text-primary">Keep the basics close</p>
-                  <h2 className="mt-2 font-display text-3xl">Daily essentials</h2>
+                  <h2 className="mt-2 font-display text-3xl">
+                    <UiText>{"Daily essentials"}</UiText>
+                  </h2>
                   <p className="mt-1 text-sm text-muted-foreground">The things you run out of.</p>
                   <ul className="essentials-list">
                     {essentials.map((p) => (
@@ -318,12 +350,14 @@ function Home() {
                 <div className="favourites-panel">
                   <p className="eyebrow text-primary">Popular in this catalogue</p>
                   <h2 id="best-h" className="mt-2 font-display text-3xl">
-                    Neighbourhood favourites
+                    <UiText>{"Neighbourhood favourites"}</UiText>
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {isDemoMode
-                      ? "A few favourites from our demo shop catalogue."
-                      : "Selections from shops in your chosen area."}
+                    <UiText>
+                      {isDemoMode
+                        ? "A few favourites from our demo shop catalogue."
+                        : "Selections from shops in your chosen area."}
+                    </UiText>
                   </p>
                   <div className="favourites-grid">
                     {bestsellers.map((p) => (
@@ -390,7 +424,8 @@ function Home() {
                 to="/seller"
                 className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
               >
-                Own a shop? Sell with us <ArrowRight className="size-4" />
+                <UiText>{"Own a shop? Sell with us "}</UiText>
+                <ArrowRight className="size-4" />
               </Link>
             </div>
           </div>
@@ -420,7 +455,9 @@ function PromoCard({
       className={`promo-card promo-card-${tone} group`}
     >
       <div className="relative z-10 max-w-56">
-        <h2 className="font-display text-3xl leading-[0.95]">{title}</h2>
+        <h2 className="font-display text-3xl leading-[0.95]">
+          <UiText>{title}</UiText>
+        </h2>
         <p className="mt-3 text-sm leading-snug">{copy}</p>
         <span className="mt-6 inline-flex size-10 items-center justify-center rounded-full bg-card text-foreground transition group-hover:translate-x-1">
           <ArrowRight className="size-4" aria-hidden />

@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { SupportConversation } from "@/components/common/SupportConversation";
 import { Input } from "@/components/ui/input";
 import { Link } from "@tanstack/react-router";
@@ -72,11 +73,16 @@ export function LiveSupport() {
     <div className="admin-support">
       <header className="support-hero">
         <div>
-          <nav aria-label="Breadcrumb">
-            OPERATIONS <ChevronRight size={13} />
-            <b>ORDER SUPPORT</b>
-          </nav>
-          <h1>Order support</h1>
+          <UiAttributes>
+            <nav aria-label="Breadcrumb">
+              <UiText>{"OPERATIONS "}</UiText>
+              <ChevronRight size={13} />
+              <b>ORDER SUPPORT</b>
+            </nav>
+          </UiAttributes>
+          <h1>
+            <UiText>{"Order support"}</UiText>
+          </h1>
           <p>
             Review buyer issues by shop. Resolve customer concerns and keep marketplace operations
             running smoothly. Resolution does not issue refunds or change orders.
@@ -95,25 +101,33 @@ export function LiveSupport() {
           </aside>
         </div>
       </header>
-      <section className="support-metrics" aria-label="Loaded ticket statistics">
-        {cards.map(({ title, icon: Icon, value, note }) => (
-          <article key={title}>
-            <Icon aria-hidden="true" />
-            <div>
-              <p>{title}</p>
-              {q.isPending ? (
-                <Skeleton className="my-2 h-8 w-12" />
-              ) : (
-                <strong>{q.isError ? "N/A" : value}</strong>
-              )}
-              <small>{q.isError ? "Count unavailable" : note}</small>
-            </div>
-          </article>
-        ))}
-      </section>
+      <UiAttributes>
+        <section className="support-metrics" aria-label="Loaded ticket statistics">
+          {cards.map(({ title, icon: Icon, value, note }) => (
+            <article key={title}>
+              <Icon aria-hidden="true" />
+              <div>
+                <p>
+                  <UiText>{title}</UiText>
+                </p>
+                {q.isPending ? (
+                  <Skeleton className="my-2 h-8 w-12" />
+                ) : (
+                  <strong>
+                    <UiText>{q.isError ? "N/A" : value}</UiText>
+                  </strong>
+                )}
+                <small>
+                  <UiText>{q.isError ? "Count unavailable" : note}</UiText>
+                </small>
+              </div>
+            </article>
+          ))}
+        </section>
+      </UiAttributes>
       <p className="support-count-note">
         Counts cover loaded results for the current search and status, not all marketplace tickets.
-        {q.hasNextPage ? " More matching tickets are available below." : ""}
+        <UiText>{q.hasNextPage ? " More matching tickets are available below." : ""}</UiText>
       </p>
       <form
         className="support-toolbar"
@@ -124,27 +138,41 @@ export function LiveSupport() {
       >
         <label>
           Search support tickets
-          <Input
-            maxLength={100}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Shop name, order ID, issue or conversation…"
-          />
+          <UiAttributes>
+            <Input
+              maxLength={100}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Shop name, order ID, issue or conversation…"
+            />
+          </UiAttributes>
         </label>
         <label>
-          Ticket status
-          <select
-            aria-label="Ticket status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as typeof status)}
-          >
-            <option value="all">All tickets</option>
-            <option value="open">Open</option>
-            <option value="in_progress">In progress</option>
-            <option value="resolved">Resolved</option>
-          </select>
+          <UiText>{"Ticket status"}</UiText>
+          <UiAttributes>
+            <select
+              aria-label="Ticket status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value as typeof status)}
+            >
+              <option value="all">
+                <UiText>{"All tickets"}</UiText>
+              </option>
+              <option value="open">
+                <UiText>{"Open"}</UiText>
+              </option>
+              <option value="in_progress">
+                <UiText>{"In progress"}</UiText>
+              </option>
+              <option value="resolved">
+                <UiText>{"Resolved"}</UiText>
+              </option>
+            </select>
+          </UiAttributes>
         </label>
-        <Button type="submit">Search tickets</Button>
+        <Button type="submit">
+          <UiText>{"Search tickets"}</UiText>
+        </Button>
         <Button
           type="button"
           variant="outline"
@@ -154,7 +182,7 @@ export function LiveSupport() {
             setStatus("all");
           }}
         >
-          Clear
+          <UiText>{"Clear"}</UiText>
         </Button>
         <Button
           type="button"
@@ -163,114 +191,133 @@ export function LiveSupport() {
           onClick={() => void q.refetch()}
         >
           <RefreshCw size={16} />
-          Refresh tickets
+          <UiText>{"Refresh tickets"}</UiText>
         </Button>
       </form>
-      <section className="support-results" aria-label="Support ticket results">
-        {q.isPending ? (
-          <div role="status" aria-label="Loading support tickets">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="my-3 h-20 w-full" />
-            ))}
-          </div>
-        ) : q.isError ? (
-          <div role="alert" className="support-error">
-            <Headphones />
-            <h2>Could not load tickets</h2>
-            <p>{q.error.message} Your filters are kept. Refresh before updating a ticket.</p>
-            <Button variant="outline" onClick={() => void q.refetch()}>
-              Retry tickets
-            </Button>
-          </div>
-        ) : (
-          <>
-            {!rows.length ? (
-              <div className="support-empty">
-                <div className="support-empty-art" aria-hidden="true">
-                  <Headphones />
-                  <MessageCircle />
-                </div>
-                <h2>
-                  {search || status !== "all"
-                    ? "No matching support tickets"
-                    : "No support tickets"}
-                </h2>
-                <p>
-                  {status !== "all"
-                    ? `No ${status.replaceAll("_", " ")} tickets match this view. `
-                    : "There are no buyer issues in this view. "}
-                  {search || status !== "all"
-                    ? "Try another search or clear your filters."
-                    : "New tickets will appear here when buyers need support."}
-                </p>
-                <Button variant="outline" disabled={q.isFetching} onClick={() => void q.refetch()}>
-                  <RefreshCw size={16} />
-                  Refresh tickets
-                </Button>
+      <UiAttributes>
+        <section className="support-results" aria-label="Support ticket results">
+          {q.isPending ? (
+            <UiAttributes>
+              <div role="status" aria-label="Loading support tickets">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="my-3 h-20 w-full" />
+                ))}
               </div>
-            ) : (
-              <div className="support-table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      {["Shop / ticket", "Order", "Issue", "Created (IST)", "Status", "Action"].map(
-                        (h) => (
+            </UiAttributes>
+          ) : q.isError ? (
+            <div role="alert" className="support-error">
+              <Headphones />
+              <h2>Could not load tickets</h2>
+              <p>{q.error.message} Your filters are kept. Refresh before updating a ticket.</p>
+              <Button variant="outline" onClick={() => void q.refetch()}>
+                Retry tickets
+              </Button>
+            </div>
+          ) : (
+            <>
+              {!rows.length ? (
+                <div className="support-empty">
+                  <div className="support-empty-art" aria-hidden="true">
+                    <Headphones />
+                    <MessageCircle />
+                  </div>
+                  <h2>
+                    <UiText>
+                      {search || status !== "all"
+                        ? "No matching support tickets"
+                        : "No support tickets"}
+                    </UiText>
+                  </h2>
+                  <p>
+                    <UiText>
+                      {status !== "all"
+                        ? `No ${status.replaceAll("_", " ")} tickets match this view. `
+                        : "There are no buyer issues in this view. "}
+                    </UiText>
+                    <UiText>
+                      {search || status !== "all"
+                        ? "Try another search or clear your filters."
+                        : "New tickets will appear here when buyers need support."}
+                    </UiText>
+                  </p>
+                  <Button
+                    variant="outline"
+                    disabled={q.isFetching}
+                    onClick={() => void q.refetch()}
+                  >
+                    <RefreshCw size={16} />
+                    <UiText>{"Refresh tickets"}</UiText>
+                  </Button>
+                </div>
+              ) : (
+                <div className="support-table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        {[
+                          "Shop / ticket",
+                          "Order",
+                          "Issue",
+                          "Created (IST)",
+                          "Status",
+                          "Action",
+                        ].map((h) => (
                           <th scope="col" key={h}>
                             {h}
                           </th>
-                        ),
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((t) => (
-                      <tr key={t.id}>
-                        <td data-label="Shop / ticket">
-                          <b>{t.shopName}</b>
-                          <small>{t.id}</small>
-                        </td>
-                        <td data-label="Order">
-                          <span>{t.orderId}</span>
-                          <small>Part {t.suborderId}</small>
-                        </td>
-                        <td data-label="Issue">
-                          <b>{t.kind.replaceAll("_", " ")}</b>
-                          <p className="support-issue-summary">{t.description}</p>
-                        </td>
-                        <td data-label="Created (IST)">{financeDate(t.createdAt)}</td>
-                        <td data-label="Status">
-                          <span className={`support-status ${t.status}`}>
-                            {statusText[t.status]}
-                          </span>
-                        </td>
-                        <td data-label="Action">
-                          <Button variant="outline" onClick={() => setSelected(t.id)}>
-                            View ticket
-                          </Button>
-                        </td>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            {q.hasNextPage && (
-              <Button
-                variant="outline"
-                disabled={q.isFetching}
-                onClick={() => void q.fetchNextPage()}
-              >
-                Load more tickets
-              </Button>
-            )}
-          </>
-        )}
-        {q.isFetching && !q.isPending && (
-          <p role="status" className="support-refreshing">
-            Refreshing tickets…
-          </p>
-        )}
-      </section>
+                    </thead>
+                    <tbody>
+                      {rows.map((t) => (
+                        <tr key={t.id}>
+                          <td data-label="Shop / ticket">
+                            <b>{t.shopName}</b>
+                            <small>{t.id}</small>
+                          </td>
+                          <td data-label="Order">
+                            <span>{t.orderId}</span>
+                            <small>Part {t.suborderId}</small>
+                          </td>
+                          <td data-label="Issue">
+                            <b>{t.kind.replaceAll("_", " ")}</b>
+                            <p className="support-issue-summary">{t.description}</p>
+                          </td>
+                          <td data-label="Created (IST)">{financeDate(t.createdAt)}</td>
+                          <td data-label="Status">
+                            <span className={`support-status ${t.status}`}>
+                              {statusText[t.status]}
+                            </span>
+                          </td>
+                          <td data-label="Action">
+                            <Button variant="outline" onClick={() => setSelected(t.id)}>
+                              View ticket
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {q.hasNextPage && (
+                <Button
+                  variant="outline"
+                  disabled={q.isFetching}
+                  onClick={() => void q.fetchNextPage()}
+                >
+                  Load more tickets
+                </Button>
+              )}
+            </>
+          )}
+          {q.isFetching && !q.isPending && (
+            <p role="status" className="support-refreshing">
+              Refreshing tickets…
+            </p>
+          )}
+        </section>
+      </UiAttributes>
       <Sheet
         open={selected !== null}
         onOpenChange={(open) => {

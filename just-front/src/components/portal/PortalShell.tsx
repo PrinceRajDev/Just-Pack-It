@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import {
@@ -43,7 +44,7 @@ function NavList({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => v
                 "bg-sidebar-accent text-sidebar-accent-foreground font-medium [&_svg]:text-sidebar-primary",
             }}
           >
-            <i.icon className="size-4" /> {i.label}
+            <i.icon className="size-4" /> <UiText>{i.label}</UiText>
           </Link>
         </li>
       ))}
@@ -73,7 +74,11 @@ export function PortalShell({
     >
       <div className={admin ? "admin-sidebar-brand" : undefined}>
         <Logo inverse to="/" className="text-sidebar-foreground [&_span]:text-sidebar-foreground" />
-        {admin && <p>Admin · Marketplace Operations</p>}
+        {admin && (
+          <p>
+            <UiText>{"Admin · Marketplace Operations"}</UiText>
+          </p>
+        )}
       </div>
       <div className="workspace-role">
         <span>
@@ -84,17 +89,23 @@ export function PortalShell({
           )}
         </span>
         <div>
-          <strong>{label === "Seller" ? "Shop workspace" : "Operations"}</strong>
+          <strong>
+            <UiText>{label === "Seller" ? "Shop workspace" : "Operations"}</UiText>
+          </strong>
           <p>
-            {label === "Seller"
-              ? "Your counter, connected."
-              : "Keep the neighbourhood running smoothly."}
+            <UiText>
+              {label === "Seller"
+                ? "Your counter, connected."
+                : "Keep the neighbourhood running smoothly."}
+            </UiText>
           </p>
         </div>
       </div>
-      <nav className="mt-8 flex-1" aria-label={`${label} navigation`}>
-        <NavList items={items} onNavigate={() => setOpen(false)} />
-      </nav>
+      <UiAttributes>
+        <nav className="mt-8 flex-1" aria-label={`${label} navigation`}>
+          <NavList items={items} onNavigate={() => setOpen(false)} />
+        </nav>
+      </UiAttributes>
       {admin && (
         <div className="admin-sidebar-note">
           <NeighbourhoodIllustration />
@@ -107,7 +118,8 @@ export function PortalShell({
         </div>
       )}
       <Link to="/" className="workspace-market-link">
-        Visit the marketplace <ArrowUpRight className="size-4" aria-hidden />
+        <UiText>{"Visit the marketplace "}</UiText>
+        <ArrowUpRight className="size-4" aria-hidden />
       </Link>
       <div className="border-t border-sidebar-border pt-4 text-sm">
         <p className="truncate font-medium">{session?.name}</p>
@@ -115,7 +127,8 @@ export function PortalShell({
           onClick={signOut}
           className="mt-2 flex items-center gap-2 text-sidebar-foreground/70 hover:text-sidebar-foreground"
         >
-          <LogOut className="size-4" /> Sign out
+          <LogOut className="size-4" />
+          <UiText>{"Sign out"}</UiText>
         </button>
       </div>
     </div>
@@ -138,12 +151,14 @@ export function PortalShell({
           {!admin && (
             <div className="workspace-mobile-nav flex items-center gap-3 border-b border-border px-4 py-3 lg:hidden">
               <Sheet open={open} onOpenChange={setOpen}>
-                <SheetTrigger
-                  className="flex size-10 items-center justify-center rounded-md border border-border"
-                  aria-label="Open menu"
-                >
-                  <Menu className="size-5" />
-                </SheetTrigger>
+                <UiAttributes>
+                  <SheetTrigger
+                    className="flex size-10 items-center justify-center rounded-md border border-border"
+                    aria-label="Open menu"
+                  >
+                    <Menu className="size-5" />
+                  </SheetTrigger>
+                </UiAttributes>
                 <SheetContent side="left" className="w-64 border-0 p-0">
                   <SheetTitle className="sr-only">Navigation</SheetTitle>
                   {side}
@@ -158,9 +173,11 @@ export function PortalShell({
           {admin ? (
             <header className="admin-topbar">
               <Sheet open={open} onOpenChange={setOpen}>
-                <SheetTrigger className="admin-menu-trigger" aria-label="Open admin menu">
-                  <Menu size={21} />
-                </SheetTrigger>
+                <UiAttributes>
+                  <SheetTrigger className="admin-menu-trigger" aria-label="Open admin menu">
+                    <Menu size={21} />
+                  </SheetTrigger>
+                </UiAttributes>
                 <SheetContent
                   side="left"
                   className="admin-menu-drawer w-[min(19rem,90vw)] border-0 p-0"
@@ -182,13 +199,17 @@ export function PortalShell({
                 </span>
                 <span className="admin-account-name">
                   <strong>{session?.name ?? "Administrator"}</strong>
-                  <small>{session?.isDemo ? "Demo administrator" : "Administrator"}</small>
+                  <small>
+                    <UiText>{session?.isDemo ? "Demo administrator" : "Administrator"}</UiText>
+                  </small>
                 </span>
               </div>
             </header>
           ) : (
             <div className="workspace-topbar">
-              <span>{label === "Seller" ? "Seller workspace" : "Operations workspace"}</span>
+              <span>
+                <UiText>{label === "Seller" ? "Seller workspace" : "Operations workspace"}</UiText>
+              </span>
               <span className="flex items-center gap-3">
                 <NotificationBell />
                 <details className="seller-profile-menu">
@@ -197,15 +218,19 @@ export function PortalShell({
                     <ChevronDown size={16} aria-hidden="true" />
                   </summary>
                   <div>
-                    <Link to="/account">My account</Link>
-                    <Link to="/seller/settings">Shop settings</Link>
+                    <Link to="/account">
+                      <UiText>{"My account"}</UiText>
+                    </Link>
+                    <Link to="/seller/settings">
+                      <UiText>{"Shop settings"}</UiText>
+                    </Link>
                     <button onClick={signOut}>
                       <LogOut size={16} aria-hidden="true" />
-                      Sign out
+                      <UiText>{"Sign out"}</UiText>
                     </button>
                   </div>
                 </details>
-                {session?.isDemo ? " · Demo session" : ""}
+                <UiText>{session?.isDemo ? " · Demo session" : ""}</UiText>
               </span>
             </div>
           )}
@@ -229,8 +254,14 @@ export function PortalHeader({
     <div className="portal-page-header mb-8 flex flex-wrap items-end justify-between gap-4">
       <div>
         <p className="workspace-eyebrow">Just Pack It · Workspace</p>
-        <h1 className="font-display text-3xl md:text-4xl">{title}</h1>
-        {sub && <p className="mt-1 text-sm text-muted-foreground">{sub}</p>}
+        <h1 className="font-display text-3xl md:text-4xl">
+          <UiText>{title}</UiText>
+        </h1>
+        {sub && (
+          <p className="mt-1 text-sm text-muted-foreground">
+            <UiText>{sub}</UiText>
+          </p>
+        )}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>
@@ -262,9 +293,15 @@ export function Kpi({
           <Icon size={22} aria-hidden="true" />
         </span>
       )}
-      <p className="label-stamp text-muted-foreground">{label}</p>
+      <p className="label-stamp text-muted-foreground">
+        <UiText>{label}</UiText>
+      </p>
       <p className="mt-1 font-display text-3xl tabular-nums">{value}</p>
-      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      {hint && (
+        <p className="text-xs text-muted-foreground">
+          <UiText>{hint}</UiText>
+        </p>
+      )}
     </div>
   );
 }

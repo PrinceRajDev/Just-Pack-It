@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useIsFetching } from "@tanstack/react-query";
 import {
@@ -156,8 +157,12 @@ export function OperationsDashboard({ preview }: { preview?: OverviewPreview }) 
     <div className="admin-overview">
       <section className="admin-welcome" aria-labelledby="admin-overview-heading">
         <div>
-          <p className="admin-eyebrow">Welcome back{session?.name ? `, ${session.name}` : ""}</p>
-          <h1 id="admin-overview-heading">Marketplace operations</h1>
+          <p className="admin-eyebrow">
+            Welcome back<UiText>{session?.name ? `, ${session.name}` : ""}</UiText>
+          </p>
+          <h1 id="admin-overview-heading">
+            <UiText>{"Marketplace operations"}</UiText>
+          </h1>
           <p>
             Here's what's happening across Just Pack It. Keep an eye on approvals, orders, support
             and more.
@@ -178,14 +183,14 @@ export function OperationsDashboard({ preview }: { preview?: OverviewPreview }) 
       <div className="admin-snapshot-toolbar">
         <span className="admin-snapshot-label">
           <CalendarDays size={18} aria-hidden="true" />
-          {preview ? "Demo snapshot" : "Current snapshot"}
+          <UiText>{preview ? "Demo snapshot" : "Current snapshot"}</UiText>
         </span>
         <p>
           {preview ? (
             "Demo preview · no live timestamp"
           ) : data ? (
             <>
-              Last updated{" "}
+              <UiText>{"Last updated"}</UiText>{" "}
               <time dateTime={data.asOf}>
                 {new Date(data.asOf).toLocaleString("en-IN", {
                   timeZone: "Asia/Kolkata",
@@ -196,7 +201,7 @@ export function OperationsDashboard({ preview }: { preview?: OverviewPreview }) 
                   minute: "2-digit",
                 })}
               </time>{" "}
-              · IST
+              <UiText>{"· IST"}</UiText>
             </>
           ) : (
             "Waiting for operations data"
@@ -214,38 +219,49 @@ export function OperationsDashboard({ preview }: { preview?: OverviewPreview }) 
             }
           >
             <RefreshCw size={16} className={query.isFetching ? "animate-spin" : ""} />
-            {query.isFetching ? "Refreshing…" : "Refresh data"}
+            <UiText>{query.isFetching ? "Refreshing…" : "Refresh data"}</UiText>
           </Button>
         )}
       </div>
-      <section className="admin-metrics" aria-label="Marketplace performance">
-        {metrics.map(({ title, icon: Icon, tone, value }) => (
-          <article key={title} className={`admin-metric tone-${tone}`}>
-            <span className="admin-metric-icon">
-              <Icon size={23} aria-hidden="true" />
-            </span>
-            <div>
-              <h2>{title}</h2>
-              <strong>{value === undefined ? "N/A" : value.toLocaleString("en-IN")}</strong>
-            </div>
-            <p>
-              {value === undefined
-                ? "Reporting unavailable"
-                : preview
-                  ? "From demo records"
-                  : "All registered records"}
-            </p>
-          </article>
-        ))}
-      </section>
+      <UiAttributes>
+        <section className="admin-metrics" aria-label="Marketplace performance">
+          {metrics.map(({ title, icon: Icon, tone, value }) => (
+            <article key={title} className={`admin-metric tone-${tone}`}>
+              <span className="admin-metric-icon">
+                <Icon size={23} aria-hidden="true" />
+              </span>
+              <div>
+                <h2>
+                  <UiText>{title}</UiText>
+                </h2>
+                <strong>
+                  <UiText>{value === undefined ? "N/A" : value.toLocaleString("en-IN")}</UiText>
+                </strong>
+              </div>
+              <p>
+                <UiText>
+                  {value === undefined
+                    ? "Reporting unavailable"
+                    : preview
+                      ? "From demo records"
+                      : "All registered records"}
+                </UiText>
+              </p>
+            </article>
+          ))}
+        </section>
+      </UiAttributes>
       <p className="admin-reporting-note">
-        {preview ? "Demo values only." : "Period totals and comparisons are not available yet."} No
-        estimated trends or revenue are shown.
+        <UiText>
+          {preview ? "Demo values only." : "Period totals and comparisons are not available yet."}
+        </UiText>{" "}
+        No estimated trends or revenue are shown.
       </p>
       {!preview && query.isError && (
         <div role="alert" className="admin-overview-error">
           <p>
-            Could not load operations queues.{data ? " Last successful snapshot is retained." : ""}
+            Could not load operations queues.
+            <UiText>{data ? " Last successful snapshot is retained." : ""}</UiText>
           </p>
           <Button variant="outline" onClick={() => void query.refetch()}>
             Retry operations
@@ -258,29 +274,33 @@ export function OperationsDashboard({ preview }: { preview?: OverviewPreview }) 
         </h2>
         <div className="admin-attention">
           {cards.map(({ title, icon: Icon, tone, count, to, note }) => (
-            <Link
-              key={title}
-              to={to}
-              className={`admin-attention-card tone-${tone}`}
-              aria-label={`${title}: ${count ?? "Unavailable"}. Open workspace`}
-            >
-              <span className="admin-metric-icon">
-                <Icon size={22} aria-hidden="true" />
-              </span>
-              <div>
-                <h3>{title}</h3>
-                <strong className={!preview && query.isPending ? "admin-loading-value" : ""}>
-                  {!preview && query.isPending ? "…" : (count ?? "N/A")}
-                </strong>
-                <p>
-                  {count === undefined && data ? "Count unavailable. " : ""}
-                  {note}
-                </p>
-              </div>
-              <span className="admin-card-arrow">
-                <ArrowRight size={17} aria-hidden="true" />
-              </span>
-            </Link>
+            <UiAttributes key={title}>
+              <Link
+                key={title}
+                to={to}
+                className={`admin-attention-card tone-${tone}`}
+                aria-label={`${title}: ${count ?? "Unavailable"}. Open workspace`}
+              >
+                <span className="admin-metric-icon">
+                  <Icon size={22} aria-hidden="true" />
+                </span>
+                <div>
+                  <h3>
+                    <UiText>{title}</UiText>
+                  </h3>
+                  <strong className={!preview && query.isPending ? "admin-loading-value" : ""}>
+                    <UiText>{!preview && query.isPending ? "…" : (count ?? "N/A")}</UiText>
+                  </strong>
+                  <p>
+                    <UiText>{count === undefined && data ? "Count unavailable. " : ""}</UiText>
+                    {note}
+                  </p>
+                </div>
+                <span className="admin-card-arrow">
+                  <ArrowRight size={17} aria-hidden="true" />
+                </span>
+              </Link>
+            </UiAttributes>
           ))}
         </div>
       </section>
@@ -316,9 +336,11 @@ export function OperationsDashboard({ preview }: { preview?: OverviewPreview }) 
               .map((s) => (
                 <section key={s.title}>
                   <h2>
-                    {s.title} <span>{s.count}</span>
+                    <UiText>{s.title}</UiText> <span>{s.count}</span>
                   </h2>
-                  <p>{s.hint}</p>
+                  <p>
+                    <UiText>{s.hint}</UiText>
+                  </p>
                   {s.rows.length ? (
                     <ul>
                       {s.rows.map((r) => (
@@ -329,9 +351,11 @@ export function OperationsDashboard({ preview }: { preview?: OverviewPreview }) 
                     </ul>
                   ) : (
                     <p>
-                      {s.count
-                        ? "Open the full workspace to review flagged records."
-                        : "No items currently flagged."}
+                      <UiText>
+                        {s.count
+                          ? "Open the full workspace to review flagged records."
+                          : "No items currently flagged."}
+                      </UiText>
                     </p>
                   )}
                   {s.count > s.rows.length && (
@@ -340,7 +364,8 @@ export function OperationsDashboard({ preview }: { preview?: OverviewPreview }) 
                     </p>
                   )}
                   <Link to={s.to} className="admin-small-link">
-                    Open {s.title.toLowerCase()} <ArrowRight size={14} />
+                    <UiText>{"Open "}</UiText>
+                    {s.title.toLowerCase()} <ArrowRight size={14} />
                   </Link>
                 </section>
               ))}
@@ -348,7 +373,7 @@ export function OperationsDashboard({ preview }: { preview?: OverviewPreview }) 
           {preview?.extra?.map((i) => (
             <p key={i.title}>
               <Link to={i.to}>
-                {i.count} {i.title} → Review
+                {i.count} <UiText>{i.title}</UiText> → Review
               </Link>
             </p>
           ))}

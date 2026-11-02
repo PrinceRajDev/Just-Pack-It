@@ -1,3 +1,4 @@
+import { UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { StoreLayout, PageTitle } from "@/components/store/StoreLayout";
@@ -28,7 +29,9 @@ function OrdersPage() {
   if (!isDemoMode) return <LiveOrdersPage />;
   return (
     <StoreLayout>
-      <PageTitle eyebrow="Account" title="Your orders" />
+      <UiAttributes>
+        <PageTitle eyebrow="Account" title="Your orders" />
+      </UiAttributes>
       <div className="mx-auto max-w-4xl px-4">
         <OrdersList />
       </div>

@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { financeDate } from "@/lib/finance-date";
 import { FinanceEmpty } from "./FinancePresentation";
 import { useRef, useState } from "react";
@@ -15,29 +16,37 @@ export function AdminRefunds({ orderId }: { orderId: string }) {
     retry: false,
   });
   return (
-    <section className="space-y-3 border-t pt-4" aria-label="Cancelled suborder refunds">
-      <h3 className="font-semibold">Cancelled suborder refunds</h3>
-      <p className="text-sm text-muted-foreground">
-        Payment-scoped refund requests and confirmed provider records. Requested or pending is not
-        processed or bank-credited.
-      </p>
-      {query.isPending ? (
-        <p role="status">Loading refunds…</p>
-      ) : query.error ? (
-        <div role="alert">
-          <p>{query.error.message}</p>
-          <Button variant="outline" onClick={() => void query.refetch()}>
-            Retry refunds
-          </Button>
-        </div>
-      ) : !query.data.length ? (
-        <FinanceEmpty kind="refunds" title="No refund records found">
-          No refund requests for this payment.
-        </FinanceEmpty>
-      ) : (
-        query.data.map((refund) => <RefundAction key={refund.id} refund={refund} />)
-      )}
-    </section>
+    <UiAttributes>
+      <section className="space-y-3 border-t pt-4" aria-label="Cancelled suborder refunds">
+        <h3 className="font-semibold">
+          <UiText>{"Cancelled suborder refunds"}</UiText>
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Payment-scoped refund requests and confirmed provider records. Requested or pending is not
+          processed or bank-credited.
+        </p>
+        {query.isPending ? (
+          <p role="status">
+            <UiText>{"Loading refunds…"}</UiText>
+          </p>
+        ) : query.error ? (
+          <div role="alert">
+            <p>{query.error.message}</p>
+            <Button variant="outline" onClick={() => void query.refetch()}>
+              <UiText>{"Retry refunds"}</UiText>
+            </Button>
+          </div>
+        ) : !query.data.length ? (
+          <UiAttributes>
+            <FinanceEmpty kind="refunds" title="No refund records found">
+              No refund requests for this payment.
+            </FinanceEmpty>
+          </UiAttributes>
+        ) : (
+          query.data.map((refund) => <RefundAction key={refund.id} refund={refund} />)
+        )}
+      </section>
+    </UiAttributes>
   );
 }
 function RefundAction({ refund }: { refund: AdminRefund }) {
@@ -83,19 +92,31 @@ function RefundAction({ refund }: { refund: AdminRefund }) {
       {refund.testMode && <p className="font-semibold">TEST refund: no real money returned.</p>}
       <RefundNotice refund={refund} />
       <dl className="finance-detail-summary">
-        <dt>Refund request ID</dt>
+        <dt>
+          <UiText>{"Refund request ID"}</UiText>
+        </dt>
         <dd>{refund.id}</dd>
-        <dt>Marketplace order</dt>
+        <dt>
+          <UiText>{"Marketplace order"}</UiText>
+        </dt>
         <dd>{refund.orderId}</dd>
-        <dt>Requested (IST)</dt>
+        <dt>
+          <UiText>{"Requested (IST)"}</UiText>
+        </dt>
         <dd>{financeDate(refund.createdAt)}</dd>
-        <dt>Last state update (IST)</dt>
+        <dt>
+          <UiText>{"Last state update (IST)"}</UiText>
+        </dt>
         <dd>{financeDate(refund.updatedAt)}</dd>
       </dl>
       <RecoveryNotice recovery={refund.recovery} />
-      <p className="text-sm">Reason: {refund.reason}</p>
+      <p className="text-sm">
+        <UiText>{"Reason: "}</UiText>
+        {refund.reason}
+      </p>
       <p className="break-all text-sm">
-        Provider refund: {refund.providerRefundId ?? "Not confirmed"}
+        <UiText>{"Provider refund: "}</UiText>
+        {refund.providerRefundId ?? "Not confirmed"}
       </p>
       {maySubmit && (
         <>
@@ -106,15 +127,17 @@ function RefundAction({ refund }: { refund: AdminRefund }) {
               disabled={busy || !refund.canSubmit}
               onChange={(event) => setConfirmed(event.target.checked)}
             />
-            I authorize the {refund.testMode ? "test-mode" : "live"} refund of {inr(refund.amount)}{" "}
-            to the original payment method for this cancelled shop order.
+            I authorize the <UiText>{refund.testMode ? "test-mode" : "live"}</UiText> refund of{" "}
+            {inr(refund.amount)} to the original payment method for this cancelled shop order.
           </label>
           <Button disabled={busy || !confirmed || !refund.canSubmit} onClick={() => void run(true)}>
-            {busy
-              ? "Checking…"
-              : refund.state === "requested"
-                ? "Submit confirmed refund"
-                : "Recover same refund request"}
+            <UiText>
+              {busy
+                ? "Checking…"
+                : refund.state === "requested"
+                  ? "Submit confirmed refund"
+                  : "Recover same refund request"}
+            </UiText>
           </Button>
         </>
       )}
@@ -124,7 +147,7 @@ function RefundAction({ refund }: { refund: AdminRefund }) {
           disabled={busy || !refund.canReconcile}
           onClick={() => void run(false)}
         >
-          Check provider refund status
+          <UiText>{"Check provider refund status"}</UiText>
         </Button>
       )}
       {!refund.canSubmit && maySubmit && (
@@ -134,7 +157,7 @@ function RefundAction({ refund }: { refund: AdminRefund }) {
       )}
       {message && (
         <p role="status" className="text-sm">
-          {message}
+          <UiText>{message}</UiText>
         </p>
       )}
     </div>

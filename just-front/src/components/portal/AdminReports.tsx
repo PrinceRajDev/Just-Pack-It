@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -38,13 +39,18 @@ export function AdminReports() {
   return (
     <div className="admin-reports">
       <header className="reports-hero">
-        <nav aria-label="Breadcrumb">
-          OPERATIONS <ChevronRight size={13} />
-          <b>REPORTS &amp; ANALYTICS</b>
-        </nav>
+        <UiAttributes>
+          <nav aria-label="Breadcrumb">
+            <UiText>{"OPERATIONS "}</UiText>
+            <ChevronRight size={13} />
+            <b>REPORTS &amp; ANALYTICS</b>
+          </nav>
+        </UiAttributes>
         <div>
           <section>
-            <h1>Your market, by the numbers.</h1>
+            <h1>
+              <UiText>{"Your market, by the numbers."}</UiText>
+            </h1>
             <p>
               Explore real order activity and recorded collections. Test orders and test payments
               are excluded.
@@ -53,9 +59,9 @@ export function AdminReports() {
           <aside>
             <ChartNoAxesCombined />
             <h2>
-              Clear numbers.
+              <UiText>{"Clear numbers."}</UiText>
               <br />
-              Better local decisions.
+              <UiText>{"Better local decisions."}</UiText>
             </h2>
             <p>Booked value is not revenue. Cash acknowledgement is not a bank deposit.</p>
           </aside>
@@ -69,7 +75,7 @@ export function AdminReports() {
         }}
       >
         <label>
-          From date (IST)
+          <UiText>{"From date (IST)"}</UiText>
           <Input
             type="date"
             value={draft.from}
@@ -78,7 +84,7 @@ export function AdminReports() {
           />
         </label>
         <label>
-          To date (IST)
+          <UiText>{"To date (IST)"}</UiText>
           <Input
             type="date"
             value={draft.to}
@@ -86,7 +92,9 @@ export function AdminReports() {
             onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))}
           />
         </label>
-        <Button disabled={query.isFetching}>Apply dates</Button>
+        <Button disabled={query.isFetching}>
+          <UiText>{"Apply dates"}</UiText>
+        </Button>
         <Button
           type="button"
           variant="outline"
@@ -109,9 +117,11 @@ export function AdminReports() {
         <p>Inclusive IST dates · up to 90 days</p>
       </form>
       {query.isPending ? (
-        <div role="status" aria-label="Loading report">
-          <Skeleton className="h-40 w-full" />
-        </div>
+        <UiAttributes>
+          <div role="status" aria-label="Loading report">
+            <Skeleton className="h-40 w-full" />
+          </div>
+        </UiAttributes>
       ) : query.isError ? (
         <section className="reports-panel" role="alert">
           <h2>Could not load report</h2>
@@ -127,41 +137,45 @@ export function AdminReports() {
               {r.from} to {r.to} · {r.timezone} · Generated {financeDate(r.checkedAt)}. Live
               database reads may change during generation.
             </p>
-            <section className="reports-metrics" aria-label="Report metrics">
-              {[
-                {
-                  title: "Orders created",
-                  value: String(r.orders.count),
-                  icon: ShoppingBag,
-                  note: "Created in range; includes unpaid/cancelled",
-                },
-                {
-                  title: "Original booked value",
-                  value: inr(r.orders.amountCents / 100),
-                  icon: IndianRupee,
-                  note: "Original totals; not realised revenue",
-                },
-                {
-                  title: "Recorded online captures",
-                  value: inr(r.captures.amountCents / 100),
-                  icon: CreditCard,
-                  note: `${r.captures.count} verified local captures by capture date`,
-                },
-                {
-                  title: "Cash acknowledged",
-                  value: inr(r.cash.amountCents / 100),
-                  icon: Banknote,
-                  note: `${r.cash.count} shop collections by recorded date; not remittance`,
-                },
-              ].map(({ title, value, icon: Icon, note }) => (
-                <article key={title}>
-                  <Icon aria-hidden="true" />
-                  <p>{title}</p>
-                  <strong>{value}</strong>
-                  <small>{note}</small>
-                </article>
-              ))}
-            </section>
+            <UiAttributes>
+              <section className="reports-metrics" aria-label="Report metrics">
+                {[
+                  {
+                    title: "Orders created",
+                    value: String(r.orders.count),
+                    icon: ShoppingBag,
+                    note: "Created in range; includes unpaid/cancelled",
+                  },
+                  {
+                    title: "Original booked value",
+                    value: inr(r.orders.amountCents / 100),
+                    icon: IndianRupee,
+                    note: "Original totals; not realised revenue",
+                  },
+                  {
+                    title: "Recorded online captures",
+                    value: inr(r.captures.amountCents / 100),
+                    icon: CreditCard,
+                    note: `${r.captures.count} verified local captures by capture date`,
+                  },
+                  {
+                    title: "Cash acknowledged",
+                    value: inr(r.cash.amountCents / 100),
+                    icon: Banknote,
+                    note: `${r.cash.count} shop collections by recorded date; not remittance`,
+                  },
+                ].map(({ title, value, icon: Icon, note }) => (
+                  <article key={title}>
+                    <Icon aria-hidden="true" />
+                    <p>
+                      <UiText>{title}</UiText>
+                    </p>
+                    <strong>{value}</strong>
+                    <small>{note}</small>
+                  </article>
+                ))}
+              </section>
+            </UiAttributes>
             <section className="reports-panel">
               <h2>Daily order activity</h2>
               <p>
@@ -171,25 +185,27 @@ export function AdminReports() {
               {r.orders.count === 0 && (
                 <p role="status">No live orders were created in this range.</p>
               )}
-              <div
-                className="reports-chart"
-                role="region"
-                tabIndex={0}
-                aria-label="Daily order chart; scroll horizontally for more dates"
-              >
-                {r.daily.map((d) => (
-                  <div key={d.date} className="reports-bar-column">
-                    <span>{d.count}</span>
-                    <div className="reports-bar-track">
-                      <div style={{ height: `${(d.count / max) * 100}%` }} />
+              <UiAttributes>
+                <div
+                  className="reports-chart"
+                  role="region"
+                  tabIndex={0}
+                  aria-label="Daily order chart; scroll horizontally for more dates"
+                >
+                  {r.daily.map((d) => (
+                    <div key={d.date} className="reports-bar-column">
+                      <span>{d.count}</span>
+                      <div className="reports-bar-track">
+                        <div style={{ height: `${(d.count / max) * 100}%` }} />
+                      </div>
+                      <span>{d.date.slice(5)}</span>
+                      <span className="sr-only">
+                        {d.date}: {d.count} orders
+                      </span>
                     </div>
-                    <span>{d.date.slice(5)}</span>
-                    <span className="sr-only">
-                      {d.date}: {d.count} orders
-                    </span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </UiAttributes>
               <details>
                 <summary>View daily data table</summary>
                 <div className="reports-table">
@@ -249,7 +265,9 @@ export function AdminReports() {
                         <tr>
                           <th>Current state</th>
                           <th>Requests</th>
-                          <th>Amount</th>
+                          <th>
+                            <UiText>{"Amount"}</UiText>
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -279,7 +297,9 @@ export function AdminReports() {
                   <table>
                     <thead>
                       <tr>
-                        <th>Shop</th>
+                        <th>
+                          <UiText>{"Shop"}</UiText>
+                        </th>
                         <th>Shop orders</th>
                         <th>Cancelled parts</th>
                         <th>Original booked value</th>

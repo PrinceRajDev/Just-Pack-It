@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute, Link, Outlet, useMatchRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { MoreHorizontal } from "lucide-react";
@@ -40,15 +41,19 @@ function Products() {
 
   return (
     <>
-      <PortalHeader
-        title="Products"
-        sub={`${products.filter((p) => !p.archived).length} live listings`}
-        actions={
-          <Button asChild variant="citrus">
-            <Link to="/seller/products/new">Add product</Link>
-          </Button>
-        }
-      />
+      <UiAttributes>
+        <PortalHeader
+          title="Products"
+          sub={`${products.filter((p) => !p.archived).length} live listings`}
+          actions={
+            <Button asChild variant="citrus">
+              <Link to="/seller/products/new">
+                <UiText>{"Add product"}</UiText>
+              </Link>
+            </Button>
+          }
+        />
+      </UiAttributes>
       <div className="mb-4 flex flex-wrap items-center gap-3 text-sm">
         <button
           onClick={() => setShowArchived(false)}
@@ -56,7 +61,7 @@ function Products() {
             !showArchived ? "font-semibold underline underline-offset-4" : "text-muted-foreground"
           }
         >
-          Active
+          <UiText>{"Active"}</UiText>
         </button>
         <button
           onClick={() => setShowArchived(true)}
@@ -90,136 +95,161 @@ function Products() {
                 bulk({ archived: !showArchived }, showArchived ? "restored" : "archived")
               }
             >
-              {showArchived ? "Restore" : "Archive"}
+              <UiText>{showArchived ? "Restore" : "Archive"}</UiText>
             </Button>
           </div>
         )}
       </div>
       <div className="seller-product-table overflow-x-auto border border-border bg-card">
-        <table className="w-full min-w-[640px] text-sm" aria-label="Shop products">
-          <thead className="border-b border-border text-left">
-            <tr className="label-stamp text-muted-foreground">
-              <th className="w-10 p-3">
-                <Checkbox
-                  aria-label="Select all"
-                  checked={sel.length === list.length && list.length > 0}
-                  onCheckedChange={(v) => setSel(v ? list.map((p) => p.id) : [])}
-                />
-              </th>
-              <th className="p-3">Product</th>
-              <th className="p-3">Price</th>
-              <th className="p-3">Stock</th>
-              <th className="p-3">Status</th>
-              <th className="p-3" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {list.map((p) => (
-              <tr key={p.id}>
-                <td data-label="Select" className="p-3">
-                  <Checkbox
-                    aria-label={`Select ${p.name}`}
-                    checked={sel.includes(p.id)}
-                    onCheckedChange={(v) =>
-                      setSel((s) => (v ? [...s, p.id] : s.filter((x) => x !== p.id)))
-                    }
-                  />
-                </td>
-                <td data-label="Product" className="p-3">
-                  <div className="flex items-center gap-3">
-                    <ProductImage src={p.image} alt="" width={80} className="size-10 rounded-sm" />
-                    <Link
-                      to="/seller/products/$id/edit"
-                      params={{ id: p.id }}
-                      className="line-clamp-1 max-w-xs hover:text-primary hover:underline"
-                    >
-                      {p.name}
-                      <span className="block text-xs text-muted-foreground">{p.unit}</span>
-                    </Link>
-                  </div>
-                </td>
-                <td data-label="Price" className="p-3 tabular-nums">
-                  {inr(p.price)}
-                  {p.mrp && (
-                    <span className="block text-xs text-muted-foreground line-through">
-                      {inr(p.mrp)}
-                    </span>
-                  )}
-                </td>
-                <td data-label="Stock" className="p-3 tabular-nums">
-                  {p.variants?.length
-                    ? `${p.variants.reduce((n, v) => n + v.stock, 0)} across ${p.variants.length} options`
-                    : p.stock}
-                </td>
-                <td data-label="Status" className="p-3">
-                  <StatusBadge
-                    status={
-                      p.archived
-                        ? "archived"
-                        : p.hidden
-                          ? "unavailable"
-                          : listingStock(p) === 0
-                            ? "out"
-                            : listingStock(p) <= LOW_STOCK
-                              ? "low"
-                              : "active"
-                    }
-                  />
-                </td>
-                <td data-label="Actions" className="p-3 text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      className="rounded-md p-2 hover:bg-muted"
-                      aria-label={`Actions for ${p.name}`}
-                    >
-                      <MoreHorizontal className="size-4" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link to="/seller/products/$id/edit" params={{ id: p.id }}>
-                          Edit product
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => updateProduct(p.id, { hidden: !p.hidden })}>
-                        {p.hidden ? "Make available" : "Mark unavailable"}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        disabled={!!p.variants?.length}
-                        onClick={() => updateProduct(p.id, { stock: p.stock + 10 })}
-                      >
-                        Add 10 to stock
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          updateProduct(p.id, { archived: !p.archived });
-                          toast(p.archived ? "Restored" : "Archived");
-                        }}
-                      >
-                        {p.archived ? "Restore" : "Archive"}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </td>
+        <UiAttributes>
+          <table className="w-full min-w-[640px] text-sm" aria-label="Shop products">
+            <thead className="border-b border-border text-left">
+              <tr className="label-stamp text-muted-foreground">
+                <th className="w-10 p-3">
+                  <UiAttributes>
+                    <Checkbox
+                      aria-label="Select all"
+                      checked={sel.length === list.length && list.length > 0}
+                      onCheckedChange={(v) => setSel(v ? list.map((p) => p.id) : [])}
+                    />
+                  </UiAttributes>
+                </th>
+                <th className="p-3">Product</th>
+                <th className="p-3">
+                  <UiText>{"Price"}</UiText>
+                </th>
+                <th className="p-3">
+                  <UiText>{"Stock"}</UiText>
+                </th>
+                <th className="p-3">
+                  <UiText>{"Status"}</UiText>
+                </th>
+                <th className="p-3" />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {list.map((p) => (
+                <tr key={p.id}>
+                  <td data-label="Select" className="p-3">
+                    <UiAttributes>
+                      <Checkbox
+                        aria-label={`Select ${p.name}`}
+                        checked={sel.includes(p.id)}
+                        onCheckedChange={(v) =>
+                          setSel((s) => (v ? [...s, p.id] : s.filter((x) => x !== p.id)))
+                        }
+                      />
+                    </UiAttributes>
+                  </td>
+                  <td data-label="Product" className="p-3">
+                    <div className="flex items-center gap-3">
+                      <ProductImage
+                        src={p.image}
+                        alt=""
+                        width={80}
+                        className="size-10 rounded-sm"
+                      />
+                      <Link
+                        to="/seller/products/$id/edit"
+                        params={{ id: p.id }}
+                        className="line-clamp-1 max-w-xs hover:text-primary hover:underline"
+                      >
+                        {p.name}
+                        <span className="block text-xs text-muted-foreground">{p.unit}</span>
+                      </Link>
+                    </div>
+                  </td>
+                  <td data-label="Price" className="p-3 tabular-nums">
+                    {inr(p.price)}
+                    {p.mrp && (
+                      <span className="block text-xs text-muted-foreground line-through">
+                        {inr(p.mrp)}
+                      </span>
+                    )}
+                  </td>
+                  <td data-label="Stock" className="p-3 tabular-nums">
+                    {p.variants?.length
+                      ? `${p.variants.reduce((n, v) => n + v.stock, 0)} across ${p.variants.length} options`
+                      : p.stock}
+                  </td>
+                  <td data-label="Status" className="p-3">
+                    <StatusBadge
+                      status={
+                        p.archived
+                          ? "archived"
+                          : p.hidden
+                            ? "unavailable"
+                            : listingStock(p) === 0
+                              ? "out"
+                              : listingStock(p) <= LOW_STOCK
+                                ? "low"
+                                : "active"
+                      }
+                    />
+                  </td>
+                  <td data-label="Actions" className="p-3 text-right">
+                    <DropdownMenu>
+                      <UiAttributes>
+                        <DropdownMenuTrigger
+                          className="rounded-md p-2 hover:bg-muted"
+                          aria-label={`Actions for ${p.name}`}
+                        >
+                          <MoreHorizontal className="size-4" />
+                        </DropdownMenuTrigger>
+                      </UiAttributes>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link to="/seller/products/$id/edit" params={{ id: p.id }}>
+                            <UiText>{"Edit product"}</UiText>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => updateProduct(p.id, { hidden: !p.hidden })}
+                        >
+                          <UiText>{p.hidden ? "Make available" : "Mark unavailable"}</UiText>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          disabled={!!p.variants?.length}
+                          onClick={() => updateProduct(p.id, { stock: p.stock + 10 })}
+                        >
+                          Add 10 to stock
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            updateProduct(p.id, { archived: !p.archived });
+                            toast(p.archived ? "Restored" : "Archived");
+                          }}
+                        >
+                          <UiText>{p.archived ? "Restore" : "Archive"}</UiText>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </UiAttributes>
         {list.length === 0 && (
-          <EmptyState
-            title={`No ${showArchived ? "archived" : "active"} products`}
-            body={
-              showArchived
-                ? "Archived listings will appear here."
-                : "Add your first listing to start building your shop catalogue."
-            }
-            action={
-              !showArchived ? (
-                <Button asChild>
-                  <Link to="/seller/products/new">Add product</Link>
-                </Button>
-              ) : undefined
-            }
-          />
+          <UiAttributes>
+            <EmptyState
+              title={`No ${showArchived ? "archived" : "active"} products`}
+              body={
+                showArchived
+                  ? "Archived listings will appear here."
+                  : "Add your first listing to start building your shop catalogue."
+              }
+              action={
+                !showArchived ? (
+                  <Button asChild>
+                    <Link to="/seller/products/new">
+                      <UiText>{"Add product"}</UiText>
+                    </Link>
+                  </Button>
+                ) : undefined
+              }
+            />
+          </UiAttributes>
         )}
       </div>
     </>

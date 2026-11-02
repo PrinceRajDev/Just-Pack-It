@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import type { Category } from "@/domain/types";
@@ -14,9 +15,11 @@ export function CategoryTile({ category, shopCount }: { category: Category; shop
         <p>{category.blurb}</p>
         {shopCount !== undefined && (
           <span>
-            {shopCount
-              ? `${shopCount} shop${shopCount === 1 ? "" : "s"} listed`
-              : "No shops listed yet"}
+            <UiText>
+              {shopCount
+                ? `${shopCount} shop${shopCount === 1 ? "" : "s"} listed`
+                : "No shops listed yet"}
+            </UiText>
           </span>
         )}
         <ArrowUpRight className="size-4" aria-hidden />

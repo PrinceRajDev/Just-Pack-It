@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useNavigate, Link, useBlocker } from "@tanstack/react-router";
 import { useState, useRef, cloneElement, isValidElement, type ReactElement } from "react";
 import {
@@ -75,7 +76,9 @@ function Field({
 }) {
   return (
     <div>
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id}>
+        <UiText>{label}</UiText>
+      </Label>
       <div className="mt-1">
         {isValidElement(children)
           ? cloneElement(children as ReactElement<Record<string, unknown>>, {
@@ -91,7 +94,7 @@ function Field({
       ) : (
         hint && (
           <p id={`${id}-help`} className="mt-1 text-xs text-muted-foreground">
-            {hint}
+            <UiText>{hint}</UiText>
           </p>
         )
       )}
@@ -144,7 +147,9 @@ export function SellerProductForm({ product }: { product?: SellerProduct }) {
   });
   if (!isDemoMode)
     return (
-      <ErrorState message="Seller editing is not connected yet. Your existing catalogue has not been changed." />
+      <UiAttributes>
+        <ErrorState message="Seller editing is not connected yet. Your existing catalogue has not been changed." />
+      </UiAttributes>
     );
 
   return (
@@ -170,10 +175,12 @@ export function SellerProductForm({ product }: { product?: SellerProduct }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <PortalHeader
-        title={product ? "Edit product" : "Add a product"}
-        sub="Changes stay in this demo session and are not saved to the server."
-      />
+      <UiAttributes>
+        <PortalHeader
+          title={product ? "Edit product" : "Add a product"}
+          sub="Changes stay in this demo session and are not saved to the server."
+        />
+      </UiAttributes>
       <form
         noValidate
         className="workspace-product-form grid gap-8 md:grid-cols-[200px_1fr]"
@@ -231,40 +238,42 @@ export function SellerProductForm({ product }: { product?: SellerProduct }) {
                 <span className="text-xs">Square works best</span>
               </>
             )}
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              aria-label="Choose product photo"
-              aria-describedby="photo-help"
-              onClick={(event) => {
-                event.currentTarget.value = "";
-              }}
-              className="sr-only"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (!f) return;
-                if (
-                  !["image/png", "image/jpeg", "image/webp"].includes(f.type) ||
-                  f.size > 5 * 1024 * 1024
-                ) {
-                  setImageError("Choose a JPG, PNG or WebP image up to 5 MB.");
-                  e.target.value = "";
-                  return;
-                }
-                setImageError("");
-                setImageBusy(true);
-                const reader = new FileReader();
-                reader.onload = () => {
-                  setPreview(String(reader.result));
-                  setImageBusy(false);
-                };
-                reader.onerror = () => {
-                  setImageError("Couldn't read this photo. Try another image.");
-                  setImageBusy(false);
-                };
-                reader.readAsDataURL(f);
-              }}
-            />
+            <UiAttributes>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                aria-label="Choose product photo"
+                aria-describedby="photo-help"
+                onClick={(event) => {
+                  event.currentTarget.value = "";
+                }}
+                className="sr-only"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  if (
+                    !["image/png", "image/jpeg", "image/webp"].includes(f.type) ||
+                    f.size > 5 * 1024 * 1024
+                  ) {
+                    setImageError("Choose a JPG, PNG or WebP image up to 5 MB.");
+                    e.target.value = "";
+                    return;
+                  }
+                  setImageError("");
+                  setImageBusy(true);
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    setPreview(String(reader.result));
+                    setImageBusy(false);
+                  };
+                  reader.onerror = () => {
+                    setImageError("Couldn't read this photo. Try another image.");
+                    setImageBusy(false);
+                  };
+                  reader.readAsDataURL(f);
+                }}
+              />
+            </UiAttributes>
           </label>
           <p id="photo-help" className="text-xs text-muted-foreground">
             JPG, PNG or WebP, up to 5 MB. Preview only in this demo.
@@ -290,37 +299,54 @@ export function SellerProductForm({ product }: { product?: SellerProduct }) {
           )}
         </div>
         <div className="space-y-5">
-          <Field id="name" label="Product name" error={errors.name?.message}>
-            <Input id="name" className="h-11" placeholder="e.g. Toor Dal" {...register("name")} />
-          </Field>
+          <UiAttributes>
+            <Field id="name" label="Product name" error={errors.name?.message}>
+              <UiAttributes>
+                <Input
+                  id="name"
+                  className="h-11"
+                  placeholder="e.g. Toor Dal"
+                  {...register("name")}
+                />
+              </UiAttributes>
+            </Field>
+          </UiAttributes>
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field id="cat" label="Aisle" error={errors.categorySlug?.message}>
-              <select
-                id="cat"
-                className="h-11 w-full rounded-md border border-input bg-card px-3 text-sm"
-                {...register("categorySlug")}
+            <UiAttributes>
+              <Field id="cat" label="Aisle" error={errors.categorySlug?.message}>
+                <select
+                  id="cat"
+                  className="h-11 w-full rounded-md border border-input bg-card px-3 text-sm"
+                  {...register("categorySlug")}
+                >
+                  {categories.map((c) => (
+                    <option key={c.slug} value={c.slug}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </UiAttributes>
+            <UiAttributes>
+              <Field
+                id="unit"
+                label="Sold as"
+                error={errors.unit?.message}
+                hint="1 kg, 500 g, 6 pcs…"
               >
-                {categories.map((c) => (
-                  <option key={c.slug} value={c.slug}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field
-              id="unit"
-              label="Sold as"
-              error={errors.unit?.message}
-              hint="1 kg, 500 g, 6 pcs…"
-            >
-              <Input id="unit" className="h-11" {...register("unit")} />
-            </Field>
-            <Field id="price" label="Your price (₹)" error={errors.price?.message}>
-              <Input id="price" inputMode="decimal" className="h-11" {...register("price")} />
-            </Field>
-            <Field id="stock" label="In stock" error={errors.stock?.message}>
-              <Input id="stock" inputMode="numeric" className="h-11" {...register("stock")} />
-            </Field>
+                <Input id="unit" className="h-11" {...register("unit")} />
+              </Field>
+            </UiAttributes>
+            <UiAttributes>
+              <Field id="price" label="Your price (₹)" error={errors.price?.message}>
+                <Input id="price" inputMode="decimal" className="h-11" {...register("price")} />
+              </Field>
+            </UiAttributes>
+            <UiAttributes>
+              <Field id="stock" label="In stock" error={errors.stock?.message}>
+                <Input id="stock" inputMode="numeric" className="h-11" {...register("stock")} />
+              </Field>
+            </UiAttributes>
           </div>
           {!more ? (
             <button
@@ -332,17 +358,21 @@ export function SellerProductForm({ product }: { product?: SellerProduct }) {
             </button>
           ) : (
             <>
-              <Field
-                id="mrp"
-                label="MRP (₹, optional)"
-                error={errors.mrp?.message}
-                hint="Shown struck through if higher than your price"
-              >
-                <Input id="mrp" inputMode="decimal" className="h-11" {...register("mrp")} />
-              </Field>
-              <Field id="desc" label="Description (optional)" error={errors.description?.message}>
-                <Textarea id="desc" rows={3} {...register("description")} />
-              </Field>
+              <UiAttributes>
+                <Field
+                  id="mrp"
+                  label="MRP (₹, optional)"
+                  error={errors.mrp?.message}
+                  hint="Shown struck through if higher than your price"
+                >
+                  <Input id="mrp" inputMode="decimal" className="h-11" {...register("mrp")} />
+                </Field>
+              </UiAttributes>
+              <UiAttributes>
+                <Field id="desc" label="Description (optional)" error={errors.description?.message}>
+                  <Textarea id="desc" rows={3} {...register("description")} />
+                </Field>
+              </UiAttributes>
             </>
           )}
           <section className="border-t border-border pt-5">
@@ -389,63 +419,71 @@ export function SellerProductForm({ product }: { product?: SellerProduct }) {
                     <p className="col-span-full text-sm font-medium">
                       Option {index + 1} · Name, price (₹), stock
                     </p>
-                    <Input
-                      aria-label={`Variant ${index + 1} name`}
-                      aria-invalid={!!variantError}
-                      aria-describedby={variantError ? "variant-errors" : undefined}
-                      value={variant.label}
-                      onChange={(event) =>
-                        setVariants((current) =>
-                          current.map((item, itemIndex) =>
-                            itemIndex === index ? { ...item, label: event.target.value } : item,
-                          ),
-                        )
-                      }
-                      placeholder="e.g. 500 g / Blue / Large"
-                    />
-                    <Input
-                      aria-label={`Variant ${index + 1} price`}
-                      aria-invalid={!!variantError}
-                      aria-describedby={variantError ? "variant-errors" : undefined}
-                      inputMode="decimal"
-                      value={variant.price}
-                      onChange={(event) =>
-                        setVariants((current) =>
-                          current.map((item, itemIndex) =>
-                            itemIndex === index ? { ...item, price: event.target.value } : item,
-                          ),
-                        )
-                      }
-                      placeholder="Price"
-                    />
-                    <Input
-                      aria-label={`Variant ${index + 1} stock`}
-                      aria-invalid={!!variantError}
-                      aria-describedby={variantError ? "variant-errors" : undefined}
-                      inputMode="numeric"
-                      value={variant.stock}
-                      onChange={(event) =>
-                        setVariants((current) =>
-                          current.map((item, itemIndex) =>
-                            itemIndex === index ? { ...item, stock: event.target.value } : item,
-                          ),
-                        )
-                      }
-                      placeholder="Stock"
-                    />
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      onClick={() =>
-                        setVariants((current) =>
-                          current.filter((_, itemIndex) => itemIndex !== index),
-                        )
-                      }
-                      aria-label={`Remove variant ${index + 1}`}
-                    >
-                      <Trash2 />
-                    </Button>
+                    <UiAttributes>
+                      <Input
+                        aria-label={`Variant ${index + 1} name`}
+                        aria-invalid={!!variantError}
+                        aria-describedby={variantError ? "variant-errors" : undefined}
+                        value={variant.label}
+                        onChange={(event) =>
+                          setVariants((current) =>
+                            current.map((item, itemIndex) =>
+                              itemIndex === index ? { ...item, label: event.target.value } : item,
+                            ),
+                          )
+                        }
+                        placeholder="e.g. 500 g / Blue / Large"
+                      />
+                    </UiAttributes>
+                    <UiAttributes>
+                      <Input
+                        aria-label={`Variant ${index + 1} price`}
+                        aria-invalid={!!variantError}
+                        aria-describedby={variantError ? "variant-errors" : undefined}
+                        inputMode="decimal"
+                        value={variant.price}
+                        onChange={(event) =>
+                          setVariants((current) =>
+                            current.map((item, itemIndex) =>
+                              itemIndex === index ? { ...item, price: event.target.value } : item,
+                            ),
+                          )
+                        }
+                        placeholder="Price"
+                      />
+                    </UiAttributes>
+                    <UiAttributes>
+                      <Input
+                        aria-label={`Variant ${index + 1} stock`}
+                        aria-invalid={!!variantError}
+                        aria-describedby={variantError ? "variant-errors" : undefined}
+                        inputMode="numeric"
+                        value={variant.stock}
+                        onChange={(event) =>
+                          setVariants((current) =>
+                            current.map((item, itemIndex) =>
+                              itemIndex === index ? { ...item, stock: event.target.value } : item,
+                            ),
+                          )
+                        }
+                        placeholder="Stock"
+                      />
+                    </UiAttributes>
+                    <UiAttributes>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={() =>
+                          setVariants((current) =>
+                            current.filter((_, itemIndex) => itemIndex !== index),
+                          )
+                        }
+                        aria-label={`Remove variant ${index + 1}`}
+                      >
+                        <Trash2 />
+                      </Button>
+                    </UiAttributes>
                   </div>
                 ))}
               </div>
@@ -453,10 +491,12 @@ export function SellerProductForm({ product }: { product?: SellerProduct }) {
           </section>
           <div className="flex gap-2 pt-2">
             <Button type="submit" size="lg" disabled={isSubmitting || imageBusy}>
-              {product ? "Save changes" : "Save product"}
+              <UiText>{product ? "Save changes" : "Save product"}</UiText>
             </Button>
             <Button type="button" variant="ghost" size="lg" asChild>
-              <Link to="/seller/products">Cancel</Link>
+              <Link to="/seller/products">
+                <UiText>{"Cancel"}</UiText>
+              </Link>
             </Button>
           </div>
         </div>

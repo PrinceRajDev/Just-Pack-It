@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import { Bike, Store, Truck } from "lucide-react";
 import type { FulfilmentMethod, Shop } from "@/domain/types";
 import { cn } from "@/lib/utils";
@@ -86,11 +87,13 @@ export function OpenState({ shop }: { shop: Shop }) {
       )}
     >
       <span className="size-2 rounded-full bg-current" aria-hidden />
-      {shop.temporarilyClosed || shop.availability === "temporarily_closed"
-        ? "Temporarily closed"
-        : shop.isOpen
-          ? "Open now"
-          : "Closed"}{" "}
+      <UiText>
+        {shop.temporarilyClosed || shop.availability === "temporarily_closed"
+          ? "Temporarily closed"
+          : shop.isOpen
+            ? "Open now"
+            : "Closed"}
+      </UiText>{" "}
       · {shop.scheduleLabel ?? shop.hours}
     </span>
   );

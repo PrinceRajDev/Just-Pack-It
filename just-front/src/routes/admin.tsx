@@ -1,3 +1,4 @@
+import { UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import {
   ChartNoAxesCombined,
@@ -42,43 +43,45 @@ export const Route = createFileRoute("/admin")({
   }),
   component: () => (
     <RoleGuard role="admin">
-      <PortalShell
-        label="Ops"
-        items={
-          isDemoMode
-            ? nav
-            : nav
-                .filter((item) =>
-                  [
-                    "/admin",
-                    "/admin/partners",
-                    "/admin/orders",
-                    "/admin/finance",
-                    "/admin/catalog",
-                    "/admin/settings",
-                    "/admin/support",
-                    "/admin/users",
-                    "/admin/reports",
-                    "/admin/platform",
-                  ].includes(item.to),
-                )
-                .map((item) => ({
-                  ...item,
-                  label:
-                    (
-                      {
-                        "/admin/finance": "Payments & refunds",
-                        "/admin/partners": "Sellers & approvals",
-                        "/admin/orders": "Orders & cash records",
-                        "/admin/settings": "Service areas & audit",
-                        "/admin/support": "Order support",
-                      } as Record<string, string>
-                    )[item.to] ?? item.label,
-                }))
-        }
-      >
-        {isDemoMode ? <Outlet /> : <LiveAdmin />}
-      </PortalShell>
+      <UiAttributes>
+        <PortalShell
+          label="Ops"
+          items={
+            isDemoMode
+              ? nav
+              : nav
+                  .filter((item) =>
+                    [
+                      "/admin",
+                      "/admin/partners",
+                      "/admin/orders",
+                      "/admin/finance",
+                      "/admin/catalog",
+                      "/admin/settings",
+                      "/admin/support",
+                      "/admin/users",
+                      "/admin/reports",
+                      "/admin/platform",
+                    ].includes(item.to),
+                  )
+                  .map((item) => ({
+                    ...item,
+                    label:
+                      (
+                        {
+                          "/admin/finance": "Payments & refunds",
+                          "/admin/partners": "Sellers & approvals",
+                          "/admin/orders": "Orders & cash records",
+                          "/admin/settings": "Service areas & audit",
+                          "/admin/support": "Order support",
+                        } as Record<string, string>
+                      )[item.to] ?? item.label,
+                  }))
+          }
+        >
+          {isDemoMode ? <Outlet /> : <LiveAdmin />}
+        </PortalShell>
+      </UiAttributes>
     </RoleGuard>
   ),
 });

@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Settings, ShieldCheck, ChevronRight, Mail, Phone, Megaphone } from "lucide-react";
@@ -21,10 +22,13 @@ export function PlatformSettingsPage() {
   return (
     <div className="platform-settings">
       <header className="platform-hero">
-        <nav aria-label="Breadcrumb">
-          OPERATIONS <ChevronRight size={13} />
-          <b>PLATFORM SETTINGS</b>
-        </nav>
+        <UiAttributes>
+          <nav aria-label="Breadcrumb">
+            <UiText>{"OPERATIONS "}</UiText>
+            <ChevronRight size={13} />
+            <b>PLATFORM SETTINGS</b>
+          </nav>
+        </UiAttributes>
         <div>
           <section>
             <h1>A considered local market.</h1>
@@ -45,9 +49,11 @@ export function PlatformSettingsPage() {
         </div>
       </header>
       {q.isPending ? (
-        <div role="status" aria-label="Loading platform settings">
-          <Skeleton className="h-40 w-full" />
-        </div>
+        <UiAttributes>
+          <div role="status" aria-label="Loading platform settings">
+            <Skeleton className="h-40 w-full" />
+          </div>
+        </UiAttributes>
       ) : q.isError && !q.data ? (
         <section className="platform-panel" role="alert">
           <h2>Could not load platform settings</h2>
@@ -167,33 +173,43 @@ function SettingsEditor({
             <fieldset disabled={busy || refreshing} className="space-y-4">
               <label>
                 Support email
-                <Input
-                  type="email"
-                  maxLength={254}
-                  value={draft.supportEmail}
-                  onChange={(e) => setDraft((d) => ({ ...d, supportEmail: e.target.value.trim() }))}
-                  placeholder="Leave blank until ready"
-                />
+                <UiAttributes>
+                  <Input
+                    type="email"
+                    maxLength={254}
+                    value={draft.supportEmail}
+                    onChange={(e) =>
+                      setDraft((d) => ({ ...d, supportEmail: e.target.value.trim() }))
+                    }
+                    placeholder="Leave blank until ready"
+                  />
+                </UiAttributes>
               </label>
               <label>
                 Support phone
-                <Input
-                  type="tel"
-                  pattern="\+[1-9][0-9]{9,14}"
-                  title="Use international format, for example +91 followed by your number"
-                  value={draft.supportPhone}
-                  onChange={(e) => setDraft((d) => ({ ...d, supportPhone: e.target.value.trim() }))}
-                  placeholder="International format"
-                />
+                <UiAttributes>
+                  <Input
+                    type="tel"
+                    pattern="\+[1-9][0-9]{9,14}"
+                    title="Use international format, for example +91 followed by your number"
+                    value={draft.supportPhone}
+                    onChange={(e) =>
+                      setDraft((d) => ({ ...d, supportPhone: e.target.value.trim() }))
+                    }
+                    placeholder="International format"
+                  />
+                </UiAttributes>
               </label>
               <label>
                 Support hours
-                <Input
-                  maxLength={100}
-                  value={draft.supportHours}
-                  onChange={(e) => setDraft((d) => ({ ...d, supportHours: e.target.value }))}
-                  placeholder="Only state hours you can provide"
-                />
+                <UiAttributes>
+                  <Input
+                    maxLength={100}
+                    value={draft.supportHours}
+                    onChange={(e) => setDraft((d) => ({ ...d, supportHours: e.target.value }))}
+                    placeholder="Only state hours you can provide"
+                  />
+                </UiAttributes>
               </label>
               <label className="platform-checkbox">
                 <input
@@ -228,27 +244,29 @@ function SettingsEditor({
               </label>
             </fieldset>
             <div className="platform-actions">
-              <ConfirmAction
-                title="Publish marketplace information?"
-                description="The contact details and active notice in the preview will become visible to customers. Payments, fees and order eligibility do not change."
-                confirmLabel="Confirm publish"
-                onConfirm={() => void save()}
-              >
-                <Button
-                  type="button"
-                  disabled={
-                    busy ||
-                    refreshing ||
-                    stale ||
-                    data.version !== baseVersion ||
-                    !dirty ||
-                    reason.trim().length < 10 ||
-                    (draft.noticeEnabled && !draft.noticeText.trim())
-                  }
+              <UiAttributes>
+                <ConfirmAction
+                  title="Publish marketplace information?"
+                  description="The contact details and active notice in the preview will become visible to customers. Payments, fees and order eligibility do not change."
+                  confirmLabel="Confirm publish"
+                  onConfirm={() => void save()}
                 >
-                  {busy ? "Publishing…" : "Publish changes"}
-                </Button>
-              </ConfirmAction>
+                  <Button
+                    type="button"
+                    disabled={
+                      busy ||
+                      refreshing ||
+                      stale ||
+                      data.version !== baseVersion ||
+                      !dirty ||
+                      reason.trim().length < 10 ||
+                      (draft.noticeEnabled && !draft.noticeText.trim())
+                    }
+                  >
+                    <UiText>{busy ? "Publishing…" : "Publish changes"}</UiText>
+                  </Button>
+                </ConfirmAction>
+              </UiAttributes>
               <Button
                 type="button"
                 variant="outline"
@@ -266,58 +284,65 @@ function SettingsEditor({
           </form>
           <p className="platform-note">
             Last saved: {financeDate(data.updatedAt)} (IST).{" "}
-            {dirty ? "You have unpublished changes." : "No unpublished changes."}
+            <UiText>{dirty ? "You have unpublished changes." : "No unpublished changes."}</UiText>
           </p>
-          <ConfirmAction
-            title="Reload saved settings?"
-            description="Unsaved draft text will be replaced by the latest saved information."
-            confirmLabel="Reload settings"
-            onConfirm={() =>
-              void onReload().then((result) => {
-                if (
-                  result &&
-                  typeof result === "object" &&
-                  "data" in result &&
-                  result.data &&
-                  !("isError" in result && result.isError)
-                )
-                  resetDraft(result.data as PlatformSettings);
-              })
-            }
-          >
-            <Button variant="outline" disabled={busy || refreshing}>
-              Reload saved settings
-            </Button>
-          </ConfirmAction>
+          <UiAttributes>
+            <ConfirmAction
+              title="Reload saved settings?"
+              description="Unsaved draft text will be replaced by the latest saved information."
+              confirmLabel="Reload settings"
+              onConfirm={() =>
+                void onReload().then((result) => {
+                  if (
+                    result &&
+                    typeof result === "object" &&
+                    "data" in result &&
+                    result.data &&
+                    !("isError" in result && result.isError)
+                  )
+                    resetDraft(result.data as PlatformSettings);
+                })
+              }
+            >
+              <Button variant="outline" disabled={busy || refreshing}>
+                Reload saved settings
+              </Button>
+            </ConfirmAction>
+          </UiAttributes>
         </section>
-        <aside className="platform-panel platform-preview" aria-label="Public information preview">
-          <h2>
-            <Megaphone />
-            Customer preview
-          </h2>
-          {draft.noticeEnabled && draft.noticeText ? (
-            <p className="platform-notice-preview">{draft.noticeText}</p>
-          ) : (
-            <p>No announcement published in this draft.</p>
-          )}
-          {draft.supportPhone && (
-            <p>
-              <Phone size={16} />
-              {draft.supportPhone}
-            </p>
-          )}
-          {draft.supportEmail && (
-            <p className="break-all">
-              <Mail size={16} />
-              {draft.supportEmail}
-            </p>
-          )}
-          {draft.supportHours && <p>{draft.supportHours}</p>}
-          <small>
-            Preview only until confirmed publication. Storefront updates on refresh or its next
-            background check.
-          </small>
-        </aside>
+        <UiAttributes>
+          <aside
+            className="platform-panel platform-preview"
+            aria-label="Public information preview"
+          >
+            <h2>
+              <Megaphone />
+              Customer preview
+            </h2>
+            {draft.noticeEnabled && draft.noticeText ? (
+              <p className="platform-notice-preview">{draft.noticeText}</p>
+            ) : (
+              <p>No announcement published in this draft.</p>
+            )}
+            {draft.supportPhone && (
+              <p>
+                <Phone size={16} />
+                {draft.supportPhone}
+              </p>
+            )}
+            {draft.supportEmail && (
+              <p className="break-all">
+                <Mail size={16} />
+                {draft.supportEmail}
+              </p>
+            )}
+            {draft.supportHours && <p>{draft.supportHours}</p>}
+            <small>
+              Preview only until confirmed publication. Storefront updates on refresh or its next
+              background check.
+            </small>
+          </aside>
+        </UiAttributes>
       </div>
       <section className="platform-panel">
         <h2>
@@ -351,7 +376,9 @@ function SettingsEditor({
             ],
           ].map(([label, value]) => (
             <article key={label}>
-              <h3>{label}</h3>
+              <h3>
+                <UiText>{label}</UiText>
+              </h3>
               <p>{value}</p>
             </article>
           ))}

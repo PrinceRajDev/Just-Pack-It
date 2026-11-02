@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MapPin, Store, Map, MapPinOff, ChevronRight, RefreshCw } from "lucide-react";
@@ -79,10 +80,13 @@ export function AdminSettings() {
     <div className="admin-settings">
       <header className="settings-hero">
         <div>
-          <nav aria-label="Breadcrumb">
-            OPERATIONS <ChevronRight size={13} />
-            <b>SERVICE AREAS &amp; AUDIT</b>
-          </nav>
+          <UiAttributes>
+            <nav aria-label="Breadcrumb">
+              <UiText>{"OPERATIONS "}</UiText>
+              <ChevronRight size={13} />
+              <b>SERVICE AREAS &amp; AUDIT</b>
+            </nav>
+          </UiAttributes>
           <h1>Service areas &amp; audit</h1>
           <p>
             Manage active service areas for delivery and review platform activity. Keep the
@@ -102,174 +106,195 @@ export function AdminSettings() {
           </aside>
         </div>
       </header>
-      <section className="settings-metrics" aria-label="Service area statistics">
-        {cards.map(({ title, icon: Icon, value, ready, note }) => (
-          <article key={title}>
-            <Icon aria-hidden="true" />
-            <div>
-              <p>{title}</p>
-              {(areas.isPending || shops.isPending) && !ready ? (
-                <Skeleton className="my-2 h-8 w-12" />
-              ) : (
-                <strong>{ready ? value : "N/A"}</strong>
-              )}
-              <small>{ready ? note : "Data unavailable"}</small>
-            </div>
-          </article>
-        ))}
-      </section>
-      <section className="settings-panel" aria-label="Service areas management">
-        <header className="settings-panel-heading">
-          <div>
-            <h2>
-              <MapPin />
-              Service areas
-            </h2>
-            <p>
-              Add an active area, then assign approved shops with saved GPS pins. Buyers using GPS
-              see eligible shops within 6 km; the nearest shop’s area is selected automatically.
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            disabled={areas.isFetching || shops.isFetching}
-            onClick={() => {
-              void areas.refetch();
-              void shops.refetch();
-            }}
-          >
-            <RefreshCw size={16} />
-            Refresh areas
-          </Button>
-        </header>
-        <div className="settings-columns">
-          <AreaEditor
-            key={`${area?.id ?? "new"}:${area?.version ?? 0}:${reset}`}
-            area={area}
-            onClear={() => {
-              setEditing(null);
-              setReset((n) => n + 1);
-            }}
-            onCreated={() => {
-              setEditing(null);
-              setReset((n) => n + 1);
-            }}
-          />
-          <div className="settings-area-list">
-            <h3>Service areas list</h3>
-            <div className="settings-list-filters">
-              <label>
-                Search service areas
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search area, city or pincode…"
-                />
-              </label>
-              <label>
-                Area status
-                <select
-                  aria-label="Area status"
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                >
-                  <option value="all">All areas</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </label>
-            </div>
-            {areas.isPending ? (
-              <div role="status" aria-label="Loading service areas">
-                <Skeleton className="h-24 w-full" />
-              </div>
-            ) : areas.isError ? (
-              <div role="alert">
-                Could not load areas. {areas.error.message}
-                <Button variant="outline" onClick={() => void areas.refetch()}>
-                  Retry areas
-                </Button>
-              </div>
-            ) : (
-              <>
-                <p className="settings-result-count">{rows.length} matching areas</p>
-                <div className="settings-table">
-                  <table>
-                    <thead>
-                      <tr>
-                        {[
-                          "Area / locality",
-                          "City / town",
-                          "Pincodes",
-                          "Status",
-                          "Assigned shops",
-                          "Actions",
-                        ].map((h) => (
-                          <th key={h} scope="col">
-                            {h}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((a) => (
-                        <tr key={a.id}>
-                          <td data-label="Area / locality">
-                            <b>{a.name}</b>
-                          </td>
-                          <td data-label="City / town">{a.city}</td>
-                          <td data-label="Pincodes">{a.pincodes.join(", ")}</td>
-                          <td data-label="Status">
-                            <span className={`settings-badge ${a.active ? "" : "inactive"}`}>
-                              {a.active ? "Active" : "Inactive"}
-                            </span>
-                          </td>
-                          <td data-label="Assigned shops">
-                            {shops.isSuccess
-                              ? shops.data.filter((s) => s.serviceAreaIds.includes(a.id)).length
-                              : "Unavailable"}
-                          </td>
-                          <td data-label="Actions">
-                            <Button
-                              variant="outline"
-                              disabled={areas.isFetching}
-                              onClick={() => setEditing(a.id)}
-                            >
-                              Edit {a.name}
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                {!rows.length && (
-                  <div className="settings-empty">
-                    <MapPin />
-                    <h3>No matching service areas</h3>
-                    <p>Change your filters or add an area using the form.</p>
-                  </div>
+      <UiAttributes>
+        <section className="settings-metrics" aria-label="Service area statistics">
+          {cards.map(({ title, icon: Icon, value, ready, note }) => (
+            <article key={title}>
+              <Icon aria-hidden="true" />
+              <div>
+                <p>
+                  <UiText>{title}</UiText>
+                </p>
+                {(areas.isPending || shops.isPending) && !ready ? (
+                  <Skeleton className="my-2 h-8 w-12" />
+                ) : (
+                  <strong>
+                    <UiText>{ready ? value : "N/A"}</UiText>
+                  </strong>
                 )}
-              </>
-            )}
-            {shops.isError && (
-              <div role="alert">
-                Shop readiness unavailable. Area editing remains available.
-                <Button variant="outline" onClick={() => void shops.refetch()}>
-                  Retry shop readiness
-                </Button>
+                <small>
+                  <UiText>{ready ? note : "Data unavailable"}</UiText>
+                </small>
               </div>
-            )}
-            {shops.isSuccess &&
-              rows.map((a) => (
-                <details key={a.id} className="settings-readiness">
-                  <summary>GPS readiness: {a.name}</summary>
-                  <AreaReadiness area={a} shops={shops.data} />
-                </details>
-              ))}
+            </article>
+          ))}
+        </section>
+      </UiAttributes>
+      <UiAttributes>
+        <section className="settings-panel" aria-label="Service areas management">
+          <header className="settings-panel-heading">
+            <div>
+              <h2>
+                <MapPin />
+                <UiText>{"Service areas"}</UiText>
+              </h2>
+              <p>
+                Add an active area, then assign approved shops with saved GPS pins. Buyers using GPS
+                see eligible shops within 6 km; the nearest shop’s area is selected automatically.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              disabled={areas.isFetching || shops.isFetching}
+              onClick={() => {
+                void areas.refetch();
+                void shops.refetch();
+              }}
+            >
+              <RefreshCw size={16} />
+              <UiText>{"Refresh areas"}</UiText>
+            </Button>
+          </header>
+          <div className="settings-columns">
+            <AreaEditor
+              key={`${area?.id ?? "new"}:${area?.version ?? 0}:${reset}`}
+              area={area}
+              onClear={() => {
+                setEditing(null);
+                setReset((n) => n + 1);
+              }}
+              onCreated={() => {
+                setEditing(null);
+                setReset((n) => n + 1);
+              }}
+            />
+            <div className="settings-area-list">
+              <h3>Service areas list</h3>
+              <div className="settings-list-filters">
+                <label>
+                  Search service areas
+                  <UiAttributes>
+                    <Input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search area, city or pincode…"
+                    />
+                  </UiAttributes>
+                </label>
+                <label>
+                  Area status
+                  <UiAttributes>
+                    <select
+                      aria-label="Area status"
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value)}
+                    >
+                      <option value="all">All areas</option>
+                      <option value="active">
+                        <UiText>{"Active"}</UiText>
+                      </option>
+                      <option value="inactive">
+                        <UiText>{"Inactive"}</UiText>
+                      </option>
+                    </select>
+                  </UiAttributes>
+                </label>
+              </div>
+              {areas.isPending ? (
+                <UiAttributes>
+                  <div role="status" aria-label="Loading service areas">
+                    <Skeleton className="h-24 w-full" />
+                  </div>
+                </UiAttributes>
+              ) : areas.isError ? (
+                <div role="alert">
+                  Could not load areas. {areas.error.message}
+                  <Button variant="outline" onClick={() => void areas.refetch()}>
+                    Retry areas
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <p className="settings-result-count">{rows.length} matching areas</p>
+                  <div className="settings-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          {[
+                            "Area / locality",
+                            "City / town",
+                            "Pincodes",
+                            "Status",
+                            "Assigned shops",
+                            "Actions",
+                          ].map((h) => (
+                            <th key={h} scope="col">
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((a) => (
+                          <tr key={a.id}>
+                            <td data-label="Area / locality">
+                              <b>{a.name}</b>
+                            </td>
+                            <td data-label="City / town">{a.city}</td>
+                            <td data-label="Pincodes">{a.pincodes.join(", ")}</td>
+                            <td data-label="Status">
+                              <span className={`settings-badge ${a.active ? "" : "inactive"}`}>
+                                <UiText>{a.active ? "Active" : "Inactive"}</UiText>
+                              </span>
+                            </td>
+                            <td data-label="Assigned shops">
+                              {shops.isSuccess
+                                ? shops.data.filter((s) => s.serviceAreaIds.includes(a.id)).length
+                                : "Unavailable"}
+                            </td>
+                            <td data-label="Actions">
+                              <Button
+                                variant="outline"
+                                disabled={areas.isFetching}
+                                onClick={() => setEditing(a.id)}
+                              >
+                                <UiText>{"Edit "}</UiText>
+                                {a.name}
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {!rows.length && (
+                    <div className="settings-empty">
+                      <MapPin />
+                      <h3>No matching service areas</h3>
+                      <p>Change your filters or add an area using the form.</p>
+                    </div>
+                  )}
+                </>
+              )}
+              {shops.isError && (
+                <div role="alert">
+                  Shop readiness unavailable. Area editing remains available.
+                  <Button variant="outline" onClick={() => void shops.refetch()}>
+                    Retry shop readiness
+                  </Button>
+                </div>
+              )}
+              {shops.isSuccess &&
+                rows.map((a) => (
+                  <details key={a.id} className="settings-readiness">
+                    <summary>GPS readiness: {a.name}</summary>
+                    <AreaReadiness area={a} shops={shops.data} />
+                  </details>
+                ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </UiAttributes>
       <AuditExplorer />
     </div>
   );
@@ -287,7 +312,9 @@ function AreaEditor({
     lock = useRef(false);
   return (
     <div className="settings-area-editor">
-      <h3>{area ? `Edit ${area.name}` : "Add service area"}</h3>
+      <h3>
+        <UiText>{area ? `Edit ${area.name}` : "Add service area"}</UiText>
+      </h3>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -320,17 +347,23 @@ function AreaEditor({
         }}
       >
         <fieldset disabled={save.isPending} className="space-y-4">
-          <Field label="Area / locality name" name="name" value={area?.name} required />
-          <Field label="City / town" name="city" value={area?.city} required />
+          <UiAttributes>
+            <Field label="Area / locality name" name="name" value={area?.name} required />
+          </UiAttributes>
+          <UiAttributes>
+            <Field label="City / town" name="city" value={area?.city} required />
+          </UiAttributes>
           <label className="block text-sm">
-            Pincodes (comma separated)
-            <Input
-              name="pincodes"
-              defaultValue={area?.pincodes.join(", ")}
-              required
-              pattern="\s*[0-9]{6}\s*(,\s*[0-9]{6}\s*)*"
-              title="Enter six-digit pincodes separated by commas"
-            />
+            <UiText>{"Pincodes (comma separated)"}</UiText>
+            <UiAttributes>
+              <Input
+                name="pincodes"
+                defaultValue={area?.pincodes.join(", ")}
+                required
+                pattern="\s*[0-9]{6}\s*(,\s*[0-9]{6}\s*)*"
+                title="Enter six-digit pincodes separated by commas"
+              />
+            </UiAttributes>
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -339,7 +372,7 @@ function AreaEditor({
               defaultChecked={area?.active ?? true}
               disabled={!area}
             />
-            Active area
+            <UiText>{"Active area"}</UiText>
           </label>
           {!area && (
             <p className="text-xs text-muted-foreground">
@@ -353,7 +386,9 @@ function AreaEditor({
           </p>
           <SaveError error={save.error} />
           <div className="flex gap-3">
-            <Button type="submit">{save.isPending ? "Saving…" : "Save area"}</Button>
+            <Button type="submit">
+              <UiText>{save.isPending ? "Saving…" : "Save area"}</UiText>
+            </Button>
             <Button type="button" variant="outline" onClick={onClear}>
               Clear area form
             </Button>

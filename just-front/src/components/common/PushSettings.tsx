@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -41,39 +42,45 @@ export function PushSettings() {
   });
   if (!pushConfigured) return null;
   return (
-    <section className="mt-5 rounded-md border border-border p-3" aria-label="Browser alerts">
-      <p className="text-sm font-medium">Browser alerts</p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Optional generic alerts on this browser. Delivery depends on browser and system settings.
-        Re-enable after a new login.
-      </p>
-      {status.isError ? (
-        <Button variant="outline" size="sm" className="mt-3" onClick={() => status.refetch()}>
-          Retry alert settings
-        </Button>
-      ) : (
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-3"
-          disabled={status.isPending || !status.data?.available || change.isPending}
-          onClick={() => change.mutate()}
-        >
-          {change.isPending
-            ? "Saving…"
-            : status.data?.subscribed
-              ? "Turn off browser alerts"
-              : "Enable browser alerts"}
-        </Button>
-      )}
-      {status.data && !status.data.available && (
-        <p className="mt-2 text-xs">Browser push is not enabled on the server yet.</p>
-      )}
-      {message && (
-        <p className="mt-2 text-sm" role="status">
-          {message}
+    <UiAttributes>
+      <section className="mt-5 rounded-md border border-border p-3" aria-label="Browser alerts">
+        <p className="text-sm font-medium">
+          <UiText>{"Browser alerts"}</UiText>
         </p>
-      )}
-    </section>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Optional generic alerts on this browser. Delivery depends on browser and system settings.
+          Re-enable after a new login.
+        </p>
+        {status.isError ? (
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => status.refetch()}>
+            <UiText>{"Retry alert settings"}</UiText>
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            disabled={status.isPending || !status.data?.available || change.isPending}
+            onClick={() => change.mutate()}
+          >
+            <UiText>
+              {change.isPending
+                ? "Saving…"
+                : status.data?.subscribed
+                  ? "Turn off browser alerts"
+                  : "Enable browser alerts"}
+            </UiText>
+          </Button>
+        )}
+        {status.data && !status.data.available && (
+          <p className="mt-2 text-xs">Browser push is not enabled on the server yet.</p>
+        )}
+        {message && (
+          <p className="mt-2 text-sm" role="status">
+            <UiText>{message}</UiText>
+          </p>
+        )}
+      </section>
+    </UiAttributes>
   );
 }

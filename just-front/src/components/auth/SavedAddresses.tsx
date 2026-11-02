@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { DeliveryPinEditor } from "@/components/store/DeliveryPinEditor";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -90,7 +91,7 @@ export function SavedAddresses({ userId }: { userId: string }) {
           <span>
             <MapPin size={21} aria-hidden="true" />
           </span>
-          Saved addresses
+          <UiText>{"Saved addresses"}</UiText>
         </h2>
         <p>
           Saved delivery addresses. Delivery availability and charges will be checked separately at
@@ -106,54 +107,66 @@ export function SavedAddresses({ userId }: { userId: string }) {
         </p>
       )}
       {query.isPending ? (
-        <p role="status">Loading addresses…</p>
+        <p role="status">
+          <UiText>{"Loading addresses…"}</UiText>
+        </p>
       ) : query.isError ? (
         <div role="alert">
           <p>Couldn't load addresses. Your saved data has not been replaced.</p>
           <Button variant="outline" onClick={() => void query.refetch()}>
-            Retry addresses
+            <UiText>{"Retry addresses"}</UiText>
           </Button>
         </div>
       ) : (
         <>
           {!query.data.length && (
             <p className="my-4 text-muted-foreground">
-              No saved addresses yet. Add the place you'd like your shopping delivered.
+              <UiText>
+                {"No saved addresses yet. Add the place you'd like your shopping delivered."}
+              </UiText>
             </p>
           )}
           <ul className="my-4 grid gap-3 sm:grid-cols-2">
             {query.data.map((address) => (
               <li key={address.id} className="rounded-xl border border-border bg-card p-4">
-                <h3 className="font-semibold">{address.label}</h3>
+                <h3 className="font-semibold">
+                  <UiText>{address.label}</UiText>
+                </h3>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {address.line1}, {address.locality}, {address.city} {address.pincode}
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {address.location
-                    ? "Delivery pin saved; shop coverage checked at checkout."
-                    : "No delivery pin; pincode coverage only."}
+                  <UiText>
+                    {address.location
+                      ? "Delivery pin saved; shop coverage checked at checkout."
+                      : "No delivery pin; pincode coverage only."}
+                  </UiText>
                 </p>
                 <div className="mt-3 flex gap-2">
-                  <Button
-                    variant="outline"
-                    disabled={!!editing || !!deleting || busy}
-                    aria-label={`Edit ${address.label}`}
-                    onClick={() => start(address)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    disabled={!!editing || !!deleting || busy}
-                    aria-label={`Remove ${address.label}`}
-                    onClick={() => {
-                      setDeleting(address);
-                      setError("");
-                      setNotice("");
-                    }}
-                  >
-                    Remove
-                  </Button>
+                  <UiAttributes>
+                    <Button
+                      variant="outline"
+                      disabled={!!editing || !!deleting || busy}
+                      aria-label={`Edit ${address.label}`}
+                      onClick={() => start(address)}
+                    >
+                      <UiText>{"Edit"}</UiText>
+                    </Button>
+                  </UiAttributes>
+                  <UiAttributes>
+                    <Button
+                      variant="ghost"
+                      disabled={!!editing || !!deleting || busy}
+                      aria-label={`Remove ${address.label}`}
+                      onClick={() => {
+                        setDeleting(address);
+                        setError("");
+                        setNotice("");
+                      }}
+                    >
+                      <UiText>{"Remove"}</UiText>
+                    </Button>
+                  </UiAttributes>
                 </div>
               </li>
             ))}
@@ -162,7 +175,7 @@ export function SavedAddresses({ userId }: { userId: string }) {
             <div className="flex gap-2">
               <Button onClick={() => start("new")}>
                 <Plus size={17} aria-hidden="true" />
-                Add address
+                <UiText>{"Add address"}</UiText>
               </Button>
               <Button
                 variant="outline"
@@ -170,35 +183,40 @@ export function SavedAddresses({ userId }: { userId: string }) {
                 onClick={() => void query.refetch()}
               >
                 <RefreshCw size={16} aria-hidden="true" />
-                Reload addresses
+                <UiText>{"Reload addresses"}</UiText>
               </Button>
             </div>
           )}
         </>
       )}
       {deleting && (
-        <div
-          className="my-4 rounded-xl border border-border p-4"
-          role="group"
-          aria-label="Confirm address removal"
-        >
-          <p>Remove {deleting.label}? This removes it from your saved addresses.</p>
-          <div className="mt-3 flex gap-2">
-            <Button disabled={busy} onClick={() => void commit(true)}>
-              {busy ? "Removing…" : "Confirm removal"}
-            </Button>
-            <Button
-              variant="outline"
-              disabled={busy}
-              onClick={() => {
-                setDeleting(null);
-                setError("");
-              }}
-            >
-              Keep address
-            </Button>
+        <UiAttributes>
+          <div
+            className="my-4 rounded-xl border border-border p-4"
+            role="group"
+            aria-label="Confirm address removal"
+          >
+            <p>
+              <UiText>{"Remove "}</UiText>
+              <UiText>{deleting.label}</UiText>? This removes it from your saved addresses.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <Button disabled={busy} onClick={() => void commit(true)}>
+                <UiText>{busy ? "Removing…" : "Confirm removal"}</UiText>
+              </Button>
+              <Button
+                variant="outline"
+                disabled={busy}
+                onClick={() => {
+                  setDeleting(null);
+                  setError("");
+                }}
+              >
+                <UiText>{"Keep address"}</UiText>
+              </Button>
+            </div>
           </div>
-        </div>
+        </UiAttributes>
       )}
       {editing && (
         <form
@@ -210,12 +228,14 @@ export function SavedAddresses({ userId }: { userId: string }) {
           }}
         >
           <h3 className="font-semibold">
-            {editing === "new" ? "Add an address" : `Edit ${editing.label}`}
+            <UiText>{editing === "new" ? "Add an address" : `Edit ${editing.label}`}</UiText>
           </h3>
           <fieldset disabled={busy} className="space-y-4">
             {fields.map(([name, label, max, autocomplete]) => (
               <div key={name}>
-                <Label htmlFor={`address-${name}`}>{label}</Label>
+                <Label htmlFor={`address-${name}`}>
+                  <UiText>{label}</UiText>
+                </Label>
                 <Input
                   id={`address-${name}`}
                   className="mt-1"
@@ -239,7 +259,9 @@ export function SavedAddresses({ userId }: { userId: string }) {
               }}
             />
             <div className="flex gap-2">
-              <Button type="submit">{busy ? "Saving…" : "Save address"}</Button>
+              <Button type="submit">
+                <UiText>{busy ? "Saving…" : "Save address"}</UiText>
+              </Button>
               <Button
                 type="button"
                 variant="outline"
@@ -249,7 +271,7 @@ export function SavedAddresses({ userId }: { userId: string }) {
                   setError("");
                 }}
               >
-                Cancel
+                <UiText>{"Cancel"}</UiText>
               </Button>
             </div>
           </fieldset>

@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -81,7 +82,7 @@ export function AccountSecurity() {
         <span>
           <LockKeyhole size={21} aria-hidden="true" />
         </span>
-        Account security
+        <UiText>{"Account security"}</UiText>
       </h2>
       <p className="text-sm text-muted-foreground">
         Your current password is required. Both actions sign out every device, including this one.
@@ -90,7 +91,7 @@ export function AccountSecurity() {
       <form onSubmit={(event) => void submit(event)} className="max-w-lg space-y-4" noValidate>
         <fieldset disabled={busy || uncertain} className="space-y-4">
           <label className="block text-sm">
-            Security action
+            <UiText>{"Security action"}</UiText>
             <select
               className="mt-1 block w-full rounded border bg-background p-2"
               value={mode}
@@ -103,12 +104,18 @@ export function AccountSecurity() {
                 setError("");
               }}
             >
-              <option value="password">Change password</option>
-              <option value="logout">Sign out all devices</option>
+              <option value="password">
+                <UiText>{"Change password"}</UiText>
+              </option>
+              <option value="logout">
+                <UiText>{"Sign out all devices"}</UiText>
+              </option>
             </select>
           </label>
           <div>
-            <Label htmlFor="security-current-password">Current password</Label>
+            <Label htmlFor="security-current-password">
+              <UiText>{"Current password"}</UiText>
+            </Label>
             <Input
               id="security-current-password"
               type="password"
@@ -122,7 +129,9 @@ export function AccountSecurity() {
           {mode === "password" && (
             <>
               <div>
-                <Label htmlFor="security-new-password">New password</Label>
+                <Label htmlFor="security-new-password">
+                  <UiText>{"New password"}</UiText>
+                </Label>
                 <Input
                   id="security-new-password"
                   type="password"
@@ -134,7 +143,9 @@ export function AccountSecurity() {
                 />
               </div>
               <div>
-                <Label htmlFor="security-confirm-password">Confirm new password</Label>
+                <Label htmlFor="security-confirm-password">
+                  <UiText>{"Confirm new password"}</UiText>
+                </Label>
                 <Input
                   id="security-confirm-password"
                   type="password"
@@ -160,11 +171,13 @@ export function AccountSecurity() {
             type="submit"
             disabled={!ack || !current || (mode === "password" && (!next || !confirm))}
           >
-            {busy
-              ? "Updating account security…"
-              : mode === "password"
-                ? "Change password & sign out"
-                : "Sign out all devices"}
+            <UiText>
+              {busy
+                ? "Updating account security…"
+                : mode === "password"
+                  ? "Change password & sign out"
+                  : "Sign out all devices"}
+            </UiText>
           </Button>
         </fieldset>
         {error && (

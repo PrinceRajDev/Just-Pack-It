@@ -1,3 +1,4 @@
+import { UiAttributes } from "@/lib/i18n/Language";
 import { PlatformSettingsPage } from "./PlatformSettingsPage";
 import { AdminReports } from "./AdminReports";
 import { AdminUsers } from "./AdminUsers";
@@ -37,10 +38,12 @@ export function LiveAdmin() {
   if (path === "/admin/settings") return <AdminSettings />;
   if (path !== "/admin" && path !== "/admin/" && path !== "/admin/partners")
     return (
-      <EmptyState
-        title="This operations screen is not connected yet"
-        body="Choose an available section from the operations menu."
-      />
+      <UiAttributes>
+        <EmptyState
+          title="This operations screen is not connected yet"
+          body="Choose an available section from the operations menu."
+        />
+      </UiAttributes>
     );
   return <SellerApprovalsPage />;
 }

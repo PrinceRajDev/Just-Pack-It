@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -25,16 +26,18 @@ export function AddressDeliveryReview({
       aria-labelledby="delivery-check-heading"
     >
       <h2 id="delivery-check-heading" className="font-display text-2xl">
-        Where should it go?
+        <UiText>{"Where should it go?"}</UiText>
       </h2>
       <p className="text-sm text-muted-foreground">
-        Choose your saved address and how you want to receive your order.
+        <UiText>{"Choose your saved address and how you want to receive your order."}</UiText>
       </p>
       {!ready ? (
         <p role="status">Checking your session…</p>
       ) : !session ? (
         <Button asChild>
-          <Link to="/login">Sign in to check your address</Link>
+          <Link to="/login">
+            <UiText>{"Sign in to check your address"}</UiText>
+          </Link>
         </Button>
       ) : (
         <SignedInReview
@@ -94,25 +97,33 @@ function SignedInReview({
   return (
     <>
       {addresses.isPending ? (
-        <p role="status">Loading saved addresses…</p>
+        <p role="status">
+          <UiText>{"Loading saved addresses…"}</UiText>
+        </p>
       ) : addresses.isError ? (
         <div role="alert">
           <p>Couldn't load saved addresses.</p>
           <Button variant="outline" onClick={() => void addresses.refetch()}>
-            Retry addresses
+            <UiText>{"Retry addresses"}</UiText>
           </Button>
         </div>
       ) : (
         <>
-          {!addresses.data.length && <p>No saved addresses yet.</p>}
+          {!addresses.data.length && (
+            <p>
+              <UiText>{"No saved addresses yet."}</UiText>
+            </p>
+          )}
           <Button variant="outline" asChild>
             <Link to="/account" search={{ tab: "addresses" }}>
-              Manage saved addresses
+              <UiText>{"Manage saved addresses"}</UiText>
             </Link>
           </Button>
           {!!addresses.data.length && (
             <fieldset className="space-y-2">
-              <legend className="mb-2 font-medium">Delivery address</legend>
+              <legend className="mb-2 font-medium">
+                <UiText>{"Delivery address"}</UiText>
+              </legend>
               {addresses.data.map((address) => (
                 <label
                   key={address.id}
@@ -130,13 +141,17 @@ function SignedInReview({
                     className="mt-1 accent-primary"
                   />
                   <span>
-                    <strong>{address.label}</strong>
+                    <strong>
+                      <UiText>{address.label}</UiText>
+                    </strong>
                     <br />
                     {address.line1}, {address.locality}, {address.city} {address.pincode}
                     <span className="block text-xs text-muted-foreground">
-                      {address.location
-                        ? "Delivery pin saved; distance is checked per shop."
-                        : "No pin saved: pincode coverage only, exact destination distance not checked."}
+                      <UiText>
+                        {address.location
+                          ? "Delivery pin saved; distance is checked per shop."
+                          : "No pin saved: pincode coverage only, exact destination distance not checked."}
+                      </UiText>
                     </span>
                   </span>
                 </label>
@@ -147,7 +162,9 @@ function SignedInReview({
       )}
       {current &&
         (check.isPending ? (
-          <p role="status">Checking shop delivery options…</p>
+          <p role="status">
+            <UiText>{"Checking shop delivery options…"}</UiText>
+          </p>
         ) : check.isError ? (
           <div role="alert">
             <p>
@@ -155,17 +172,17 @@ function SignedInReview({
               retry.
             </p>
             <Button variant="outline" onClick={() => void addresses.refetch()}>
-              Reload addresses
+              <UiText>{"Reload addresses"}</UiText>
             </Button>
             <Button variant="outline" onClick={() => void check.refetch()}>
-              Retry delivery check
+              <UiText>{"Retry delivery check"}</UiText>
             </Button>
           </div>
         ) : check.data && check.data.addressVersion !== current.version ? (
           <div role="alert">
             <p>Your address changed elsewhere. Reload addresses before checking delivery again.</p>
             <Button variant="outline" onClick={() => void addresses.refetch()}>
-              Reload addresses
+              <UiText>{"Reload addresses"}</UiText>
             </Button>
           </div>
         ) : (
@@ -189,11 +206,13 @@ function SignedInReview({
                       <li key={option.method} className="text-sm">
                         <p className="font-medium">
                           {fulfilmentLabel[option.method]} ·{" "}
-                          {option.status === "eligible"
-                            ? "Available"
-                            : option.status === "unavailable"
-                              ? "Unavailable"
-                              : "Not verified"}
+                          <UiText>
+                            {option.status === "eligible"
+                              ? "Available"
+                              : option.status === "unavailable"
+                                ? "Unavailable"
+                                : "Not verified"}
+                          </UiText>
                         </p>
                         <p className="text-muted-foreground">{option.message}</p>
                         {lines.length > 0 && (
@@ -214,9 +233,11 @@ function SignedInReview({
                         )}
                         {option.status === "eligible" && (
                           <p>
-                            {option.method === "pickup"
-                              ? "Pickup delivery charge: ₹0"
-                              : `Listed fee: ${option.listedFee === null ? "Not supplied" : inr(option.listedFee)}`}
+                            <UiText>
+                              {option.method === "pickup"
+                                ? "Pickup delivery charge: ₹0"
+                                : `Listed fee: ${option.listedFee === null ? "Not supplied" : inr(option.listedFee)}`}
+                            </UiText>
                           </p>
                         )}
                       </li>
@@ -229,7 +250,7 @@ function SignedInReview({
                 disabled={check.isFetching}
                 onClick={() => void check.refetch()}
               >
-                Refresh delivery check
+                <UiText>{"Refresh delivery check"}</UiText>
               </Button>
               {areaId &&
                 lines.length > 0 &&

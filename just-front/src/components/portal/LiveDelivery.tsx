@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { SettlementLedger } from "./SettlementLedger";
 import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
@@ -87,7 +88,7 @@ export function LiveDelivery() {
       <header className="flex flex-wrap items-center justify-between gap-3 bg-primary p-4 text-primary-foreground">
         <p className="font-semibold">{session?.name} · Delivery desk</p>
         <Button variant="outline" className="text-foreground" onClick={signOut}>
-          Sign out
+          <UiText>{"Sign out"}</UiText>
         </Button>
       </header>
       <main className="mx-auto max-w-3xl space-y-5 p-4 pb-16">
@@ -117,7 +118,7 @@ export function LiveDelivery() {
               </p>
             ) : (
               <Button disabled={busy} onClick={() => void availability(!profile.data?.online)}>
-                {profile.data.online ? "Go offline" : "Go online"}
+                <UiText>{profile.data.online ? "Go offline" : "Go online"}</UiText>
               </Button>
             )}
             <Button
@@ -137,9 +138,11 @@ export function LiveDelivery() {
             ) : active.isError ? (
               <p role="alert">
                 Could not refresh active task.{" "}
-                {active.data
-                  ? "Last loaded task remains below; refresh before acting."
-                  : "Check again before claiming."}
+                <UiText>
+                  {active.data
+                    ? "Last loaded task remains below; refresh before acting."
+                    : "Check again before claiming."}
+                </UiText>
               </p>
             ) : null}
             {active.data ? (
@@ -178,9 +181,11 @@ export function LiveDelivery() {
                             <h3 className="font-semibold">{task.shopName}</h3>
                             <p>
                               {task.itemCount} items ·{" "}
-                              {task.paymentMethod === "cod"
-                                ? `Collect ${inr(task.amountToCollect)} at drop-off`
-                                : "Prepaid: no cash"}
+                              <UiText>
+                                {task.paymentMethod === "cod"
+                                  ? `Collect ${inr(task.amountToCollect)} at drop-off`
+                                  : "Prepaid: no cash"}
+                              </UiText>
                             </p>
                             <p className="text-sm">
                               Customer details appear only after a successful claim.
@@ -189,7 +194,7 @@ export function LiveDelivery() {
                               disabled={busy || active.isError}
                               onClick={() => void claim(task)}
                             >
-                              Claim task
+                              <UiText>{"Claim task"}</UiText>
                             </Button>
                           </article>
                         ))}
@@ -205,7 +210,9 @@ export function LiveDelivery() {
                           disabled={tasks.isFetching}
                           onClick={() => void tasks.fetchNextPage()}
                         >
-                          {tasks.isFetchNextPageError ? "Retry more tasks" : "Load more tasks"}
+                          <UiText>
+                            {tasks.isFetchNextPageError ? "Retry more tasks" : "Load more tasks"}
+                          </UiText>
                         </Button>
                       )}
                     </>
@@ -265,165 +272,171 @@ function DeliveryTask({
     ? `${task.drop.line1}, ${task.drop.locality}, ${task.drop.city} ${task.drop.pincode}`
     : undefined;
   return (
-    <section
-      className="space-y-4 rounded-xl border border-border bg-card p-5"
-      aria-label="Active delivery"
-    >
-      <h2 className="font-display text-2xl">{task.shopName}</h2>
-      <p className="break-all text-sm">Your partner ID: {session?.userId}</p>
-      <p className="break-all text-sm">
-        Task {task.id} · {task.status.replaceAll("_", " ")}
-      </p>
-      <p>Pickup: {task.pickup ?? "Shop address not recorded; contact shop before travelling."}</p>
-      <p>Drop-off: {drop ?? "Address unavailable; contact support."}</p>
-      {[
-        { label: "Pickup", url: navigation(task.pickup ?? undefined) },
-        { label: "Drop-off", url: navigation(drop, task.drop?.location) },
-      ].map(
-        (link) =>
-          link.url && (
-            <a
-              key={link.label}
-              href={link.url}
-              target="_blank"
-              rel="noreferrer"
-              className="mr-4 inline-block underline"
-            >
-              {link.label} navigation (external map)
-            </a>
-          ),
-      )}
-      <p>
-        {task.status === "returning"
-          ? "Cash collection stopped: return goods to the shop"
-          : task.paymentMethod === "cod"
-            ? `Cash to collect: ${inr(task.amountToCollect)}`
-            : "Prepaid: do not collect cash"}
-        . Cash acknowledgement is not bank settlement or payout.
-      </p>
-      <Button
-        variant="outline"
-        disabled={busy}
-        onClick={() => void run(async () => setContact(await delivery.contact(task.id)))}
+    <UiAttributes>
+      <section
+        className="space-y-4 rounded-xl border border-border bg-card p-5"
+        aria-label="Active delivery"
       >
-        Show contact numbers
-      </Button>
-      {contact && (
-        <div>
-          {(["shop", "buyer"] as const).map((key) =>
-            contact[key] && /^\+[1-9]\d{7,14}$/.test(contact[key]!) ? (
-              <a key={key} className="mr-4 underline" href={`tel:${contact[key]}`}>
-                Call {key}
+        <h2 className="font-display text-2xl">{task.shopName}</h2>
+        <p className="break-all text-sm">Your partner ID: {session?.userId}</p>
+        <p className="break-all text-sm">
+          Task {task.id} · {task.status.replaceAll("_", " ")}
+        </p>
+        <p>Pickup: {task.pickup ?? "Shop address not recorded; contact shop before travelling."}</p>
+        <p>Drop-off: {drop ?? "Address unavailable; contact support."}</p>
+        {[
+          { label: "Pickup", url: navigation(task.pickup ?? undefined) },
+          { label: "Drop-off", url: navigation(drop, task.drop?.location) },
+        ].map(
+          (link) =>
+            link.url && (
+              <a
+                key={link.label}
+                href={link.url}
+                target="_blank"
+                rel="noreferrer"
+                className="mr-4 inline-block underline"
+              >
+                <UiText>{link.label}</UiText> navigation (external map)
               </a>
-            ) : (
-              <p key={key}>{key} contact unavailable</p>
             ),
-          )}
-        </div>
-      )}
-      <ul>
-        {task.lines?.map((line, i) => (
-          <li key={i}>
-            {line.qty} × {line.name}
-            {line.variantLabel ? ` · ${line.variantLabel}` : ""}
-          </li>
-        ))}
-      </ul>
-      {error && <p role="alert">{error}</p>}
-      {task.issue && (
-        <p role="status">
-          Issue reported: {task.issue.reason}. Task remains assigned; contact operations for
-          assistance.
+        )}
+        <p>
+          <UiText>
+            {task.status === "returning"
+              ? "Cash collection stopped: return goods to the shop"
+              : task.paymentMethod === "cod"
+                ? `Cash to collect: ${inr(task.amountToCollect)}`
+                : "Prepaid: do not collect cash"}
+          </UiText>
+          . Cash acknowledgement is not bank settlement or payout.
         </p>
-      )}
-      <details>
-        <summary className="cursor-pointer">Report a delivery problem</summary>
-        <form
-          className="mt-3 space-y-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (reason.trim().length >= 10) void run(() => delivery.report(task, reason.trim()));
-          }}
+        <Button
+          variant="outline"
+          disabled={busy}
+          onClick={() => void run(async () => setContact(await delivery.contact(task.id)))}
         >
-          <label className="block">
-            Problem details
-            <textarea
-              className="mt-1 block w-full rounded border border-input bg-background p-2"
-              value={reason}
-              maxLength={1000}
-              onChange={(e) => setReason(e.target.value)}
-            />
-          </label>
-          <p className="text-sm">
-            This alerts operations; it does not cancel, reassign, refund or mark the order
-            delivered. Keep goods/cash safe while awaiting assistance.
-          </p>
-          <Button variant="outline" disabled={busy || reason.trim().length < 10}>
-            Report issue
-          </Button>
-        </form>
-      </details>
-      {task.status === "returning" && (
-        <p role="status">
-          Return these goods to the shop. The shop must verify your partner ID and acknowledge
-          physical receipt before your task is released. Do not collect cash or deliver to the
-          buyer.
-        </p>
-      )}
-      {task.status === "claimed" && (
-        <p role="status">
-          Ask the shop to verify your partner ID and confirm pickup in its Orders screen. Your
-          partner ID is shown in your account session, and the seller has the assigned ID.
-        </p>
-      )}
-      {task.status === "picked_up" && (
-        <Button disabled={busy} onClick={() => void run(() => delivery.dispatch(task))}>
-          Start delivery
+          Show contact numbers
         </Button>
-      )}
-      {task.status === "out_for_delivery" && (
-        <form
-          className="space-y-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (confirm && /^\d{6}$/.test(code))
-              void run(
-                () => delivery.complete(task, code),
-                "Delivery completed. Buyer receipt verified; any COD cash acknowledgement was saved. Cash remittance and payouts are separate.",
-              );
-          }}
-        >
-          <p>
-            Only after the buyer receives goods
-            {task.paymentMethod === "cod" ? " and pays cash" : ""}, ask them for the receipt code
-            from their order page.
+        {contact && (
+          <div>
+            {(["shop", "buyer"] as const).map((key) =>
+              contact[key] && /^\+[1-9]\d{7,14}$/.test(contact[key]!) ? (
+                <a key={key} className="mr-4 underline" href={`tel:${contact[key]}`}>
+                  Call {key}
+                </a>
+              ) : (
+                <p key={key}>{key} contact unavailable</p>
+              ),
+            )}
+          </div>
+        )}
+        <ul>
+          {task.lines?.map((line, i) => (
+            <li key={i}>
+              {line.qty} × {line.name}
+              <UiText>{line.variantLabel ? ` · ${line.variantLabel}` : ""}</UiText>
+            </li>
+          ))}
+        </ul>
+        {error && <p role="alert">{error}</p>}
+        {task.issue && (
+          <p role="status">
+            Issue reported: {task.issue.reason}. Task remains assigned; contact operations for
+            assistance.
           </p>
-          <label className="block">
-            Buyer receipt code
-            <input
-              className="ml-2 w-32 rounded border border-input bg-background p-2"
-              inputMode="numeric"
-              autoComplete="off"
-              maxLength={6}
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-            />
-          </label>
-          <label className="flex items-start gap-2">
-            <input
-              type="checkbox"
-              checked={confirm}
-              onChange={(e) => setConfirm(e.target.checked)}
-            />
-            {task.paymentMethod === "cod"
-              ? `I handed over goods and actually received exactly ${inr(task.amountToCollect)} cash.`
-              : "I handed over the prepaid goods. No cash was collected."}
-          </label>
-          <Button disabled={busy || !confirm || !/^\d{6}$/.test(code)}>
-            Verify code and complete
+        )}
+        <details>
+          <summary className="cursor-pointer">Report a delivery problem</summary>
+          <form
+            className="mt-3 space-y-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (reason.trim().length >= 10) void run(() => delivery.report(task, reason.trim()));
+            }}
+          >
+            <label className="block">
+              Problem details
+              <textarea
+                className="mt-1 block w-full rounded border border-input bg-background p-2"
+                value={reason}
+                maxLength={1000}
+                onChange={(e) => setReason(e.target.value)}
+              />
+            </label>
+            <p className="text-sm">
+              This alerts operations; it does not cancel, reassign, refund or mark the order
+              delivered. Keep goods/cash safe while awaiting assistance.
+            </p>
+            <Button variant="outline" disabled={busy || reason.trim().length < 10}>
+              Report issue
+            </Button>
+          </form>
+        </details>
+        {task.status === "returning" && (
+          <p role="status">
+            Return these goods to the shop. The shop must verify your partner ID and acknowledge
+            physical receipt before your task is released. Do not collect cash or deliver to the
+            buyer.
+          </p>
+        )}
+        {task.status === "claimed" && (
+          <p role="status">
+            Ask the shop to verify your partner ID and confirm pickup in its Orders screen. Your
+            partner ID is shown in your account session, and the seller has the assigned ID.
+          </p>
+        )}
+        {task.status === "picked_up" && (
+          <Button disabled={busy} onClick={() => void run(() => delivery.dispatch(task))}>
+            Start delivery
           </Button>
-        </form>
-      )}
-    </section>
+        )}
+        {task.status === "out_for_delivery" && (
+          <form
+            className="space-y-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (confirm && /^\d{6}$/.test(code))
+                void run(
+                  () => delivery.complete(task, code),
+                  "Delivery completed. Buyer receipt verified; any COD cash acknowledgement was saved. Cash remittance and payouts are separate.",
+                );
+            }}
+          >
+            <p>
+              Only after the buyer receives goods
+              <UiText>{task.paymentMethod === "cod" ? " and pays cash" : ""}</UiText>, ask them for
+              the receipt code from their order page.
+            </p>
+            <label className="block">
+              Buyer receipt code
+              <input
+                className="ml-2 w-32 rounded border border-input bg-background p-2"
+                inputMode="numeric"
+                autoComplete="off"
+                maxLength={6}
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+              />
+            </label>
+            <label className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                checked={confirm}
+                onChange={(e) => setConfirm(e.target.checked)}
+              />
+              <UiText>
+                {task.paymentMethod === "cod"
+                  ? `I handed over goods and actually received exactly ${inr(task.amountToCollect)} cash.`
+                  : "I handed over the prepaid goods. No cash was collected."}
+              </UiText>
+            </label>
+            <Button disabled={busy || !confirm || !/^\d{6}$/.test(code)}>
+              Verify code and complete
+            </Button>
+          </form>
+        )}
+      </section>
+    </UiAttributes>
   );
 }

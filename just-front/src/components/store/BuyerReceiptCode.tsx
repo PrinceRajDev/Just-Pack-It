@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useEffect, useState } from "react";
 import { receipts } from "@/services/receipts";
 import { Button } from "@/components/ui/button";
@@ -57,71 +58,86 @@ export function BuyerReceiptCode({
     }
   }
   return (
-    <section
-      className="space-y-3 rounded-lg border border-primary/20 bg-secondary/30 p-4"
-      aria-label="Buyer receipt confirmation"
-    >
-      <h3 className="font-semibold">Confirm this shop's handoff</h3>
-      <p className="text-sm">
-        {prepaid
-          ? "Payment was captured online. Share this code only after receiving the goods; do not pay cash again."
-          : "Generate and share this code only after receiving the goods and paying cash."}{" "}
-        It is shown in your account; no SMS is sent.
-      </p>
-      <label className="flex items-start gap-3 text-sm">
-        <input
-          type="checkbox"
-          className="mt-1 accent-primary"
-          checked={received}
-          onChange={(event) => setReceived(event.target.checked)}
-          disabled={busy || !!receipt}
-        />
-        I received all items in this shop's suborder.
-      </label>
-      {!prepaid && (
+    <UiAttributes>
+      <section
+        className="space-y-3 rounded-lg border border-primary/20 bg-secondary/30 p-4"
+        aria-label="Buyer receipt confirmation"
+      >
+        <h3 className="font-semibold">Confirm this shop's handoff</h3>
+        <p className="text-sm">
+          <UiText>
+            {prepaid
+              ? "Payment was captured online. Share this code only after receiving the goods; do not pay cash again."
+              : "Generate and share this code only after receiving the goods and paying cash."}
+          </UiText>{" "}
+          It is shown in your account; no SMS is sent.
+        </p>
         <label className="flex items-start gap-3 text-sm">
           <input
             type="checkbox"
             className="mt-1 accent-primary"
-            checked={paid}
-            onChange={(event) => setPaid(event.target.checked)}
+            checked={received}
+            onChange={(event) => setReceived(event.target.checked)}
             disabled={busy || !!receipt}
           />
-          I paid {inr(amount)} in cash for this shop's suborder.
+          I received all items in this shop's suborder.
         </label>
-      )}
-      <Button disabled={busy || !received || (!prepaid && !paid)} onClick={() => void issue()}>
-        {busy ? "Generating…" : receipt ? "Generate replacement code" : "Generate receipt code"}
-      </Button>
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error} Refresh the order if its status changed. A new code can be issued only once per
-          minute.
-        </p>
-      )}
-      {expired && (
-        <p role="status" className="text-sm">
-          The code expired. Confirm receipt/payment again to generate another.
-        </p>
-      )}
-      {receipt && (
-        <div role="status">
-          <p className="text-sm">One-time receipt code</p>
-          <output aria-label="One-time receipt code" className="font-mono text-3xl tracking-widest">
-            {receipt.code}
-          </output>
-          <p className="text-sm">
-            {prepaid
-              ? "Seller handoff confirmation is pending. No cash collection is required."
-              : "Seller confirmation is pending; issuing a code alone does not record cash collection."}
+        {!prepaid && (
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1 accent-primary"
+              checked={paid}
+              onChange={(event) => setPaid(event.target.checked)}
+              disabled={busy || !!receipt}
+            />
+            I paid {inr(amount)} in cash for this shop's suborder.
+          </label>
+        )}
+        <Button disabled={busy || !received || (!prepaid && !paid)} onClick={() => void issue()}>
+          <UiText>
+            {busy ? "Generating…" : receipt ? "Generate replacement code" : "Generate receipt code"}
+          </UiText>
+        </Button>
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error} Refresh the order if its status changed. A new code can be issued only once per
+            minute.
           </p>
-          <p className="text-sm">
-            Valid until{" "}
-            {new Date(receipt.expiresAt).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" })}{" "}
-            India time. Replacing a code invalidates the previous one.
+        )}
+        {expired && (
+          <p role="status" className="text-sm">
+            The code expired. Confirm receipt/payment again to generate another.
           </p>
-        </div>
-      )}
-    </section>
+        )}
+        {receipt && (
+          <div role="status">
+            <p className="text-sm">One-time receipt code</p>
+            <UiAttributes>
+              <output
+                aria-label="One-time receipt code"
+                className="font-mono text-3xl tracking-widest"
+              >
+                {receipt.code}
+              </output>
+            </UiAttributes>
+            <p className="text-sm">
+              <UiText>
+                {prepaid
+                  ? "Seller handoff confirmation is pending. No cash collection is required."
+                  : "Seller confirmation is pending; issuing a code alone does not record cash collection."}
+              </UiText>
+            </p>
+            <p className="text-sm">
+              Valid until{" "}
+              {new Date(receipt.expiresAt).toLocaleTimeString("en-IN", {
+                timeZone: "Asia/Kolkata",
+              })}{" "}
+              India time. Replacing a code invalidates the previous one.
+            </p>
+          </div>
+        )}
+      </section>
+    </UiAttributes>
   );
 }

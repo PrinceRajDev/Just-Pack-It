@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import type { SubOrder } from "@/domain/types";
 export function ShopOrderTimeline({
   sub,
@@ -50,24 +51,26 @@ export function ShopOrderTimeline({
   const index = steps.findIndex((step) => step.status === sub.status);
   return (
     <div className="space-y-2">
-      <ol
-        aria-label={`Order progress for ${sub.shopName ?? "this shop"}`}
-        className="grid gap-2 sm:grid-cols-2"
-      >
-        {steps.map((step, i) => (
-          <li
-            key={step.status}
-            aria-current={i === index ? "step" : undefined}
-            className={`rounded-lg border p-3 text-sm ${i === index ? "border-primary bg-primary/5 font-semibold" : "border-border"}`}
-          >
-            <span aria-hidden>{i < index ? "✓ " : `${i + 1}. `}</span>
-            {step.label}
-            <span className="ml-2 text-xs text-muted-foreground">
-              {i === index ? "Current" : i < index ? "Passed" : "Upcoming"}
-            </span>
-          </li>
-        ))}
-      </ol>
+      <UiAttributes>
+        <ol
+          aria-label={`Order progress for ${sub.shopName ?? "this shop"}`}
+          className="grid gap-2 sm:grid-cols-2"
+        >
+          {steps.map((step, i) => (
+            <li
+              key={step.status}
+              aria-current={i === index ? "step" : undefined}
+              className={`rounded-lg border p-3 text-sm ${i === index ? "border-primary bg-primary/5 font-semibold" : "border-border"}`}
+            >
+              <span aria-hidden>{i < index ? "✓ " : `${i + 1}. `}</span>
+              <UiText>{step.label}</UiText>
+              <span className="ml-2 text-xs text-muted-foreground">
+                {i === index ? "Current" : i < index ? "Passed" : "Upcoming"}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </UiAttributes>
       <p className="text-xs text-muted-foreground">
         Progress follows the latest shop status. Individual step timestamps and arrival estimates
         are not supplied.
@@ -78,7 +81,7 @@ export function ShopOrderTimeline({
           <time dateTime={sub.updatedAt}>
             {new Date(sub.updatedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
           </time>{" "}
-          · India time
+          <UiText>{"· India time"}</UiText>
         </p>
       )}
     </div>

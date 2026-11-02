@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useEffect, useRef, useState } from "react";
 import { currentPosition } from "@/services/location";
 import { Button } from "@/components/ui/button";
@@ -53,51 +54,53 @@ export function ShopGpsPin({
     onChange();
   }
   return (
-    <section className="space-y-3 rounded-lg border p-3 md:col-span-2" aria-label="Shop GPS pin">
-      <p className="text-sm font-medium">Your shop’s map pin</p>
-      <p className="text-sm text-muted-foreground">
-        Use GPS only while physically at the shop. This pin helps nearby buyers discover you; saving
-        a changed profile requires admin approval.
-      </p>
-      <Button type="button" variant="outline" disabled={busy} onClick={() => void detect()}>
-        {busy ? "Finding shop location…" : "Use my current location"}
-      </Button>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-sm">
-          Shop latitude (map pin)
-          <Input
-            type="number"
-            name="latitude"
-            step="any"
-            min={-90}
-            max={90}
-            value={lat}
-            onChange={(e) => edit(() => setLat(e.target.value))}
-          />
-        </label>
-        <label className="text-sm">
-          Shop longitude (map pin)
-          <Input
-            type="number"
-            name="longitude"
-            step="any"
-            min={-180}
-            max={180}
-            value={lng}
-            onChange={(e) => edit(() => setLng(e.target.value))}
-          />
-        </label>
-      </div>
-      {notice && (
-        <p role="status" className="text-sm">
-          {notice}
+    <UiAttributes>
+      <section className="space-y-3 rounded-lg border p-3 md:col-span-2" aria-label="Shop GPS pin">
+        <p className="text-sm font-medium">Your shop’s map pin</p>
+        <p className="text-sm text-muted-foreground">
+          Use GPS only while physically at the shop. This pin helps nearby buyers discover you;
+          saving a changed profile requires admin approval.
         </p>
-      )}
-      {error && (
-        <p role="alert" className="text-sm">
-          {error}
-        </p>
-      )}
-    </section>
+        <Button type="button" variant="outline" disabled={busy} onClick={() => void detect()}>
+          <UiText>{busy ? "Finding shop location…" : "Use my current location"}</UiText>
+        </Button>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="text-sm">
+            Shop latitude (map pin)
+            <Input
+              type="number"
+              name="latitude"
+              step="any"
+              min={-90}
+              max={90}
+              value={lat}
+              onChange={(e) => edit(() => setLat(e.target.value))}
+            />
+          </label>
+          <label className="text-sm">
+            Shop longitude (map pin)
+            <Input
+              type="number"
+              name="longitude"
+              step="any"
+              min={-180}
+              max={180}
+              value={lng}
+              onChange={(e) => edit(() => setLng(e.target.value))}
+            />
+          </label>
+        </div>
+        {notice && (
+          <p role="status" className="text-sm">
+            {notice}
+          </p>
+        )}
+        {error && (
+          <p role="alert" className="text-sm">
+            {error}
+          </p>
+        )}
+      </section>
+    </UiAttributes>
   );
 }

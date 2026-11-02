@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -141,12 +142,18 @@ export function LiveAuthForm({
           }
         })}
       >
-        {registering && options.isPending && <p role="status">Loading verification options…</p>}
+        {registering && options.isPending && (
+          <p role="status">
+            <UiText>{"Loading verification options…"}</UiText>
+          </p>
+        )}
         {registering && options.isError && (
           <div role="alert">
-            <p>Could not load signup verification.</p>
+            <p>
+              <UiText>{"Could not load signup verification."}</UiText>
+            </p>
             <Button type="button" variant="outline" onClick={() => options.refetch()}>
-              Retry verification setup
+              <UiText>{"Retry verification setup"}</UiText>
             </Button>
           </div>
         )}
@@ -155,7 +162,9 @@ export function LiveAuthForm({
             disabled={form.formState.isSubmitting}
             className="auth-role-options grid grid-cols-2 gap-3"
           >
-            <legend className="mb-2 text-sm font-medium">Choose your place in the market</legend>
+            <legend className="mb-2 text-sm font-medium">
+              <UiText>{"Choose your place in the market"}</UiText>
+            </legend>
             {(["buyer", "seller"] as const).map((type) => (
               <label
                 key={type}
@@ -178,9 +187,13 @@ export function LiveAuthForm({
                   ) : (
                     <Store className="mb-2 size-5" aria-hidden />
                   )}
-                  <strong className="block">{type === "buyer" ? "Buyer" : "Seller"}</strong>
+                  <strong className="block">
+                    <UiText>{type === "buyer" ? "Buyer" : "Seller"}</UiText>
+                  </strong>
                   <span className="text-xs text-muted-foreground">
-                    {type === "buyer" ? "Discover local shops & order" : "Bring your shop online"}
+                    <UiText>
+                      {type === "buyer" ? "Discover local shops & order" : "Bring your shop online"}
+                    </UiText>
                   </span>
                 </span>
               </label>
@@ -190,72 +203,87 @@ export function LiveAuthForm({
         <div className="auth-details-section">
           {registering && (
             <p className="auth-section-title">
-              <span aria-hidden="true">01</span> Your account details
+              <span aria-hidden="true">01</span>
+              <UiText>{"Your account details"}</UiText>
             </p>
           )}
           {registering && (
             <div>
-              <Label htmlFor="live-name">Your name</Label>
-              <Input
-                id="live-name"
-                autoComplete="name"
-                placeholder="Your full name"
-                {...form.register("name")}
-                aria-invalid={!!form.formState.errors.name}
-                aria-describedby="live-name-error"
-              />
+              <Label htmlFor="live-name">
+                <UiText>{"Your name"}</UiText>
+              </Label>
+              <UiAttributes>
+                <Input
+                  id="live-name"
+                  autoComplete="name"
+                  placeholder="Your full name"
+                  {...form.register("name")}
+                  aria-invalid={!!form.formState.errors.name}
+                  aria-describedby="live-name-error"
+                />
+              </UiAttributes>
               <p id="live-name-error" className="text-sm text-destructive">
                 {form.formState.errors.name?.message}
               </p>
             </div>
           )}
           <div>
-            <Label htmlFor="live-phone">Mobile number</Label>
-            <Input
-              id="live-phone"
-              type="tel"
-              autoComplete="tel"
-              inputMode="tel"
-              placeholder="Mobile number with country code"
-              {...form.register("phone")}
-              aria-invalid={!!form.formState.errors.phone}
-              aria-describedby="live-phone-hint live-phone-error"
-            />
+            <Label htmlFor="live-phone">
+              <UiText>{"Mobile number"}</UiText>
+            </Label>
+            <UiAttributes>
+              <Input
+                id="live-phone"
+                type="tel"
+                autoComplete="tel"
+                inputMode="tel"
+                placeholder="Mobile number with country code"
+                {...form.register("phone")}
+                aria-invalid={!!form.formState.errors.phone}
+                aria-describedby="live-phone-hint live-phone-error"
+              />
+            </UiAttributes>
             <p id="live-phone-hint" className="auth-field-hint">
-              Indian number? Enter 10 digits, or include +91.
+              <UiText>{"Indian number? Enter 10 digits, or include +91."}</UiText>
             </p>
             <p id="live-phone-error" className="text-sm text-destructive">
               {form.formState.errors.phone?.message}
             </p>
           </div>
           <div>
-            <Label htmlFor="live-password">Password</Label>
+            <Label htmlFor="live-password">
+              <UiText>{"Password"}</UiText>
+            </Label>
             <div className="auth-password-field">
-              <Input
-                id="live-password"
-                type={showPassword ? "text" : "password"}
-                autoComplete={registering ? "new-password" : "current-password"}
-                placeholder={registering ? "Create a memorable password" : "Enter your password"}
-                {...form.register("password")}
-                aria-invalid={!!form.formState.errors.password}
-                aria-describedby="live-password-error"
-              />
-              <button
-                type="button"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                aria-pressed={showPassword}
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="size-4" aria-hidden />
-                ) : (
-                  <Eye className="size-4" aria-hidden />
-                )}
-              </button>
+              <UiAttributes>
+                <Input
+                  id="live-password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete={registering ? "new-password" : "current-password"}
+                  placeholder={registering ? "Create a memorable password" : "Enter your password"}
+                  {...form.register("password")}
+                  aria-invalid={!!form.formState.errors.password}
+                  aria-describedby="live-password-error"
+                />
+              </UiAttributes>
+              <UiAttributes>
+                <button
+                  type="button"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="size-4" aria-hidden />
+                  ) : (
+                    <Eye className="size-4" aria-hidden />
+                  )}
+                </button>
+              </UiAttributes>
             </div>
             {registering && (
               <p className="mt-2 text-xs text-muted-foreground">
-                Use at least 12 characters. A few memorable words work well.
+                <UiText>{"Use at least 12 characters. A few memorable words work well."}</UiText>
               </p>
             )}
             <p id="live-password-error" className="text-sm text-destructive">
@@ -271,7 +299,7 @@ export function LiveAuthForm({
             Email selected with Google: <strong className="break-all">{emailProof.email}</strong>.
             Finish your details below. Your phone number is not verified.
             <Button type="button" variant="ghost" onClick={() => setEmailProof(undefined)}>
-              Use email code instead
+              <UiText>{"Use email code instead"}</UiText>
             </Button>
           </div>
         )}
@@ -285,7 +313,8 @@ export function LiveAuthForm({
         {registering && accountType === "seller" && (
           <>
             <p className="auth-section-title">
-              <span aria-hidden="true">02</span> Introduce your shop
+              <span aria-hidden="true">02</span>
+              <UiText>{"Introduce your shop"}</UiText>
             </p>
             <SellerSignupFields onReady={setSellerReady} />
             <ShopPhotoPicker
@@ -322,19 +351,23 @@ export function LiveAuthForm({
           {form.formState.isSubmitting && (
             <Loader2 size={18} className="animate-spin" aria-hidden="true" />
           )}
-          {form.formState.isSubmitting
-            ? "Please wait…"
-            : registering
-              ? accountType === "seller"
-                ? "Create account and submit shop"
-                : "Create buyer account"
-              : "Sign in"}
+          <UiText>
+            {form.formState.isSubmitting
+              ? "Please wait…"
+              : registering
+                ? accountType === "seller"
+                  ? "Create account and submit shop"
+                  : "Create buyer account"
+                : "Sign in"}
+          </UiText>
           {!form.formState.isSubmitting && <ArrowRight size={18} aria-hidden="true" />}
         </Button>
       </form>
       {googleConfigured && options.data?.googleSignInAvailable && (
         <div className="mt-5">
-          <p className="mb-3 text-center text-xs text-muted-foreground">Or continue with</p>
+          <p className="mb-3 text-center text-xs text-muted-foreground">
+            <UiText>{"Or continue with"}</UiText>
+          </p>
           <Button
             type="button"
             variant="outline"
@@ -391,7 +424,7 @@ export function LiveAuthForm({
                 d="M12 5.8c1.5 0 2.8.5 3.8 1.5L18.6 4A9.6 9.6 0 0 0 12 2a10 10 0 0 0-9 5.4L6.3 10A6 6 0 0 1 12 5.8Z"
               />
             </svg>
-            {googleBusy ? "Connecting to Google…" : "Continue with Google"}
+            <UiText>{googleBusy ? "Connecting to Google…" : "Continue with Google"}</UiText>
           </Button>
         </div>
       )}
@@ -407,7 +440,7 @@ export function LiveAuthForm({
             onRecoveryChange?.(true);
           }}
         >
-          Forgot password?
+          <UiText>{"Forgot password?"}</UiText>
         </Button>
       )}
       <Button
@@ -425,7 +458,9 @@ export function LiveAuthForm({
           form.clearErrors();
         }}
       >
-        {registering ? "Already have an account? Sign in" : "New here? Create an account"}
+        <UiText>
+          {registering ? "Already have an account? Sign in" : "New here? Create an account"}
+        </UiText>
       </Button>
     </div>
   );

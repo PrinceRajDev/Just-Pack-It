@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { ProductDraftAssistant } from "./ProductDraftAssistant";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { productImages } from "@/services/product-images";
@@ -52,38 +53,52 @@ export function LiveProducts({
   });
   if (products.error || detail.error)
     return (
-      <ErrorState
-        message={(products.error || detail.error)?.message}
-        onRetry={() => {
-          void products.refetch();
-          if (detailId) void detail.refetch();
-        }}
-      />
+      <UiAttributes>
+        <ErrorState
+          message={(products.error || detail.error)?.message}
+          onRetry={() => {
+            void products.refetch();
+            if (detailId) void detail.refetch();
+          }}
+        />
+      </UiAttributes>
     );
   if (products.isPending || (detailId && detail.isPending))
-    return <p role="status">Loading catalogue…</p>;
+    return (
+      <p role="status">
+        <UiText>{"Loading catalogue…"}</UiText>
+      </p>
+    );
   const adding = path === "/seller/products/new";
   const editing = detailId ? detail.data : undefined;
   return (
     <div className={path.startsWith("/seller/products") ? "seller-products-page" : undefined}>
       {path === "/seller/inventory" ? (
-        <PortalHeader
-          title={adding ? "Add a listing" : editing ? "Edit listing" : "Your catalogue"}
-          sub={`Shop approval: ${shop.status}. Only approved, active shops appear in the marketplace.`}
-          actions={
-            <Button asChild>
-              <Link to="/seller/products/new">Add product</Link>
-            </Button>
-          }
-        />
+        <UiAttributes>
+          <PortalHeader
+            title={adding ? "Add a listing" : editing ? "Edit listing" : "Your catalogue"}
+            sub={`Shop approval: ${shop.status}. Only approved, active shops appear in the marketplace.`}
+            actions={
+              <Button asChild>
+                <Link to="/seller/products/new">
+                  <UiText>{"Add product"}</UiText>
+                </Link>
+              </Button>
+            }
+          />
+        </UiAttributes>
       ) : (
         <header className="seller-catalogue-hero">
           <div>
             <p className="workspace-eyebrow">Just Pack It · Workspace</p>
-            <h1>{adding ? "Add a listing" : editing ? "Edit listing" : "Your catalogue"}</h1>
+            <h1>
+              <UiText>
+                {adding ? "Add a listing" : editing ? "Edit listing" : "Your catalogue"}
+              </UiText>
+            </h1>
             <p>
               <span className="seller-approval-chip" data-status={shop.status}>
-                Shop approval: {shop.status}
+                Shop approval: <UiText>{shop.status}</UiText>
               </span>{" "}
               Only approved, active shops appear in the marketplace.
             </p>
@@ -95,7 +110,7 @@ export function LiveProducts({
             <Button asChild className="seller-catalogue-add">
               <Link to="/seller/products/new">
                 <Plus size={18} aria-hidden="true" />
-                Add product
+                <UiText>{"Add product"}</UiText>
               </Link>
             </Button>
           )}
@@ -164,13 +179,16 @@ export function LiveProducts({
                     className="seller-product-status text-sm"
                     data-active={p.active && !p.moderation?.blocked}
                   >
-                    {p.moderation?.blocked ? "Blocked" : p.active ? "Active" : "Inactive"} ·{" "}
+                    <UiText>
+                      {p.moderation?.blocked ? "Blocked" : p.active ? "Active" : "Inactive"}
+                    </UiText>{" "}
+                    ·{" "}
                     {inr(
                       p.variants?.length ? Math.min(...p.variants.map((v) => v.price)) : p.price,
                     )}{" "}
                     ·{" "}
                     {p.variants?.length ? p.variants.reduce((sum, v) => sum + v.stock, 0) : p.stock}{" "}
-                    in stock
+                    <UiText>{"in stock"}</UiText>
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {p.variants?.length ?? 0} options · {p.unit}
@@ -180,55 +198,67 @@ export function LiveProducts({
               <div className="seller-product-card-actions">
                 <Button variant="outline" asChild>
                   <Link to="/seller/products/$id/edit" params={{ id: p.id }}>
-                    Edit product
+                    <UiText>{"Edit product"}</UiText>
                   </Link>
                 </Button>
                 <Button variant="ghost" asChild>
-                  <Link to="/seller/inventory">Update stock</Link>
+                  <Link to="/seller/inventory">
+                    <UiText>{"Update stock"}</UiText>
+                  </Link>
                 </Button>
               </div>
             </Panel>
           ))}
         </div>
       ) : path === "/seller/inventory" ? (
-        <EmptyState
-          title="No listings yet"
-          body="Add actual products from your shop. Prices and stock are saved independently for each listing."
-        />
+        <UiAttributes>
+          <EmptyState
+            title="No listings yet"
+            body="Add actual products from your shop. Prices and stock are saved independently for each listing."
+          />
+        </UiAttributes>
       ) : (
-        <section className="seller-catalogue-empty" aria-label="Empty catalogue">
-          <OrderBoxIllustration />
-          <h2>No listings yet</h2>
-          <p>
-            Add actual products from your shop. Prices and stock are saved independently for each
-            listing.
-          </p>
-          <Button asChild>
-            <Link to="/seller/products/new">
-              <Plus size={18} aria-hidden="true" />
-              Add your first product
-            </Link>
-          </Button>
-          <ol className="seller-catalogue-guidance">
-            {[
-              { Icon: Package, title: "List your products", body: "Add items from your shop" },
-              { Icon: Tag, title: "Set price & stock", body: "Keep it up to date" },
-              {
-                Icon: Store,
-                title: "Go live in marketplace",
-                body: "Approved, active shops appear for buyers",
-              },
-            ].map(({ Icon, title, body }) => (
-              <li key={title}>
-                <Icon aria-hidden="true" />
-                <div>
-                  <strong>{title}</strong>
-                  <p>{body}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </section>
+        <UiAttributes>
+          <section className="seller-catalogue-empty" aria-label="Empty catalogue">
+            <OrderBoxIllustration />
+            <h2>
+              <UiText>{"No listings yet"}</UiText>
+            </h2>
+            <p>
+              Add actual products from your shop. Prices and stock are saved independently for each
+              listing.
+            </p>
+            <Button asChild>
+              <Link to="/seller/products/new">
+                <Plus size={18} aria-hidden="true" />
+                <UiText>{"Add your first product"}</UiText>
+              </Link>
+            </Button>
+            <ol className="seller-catalogue-guidance">
+              {[
+                { Icon: Package, title: "List your products", body: "Add items from your shop" },
+                { Icon: Tag, title: "Set price & stock", body: "Keep it up to date" },
+                {
+                  Icon: Store,
+                  title: "Go live in marketplace",
+                  body: "Approved, active shops appear for buyers",
+                },
+              ].map(({ Icon, title, body }) => (
+                <li key={title}>
+                  <Icon aria-hidden="true" />
+                  <div>
+                    <strong>
+                      <UiText>{title}</UiText>
+                    </strong>
+                    <p>
+                      <UiText>{body}</UiText>
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
+        </UiAttributes>
       )}
     </div>
   );
@@ -333,38 +363,48 @@ function ProductForm({
         <fieldset disabled={save.isPending || imageEditing} className="space-y-4">
           <h2 className="seller-listing-title font-display text-2xl">
             <Box aria-hidden="true" />
-            Product basics
+            <UiText>{"Product basics"}</UiText>
           </h2>
           <p className="seller-form-intro">
-            A clear name, the right category and your price. Start with these essentials.
+            <UiText>
+              {"A clear name, the right category and your price. Start with these essentials."}
+            </UiText>
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field
-              label="Product name"
-              name="name"
-              value={product?.name}
-              placeholder="e.g. Dog food"
-              required
-            />
-            <Field
-              label="Unit / pack (e.g. 500 g, piece, portion)"
-              name="unit"
-              value={product?.unit}
-              placeholder="e.g. 500 g, piece, portion"
-              required
-            />
-            <label className="block space-y-1 text-sm">
-              <span>Description</span>
-              <textarea
-                name="description"
-                defaultValue={product?.description}
-                rows={3}
-                placeholder="Describe your product, brand and key features"
-                className="block w-full rounded-lg border bg-background p-3"
+            <UiAttributes>
+              <Field
+                label="Product name"
+                name="name"
+                value={product?.name}
+                placeholder="e.g. Dog food"
+                required
               />
+            </UiAttributes>
+            <UiAttributes>
+              <Field
+                label="Unit / pack (e.g. 500 g, piece, portion)"
+                name="unit"
+                value={product?.unit}
+                placeholder="e.g. 500 g, piece, portion"
+                required
+              />
+            </UiAttributes>
+            <label className="block space-y-1 text-sm">
+              <span>
+                <UiText>{"Description"}</UiText>
+              </span>
+              <UiAttributes>
+                <textarea
+                  name="description"
+                  defaultValue={product?.description}
+                  rows={3}
+                  placeholder="Describe your product, brand and key features"
+                  className="block w-full rounded-lg border bg-background p-3"
+                />
+              </UiAttributes>
             </label>
             <label className="space-y-1 text-sm">
-              Shop category
+              <UiText>{"Shop category"}</UiText>
               <select
                 name="categoryId"
                 required
@@ -372,7 +412,9 @@ function ProductForm({
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
               >
-                <option value="">Choose category</option>
+                <option value="">
+                  <UiText>{"Choose category"}</UiText>
+                </option>
                 {categories
                   .filter((c) => shop.categoryIds.includes(c.id))
                   .map((c) => (
@@ -383,14 +425,16 @@ function ProductForm({
               </select>
             </label>
             <label className="space-y-1 text-sm">
-              Subcategory (optional)
+              <UiText>{"Subcategory (optional)"}</UiText>
               <select
                 name="subcategoryId"
                 key={categoryId}
                 className="block w-full rounded border bg-background p-2"
                 defaultValue={product?.subcategoryId ?? ""}
               >
-                <option value="">None</option>
+                <option value="">
+                  <UiText>{"None"}</UiText>
+                </option>
                 {categories
                   .find((c) => c.id === categoryId)
                   ?.subcategories.filter((sub) => shop.subcategoryIds.includes(sub.id))
@@ -401,35 +445,41 @@ function ProductForm({
                   ))}
               </select>
             </label>
-            <Field
-              label="Base price ₹"
-              name="price"
-              type="number"
-              min={0.01}
-              step="0.01"
-              value={product?.price}
-              placeholder="e.g. 299"
-              required
-            />
-            <Field
-              label="MRP ₹ (optional)"
-              name="mrp"
-              type="number"
-              min={0.01}
-              step="0.01"
-              value={product?.mrp}
-              placeholder="e.g. 399"
-            />
-            {!product?.variants?.length && (
+            <UiAttributes>
               <Field
-                label="Stock (whole sale units)"
-                name="stock"
+                label="Base price ₹"
+                name="price"
                 type="number"
-                min={0}
-                step="1"
-                value={product?.stock ?? 0}
+                min={0.01}
+                step="0.01"
+                value={product?.price}
+                placeholder="e.g. 299"
                 required
               />
+            </UiAttributes>
+            <UiAttributes>
+              <Field
+                label="MRP ₹ (optional)"
+                name="mrp"
+                type="number"
+                min={0.01}
+                step="0.01"
+                value={product?.mrp}
+                placeholder="e.g. 399"
+              />
+            </UiAttributes>
+            {!product?.variants?.length && (
+              <UiAttributes>
+                <Field
+                  label="Stock (whole sale units)"
+                  name="stock"
+                  type="number"
+                  min={0}
+                  step="1"
+                  value={product?.stock ?? 0}
+                  required
+                />
+              </UiAttributes>
             )}
           </div>
           {!!product?.variants?.length && (
@@ -442,92 +492,108 @@ function ProductForm({
         <div className="product-photo-editor">
           {photoEditor}
           {!product && (
-            <section className="new-listing-photo" aria-label="Product photo">
-              <h3 className="font-semibold">Product photo</h3>
-              <p className="my-2 text-sm text-muted-foreground">
-                Show buyers what they will receive. Choose a clear product or packaging photo.
-              </p>
-              {capability.isPending ? (
-                <p role="status">Checking photo uploads…</p>
-              ) : capability.isError ? (
-                <div>
-                  <p role="alert">Photo upload availability could not be checked.</p>
-                  <Button type="button" variant="outline" onClick={() => void capability.refetch()}>
-                    Check photo uploads
-                  </Button>
-                </div>
-              ) : capability.data?.enabled ? (
-                <>
-                  <label className="block text-sm">
-                    Choose product photo
-                    <input
-                      ref={photoInput}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="mt-2 block w-full"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        setPhoto(null);
-                        setPhotoError("");
-                        if (!file) return;
-                        if (!capability.data.types.includes(file.type)) {
-                          setPhotoError("Choose a JPEG, PNG or WebP photo.");
-                          e.target.value = "";
-                          return;
-                        }
-                        if (
-                          !file.size ||
-                          file.size > Math.min(capability.data.maxBytes, 5 * 1024 * 1024)
-                        ) {
-                          setPhotoError("Choose a non-empty photo no larger than 5 MiB.");
-                          e.target.value = "";
-                          return;
-                        }
-                        setPhoto(file);
-                      }}
-                    />
-                  </label>
-                  {preview && (
-                    <div className="mt-3 w-32">
-                      <ProductImage
-                        src={preview}
-                        alt="Selected product photo preview"
-                        width={200}
-                      />
-                    </div>
-                  )}
-                  {photo && (
-                    <div>
-                      <p className="mt-2 text-sm">
-                        Photo ready. It will upload when you add this product.
-                      </p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="mt-2"
-                        onClick={() => {
+            <UiAttributes>
+              <section className="new-listing-photo" aria-label="Product photo">
+                <h3 className="font-semibold">
+                  <UiText>{"Product photo"}</UiText>
+                </h3>
+                <p className="my-2 text-sm text-muted-foreground">
+                  <UiText>
+                    {
+                      "Show buyers what they will receive. Choose a clear product or packaging photo."
+                    }
+                  </UiText>
+                </p>
+                {capability.isPending ? (
+                  <p role="status">
+                    <UiText>{"Checking photo uploads…"}</UiText>
+                  </p>
+                ) : capability.isError ? (
+                  <div>
+                    <p role="alert">Photo upload availability could not be checked.</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => void capability.refetch()}
+                    >
+                      <UiText>{"Check photo uploads"}</UiText>
+                    </Button>
+                  </div>
+                ) : capability.data?.enabled ? (
+                  <>
+                    <label className="block text-sm">
+                      <UiText>{"Choose product photo"}</UiText>
+                      <input
+                        ref={photoInput}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="mt-2 block w-full"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
                           setPhoto(null);
                           setPhotoError("");
-                          if (photoInput.current) photoInput.current.value = "";
+                          if (!file) return;
+                          if (!capability.data.types.includes(file.type)) {
+                            setPhotoError("Choose a JPEG, PNG or WebP photo.");
+                            e.target.value = "";
+                            return;
+                          }
+                          if (
+                            !file.size ||
+                            file.size > Math.min(capability.data.maxBytes, 5 * 1024 * 1024)
+                          ) {
+                            setPhotoError("Choose a non-empty photo no larger than 5 MiB.");
+                            e.target.value = "";
+                            return;
+                          }
+                          setPhoto(file);
                         }}
-                      >
-                        Remove selected photo
-                      </Button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <p className="text-sm">
-                  Photo uploads are not configured yet. You can save the listing and add a photo
-                  after storage is enabled.
-                </p>
-              )}
-              {photoError && (
-                <p role="alert" className="mt-2 text-sm text-destructive">
-                  {photoError}
-                </p>
-              )}
-            </section>
+                      />
+                    </label>
+                    {preview && (
+                      <div className="mt-3 w-32">
+                        <ProductImage
+                          src={preview}
+                          alt="Selected product photo preview"
+                          width={200}
+                        />
+                      </div>
+                    )}
+                    {photo && (
+                      <div>
+                        <p className="mt-2 text-sm">
+                          <UiText>
+                            {"Photo ready. It will upload when you add this product."}
+                          </UiText>
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="mt-2"
+                          onClick={() => {
+                            setPhoto(null);
+                            setPhotoError("");
+                            if (photoInput.current) photoInput.current.value = "";
+                          }}
+                        >
+                          <UiText>{"Remove selected photo"}</UiText>
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm">
+                    Photo uploads are not configured yet. You can save the listing and add a photo
+                    after storage is enabled.
+                  </p>
+                )}
+                {photoError && (
+                  <p role="alert" className="mt-2 text-sm text-destructive">
+                    {photoError}
+                  </p>
+                )}
+              </section>
+            </UiAttributes>
           )}
           {!product && (
             <ProductDraftAssistant
@@ -558,7 +624,7 @@ function ProductForm({
         <fieldset disabled={save.isPending || imageEditing} className="space-y-4">
           <label className="seller-listing-visibility flex items-center gap-2 text-sm">
             <input type="checkbox" name="active" defaultChecked={product?.active ?? true} />
-            Active listing
+            <UiText>{"Active listing"}</UiText>
           </label>
           <p className="text-xs text-muted-foreground">
             Optional variants are managed after saving this listing. Each option has its own price,
@@ -567,10 +633,14 @@ function ProductForm({
           <SaveError error={save.error} />
           <div className="seller-listing-actions">
             <Button type="button" variant="ghost" asChild>
-              <Link to="/seller/products">Cancel</Link>
+              <Link to="/seller/products">
+                <UiText>{"Cancel"}</UiText>
+              </Link>
             </Button>
             <Button type="submit">
-              {save.isPending ? "Saving…" : product ? "Save listing" : "Add product"}
+              <UiText>
+                {save.isPending ? "Saving…" : product ? "Save listing" : "Add product"}
+              </UiText>
             </Button>
           </div>
         </fieldset>
@@ -595,7 +665,9 @@ function VariantManager({
   const save = useSave();
   return (
     <Panel>
-      <h2 className="font-display text-2xl">Options and stock</h2>
+      <h2 className="font-display text-2xl">
+        <UiText>{"Options and stock"}</UiText>
+      </h2>
       <p className="text-sm text-muted-foreground">
         Changes save individually. Removing an option makes it unavailable; the last option cannot
         be removed. Deactivate the listing instead.
@@ -604,7 +676,7 @@ function VariantManager({
       {product.variants?.map((variant) => (
         <div key={variant.id} className="rounded-lg border border-border p-3">
           <p>
-            {variant.label} · {inr(variant.price)} · {variant.stock} available
+            <UiText>{variant.label}</UiText> · {inr(variant.price)} · {variant.stock} available
           </p>
           {editing === variant.id ? (
             <VariantForm
@@ -615,7 +687,8 @@ function VariantManager({
             />
           ) : (
             <Button variant="outline" disabled={dirty} onClick={() => setEditing(variant.id)}>
-              Edit {variant.label}
+              <UiText>{"Edit "}</UiText>
+              <UiText>{variant.label}</UiText>
             </Button>
           )}
           <Button
@@ -623,7 +696,8 @@ function VariantManager({
             disabled={dirty || save.isPending || (product.variants?.length ?? 0) <= 1}
             onClick={() => save.mutate(() => management.removeVariant(product, variant.id))}
           >
-            Remove {variant.label}
+            <UiText>{"Remove "}</UiText>
+            <UiText>{variant.label}</UiText>
           </Button>
         </div>
       ))}
@@ -677,35 +751,41 @@ function VariantForm({
       <fieldset disabled={save.isPending} className="space-y-3">
         {draft.dialog}
         <div className="grid gap-3 sm:grid-cols-3">
-          <Field
-            label="Option label (size / colour / weight)"
-            name="label"
-            value={variant?.label}
-            required
-          />
-          <Field
-            label="Price ₹"
-            name="price"
-            type="number"
-            min={0.01}
-            step="0.01"
-            value={variant?.price}
-            required
-          />
-          <Field
-            label="Available stock"
-            name="stock"
-            type="number"
-            min={0}
-            step="1"
-            value={variant?.stock ?? 0}
-            required
-          />
+          <UiAttributes>
+            <Field
+              label="Option label (size / colour / weight)"
+              name="label"
+              value={variant?.label}
+              required
+            />
+          </UiAttributes>
+          <UiAttributes>
+            <Field
+              label="Price ₹"
+              name="price"
+              type="number"
+              min={0.01}
+              step="0.01"
+              value={variant?.price}
+              required
+            />
+          </UiAttributes>
+          <UiAttributes>
+            <Field
+              label="Available stock"
+              name="stock"
+              type="number"
+              min={0}
+              step="1"
+              value={variant?.stock ?? 0}
+              required
+            />
+          </UiAttributes>
         </div>
         <Attributes values={variant?.attributes} />
         <SaveError error={save.error} />
         <Button type="submit">
-          {save.isPending ? "Saving…" : variant ? "Save option" : "Add option"}
+          <UiText>{save.isPending ? "Saving…" : variant ? "Save option" : "Add option"}</UiText>
         </Button>
       </fieldset>
     </form>

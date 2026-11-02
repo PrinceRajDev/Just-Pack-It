@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { management } from "@/services/management";
@@ -16,7 +17,11 @@ export function Taxonomy() {
   const [status, setStatus] = useState<"all" | "active" | "inactive">("all");
   const query = useQuery({ queryKey: ["admin-categories"], queryFn: management.adminCategories });
   if (query.error)
-    return <ErrorState message={query.error.message} onRetry={() => void query.refetch()} />;
+    return (
+      <UiAttributes>
+        <ErrorState message={query.error.message} onRetry={() => void query.refetch()} />
+      </UiAttributes>
+    );
   if (query.isPending) return <p role="status">Loading categories…</p>;
   const term = search.trim().toLowerCase();
   const filtered = query.data.filter(
@@ -35,65 +40,78 @@ export function Taxonomy() {
         <div>
           <h2>
             <FolderTree />
-            Marketplace taxonomy
+            <UiText>{"Marketplace taxonomy"}</UiText>
           </h2>
           <p>Changes are persisted through admin APIs. IDs and URL slugs remain stable.</p>
         </div>
         <Button onClick={() => setEditing("new")}>
-          <Plus size={16} /> Add category
+          <Plus size={16} />
+          <UiText>{"Add category"}</UiText>
         </Button>
       </header>
-      <section
-        aria-label="Category discovery"
-        className="mb-6 space-y-3 rounded-xl border bg-card p-4"
-      >
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="w-full text-sm sm:flex-1">
-            Search categories and subcategories
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Name, slug or ID"
-              className="mt-1"
-            />
-          </label>
-          <label className="text-sm">
-            Category status
-            <select
-              aria-label="Category status"
-              className="ml-2 rounded-lg border bg-background p-2"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as typeof status)}
+      <UiAttributes>
+        <section
+          aria-label="Category discovery"
+          className="mb-6 space-y-3 rounded-xl border bg-card p-4"
+        >
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="w-full text-sm sm:flex-1">
+              Search categories and subcategories
+              <UiAttributes>
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Name, slug or ID"
+                  className="mt-1"
+                />
+              </UiAttributes>
+            </label>
+            <label className="text-sm">
+              Category status
+              <UiAttributes>
+                <select
+                  aria-label="Category status"
+                  className="ml-2 rounded-lg border bg-background p-2"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as typeof status)}
+                >
+                  <option value="all">
+                    <UiText>{"All categories"}</UiText>
+                  </option>
+                  <option value="active">
+                    <UiText>{"Active"}</UiText>
+                  </option>
+                  <option value="inactive">
+                    <UiText>{"Inactive"}</UiText>
+                  </option>
+                </select>
+              </UiAttributes>
+            </label>
+            <Button
+              variant="outline"
+              disabled={query.isFetching}
+              onClick={() => void query.refetch()}
             >
-              <option value="all">All categories</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </label>
-          <Button
-            variant="outline"
-            disabled={query.isFetching}
-            onClick={() => void query.refetch()}
-          >
-            Refresh categories
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setSearch("");
-              setStatus("all");
-            }}
-          >
-            Clear filters
-          </Button>
-        </div>
-        <p role="status" className="text-sm text-muted-foreground">
-          {filtered.length} matching categories ·{" "}
-          {query.data.filter((c) => c.active !== false).length} active ·{" "}
-          {query.data.filter((c) => c.active === false).length} inactive. Search includes
-          subcategory names and slugs.
-        </p>
-      </section>
+              <UiText>{"Refresh categories"}</UiText>
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setSearch("");
+                setStatus("all");
+              }}
+            >
+              <UiText>{"Clear filters"}</UiText>
+            </Button>
+          </div>
+          <p role="status" className="text-sm text-muted-foreground">
+            {filtered.length} matching categories ·{" "}
+            {query.data.filter((c) => c.active !== false).length} active ·{" "}
+            {query.data.filter((c) => c.active === false).length} inactive. Search includes
+            subcategory names and slugs.
+          </p>
+        </section>
+      </UiAttributes>
       <div className="taxonomy-list">
         {!filtered.length && (
           <div className="catalog-empty">
@@ -111,7 +129,7 @@ export function Taxonomy() {
             </div>
             <span>{category.subcategories.length} subcategories</span>
             <span className={category.active === false ? "catalog-badge muted" : "catalog-badge"}>
-              {category.active === false ? "Inactive" : "Active"}
+              <UiText>{category.active === false ? "Inactive" : "Active"}</UiText>
             </span>
             <Button variant="outline" onClick={() => setEditing(category)}>
               Manage <ChevronRight size={15} />
@@ -124,7 +142,7 @@ export function Taxonomy() {
                   <li key={sub.id}>
                     {sub.name}{" "}
                     <small>
-                      /{sub.slug} · {sub.active === false ? "Inactive" : "Active"}
+                      /{sub.slug} · <UiText>{sub.active === false ? "Inactive" : "Active"}</UiText>
                     </small>
                   </li>
                 ))}
@@ -141,7 +159,9 @@ export function Taxonomy() {
         }}
       >
         <SheetContent className="catalog-drawer">
-          <SheetTitle>{editing === "new" ? "Add category" : "Manage category"}</SheetTitle>
+          <SheetTitle>
+            <UiText>{editing === "new" ? "Add category" : "Manage category"}</UiText>
+          </SheetTitle>
           <SheetDescription>
             Edit supported fields and manage subcategories. Existing IDs and slugs stay unchanged.
           </SheetDescription>
@@ -176,15 +196,17 @@ function CategoryForm({
   return (
     <Panel>
       <h2 className="font-display text-xl">
-        {category
-          ? `${category.name}${category.active === false ? " (inactive)" : ""}`
-          : "Add a category"}
+        <UiText>
+          {category
+            ? `${category.name}${category.active === false ? " (inactive)" : ""}`
+            : "Add a category"}
+        </UiText>
       </h2>
       {category && (
         <p className="break-all text-sm text-muted-foreground">
-          {category.active === false ? "Inactive" : "Active"} · Slug: {category.slug} · ID:{" "}
-          {category.id} · {category.subcategories.filter((sub) => sub.active !== false).length}{" "}
-          active subcategories
+          <UiText>{category.active === false ? "Inactive" : "Active"}</UiText> · Slug:{" "}
+          {category.slug} · ID: {category.id} ·{" "}
+          {category.subcategories.filter((sub) => sub.active !== false).length} active subcategories
         </p>
       )}
       <form
@@ -249,8 +271,12 @@ function CategoryForm({
               />
             </label>
           )}
-          <Field label="Description" name="blurb" value={category?.blurb} />
-          <Button type="submit">{save.isPending ? "Saving…" : "Save category"}</Button>
+          <UiAttributes>
+            <Field label="Description" name="blurb" value={category?.blurb} />
+          </UiAttributes>
+          <Button type="submit">
+            <UiText>{save.isPending ? "Saving…" : "Save category"}</UiText>
+          </Button>
         </fieldset>
       </form>
       {category && (
@@ -266,16 +292,18 @@ function CategoryForm({
               Reactivate category
             </Button>
           )}
-          <ConfirmAction
-            title={`Deactivate ${category.name}?`}
-            description="This hides an unused category from discovery. The server will refuse this change if shops or products still reference it."
-            confirmLabel="Deactivate category"
-            onConfirm={() => save.mutate(() => management.removeCategory(category))}
-          >
-            <Button variant="outline" disabled={save.isPending || category.active === false}>
-              Deactivate category
-            </Button>
-          </ConfirmAction>
+          <UiAttributes>
+            <ConfirmAction
+              title={`Deactivate ${category.name}?`}
+              description="This hides an unused category from discovery. The server will refuse this change if shops or products still reference it."
+              confirmLabel="Deactivate category"
+              onConfirm={() => save.mutate(() => management.removeCategory(category))}
+            >
+              <Button variant="outline" disabled={save.isPending || category.active === false}>
+                Deactivate category
+              </Button>
+            </ConfirmAction>
+          </UiAttributes>
           <p className="text-xs text-muted-foreground">
             Deactivation is refused if shops/products still reference this category.
           </p>
@@ -291,7 +319,8 @@ function CategoryForm({
               }}
             >
               <p className="break-all text-xs text-muted-foreground">
-                {sub.active === false ? "Inactive" : "Active"} · {sub.slug} · ID: {sub.id}
+                <UiText>{sub.active === false ? "Inactive" : "Active"}</UiText> · {sub.slug} · ID:{" "}
+                {sub.id}
               </p>
               {sub.active === false && (
                 <Button
@@ -311,27 +340,33 @@ function CategoryForm({
                 disabled={save.isPending || category.active === false || sub.active === false}
                 className="flex flex-wrap items-end gap-2"
               >
-                <Field
-                  label={sub.active === false ? "Subcategory name (inactive)" : "Subcategory name"}
-                  name="name"
-                  value={sub.name}
-                  required
-                />
+                <UiAttributes>
+                  <Field
+                    label={
+                      sub.active === false ? "Subcategory name (inactive)" : "Subcategory name"
+                    }
+                    name="name"
+                    value={sub.name}
+                    required
+                  />
+                </UiAttributes>
                 <Button type="submit" variant="outline">
                   Rename
                 </Button>
-                <ConfirmAction
-                  title={`Deactivate ${sub.name}?`}
-                  description="Referenced subcategories cannot be deactivated. This change will be saved to the server."
-                  confirmLabel="Deactivate subcategory"
-                  onConfirm={() =>
-                    save.mutate(() => management.removeSubcategory(category, sub.id))
-                  }
-                >
-                  <Button type="button" variant="ghost">
-                    Deactivate {sub.name}
-                  </Button>
-                </ConfirmAction>
+                <UiAttributes>
+                  <ConfirmAction
+                    title={`Deactivate ${sub.name}?`}
+                    description="Referenced subcategories cannot be deactivated. This change will be saved to the server."
+                    confirmLabel="Deactivate subcategory"
+                    onConfirm={() =>
+                      save.mutate(() => management.removeSubcategory(category, sub.id))
+                    }
+                  >
+                    <Button type="button" variant="ghost">
+                      Deactivate {sub.name}
+                    </Button>
+                  </ConfirmAction>
+                </UiAttributes>
               </fieldset>
             </form>
           ))}
@@ -348,8 +383,12 @@ function CategoryForm({
             }}
           >
             <fieldset disabled={save.isPending || category.active === false} className="space-y-3">
-              <Field label="New subcategory name" name="name" required />
-              <Field label="New subcategory slug" name="slug" required />
+              <UiAttributes>
+                <Field label="New subcategory name" name="name" required />
+              </UiAttributes>
+              <UiAttributes>
+                <Field label="New subcategory slug" name="slug" required />
+              </UiAttributes>
               <Button type="submit" variant="outline">
                 Add subcategory
               </Button>

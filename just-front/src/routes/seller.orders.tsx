@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -36,32 +37,42 @@ function SellerOrders() {
 
   return (
     <>
-      <PortalHeader title="Orders" sub="Accept, pack and hand over. Customers see each step." />
-      <div className="mb-6 flex flex-wrap gap-2" role="group" aria-label="Filter orders by status">
-        {[{ key: "all", label: "All" }, ...columns].map((c) => {
-          const n =
-            c.key === "all"
-              ? orders.filter((o) => o.status !== "picked_up").length
-              : orders.filter((o) => o.status === c.key).length;
-          return (
-            <button
-              key={c.key}
-              aria-pressed={filter === c.key}
-              onClick={() => setFilter(c.key as typeof filter)}
-              className={cn(
-                "h-10 rounded-full border px-4 text-sm",
-                filter === c.key
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-card",
-              )}
-            >
-              {c.label} <span className="ml-1 tabular-nums opacity-70">{n}</span>
-            </button>
-          );
-        })}
-      </div>
+      <UiAttributes>
+        <PortalHeader title="Orders" sub="Accept, pack and hand over. Customers see each step." />
+      </UiAttributes>
+      <UiAttributes>
+        <div
+          className="mb-6 flex flex-wrap gap-2"
+          role="group"
+          aria-label="Filter orders by status"
+        >
+          {[{ key: "all", label: "All" }, ...columns].map((c) => {
+            const n =
+              c.key === "all"
+                ? orders.filter((o) => o.status !== "picked_up").length
+                : orders.filter((o) => o.status === c.key).length;
+            return (
+              <button
+                key={c.key}
+                aria-pressed={filter === c.key}
+                onClick={() => setFilter(c.key as typeof filter)}
+                className={cn(
+                  "h-10 rounded-full border px-4 text-sm",
+                  filter === c.key
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card",
+                )}
+              >
+                <UiText>{c.label}</UiText> <span className="ml-1 tabular-nums opacity-70">{n}</span>
+              </button>
+            );
+          })}
+        </div>
+      </UiAttributes>
       {list.length === 0 ? (
-        <EmptyState title="No orders here" body="New orders will appear at the top." />
+        <UiAttributes>
+          <EmptyState title="No orders here" body="New orders will appear at the top." />
+        </UiAttributes>
       ) : (
         <ul className="workspace-order-list">
           {list.map((o) => {
@@ -113,9 +124,11 @@ function SellerOrders() {
                           toast.success(`${o.id}: ${n[1]}`);
                         }}
                       >
-                        {o.fulfilment === "platform_delivery" && o.status === "ready"
-                          ? "Handed to rider"
-                          : n[1]}
+                        <UiText>
+                          {o.fulfilment === "platform_delivery" && o.status === "ready"
+                            ? "Handed to rider"
+                            : n[1]}
+                        </UiText>
                       </Button>
                     )}
                   </div>

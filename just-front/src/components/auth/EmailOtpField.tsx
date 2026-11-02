@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { authentication } from "@/services/auth";
@@ -47,11 +48,15 @@ export function EmailOtpField({
       className="space-y-3 rounded-xl border border-border bg-secondary/30 p-4"
       disabled={disabled}
     >
-      <legend className="px-1 text-sm font-semibold">Verify your email</legend>
+      <legend className="px-1 text-sm font-semibold">
+        <UiText>{"Verify your email"}</UiText>
+      </legend>
       <p className="text-xs text-muted-foreground">
         A six-digit code verifies your email address. Your mobile number remains unverified.
       </p>
-      <Label htmlFor="signup-email">Email address</Label>
+      <Label htmlFor="signup-email">
+        <UiText>{"Email address"}</UiText>
+      </Label>
       <Input
         id="signup-email"
         type="email"
@@ -102,7 +107,9 @@ export function EmailOtpField({
             Code submitted to your email provider. Check your inbox and spam folder. It expires in
             10 minutes.
           </p>
-          <Label htmlFor="signup-email-code">Six-digit email code</Label>
+          <Label htmlFor="signup-email-code">
+            <UiText>{"Six-digit email code"}</UiText>
+          </Label>
           <Input
             id="signup-email-code"
             inputMode="numeric"
@@ -113,7 +120,7 @@ export function EmailOtpField({
           />
           {Date.parse(challenge.expiresAt) <= now && (
             <p role="alert" className="text-sm">
-              Code expired. Request another code.
+              <UiText>{"Code expired. Request another code."}</UiText>
             </p>
           )}
         </>

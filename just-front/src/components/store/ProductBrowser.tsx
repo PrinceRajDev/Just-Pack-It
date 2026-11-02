@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { CatalogueMore } from "./CatalogueMore";
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import {
@@ -45,10 +46,12 @@ export function ProductBrowser({
   const shops = useAreaShops();
   if (!area)
     return (
-      <EmptyState
-        title="Choose your area first"
-        body="Select your neighbourhood above to search products from shops serving it."
-      />
+      <UiAttributes>
+        <EmptyState
+          title="Choose your area first"
+          body="Select your neighbourhood above to search products from shops serving it."
+        />
+      </UiAttributes>
     );
   return (
     <div className="product-browser">
@@ -65,7 +68,9 @@ export function ProductBrowser({
             value={query.category ?? ""}
             onChange={(event) => onChange({ category: event.target.value || undefined })}
           >
-            <option value="">All categories</option>
+            <option value="">
+              <UiText>{"All categories"}</UiText>
+            </option>
             {categories.map((category) => (
               <option key={category.slug} value={category.slug}>
                 {category.name}
@@ -75,9 +80,11 @@ export function ProductBrowser({
         </label>
         <p className="flex items-center gap-2 text-sm text-muted-foreground" aria-live="polite">
           <SlidersHorizontal className="size-4" />
-          {isPending
-            ? "Searching…"
-            : `${data.length} loaded${pages.data?.pages[0]?.total !== undefined ? ` of ${pages.data.pages[0].total}` : ""} items`}
+          <UiText>
+            {isPending
+              ? "Searching…"
+              : `${data.length} loaded${pages.data?.pages[0]?.total !== undefined ? ` of ${pages.data.pages[0].total}` : ""} items`}
+          </UiText>
         </p>
         <div className="flex items-center gap-2">
           <Switch
@@ -86,7 +93,7 @@ export function ProductBrowser({
             onCheckedChange={(v) => onChange({ inStockOnly: v || undefined })}
           />
           <Label htmlFor="instock" className="text-sm">
-            In stock
+            <UiText>{"In stock"}</UiText>
           </Label>
         </div>
         <div className="flex items-center gap-2">
@@ -96,7 +103,7 @@ export function ProductBrowser({
             onCheckedChange={(v) => onChange({ offersOnly: v || undefined })}
           />
           <Label htmlFor="offers" className="text-sm">
-            Offers
+            <UiText>{"Offers"}</UiText>
           </Label>
         </div>
         <label className="ml-auto flex items-center gap-2 text-sm">
@@ -120,59 +127,63 @@ export function ProductBrowser({
           <ErrorState onRetry={() => refetch()} />
         ) : data.length === 0 ? (
           <>
-            <EmptyState
-              title="Nothing matched"
-              body={emptyHint ?? "Try a simpler word, or switch off filters."}
-              action={
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    onChange({
-                      inStockOnly: undefined,
-                      offersOnly: undefined,
-                      q: undefined,
-                      category: undefined,
-                    })
-                  }
-                >
-                  Clear filters
-                </Button>
-              }
-            />
-            <section
-              className="mt-6 rounded-xl border border-border bg-card p-4"
-              aria-label="Explore alternatives"
-            >
-              <h2 className="font-display text-xl">Try a local shop or another category</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                These are alternatives in your selected area.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-3">
-                {shops.slice(0, 3).map((shop) => (
-                  <Link
-                    key={shop.id}
-                    to="/shop/$slug"
-                    params={{ slug: shop.slug }}
-                    className="rounded-lg border border-border px-3 py-2 text-sm text-primary"
+            <UiAttributes>
+              <EmptyState
+                title="Nothing matched"
+                body={emptyHint ?? "Try a simpler word, or switch off filters."}
+                action={
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      onChange({
+                        inStockOnly: undefined,
+                        offersOnly: undefined,
+                        q: undefined,
+                        category: undefined,
+                      })
+                    }
                   >
-                    {shop.name}
-                  </Link>
-                ))}
-                {categories
-                  .filter((c) => shops.some((s) => s.categories.includes(c.slug)))
-                  .slice(0, 3)
-                  .map((category) => (
+                    <UiText>{"Clear filters"}</UiText>
+                  </Button>
+                }
+              />
+            </UiAttributes>
+            <UiAttributes>
+              <section
+                className="mt-6 rounded-xl border border-border bg-card p-4"
+                aria-label="Explore alternatives"
+              >
+                <h2 className="font-display text-xl">Try a local shop or another category</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  These are alternatives in your selected area.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {shops.slice(0, 3).map((shop) => (
                     <Link
-                      key={category.slug}
-                      to="/category/$slug"
-                      params={{ slug: category.slug }}
-                      className="rounded-lg border border-border px-3 py-2 text-sm"
+                      key={shop.id}
+                      to="/shop/$slug"
+                      params={{ slug: shop.slug }}
+                      className="rounded-lg border border-border px-3 py-2 text-sm text-primary"
                     >
-                      {category.name}
+                      {shop.name}
                     </Link>
                   ))}
-              </div>
-            </section>
+                  {categories
+                    .filter((c) => shops.some((s) => s.categories.includes(c.slug)))
+                    .slice(0, 3)
+                    .map((category) => (
+                      <Link
+                        key={category.slug}
+                        to="/category/$slug"
+                        params={{ slug: category.slug }}
+                        className="rounded-lg border border-border px-3 py-2 text-sm"
+                      >
+                        {category.name}
+                      </Link>
+                    ))}
+                </div>
+              </section>
+            </UiAttributes>
           </>
         ) : (
           <div className="catalogue-product-grid grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-3 lg:grid-cols-4">

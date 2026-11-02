@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -14,7 +15,9 @@ function AdminSettings() {
   const [areas, setAreas] = useState(serviceAreas);
   return (
     <>
-      <PortalHeader title="Service areas & audit" />
+      <UiAttributes>
+        <PortalHeader title="Service areas & audit" />
+      </UiAttributes>
       <section>
         <h2 className="border-b border-foreground pb-2 font-display text-xl">Serviceable areas</h2>
         <ul className="divide-y divide-border">
@@ -26,14 +29,16 @@ function AdminSettings() {
                   PIN {a.pincodes.join(", ")}
                 </span>
               </span>
-              <Switch
-                checked={a.active}
-                onCheckedChange={(v) => {
-                  setAreas((x) => x.map((y) => (y.id === a.id ? { ...y, active: v } : y)));
-                  toast(`${a.name} ${v ? "enabled" : "disabled"} (demo)`);
-                }}
-                aria-label={`Toggle ${a.name}`}
-              />
+              <UiAttributes>
+                <Switch
+                  checked={a.active}
+                  onCheckedChange={(v) => {
+                    setAreas((x) => x.map((y) => (y.id === a.id ? { ...y, active: v } : y)));
+                    toast(`${a.name} ${v ? "enabled" : "disabled"} (demo)`);
+                  }}
+                  aria-label={`Toggle ${a.name}`}
+                />
+              </UiAttributes>
             </li>
           ))}
         </ul>
@@ -56,7 +61,9 @@ function AdminSettings() {
         </dl>
       </section>
       <section id="admin-audit-log" className="mt-10">
-        <h2 className="border-b border-foreground pb-2 font-display text-xl">Audit log</h2>
+        <h2 className="border-b border-foreground pb-2 font-display text-xl">
+          <UiText>{"Audit log"}</UiText>
+        </h2>
         <ul className="divide-y divide-border font-mono text-xs">
           {audit.map((a, i) => (
             <li key={i} className="flex gap-4 py-2">

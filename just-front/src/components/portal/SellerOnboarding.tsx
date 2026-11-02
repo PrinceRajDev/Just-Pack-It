@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { management } from "@/services/management";
@@ -100,13 +101,17 @@ export function SellerOnboarding({
   ];
   return (
     <>
-      <PortalHeader
-        title={`Welcome, ${shop.name}`}
-        sub="Your shop setup, step by step. These states come from your saved account and catalogue."
-      />
+      <UiAttributes>
+        <PortalHeader
+          title={`Welcome, ${shop.name}`}
+          sub="Your shop setup, step by step. These states come from your saved account and catalogue."
+        />
+      </UiAttributes>
       <Panel>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-2xl">Shop status: {shop.status}</h2>
+          <h2 className="font-display text-2xl">
+            Shop status: <UiText>{shop.status}</UiText>
+          </h2>
           {canBrowse && (
             <Button variant="outline" asChild>
               <Link to="/shop/$slug" params={{ slug: shop.slug }}>
@@ -124,41 +129,51 @@ export function SellerOnboarding({
           make an unapproved shop public.
         </p>
       </Panel>
-      <ol aria-label="Shop onboarding steps" className="mt-5 grid gap-4 md:grid-cols-2">
-        {steps.map((step, index) => (
-          <li key={step.title}>
-            <Panel>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sm text-muted-foreground">Step {index + 1}</span>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs ${step.done ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"}`}
-                >
-                  {step.done
-                    ? "Complete"
-                    : index === 2 && products.isPending
-                      ? "Checking"
-                      : index === 2 && products.error
-                        ? "Not checked"
-                        : index === 3 && shop.status === "pending"
-                          ? "Awaiting review"
-                          : "To do"}
-                </span>
-              </div>
-              <h2 className="font-display text-xl">{step.title}</h2>
-              <p className="text-sm text-muted-foreground">{step.body}</p>
-              <Button variant="outline" asChild>
-                <Link to={step.to}>{step.action}</Link>
-              </Button>
-            </Panel>
-          </li>
-        ))}
-      </ol>
+      <UiAttributes>
+        <ol aria-label="Shop onboarding steps" className="mt-5 grid gap-4 md:grid-cols-2">
+          {steps.map((step, index) => (
+            <li key={step.title}>
+              <Panel>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm text-muted-foreground">Step {index + 1}</span>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs ${step.done ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"}`}
+                  >
+                    <UiText>
+                      {step.done
+                        ? "Complete"
+                        : index === 2 && products.isPending
+                          ? "Checking"
+                          : index === 2 && products.error
+                            ? "Not checked"
+                            : index === 3 && shop.status === "pending"
+                              ? "Awaiting review"
+                              : "To do"}
+                    </UiText>
+                  </span>
+                </div>
+                <h2 className="font-display text-xl">
+                  <UiText>{step.title}</UiText>
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  <UiText>{step.body}</UiText>
+                </p>
+                <Button variant="outline" asChild>
+                  <Link to={step.to}>{step.action}</Link>
+                </Button>
+              </Panel>
+            </li>
+          ))}
+        </ol>
+      </UiAttributes>
       {products.error && (
         <div className="mt-4">
-          <ErrorState
-            message="We could not check your catalogue. Your existing listings have not been changed."
-            onRetry={() => void products.refetch()}
-          />
+          <UiAttributes>
+            <ErrorState
+              message="We could not check your catalogue. Your existing listings have not been changed."
+              onRetry={() => void products.refetch()}
+            />
+          </UiAttributes>
         </div>
       )}
     </>

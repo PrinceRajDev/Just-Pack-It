@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { BuyAgain } from "./BuyAgain";
 import { OrderReceipt } from "./OrderReceipt";
 import { DeliveryPinLink } from "./DeliveryPinLink";
@@ -33,7 +34,9 @@ function BuyerOrders({ children }: { children: (userId: string) => ReactNode }) 
 export function LiveOrdersPage() {
   return (
     <StoreLayout>
-      <PageTitle title="Your orders" eyebrow="Your account" />
+      <UiAttributes>
+        <PageTitle title="Your orders" eyebrow="Your account" />
+      </UiAttributes>
       <section className="mx-auto max-w-5xl space-y-4 px-4 pb-12">
         <BuyerOrders>{(userId) => <History userId={userId} />}</BuyerOrders>
       </section>
@@ -46,7 +49,12 @@ function History({ userId }: { userId: string }) {
     queryFn: () => orders.list(),
     retry: false,
   });
-  if (query.isPending) return <p role="status">Loading orders…</p>;
+  if (query.isPending)
+    return (
+      <p role="status">
+        <UiText>{"Loading orders…"}</UiText>
+      </p>
+    );
   if (query.isError)
     return (
       <div role="alert">
@@ -65,11 +73,12 @@ function History({ userId }: { userId: string }) {
             <p className="font-semibold">Test order: no real payment. Do not fulfil.</p>
           )}
           <Link to="/orders/$id" params={{ id: order.id }} className="font-medium underline">
-            Order {order.id.slice(0, 8)}
+            <UiText>{"Order "}</UiText>
+            {order.id.slice(0, 8)}
           </Link>
           <p className="mt-2 text-sm text-muted-foreground">
-            {new Date(order.createdAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} ·
-            India time
+            {new Date(order.createdAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
+            <UiText>{"· India time"}</UiText>
           </p>
           <p className="text-sm">
             {order.subOrders.map((sub) => sub.shopName ?? "Shop").join(", ")}
@@ -86,7 +95,9 @@ function History({ userId }: { userId: string }) {
 export function LiveOrderPage({ id }: { id: string }) {
   return (
     <StoreLayout>
-      <PageTitle title="Order details" eyebrow="Shop by shop" />
+      <UiAttributes>
+        <PageTitle title="Order details" eyebrow="Shop by shop" />
+      </UiAttributes>
       <section className="mx-auto max-w-5xl space-y-4 px-4 pb-12">
         <BuyerOrders>
           {(userId) => <Detail key={`${userId}:${id}`} userId={userId} id={id} />}
@@ -117,43 +128,52 @@ function Detail({ userId, id }: { userId: string; id: string }) {
   if (!order) return <p>Order not found for this account.</p>;
   return (
     <>
-      <p className="break-all font-mono text-sm">Order {order.id}</p>
+      <p className="break-all font-mono text-sm">
+        <UiText>{"Order "}</UiText>
+        {order.id}
+      </p>
       <OrderReceipt order={order} />
       <BuyAgain order={order} />
-      <div
-        className="space-y-2 rounded-xl border border-border bg-card p-4"
-        aria-label="Order update status"
-      >
-        <p className="text-sm">
-          {query.isFetching
-            ? "Checking for updates…"
-            : `Last checked: ${new Date(query.dataUpdatedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} · India time`}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          {needsOrderRefresh(order)
-            ? "Checks every 15 seconds while this page is active. Each shop progresses separately."
-            : "Fulfilment is complete or stopped. You can refresh manually for later updates."}
-        </p>
-        {query.isError && (
-          <p role="alert" className="text-sm text-destructive">
-            Could not refresh. Showing the last successfully loaded order; its status may be
-            outdated. Retry with Refresh order status.
+      <UiAttributes>
+        <div
+          className="space-y-2 rounded-xl border border-border bg-card p-4"
+          aria-label="Order update status"
+        >
+          <p className="text-sm">
+            <UiText>
+              {query.isFetching
+                ? "Checking for updates…"
+                : `Last checked: ${new Date(query.dataUpdatedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} · India time`}
+            </UiText>
           </p>
-        )}
-      </div>
+          <p className="text-sm text-muted-foreground">
+            <UiText>
+              {needsOrderRefresh(order)
+                ? "Checks every 15 seconds while this page is active. Each shop progresses separately."
+                : "Fulfilment is complete or stopped. You can refresh manually for later updates."}
+            </UiText>
+          </p>
+          {query.isError && (
+            <p role="alert" className="text-sm text-destructive">
+              Could not refresh. Showing the last successfully loaded order; its status may be
+              outdated. Retry with Refresh order status.
+            </p>
+          )}
+        </div>
+      </UiAttributes>
       {order.testMode && (
         <p role="status" className="font-semibold">
           Test order: no real payment or purchase. Do not fulfil.
         </p>
       )}
       <p className="font-semibold">
-        {order.paymentMethod === "razorpay" ? "Razorpay" : "COD"} · {cashLabel(order.paymentStatus)}{" "}
-        · Total {inr(order.total)}
+        <UiText>{order.paymentMethod === "razorpay" ? "Razorpay" : "COD"}</UiText> ·{" "}
+        {cashLabel(order.paymentStatus)} · Total {inr(order.total)}
       </p>
       {order.amountDue !== undefined && (
         <p className="font-semibold">
-          Current {order.paymentMethod === "razorpay" ? "online" : "COD"} amount due:{" "}
-          {inr(order.amountDue)}
+          Current <UiText>{order.paymentMethod === "razorpay" ? "online" : "COD"}</UiText> amount
+          due: {inr(order.amountDue)}
         </p>
       )}
       {!!order.cancelledAmount && (
@@ -164,8 +184,9 @@ function Detail({ userId, id }: { userId: string; id: string }) {
       )}
       {!!order.cashRecordedAmount && (
         <p className="text-sm">
-          Cash recorded: {inr(order.cashRecordedAmount)}. This is a receipt/cash report, not gateway
-          verification or settlement.
+          <UiText>{"Cash recorded: "}</UiText>
+          {inr(order.cashRecordedAmount)}. This is a receipt/cash report, not gateway verification
+          or settlement.
         </p>
       )}
       <Button variant="outline" disabled={query.isFetching} onClick={() => void query.refetch()}>
@@ -181,7 +202,7 @@ function Detail({ userId, id }: { userId: string; id: string }) {
           <h2 className="font-semibold">Saved order address</h2>
           <DeliveryPinLink location={order.address.location} />
           <p className="text-sm">
-            {order.address.label}: {order.address.line1}, {order.address.locality},{" "}
+            <UiText>{order.address.label}</UiText>: {order.address.line1}, {order.address.locality},{" "}
             {order.address.city} {order.address.pincode}
           </p>
         </div>
@@ -191,19 +212,23 @@ function Detail({ userId, id }: { userId: string; id: string }) {
           <h2 className="font-display text-2xl">{sub.shopName ?? "Shop"}</h2>
           <p className="text-sm">
             Status:{" "}
-            {sub.deliveryState === "returning"
-              ? "returning to shop"
-              : sub.status.replaceAll("_", " ")}{" "}
+            <UiText>
+              {sub.deliveryState === "returning"
+                ? "returning to shop"
+                : sub.status.replaceAll("_", " ")}
+            </UiText>{" "}
             · {fulfilmentLabel[sub.fulfilment]}
           </p>
-          <ShopOrderTimeline
-            sub={sub}
-            paymentPending={
-              order.paymentMethod === "razorpay" &&
-              order.paymentStatus !== "paid" &&
-              sub.status === "placed"
-            }
-          />
+          <UiAttributes>
+            <ShopOrderTimeline
+              sub={sub}
+              paymentPending={
+                order.paymentMethod === "razorpay" &&
+                order.paymentStatus !== "paid" &&
+                sub.status === "placed"
+              }
+            />
+          </UiAttributes>
           {sub.shopAddress && <p className="text-sm text-muted-foreground">{sub.shopAddress}</p>}
           {sub.deliveryState === "returning" && (
             <p role="status">
@@ -212,9 +237,16 @@ function Detail({ userId, id }: { userId: string; id: string }) {
               code for a return.
             </p>
           )}
-          {sub.cancelReason && <p className="text-sm">Cancellation reason: {sub.cancelReason}</p>}
+          {sub.cancelReason && (
+            <p className="text-sm">
+              <UiText>{"Cancellation reason: "}</UiText>
+              {sub.cancelReason}
+            </p>
+          )}
           {sub.refund && <RefundNotice refund={sub.refund} />}
-          <BuyerCancellation order={order} sub={sub} />
+          <UiAttributes>
+            <BuyerCancellation order={order} sub={sub} />
+          </UiAttributes>
           <OrderSupport orderId={order.id} suborderId={sub.id} />
           <ul className="divide-y divide-border">
             {sub.lines.map((line, index) => (
@@ -224,7 +256,8 @@ function Detail({ userId, id }: { userId: string; id: string }) {
               >
                 <span>
                   {line.name}
-                  {line.variantLabel ? ` · ${line.variantLabel}` : ""} · {line.unit} × {line.qty}
+                  <UiText>{line.variantLabel ? ` · ${line.variantLabel}` : ""}</UiText> ·{" "}
+                  {line.unit} × {line.qty}
                 </span>
                 <span>{inr(line.price * line.qty)}</span>
               </li>
@@ -237,14 +270,14 @@ function Detail({ userId, id }: { userId: string; id: string }) {
           </p>
           {sub.amountDue !== undefined && (
             <p className="text-sm">
-              Current {order.paymentMethod === "razorpay" ? "online" : "COD"} due for this shop:{" "}
-              {inr(sub.amountDue)}
+              Current <UiText>{order.paymentMethod === "razorpay" ? "online" : "COD"}</UiText> due
+              for this shop: {inr(sub.amountDue)}
             </p>
           )}
           {sub.cashCollection && (
             <p className="text-sm">
-              Cash recorded: {inr(sub.cashCollection.amount)} · Buyer receipt and seller cash
-              confirmation saved.
+              <UiText>{"Cash recorded: "}</UiText>
+              {inr(sub.cashCollection.amount)} · Buyer receipt and seller cash confirmation saved.
             </p>
           )}
           {((sub.fulfilment === "pickup" && sub.status === "ready") ||

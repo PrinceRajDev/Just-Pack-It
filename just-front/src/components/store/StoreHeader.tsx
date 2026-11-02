@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState, useEffect, useId } from "react";
 import { recentSearches, rememberSearch, clearSearches } from "@/lib/search";
 import { useQuery } from "@tanstack/react-query";
@@ -68,35 +69,39 @@ export function SearchBox({
       }}
     >
       <label htmlFor={searchId} className="sr-only">
-        Search products
+        <UiText>{"Search products"}</UiText>
       </label>
       <Search
         className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
         aria-hidden
       />
-      <input
-        id={searchId}
-        autoFocus={autoFocus}
-        value={q}
-        onChange={(e) => {
-          setQ(e.target.value);
-          setOpen(true);
-        }}
-        onFocus={() => {
-          setRecent(recentSearches());
-          setOpen(true);
-        }}
-        placeholder="Search for a product…"
-        autoComplete="off"
-        className="h-11 w-full rounded-xl border border-input bg-card pl-9 pr-16 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none"
-      />
-      <button
-        type="submit"
-        aria-label="Search products"
-        className="absolute right-0 top-0 flex h-11 w-14 items-center justify-center rounded-r-xl bg-primary text-primary-foreground hover:bg-primary/90"
-      >
-        <Search className="size-5" aria-hidden />
-      </button>
+      <UiAttributes>
+        <input
+          id={searchId}
+          autoFocus={autoFocus}
+          value={q}
+          onChange={(e) => {
+            setQ(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => {
+            setRecent(recentSearches());
+            setOpen(true);
+          }}
+          placeholder="Search for a product…"
+          autoComplete="off"
+          className="h-11 w-full rounded-xl border border-input bg-card pl-9 pr-16 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+        />
+      </UiAttributes>
+      <UiAttributes>
+        <button
+          type="submit"
+          aria-label="Search products"
+          className="absolute right-0 top-0 flex h-11 w-14 items-center justify-center rounded-r-xl bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          <Search className="size-5" aria-hidden />
+        </button>
+      </UiAttributes>
       {area && open && (q ? suggestions.length > 0 : true) && (
         <div className="absolute inset-x-0 top-full z-50 mt-1 rounded-md border border-border bg-popover p-1 shadow-lift">
           {q ? (
@@ -181,19 +186,25 @@ export function LocationPicker() {
   const [open, setOpen] = useState(false);
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        className="market-location flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted"
-        aria-label="Choose delivery area"
-      >
-        <MapPin className="size-4 shrink-0 text-primary" aria-hidden />
-        <span className="min-w-0">
-          <span className="label-stamp block text-muted-foreground">Deliver to</span>
-          <span className="block max-w-[11rem] truncate text-sm font-medium">
-            {area ? `${gps ? "Within 6 km · " : ""}${area.name}` : "Choose your area"}
+      <UiAttributes>
+        <PopoverTrigger
+          className="market-location flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted"
+          aria-label="Choose delivery area"
+        >
+          <MapPin className="size-4 shrink-0 text-primary" aria-hidden />
+          <span className="min-w-0">
+            <span className="label-stamp block text-muted-foreground">
+              <UiText>{"Deliver to"}</UiText>
+            </span>
+            <span className="block max-w-[11rem] truncate text-sm font-medium">
+              <UiText>
+                {area ? `${gps ? "Within 6 km · " : ""}${area.name}` : "Choose your area"}
+              </UiText>
+            </span>
           </span>
-        </span>
-        <ChevronDown className="size-4 shrink-0" aria-hidden />
-      </PopoverTrigger>
+          <ChevronDown className="size-4 shrink-0" aria-hidden />
+        </PopoverTrigger>
+      </UiAttributes>
       <PopoverContent
         align="start"
         className="w-80 max-w-[calc(100vw-1rem)] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto overscroll-contain"
@@ -206,7 +217,9 @@ export function LocationPicker() {
           className="mt-3 flex min-h-11 w-full items-center gap-2 rounded-lg bg-primary px-3 py-2 text-left text-sm text-primary-foreground disabled:opacity-60"
         >
           <MapPin className="size-4" aria-hidden />
-          {locating ? "Finding your location…" : "Use my location · shops within 6 km"}
+          <UiText>
+            {locating ? "Finding your location…" : "Use my location · shops within 6 km"}
+          </UiText>
         </button>
         {locationError && (
           <p className="mt-2 text-sm" role="alert">
@@ -247,7 +260,7 @@ export function LocationPicker() {
             <li className="py-3 text-sm" role="alert">
               Couldn't load areas.{" "}
               <button onClick={retry} className="underline">
-                Try again
+                <UiText>{"Try again"}</UiText>
               </button>
             </li>
           )}
@@ -267,7 +280,7 @@ export function LocationPicker() {
                 <span>
                   {z.name}, {z.city}
                   <span className="block text-xs text-muted-foreground">
-                    {z.active ? `PIN ${z.pincodes.join(", ")}` : "Coming soon"}
+                    <UiText>{z.active ? `PIN ${z.pincodes.join(", ")}` : "Coming soon"}</UiText>
                   </span>
                 </span>
                 {area?.id === z.id && <Check className="size-4 text-primary" />}
@@ -290,61 +303,76 @@ export function StoreHeader() {
         <div className="market-navbar-brand shrink-0">
           <Logo />
           <span className="market-navbar-tagline text-caption ml-10 hidden text-muted-foreground xl:block">
-            Your neighbourhood, delivered
+            <UiText>{"Your neighbourhood, delivered"}</UiText>
           </span>
         </div>
         <div className="hidden md:block">
           <LocationPicker />
         </div>
         <SearchBox className="hidden flex-1 md:block" />
-        <nav className="market-navbar-actions ml-auto flex items-center gap-1" aria-label="Account">
-          <Link
-            to="/search"
-            search={{ offersOnly: true }}
-            className="market-navbar-offers hidden h-10 items-center gap-2 rounded-md px-2.5 text-sm hover:bg-muted xl:flex"
-          >
-            <Ticket className="size-4 text-promo" aria-hidden /> Offers
-          </Link>
-          <Link
-            to="/categories"
-            className="market-navbar-categories hidden h-11 items-center gap-2 rounded-md px-2.5 text-sm hover:bg-muted xl:flex"
-          >
-            <Grid2X2 size={18} aria-hidden="true" /> Categories
-          </Link>
-          <Link
-            to={session ? "/account" : "/login"}
-            className="market-navbar-account flex h-10 items-center gap-2 rounded-md px-2.5 text-sm hover:bg-muted"
+        <UiAttributes>
+          <nav
+            className="market-navbar-actions ml-auto flex items-center gap-1"
             aria-label="Account"
           >
-            <User className="size-5" aria-hidden="true" />{" "}
-            <span className="hidden lg:inline">
-              {session ? session.name.split(" ")[0] : "Sign in"}
-            </span>
-          </Link>
-          <Link
-            to="/account"
-            search={{ tab: "wishlist" }}
-            className="relative hidden h-10 items-center rounded-md px-2.5 hover:bg-muted sm:flex"
-            aria-label={`Wishlist, ${wishlist.length} items`}
-          >
-            <Heart className="size-5" />
-            {wishlist.length > 0 && (
-              <span className="absolute right-1 top-1 size-2 rounded-full bg-promo" />
-            )}
-          </Link>
-          <Link
-            to="/cart"
-            className="market-navbar-bag flex h-10 items-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            aria-label={`Bag, ${count} items`}
-          >
-            <ShoppingBag className="size-4" aria-hidden="true" />
-            <span className="market-navbar-bag-label">Your bag</span>{" "}
-            <span className="market-navbar-count tabular-nums">{count}</span>
-          </Link>
-          <div className="hidden md:block">
-            <NotificationBell />
-          </div>
-        </nav>
+            <Link
+              to="/search"
+              search={{ offersOnly: true }}
+              className="market-navbar-offers hidden h-10 items-center gap-2 rounded-md px-2.5 text-sm hover:bg-muted xl:flex"
+            >
+              <Ticket className="size-4 text-promo" aria-hidden />
+              <UiText>{"Offers"}</UiText>
+            </Link>
+            <Link
+              to="/categories"
+              className="market-navbar-categories hidden h-11 items-center gap-2 rounded-md px-2.5 text-sm hover:bg-muted xl:flex"
+            >
+              <Grid2X2 size={18} aria-hidden="true" />
+              <UiText>{"Categories"}</UiText>
+            </Link>
+            <UiAttributes>
+              <Link
+                to={session ? "/account" : "/login"}
+                className="market-navbar-account flex h-10 items-center gap-2 rounded-md px-2.5 text-sm hover:bg-muted"
+                aria-label="Account"
+              >
+                <User className="size-5" aria-hidden="true" />{" "}
+                <span className="hidden lg:inline">
+                  <UiText>{session ? session.name.split(" ")[0] : "Sign in"}</UiText>
+                </span>
+              </Link>
+            </UiAttributes>
+            <UiAttributes>
+              <Link
+                to="/account"
+                search={{ tab: "wishlist" }}
+                className="relative hidden h-10 items-center rounded-md px-2.5 hover:bg-muted sm:flex"
+                aria-label={`Wishlist, ${wishlist.length} items`}
+              >
+                <Heart className="size-5" />
+                {wishlist.length > 0 && (
+                  <span className="absolute right-1 top-1 size-2 rounded-full bg-promo" />
+                )}
+              </Link>
+            </UiAttributes>
+            <UiAttributes>
+              <Link
+                to="/cart"
+                className="market-navbar-bag flex h-10 items-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                aria-label={`Bag, ${count} items`}
+              >
+                <ShoppingBag className="size-4" aria-hidden="true" />
+                <span className="market-navbar-bag-label">
+                  <UiText>{"Your bag"}</UiText>
+                </span>{" "}
+                <span className="market-navbar-count tabular-nums">{count}</span>
+              </Link>
+            </UiAttributes>
+            <div className="hidden md:block">
+              <NotificationBell />
+            </div>
+          </nav>
+        </UiAttributes>
       </div>
       <div className="market-navbar-mobile-location flex items-center gap-2 border-t border-border px-4 py-2 md:hidden">
         <LocationPicker />
@@ -355,22 +383,24 @@ export function StoreHeader() {
       <div className="px-4 pb-3 md:hidden">
         <SearchBox />
       </div>
-      <nav aria-label="Categories" className="header-category-nav hidden border-t border-border">
-        <ul className="no-scrollbar mx-auto flex max-w-none gap-6 overflow-x-auto px-4 py-2 text-sm md:px-8 xl:px-12">
-          {categories.map((c) => (
-            <li key={c.slug}>
-              <Link
-                to="/category/$slug"
-                params={{ slug: c.slug }}
-                className="whitespace-nowrap text-muted-foreground hover:text-foreground"
-                activeProps={{ className: "text-foreground font-medium" }}
-              >
-                {c.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      <UiAttributes>
+        <nav aria-label="Categories" className="header-category-nav hidden border-t border-border">
+          <ul className="no-scrollbar mx-auto flex max-w-none gap-6 overflow-x-auto px-4 py-2 text-sm md:px-8 xl:px-12">
+            {categories.map((c) => (
+              <li key={c.slug}>
+                <Link
+                  to="/category/$slug"
+                  params={{ slug: c.slug }}
+                  className="whitespace-nowrap text-muted-foreground hover:text-foreground"
+                  activeProps={{ className: "text-foreground font-medium" }}
+                >
+                  {c.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </UiAttributes>
     </header>
   );
 }
@@ -392,26 +422,28 @@ export function StoreFooter() {
           </p>
         </div>
         <div>
-          <p className="label-stamp opacity-70">Shop</p>
+          <p className="label-stamp opacity-70">
+            <UiText>{"Shop"}</UiText>
+          </p>
           <ul className="mt-3 space-y-2 text-sm">
             <li>
               <Link to="/categories" className="hover:underline">
-                Explore categories
+                <UiText>{"Explore categories"}</UiText>
               </Link>
             </li>
             <li>
               <Link to="/search" className="hover:underline">
-                All products
+                <UiText>{"All products"}</UiText>
               </Link>
             </li>
             <li>
               <Link to="/cart" className="hover:underline">
-                Your bag
+                <UiText>{"Your bag"}</UiText>
               </Link>
             </li>
             <li>
               <Link to="/orders" className="hover:underline">
-                Track orders
+                <UiText>{"Track orders"}</UiText>
               </Link>
             </li>
           </ul>
@@ -431,7 +463,7 @@ export function StoreFooter() {
             </li>
             <li>
               <Link to="/admin" className="hover:underline">
-                Operations
+                <UiText>{"Operations"}</UiText>
               </Link>
             </li>
           </ul>

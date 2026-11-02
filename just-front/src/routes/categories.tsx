@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -47,7 +48,9 @@ function Categories() {
           </p>
           <span className="market-category-area">
             <MapPin size={15} aria-hidden="true" />
-            {area ? `Exploring ${area.name}` : "Choose your area to find nearby shops"}
+            <UiText>
+              {area ? `Exploring ${area.name}` : "Choose your area to find nearby shops"}
+            </UiText>
           </span>
         </div>
         <div className="market-directory-collage" aria-hidden="true">
@@ -68,11 +71,13 @@ function Categories() {
           <label className="directory-search">
             <Search className="size-4" aria-hidden />
             <span className="sr-only">Search categories</span>
-            <Input
-              value={q}
-              onChange={(event) => setQ(event.target.value)}
-              placeholder="Find grocery, fashion, meals…"
-            />
+            <UiAttributes>
+              <Input
+                value={q}
+                onChange={(event) => setQ(event.target.value)}
+                placeholder="Find grocery, fashion, meals…"
+              />
+            </UiAttributes>
           </label>
         </div>
         <p className="market-directory-count my-5 text-sm text-muted-foreground" aria-live="polite">
@@ -95,7 +100,9 @@ function Categories() {
             ))}
           </ul>
         ) : (
-          <EmptyState title="No lanes match that search" body="Try another category name." />
+          <UiAttributes>
+            <EmptyState title="No lanes match that search" body="Try another category name." />
+          </UiAttributes>
         )}
       </div>
     </StoreLayout>

@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { DeliveryPinEditor } from "./DeliveryPinEditor";
 import type { Address } from "@/domain/types";
 import { useEffect, useRef, useState } from "react";
@@ -46,7 +47,7 @@ export function GpsAddressConfirmation({
   return (
     <>
       <Button ref={trigger} variant="outline" onClick={() => setOpen(true)}>
-        {saved ? "Address saved · review" : "Confirm delivery address"}
+        <UiText>{saved ? "Address saved · review" : "Confirm delivery address"}</UiText>
       </Button>
       <Sheet
         open={open}
@@ -118,13 +119,15 @@ export function GpsAddressConfirmation({
                 />
                 <label className="block text-sm">
                   Address label
-                  <input
-                    name="label"
-                    required
-                    maxLength={60}
-                    placeholder="Home / Work"
-                    className="mt-1 block h-11 w-full rounded-md border bg-background px-3"
-                  />
+                  <UiAttributes>
+                    <input
+                      name="label"
+                      required
+                      maxLength={60}
+                      placeholder="Home / Work"
+                      className="mt-1 block h-11 w-full rounded-md border bg-background px-3"
+                    />
+                  </UiAttributes>
                 </label>
                 <label className="block text-sm">
                   House, street and landmark
@@ -150,7 +153,7 @@ export function GpsAddressConfirmation({
                   />
                 </label>
                 <label className="block text-sm">
-                  City / town
+                  <UiText>{"City / town"}</UiText>
                   <input
                     name="city"
                     required
@@ -161,7 +164,7 @@ export function GpsAddressConfirmation({
                   />
                 </label>
                 <label className="block text-sm">
-                  Pincode
+                  <UiText>{"Pincode"}</UiText>
                   <input
                     name="pincode"
                     required
@@ -188,7 +191,7 @@ export function GpsAddressConfirmation({
                   </p>
                 )}
                 <Button type="submit" disabled={!confirmed || save.isPending}>
-                  {save.isPending ? "Saving…" : "Confirm and save address"}
+                  <UiText>{save.isPending ? "Saving…" : "Confirm and save address"}</UiText>
                 </Button>
               </fieldset>
             </form>

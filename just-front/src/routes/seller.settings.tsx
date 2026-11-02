@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { PortalHeader } from "@/components/portal/PortalShell";
@@ -20,12 +21,18 @@ function Settings() {
   };
   return (
     <>
-      <PortalHeader title="Shop settings" />
+      <UiAttributes>
+        <PortalHeader title="Shop settings" />
+      </UiAttributes>
       <div className="workspace-settings">
         <form onSubmit={save} className="space-y-4">
-          <h2 className="border-b border-foreground pb-2 font-display text-xl">Shop profile</h2>
+          <h2 className="border-b border-foreground pb-2 font-display text-xl">
+            <UiText>{"Shop profile"}</UiText>
+          </h2>
           <div>
-            <Label htmlFor="sn">Shop name</Label>
+            <Label htmlFor="sn">
+              <UiText>{"Shop name"}</UiText>
+            </Label>
             <Input id="sn" defaultValue={shop.name} className="mt-1" />
           </div>
           <div>
@@ -45,7 +52,9 @@ function Settings() {
           <label className="flex items-center gap-3 text-sm">
             <Switch defaultChecked={shop.isOpen} /> Accepting orders now
           </label>
-          <Button type="submit">Save profile</Button>
+          <Button type="submit">
+            <UiText>{"Save profile"}</UiText>
+          </Button>
         </form>
         <form onSubmit={save} className="space-y-4">
           <h2 className="border-b border-foreground pb-2 font-display text-xl">
@@ -59,11 +68,13 @@ function Settings() {
               <span>
                 <span className="font-medium">{fulfilmentLabel[m]}</span>
                 <span className="block text-muted-foreground">
-                  {m === "seller_delivery"
-                    ? "Your own staff deliver within your radius"
-                    : m === "platform_delivery"
-                      ? "A Just Pack It rider picks up from you"
-                      : "Customer collects from the counter"}
+                  <UiText>
+                    {m === "seller_delivery"
+                      ? "Your own staff deliver within your radius"
+                      : m === "platform_delivery"
+                        ? "A Just Pack It rider picks up from you"
+                        : "Customer collects from the counter"}
+                  </UiText>
                 </span>
               </span>
               <Switch defaultChecked={shop.fulfilment.includes(m)} />

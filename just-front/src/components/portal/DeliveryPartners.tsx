@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import { DeliveryExceptions } from "./DeliveryExceptions";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -87,8 +88,8 @@ function PartnerForm({
     >
       <h3 className="font-semibold">{partner.name}</h3>
       <p className="break-all text-xs">
-        {partner.id} · {partner.active ? "Active account" : "Inactive account"}
-        {partner.activeTask ? " · Active delivery" : ""}
+        {partner.id} · <UiText>{partner.active ? "Active account" : "Inactive account"}</UiText>
+        <UiText>{partner.activeTask ? " · Active delivery" : ""}</UiText>
       </p>
       <fieldset disabled={busy || partner.activeTask || !partner.active} className="space-y-2">
         <legend className="sr-only">Delivery approval for {partner.name}</legend>
@@ -100,7 +101,9 @@ function PartnerForm({
           />
           Approved delivery partner
         </label>
-        <p className="text-sm">Service areas</p>
+        <p className="text-sm">
+          <UiText>{"Service areas"}</UiText>
+        </p>
         {areas.map((area) => (
           <label key={area.id} className="mr-4 inline-flex gap-2 text-sm">
             <input

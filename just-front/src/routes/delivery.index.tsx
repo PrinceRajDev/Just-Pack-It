@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -21,7 +22,9 @@ function TaskRow({ t, action }: { t: DeliveryTask; action?: React.ReactNode }) {
         <p className="mt-2 font-semibold">{t.shopName}</p>
         <div className="task-route-preview">
           <p>
-            <span>Pickup</span>
+            <span>
+              <UiText>{"Pickup"}</UiText>
+            </span>
             {t.pickup}
           </p>
           <p>
@@ -30,7 +33,8 @@ function TaskRow({ t, action }: { t: DeliveryTask; action?: React.ReactNode }) {
           </p>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
-          {t.distanceKm} km · {t.items} items{t.codAmount ? ` · collect ${inr(t.codAmount)}` : ""}
+          {t.distanceKm} km · {t.items} items
+          <UiText>{t.codAmount ? ` · collect ${inr(t.codAmount)}` : ""}</UiText>
         </p>
       </Link>
       {action && <div className="border-t border-border p-3">{action}</div>}
@@ -47,14 +51,18 @@ function Tasks() {
 
   return (
     <>
-      <PortalHeader
-        title="Your delivery desk"
-        sub="Pickups, neighbourhood stops and your next delivery, in one place."
-      />
+      <UiAttributes>
+        <PortalHeader
+          title="Your delivery desk"
+          sub="Pickups, neighbourhood stops and your next delivery, in one place."
+        />
+      </UiAttributes>
       <div className="delivery-task-board">
         <div className="delivery-verification flex items-center gap-3 border border-success/30 bg-success/10 p-3 text-sm">
           <ShieldCheck className="size-5 text-success" /> Verification:{" "}
-          <span className="font-semibold">Approved</span>{" "}
+          <span className="font-semibold">
+            <UiText>{"Approved"}</UiText>
+          </span>{" "}
           <span className="ml-auto text-xs text-muted-foreground">demo</span>
         </div>
         {active.length > 0 && (
@@ -68,7 +76,8 @@ function Tasks() {
                   action={
                     <Button asChild size="xl" variant="citrus" className="w-full">
                       <Link to="/delivery/$id" params={{ id: t.id }}>
-                        Continue <ChevronRight />
+                        <UiText>{"Continue "}</UiText>
+                        <ChevronRight />
                       </Link>
                     </Button>
                   }

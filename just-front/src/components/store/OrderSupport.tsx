@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import { SupportConversation } from "@/components/common/SupportConversation";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -60,7 +61,7 @@ export function OrderSupport({ orderId, suborderId }: { orderId: string; suborde
             )}
             <SupportConversation ticket={query.data} />
             <Button variant="outline" onClick={() => void query.refetch()}>
-              Refresh status
+              <UiText>{"Refresh status"}</UiText>
             </Button>
           </>
         ) : (
@@ -100,7 +101,7 @@ export function OrderSupport({ orderId, suborderId }: { orderId: string; suborde
               refund. Do not include passwords, OTPs or payment credentials.
             </p>
             <Button disabled={busy || description.trim().length < 10}>
-              {busy ? "Submitting…" : "Report issue"}
+              <UiText>{busy ? "Submitting…" : "Report issue"}</UiText>
             </Button>
           </form>
         )}

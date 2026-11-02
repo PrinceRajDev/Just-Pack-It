@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle } from "lucide-react";
 import { PortalHeader, Kpi } from "@/components/portal/PortalShell";
@@ -20,30 +21,42 @@ function SellerHome() {
 
   return (
     <>
-      <PortalHeader
-        title={`Good morning, ${shop.name.split(" ")[0]} ji`}
-        sub={`${shop.name} · ${shop.isOpen ? "Open" : "Closed"} · ${shop.hours}`}
-        actions={
-          <Button asChild variant="citrus">
-            <Link to="/seller/products/new">Add product</Link>
-          </Button>
-        }
-      />
-      <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-        <Kpi label="Orders today" value={orders.length} hint="demo" />
-        <Kpi label="Sales today" value={inr(sales)} hint="before commission · demo" />
-        <Kpi
-          label="Waiting for you"
-          value={pending.length}
-          tone={pending.length ? "warn" : undefined}
+      <UiAttributes>
+        <PortalHeader
+          title={`Good morning, ${shop.name.split(" ")[0]} ji`}
+          sub={`${shop.name} · ${shop.isOpen ? "Open" : "Closed"} · ${shop.hours}`}
+          actions={
+            <Button asChild variant="citrus">
+              <Link to="/seller/products/new">
+                <UiText>{"Add product"}</UiText>
+              </Link>
+            </Button>
+          }
         />
-        <Kpi label="Low stock" value={low.length} tone={low.length ? "warn" : undefined} />
+      </UiAttributes>
+      <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+        <UiAttributes>
+          <Kpi label="Orders today" value={orders.length} hint="demo" />
+        </UiAttributes>
+        <UiAttributes>
+          <Kpi label="Sales today" value={inr(sales)} hint="before commission · demo" />
+        </UiAttributes>
+        <UiAttributes>
+          <Kpi
+            label="Waiting for you"
+            value={pending.length}
+            tone={pending.length ? "warn" : undefined}
+          />
+        </UiAttributes>
+        <UiAttributes>
+          <Kpi label="Low stock" value={low.length} tone={low.length ? "warn" : undefined} />
+        </UiAttributes>
       </div>
       {pending.length > 0 && (
         <section className="mt-10 border border-promo/40 bg-promo/5 p-5">
           <h2 className="flex items-center gap-2 font-semibold">
             <AlertTriangle className="size-5 text-promo" /> {pending.length} new order
-            {pending.length > 1 ? "s" : ""} to accept
+            <UiText>{pending.length > 1 ? "s" : ""}</UiText> to accept
           </h2>
           <ul className="mt-3 divide-y divide-border">
             {pending.map((o) => (
@@ -60,40 +73,48 @@ function SellerHome() {
         </section>
       )}
       <div className="mt-10 grid gap-10 lg:grid-cols-2">
-        <Panel title="Order pipeline" description="A clear view of the orders at your counter.">
-          <ul className="divide-y divide-border">
-            {orders.map((o) => (
-              <li key={o.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                <span>
-                  <span className="font-mono">{o.id}</span>
-                  <span className="block text-muted-foreground">
-                    {o.items.length} items · {inr(o.total)}
+        <UiAttributes>
+          <Panel title="Order pipeline" description="A clear view of the orders at your counter.">
+            <ul className="divide-y divide-border">
+              {orders.map((o) => (
+                <li key={o.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+                  <span>
+                    <span className="font-mono">{o.id}</span>
+                    <span className="block text-muted-foreground">
+                      {o.items.length} items · {inr(o.total)}
+                    </span>
                   </span>
-                </span>
-                <StatusBadge status={o.status} />
-              </li>
-            ))}
-          </ul>
-        </Panel>
-        <Panel title="Running low" description="Keep these listings ready for the next customer.">
-          <ul className="divide-y divide-border">
-            {low.length === 0 && (
-              <li className="py-3 text-sm text-muted-foreground">All stocked up.</li>
-            )}
-            {low.map((p) => (
-              <li key={p.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                <span className="min-w-0 truncate">{p.name}</span>
-                <StatusBadge
-                  status={listingStock(p) === 0 ? "out" : "low"}
-                  label={`${listingStock(p)} left`}
-                />
-              </li>
-            ))}
-          </ul>
-          <Button asChild variant="outline" size="sm" className="mt-3">
-            <Link to="/seller/inventory">Update stock</Link>
-          </Button>
-        </Panel>
+                  <StatusBadge status={o.status} />
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        </UiAttributes>
+        <UiAttributes>
+          <Panel title="Running low" description="Keep these listings ready for the next customer.">
+            <ul className="divide-y divide-border">
+              {low.length === 0 && (
+                <li className="py-3 text-sm text-muted-foreground">All stocked up.</li>
+              )}
+              {low.map((p) => (
+                <li key={p.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+                  <span className="min-w-0 truncate">{p.name}</span>
+                  <UiAttributes>
+                    <StatusBadge
+                      status={listingStock(p) === 0 ? "out" : "low"}
+                      label={`${listingStock(p)} left`}
+                    />
+                  </UiAttributes>
+                </li>
+              ))}
+            </ul>
+            <Button asChild variant="outline" size="sm" className="mt-3">
+              <Link to="/seller/inventory">
+                <UiText>{"Update stock"}</UiText>
+              </Link>
+            </Button>
+          </Panel>
+        </UiAttributes>
       </div>
     </>
   );

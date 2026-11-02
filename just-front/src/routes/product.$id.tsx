@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useLocationArea } from "@/stores/location";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
@@ -63,25 +64,27 @@ function ProductPage() {
           <ProductImage src={p.image} alt={p.name} width={900} eager />
           {validOffer(p.offer) && (
             <span className="label-stamp absolute left-3 top-3 bg-promo px-2 py-1 text-promo-foreground">
-              {p.offer.label}
+              <UiText>{p.offer.label}</UiText>
             </span>
           )}
         </div>
         <div className="product-detail-info flex flex-col">
-          <nav className="text-xs text-muted-foreground" aria-label="Breadcrumb">
-            <Link to="/" className="hover:underline">
-              Home
-            </Link>{" "}
-            /{" "}
-            <Link
-              to="/category/$slug"
-              params={{ slug: p.categorySlug }}
-              className="hover:underline"
-            >
-              {categories.find((category) => category.slug === p.categorySlug)?.name ??
-                p.categorySlug}
-            </Link>
-          </nav>
+          <UiAttributes>
+            <nav className="text-xs text-muted-foreground" aria-label="Breadcrumb">
+              <Link to="/" className="hover:underline">
+                <UiText>{"Home"}</UiText>
+              </Link>{" "}
+              /{" "}
+              <Link
+                to="/category/$slug"
+                params={{ slug: p.categorySlug }}
+                className="hover:underline"
+              >
+                {categories.find((category) => category.slug === p.categorySlug)?.name ??
+                  p.categorySlug}
+              </Link>
+            </nav>
+          </UiAttributes>
           <h1 className="mt-3 font-display text-4xl leading-tight md:text-5xl">{p.name}</h1>
           <p className="mt-1 text-muted-foreground">{selectedVariant?.label ?? p.unit}</p>
           <div aria-live="polite" aria-atomic="true">
@@ -92,7 +95,7 @@ function ProductPage() {
             />
             {validOffer(p.offer) && (
               <p className="mt-1 text-sm text-promo">
-                {p.offer.label} · valid till{" "}
+                <UiText>{p.offer.label}</UiText> · valid till{" "}
                 {new Date(p.offer.validUntil).toLocaleDateString("en-IN", {
                   day: "numeric",
                   month: "short",
@@ -119,7 +122,7 @@ function ProductPage() {
             </p>
             {selectedVariant && (
               <p className="mt-2 text-sm text-muted-foreground">
-                Selected: {selectedVariant.label}
+                Selected: <UiText>{selectedVariant.label}</UiText>
                 {selectedVariant.attributes?.map((a) => ` · ${a.label}: ${a.value}`).join("")}
               </p>
             )}
@@ -137,24 +140,28 @@ function ProductPage() {
             <div className="hidden flex-1 md:block">
               <AddToBag product={p} variantId={selectedVariantId} size="lg" />
             </div>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => toggleWish(p.id)}
-              disabled={!isDemoMode}
-              title={!isDemoMode ? "Wishlist is not available yet" : undefined}
-              aria-pressed={wished}
-              aria-label="Save to wishlist"
-            >
-              <Heart className={cn(wished && "fill-promo text-promo")} />
-            </Button>
+            <UiAttributes>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => toggleWish(p.id)}
+                disabled={!isDemoMode}
+                title={!isDemoMode ? "Wishlist is not available yet" : undefined}
+                aria-pressed={wished}
+                aria-label="Save to wishlist"
+              >
+                <Heart className={cn(wished && "fill-promo text-promo")} />
+              </Button>
+            </UiAttributes>
           </div>
           <p className="mt-8 leading-relaxed">{p.description}</p>
           {p.attributes?.length ? (
             <dl className="mt-6 grid grid-cols-2 gap-px overflow-hidden border border-border bg-border text-sm">
               {p.attributes.map((attribute) => (
                 <div key={attribute.label} className="bg-card p-3">
-                  <dt className="label-stamp text-muted-foreground">{attribute.label}</dt>
+                  <dt className="label-stamp text-muted-foreground">
+                    <UiText>{attribute.label}</UiText>
+                  </dt>
                   <dd className="mt-1 font-medium">{attribute.value}</dd>
                 </div>
               ))}

@@ -1,3 +1,4 @@
+import { UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { StoreLayout, PageTitle } from "@/components/store/StoreLayout";
@@ -42,7 +43,9 @@ function SearchPage() {
     : [];
   return (
     <StoreLayout>
-      <PageTitle eyebrow="Search" title={search.q ? `“${search.q}”` : "All products"} />
+      <UiAttributes>
+        <PageTitle eyebrow="Search" title={search.q ? `“${search.q}”` : "All products"} />
+      </UiAttributes>
       <div className="mx-auto max-w-7xl px-4">
         {search.q && (
           <button

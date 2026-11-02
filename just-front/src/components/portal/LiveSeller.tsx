@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { SettlementLedger } from "./SettlementLedger";
 import { LiveSellerDashboard } from "./LiveSellerDashboard";
 import { ShopGpsPin } from "./ShopGpsPin";
@@ -55,31 +56,49 @@ export function LiveSeller() {
     return <LiveSellerDashboard key={shop.data.id} shop={shop.data} />;
   if (ordersPath) {
     if (shop.error)
-      return <ErrorState message={shop.error.message} onRetry={() => void shop.refetch()} />;
+      return (
+        <UiAttributes>
+          <ErrorState message={shop.error.message} onRetry={() => void shop.refetch()} />
+        </UiAttributes>
+      );
     if (shop.isPending) return <p role="status">Loading your shop…</p>;
     return shop.data ? (
       <LiveSellerOrders shop={shop.data} />
     ) : (
-      <EmptyState title="Create your shop first" />
+      <UiAttributes>
+        <EmptyState title="Create your shop first" />
+      </UiAttributes>
     );
   }
   if (inventoryPath) {
     if (shop.error)
-      return <ErrorState message={shop.error.message} onRetry={() => void shop.refetch()} />;
+      return (
+        <UiAttributes>
+          <ErrorState message={shop.error.message} onRetry={() => void shop.refetch()} />
+        </UiAttributes>
+      );
     if (shop.isPending) return <p role="status">Loading your shop…</p>;
-    return shop.data ? <LiveInventory /> : <EmptyState title="Create your shop first" />;
+    return shop.data ? (
+      <LiveInventory />
+    ) : (
+      <UiAttributes>
+        <EmptyState title="Create your shop first" />
+      </UiAttributes>
+    );
   }
   const error = shop.error || categories.error || areas.error;
   if (error)
     return (
-      <ErrorState
-        message={error.message}
-        onRetry={() => {
-          void shop.refetch();
-          void categories.refetch();
-          void areas.refetch();
-        }}
-      />
+      <UiAttributes>
+        <ErrorState
+          message={error.message}
+          onRetry={() => {
+            void shop.refetch();
+            void categories.refetch();
+            void areas.refetch();
+          }}
+        />
+      </UiAttributes>
     );
   if (shop.isPending || categories.isPending || areas.isPending)
     return <p role="status">Loading your shop…</p>;
@@ -89,28 +108,34 @@ export function LiveSeller() {
     return shop.data ? (
       <LiveProducts key={path} shop={shop.data} categories={categories.data} path={path} />
     ) : (
-      <EmptyState
-        title="Create your shop first"
-        action={
-          <Button asChild>
-            <Link to="/seller/settings">Set up shop</Link>
-          </Button>
-        }
-      />
+      <UiAttributes>
+        <EmptyState
+          title="Create your shop first"
+          action={
+            <Button asChild>
+              <Link to="/seller/settings">Set up shop</Link>
+            </Button>
+          }
+        />
+      </UiAttributes>
     );
   if (path !== "/seller" && path !== "/seller/" && path !== "/seller/settings")
     return (
-      <EmptyState
-        title="This workspace feature is not connected yet"
-        body="Orders, offers and payouts will be available in a later backend phase."
-      />
+      <UiAttributes>
+        <EmptyState
+          title="This workspace feature is not connected yet"
+          body="Orders, offers and payouts will be available in a later backend phase."
+        />
+      </UiAttributes>
     );
   return (
     <>
-      <PortalHeader
-        title={shop.data ? "Your shop profile" : "Bring your shop online"}
-        sub="Save your real details. New shops and profile changes require admin approval."
-      />
+      <UiAttributes>
+        <PortalHeader
+          title={shop.data ? "Your shop profile" : "Bring your shop online"}
+          sub="Save your real details. New shops and profile changes require admin approval."
+        />
+      </UiAttributes>
       <ShopForm
         key={`${shop.data?.id ?? "new"}:${shop.data?.version ?? 0}`}
         shop={shop.data}
@@ -138,10 +163,12 @@ function ShopForm({
   const [hours, setHours] = useState<OpeningHour[]>(shop?.openingHours ?? []);
   if (!categories.length || !areas.length)
     return (
-      <EmptyState
-        title="Platform setup is incomplete"
-        body="An admin must configure categories and service areas before you can submit a shop."
-      />
+      <UiAttributes>
+        <EmptyState
+          title="Platform setup is incomplete"
+          body="An admin must configure categories and service areas before you can submit a shop."
+        />
+      </UiAttributes>
     );
   return (
     <Panel>
@@ -157,8 +184,12 @@ function ShopForm({
       {shop && <ShopReviewNotice shop={shop} />}
       {shop && (
         <p className="rounded-lg bg-secondary p-3 text-sm">
-          Approval: <strong>{shop.status}</strong> · {shop.isOpen ? "Open" : "Closed"}. Profile
-          updates return the shop to pending review.
+          Approval:{" "}
+          <strong>
+            <UiText>{shop.status}</UiText>
+          </strong>{" "}
+          · <UiText>{shop.isOpen ? "Open" : "Closed"}</UiText>. Profile updates return the shop to
+          pending review.
         </p>
       )}
       <form
@@ -220,7 +251,9 @@ function ShopForm({
       >
         <fieldset disabled={save.isPending || photoEditing} className="space-y-5">
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Shop name" name="name" value={shop?.name} required />
+            <UiAttributes>
+              <Field label="Shop name" name="name" value={shop?.name} required />
+            </UiAttributes>
             <ShopGpsPin
               coordinates={shop?.location?.coordinates}
               onChange={() => {
@@ -228,47 +261,71 @@ function ShopForm({
                 setProfileEditing(true);
               }}
             />
-            {!shop && <Field label="Shop URL slug (lowercase-with-hyphens)" name="slug" required />}
-            <Field label="Locality / address" name="locality" value={shop?.locality} required />
-            <Field
-              label="Full shop address (blank keeps existing)"
-              name="address"
-              value={shop?.address}
-            />
-            <Field label="Short initials" name="initials" value={shop?.initials} required />
-            <Field
-              label="Trading since (year)"
-              name="since"
-              type="number"
-              min={1900}
-              max={new Date().getFullYear()}
-              value={shop?.since}
-              required
-            />
-            <Field label="Tagline" name="tagline" value={shop?.tagline} />
-            <Field label="Description" name="description" value={shop?.description} />
-            <Field
-              label="Cover image HTTPS URL or durable key (optional)"
-              name="coverImage"
-              value={shop?.coverImage}
-            />
-            <Field
-              label="Listed delivery fee ₹ (blank keeps existing)"
-              name="deliveryFee"
-              type="number"
-              min={0}
-              step="0.01"
-              value={shop?.deliveryFee}
-            />
-            <Field
-              label="Minimum order ₹ (blank keeps existing)"
-              name="minimumOrderAmount"
-              type="number"
-              min={0}
-              step="0.01"
-              value={shop?.minimumOrderAmount}
-            />
-            <Field label="Pickup instructions" name="pickupNote" value={shop?.pickupNote} />
+            {!shop && (
+              <UiAttributes>
+                <Field label="Shop URL slug (lowercase-with-hyphens)" name="slug" required />
+              </UiAttributes>
+            )}
+            <UiAttributes>
+              <Field label="Locality / address" name="locality" value={shop?.locality} required />
+            </UiAttributes>
+            <UiAttributes>
+              <Field
+                label="Full shop address (blank keeps existing)"
+                name="address"
+                value={shop?.address}
+              />
+            </UiAttributes>
+            <UiAttributes>
+              <Field label="Short initials" name="initials" value={shop?.initials} required />
+            </UiAttributes>
+            <UiAttributes>
+              <Field
+                label="Trading since (year)"
+                name="since"
+                type="number"
+                min={1900}
+                max={new Date().getFullYear()}
+                value={shop?.since}
+                required
+              />
+            </UiAttributes>
+            <UiAttributes>
+              <Field label="Tagline" name="tagline" value={shop?.tagline} />
+            </UiAttributes>
+            <UiAttributes>
+              <Field label="Description" name="description" value={shop?.description} />
+            </UiAttributes>
+            <UiAttributes>
+              <Field
+                label="Cover image HTTPS URL or durable key (optional)"
+                name="coverImage"
+                value={shop?.coverImage}
+              />
+            </UiAttributes>
+            <UiAttributes>
+              <Field
+                label="Listed delivery fee ₹ (blank keeps existing)"
+                name="deliveryFee"
+                type="number"
+                min={0}
+                step="0.01"
+                value={shop?.deliveryFee}
+              />
+            </UiAttributes>
+            <UiAttributes>
+              <Field
+                label="Minimum order ₹ (blank keeps existing)"
+                name="minimumOrderAmount"
+                type="number"
+                min={0}
+                step="0.01"
+                value={shop?.minimumOrderAmount}
+              />
+            </UiAttributes>
+            <UiAttributes>
+              <Field label="Pickup instructions" name="pickupNote" value={shop?.pickupNote} />
+            </UiAttributes>
           </div>
           <fieldset>
             <legend className="font-medium">Shop categories</legend>
@@ -310,7 +367,9 @@ function ShopForm({
               )}
           </fieldset>
           <fieldset>
-            <legend className="font-medium">Service areas</legend>
+            <legend className="font-medium">
+              <UiText>{"Service areas"}</UiText>
+            </legend>
             {areas.map((a) => (
               <label key={a.id} className="mr-4 inline-flex items-center gap-2 text-sm">
                 <input
@@ -341,15 +400,21 @@ function ShopForm({
               depends on platform coverage and partner availability.
             </p>
           </fieldset>
-          <Field
-            label="Timezone (IANA)"
-            name="timezone"
-            value={shop?.timezone ?? "Asia/Kolkata"}
-            required
-          />
-          <Field label="Hours description (optional)" name="hours" value={shop?.hours} />
+          <UiAttributes>
+            <Field
+              label="Timezone (IANA)"
+              name="timezone"
+              value={shop?.timezone ?? "Asia/Kolkata"}
+              required
+            />
+          </UiAttributes>
+          <UiAttributes>
+            <Field label="Hours description (optional)" name="hours" value={shop?.hours} />
+          </UiAttributes>
           <fieldset className="space-y-3">
-            <legend className="font-medium">Operating hours</legend>
+            <legend className="font-medium">
+              <UiText>{"Operating hours"}</UiText>
+            </legend>
             <p className="text-xs text-muted-foreground">
               Add each open day. No intervals means closed; overnight closing times are supported.
             </p>
@@ -357,48 +422,54 @@ function ShopForm({
               <div className="flex flex-wrap items-end gap-2" key={index}>
                 <label className="text-sm">
                   Day
-                  <select
-                    aria-label={`Day for interval ${index + 1}`}
-                    className="ml-2 rounded border bg-background p-2"
-                    value={hour.day}
-                    onChange={(e) =>
-                      setHours(
-                        hours.map((h, i) =>
-                          i === index ? { ...h, day: Number(e.target.value) } : h,
-                        ),
-                      )
-                    }
-                  >
-                    {[
-                      "Sunday",
-                      "Monday",
-                      "Tuesday",
-                      "Wednesday",
-                      "Thursday",
-                      "Friday",
-                      "Saturday",
-                    ].map((day, i) => (
-                      <option key={day} value={i}>
-                        {day}
-                      </option>
-                    ))}
-                  </select>
+                  <UiAttributes>
+                    <select
+                      aria-label={`Day for interval ${index + 1}`}
+                      className="ml-2 rounded border bg-background p-2"
+                      value={hour.day}
+                      onChange={(e) =>
+                        setHours(
+                          hours.map((h, i) =>
+                            i === index ? { ...h, day: Number(e.target.value) } : h,
+                          ),
+                        )
+                      }
+                    >
+                      {[
+                        "Sunday",
+                        "Monday",
+                        "Tuesday",
+                        "Wednesday",
+                        "Thursday",
+                        "Friday",
+                        "Saturday",
+                      ].map((day, i) => (
+                        <option key={day} value={i}>
+                          {day}
+                        </option>
+                      ))}
+                    </select>
+                  </UiAttributes>
                 </label>
                 {(["opens", "closes"] as const).map((key) => (
                   <label key={key} className="text-sm">
                     {key}
-                    <input
-                      aria-label={`${key} for interval ${index + 1}`}
-                      className="ml-2 rounded border bg-background p-2"
-                      type="time"
-                      required
-                      value={hour[key]}
-                      onChange={(e) =>
-                        setHours(
-                          hours.map((h, i) => (i === index ? { ...h, [key]: e.target.value } : h)),
-                        )
-                      }
-                    />
+                    <UiAttributes>
+                      <input
+                        aria-label={`${key} for interval ${index + 1}`}
+                        className="ml-2 rounded border bg-background p-2"
+                        type="time"
+                        required
+                        value={hour[key]}
+                        onChange={(e) =>
+                          setHours(
+                            hours.map((h, i) =>
+                              i === index ? { ...h, [key]: e.target.value } : h,
+                            ),
+                          )
+                        }
+                      />
+                    </UiAttributes>
                   </label>
                 ))}
                 <Button
@@ -428,7 +499,7 @@ function ShopForm({
           </label>
           <SaveError error={save.error} />
           <Button type="submit">
-            {save.isPending ? "Saving…" : "Save and submit for approval"}
+            <UiText>{save.isPending ? "Saving…" : "Save and submit for approval"}</UiText>
           </Button>
         </fieldset>
       </form>

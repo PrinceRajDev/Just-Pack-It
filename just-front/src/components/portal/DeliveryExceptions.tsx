@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useRef, useState } from "react";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -19,66 +20,72 @@ export function DeliveryExceptions() {
     retry: false,
   });
   return (
-    <section
-      className="space-y-4 rounded-xl border border-border bg-card p-4"
-      aria-label="Delivery exception desk"
-    >
-      <h2 className="font-display text-2xl">Delivery exception desk</h2>
-      <p className="text-sm">
-        Unclaimed ready orders, no-show assignments, reported problems and requested returns.
-        Releasing a pre-pickup task lets another partner claim it. After pickup, the shop must
-        confirm returned goods before cancellation.
-      </p>
-      <form
-        className="flex flex-wrap items-end gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!draft || uuid.test(draft)) setId(draft);
-        }}
+    <UiAttributes>
+      <section
+        className="space-y-4 rounded-xl border border-border bg-card p-4"
+        aria-label="Delivery exception desk"
       >
-        <label className="min-w-0 flex-1 text-sm">
-          Task ID (optional)
-          <Input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value.trim())}
-            aria-invalid={!!draft && !uuid.test(draft)}
-          />
-        </label>
-        <Button variant="outline" disabled={!!draft && !uuid.test(draft)}>
-          Find delivery task
-        </Button>
-      </form>
-      {query.isPending ? (
-        <p role="status">Loading delivery exceptions…</p>
-      ) : (
-        <>
-          {query.data?.pages
-            .flatMap((p) => p.items)
-            .map((task) => (
-              <ExceptionCard key={task.id} task={task} />
-            ))}
-          {query.isSuccess && !query.data.pages.some((p) => p.items.length) && (
-            <p>No matching unresolved delivery tasks.</p>
-          )}
-        </>
-      )}
-      {query.isError && (
-        <p role="alert">
-          Could not refresh delivery exceptions. Loaded records may be outdated; refresh before
-          acting.
+        <h2 className="font-display text-2xl">Delivery exception desk</h2>
+        <p className="text-sm">
+          Unclaimed ready orders, no-show assignments, reported problems and requested returns.
+          Releasing a pre-pickup task lets another partner claim it. After pickup, the shop must
+          confirm returned goods before cancellation.
         </p>
-      )}
-      <div className="flex flex-wrap gap-3">
-        <Button variant="outline" disabled={query.isFetching} onClick={() => void query.refetch()}>
-          Refresh delivery exceptions
-        </Button>
-        {query.hasNextPage && (
-          <Button disabled={query.isFetching} onClick={() => void query.fetchNextPage()}>
-            More delivery exceptions
+        <form
+          className="flex flex-wrap items-end gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!draft || uuid.test(draft)) setId(draft);
+          }}
+        >
+          <label className="min-w-0 flex-1 text-sm">
+            Task ID (optional)
+            <Input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value.trim())}
+              aria-invalid={!!draft && !uuid.test(draft)}
+            />
+          </label>
+          <Button variant="outline" disabled={!!draft && !uuid.test(draft)}>
+            Find delivery task
           </Button>
+        </form>
+        {query.isPending ? (
+          <p role="status">Loading delivery exceptions…</p>
+        ) : (
+          <>
+            {query.data?.pages
+              .flatMap((p) => p.items)
+              .map((task) => (
+                <ExceptionCard key={task.id} task={task} />
+              ))}
+            {query.isSuccess && !query.data.pages.some((p) => p.items.length) && (
+              <p>No matching unresolved delivery tasks.</p>
+            )}
+          </>
         )}
-      </div>
-    </section>
+        {query.isError && (
+          <p role="alert">
+            Could not refresh delivery exceptions. Loaded records may be outdated; refresh before
+            acting.
+          </p>
+        )}
+        <div className="flex flex-wrap gap-3">
+          <Button
+            variant="outline"
+            disabled={query.isFetching}
+            onClick={() => void query.refetch()}
+          >
+            Refresh delivery exceptions
+          </Button>
+          {query.hasNextPage && (
+            <Button disabled={query.isFetching} onClick={() => void query.fetchNextPage()}>
+              More delivery exceptions
+            </Button>
+          )}
+        </div>
+      </section>
+    </UiAttributes>
   );
 }
 function ExceptionCard({ task }: { task: DeliveryException }) {
@@ -137,12 +144,12 @@ function ExceptionCard({ task }: { task: DeliveryException }) {
       </h3>
       <p className="break-all text-xs">
         Task {task.id} · Version {task.version}
-        {task.partnerId ? ` · Partner ${task.partnerId}` : ""}
+        <UiText>{task.partnerId ? ` · Partner ${task.partnerId}` : ""}</UiText>
       </p>
       {task.claimedAt && (
         <p className="text-sm">
-          Claimed {new Date(task.claimedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} ·
-          India time
+          Claimed {new Date(task.claimedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
+          <UiText>{"· India time"}</UiText>
         </p>
       )}
       {task.reason && (
@@ -169,28 +176,30 @@ function ExceptionCard({ task }: { task: DeliveryException }) {
           <fieldset disabled={busy} className="space-y-3">
             <label className="block text-sm">
               Resolution action
-              <select
-                className="mt-1 block w-full rounded border border-input bg-background p-2"
-                aria-label="Resolution action"
-                value={action}
-                onChange={(e) => {
-                  setAction(e.target.value);
-                  setGoods(false);
-                  setRestock("");
-                }}
-              >
-                <option value="">Choose an action</option>
-                {before && task.deliveryState === "claimed" && (
-                  <option value="release">
-                    Release for another partner to claim (before pickup)
-                  </option>
-                )}
-                {before && <option value="cancel_before_pickup">Cancel before pickup</option>}
-                {canReturn && <option value="request_return">Request return to shop</option>}
-                {task.reason && task.deliveryState !== "unassigned" && (
-                  <option value="resume">Clear reported issue and continue existing task</option>
-                )}
-              </select>
+              <UiAttributes>
+                <select
+                  className="mt-1 block w-full rounded border border-input bg-background p-2"
+                  aria-label="Resolution action"
+                  value={action}
+                  onChange={(e) => {
+                    setAction(e.target.value);
+                    setGoods(false);
+                    setRestock("");
+                  }}
+                >
+                  <option value="">Choose an action</option>
+                  {before && task.deliveryState === "claimed" && (
+                    <option value="release">
+                      Release for another partner to claim (before pickup)
+                    </option>
+                  )}
+                  {before && <option value="cancel_before_pickup">Cancel before pickup</option>}
+                  {canReturn && <option value="request_return">Request return to shop</option>}
+                  {task.reason && task.deliveryState !== "unassigned" && (
+                    <option value="resume">Clear reported issue and continue existing task</option>
+                  )}
+                </select>
+              </UiAttributes>
             </label>
             <label className="block text-sm">
               Resolution reason
@@ -215,18 +224,20 @@ function ExceptionCard({ task }: { task: DeliveryException }) {
             {action === "cancel_before_pickup" && (
               <label className="block text-sm">
                 Returned stock decision
-                <select
-                  className="mt-1 block w-full rounded border border-input bg-background p-2"
-                  aria-label="Returned stock decision"
-                  value={restock}
-                  onChange={(e) => setRestock(e.target.value)}
-                >
-                  <option value="">Choose after checking all goods</option>
-                  <option value="yes">
-                    All items are sellable: restore exact ordered quantities
-                  </option>
-                  <option value="no">Do not restock: goods are not confirmed sellable</option>
-                </select>
+                <UiAttributes>
+                  <select
+                    className="mt-1 block w-full rounded border border-input bg-background p-2"
+                    aria-label="Returned stock decision"
+                    value={restock}
+                    onChange={(e) => setRestock(e.target.value)}
+                  >
+                    <option value="">Choose after checking all goods</option>
+                    <option value="yes">
+                      All items are sellable: restore exact ordered quantities
+                    </option>
+                    <option value="no">Do not restock: goods are not confirmed sellable</option>
+                  </select>
+                </UiAttributes>
               </label>
             )}
             {action === "request_return" && (
@@ -256,9 +267,11 @@ function ExceptionCard({ task }: { task: DeliveryException }) {
             {task.history.map((event, index) => (
               <li key={index}>
                 {event.action.replaceAll("_", " ")} · {event.reason}
-                {event.restock !== undefined
-                  ? ` · Restock ${event.restock ? "confirmed" : "not performed"}`
-                  : ""}
+                <UiText>
+                  {event.restock !== undefined
+                    ? ` · Restock ${event.restock ? "confirmed" : "not performed"}`
+                    : ""}
+                </UiText>
               </li>
             ))}
           </ul>

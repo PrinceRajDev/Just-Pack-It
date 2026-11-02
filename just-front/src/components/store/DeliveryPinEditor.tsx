@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import type { Address } from "@/domain/types";
 import { currentPosition } from "@/services/location";
@@ -62,96 +63,101 @@ export function DeliveryPinEditor({
   const hasDraft = lat !== "" || lng !== "",
     valid = !!value;
   return (
-    <section className="space-y-3 rounded-lg border p-3" aria-label="Delivery pin editor">
-      <h4 className="font-medium">Delivery pin (optional)</h4>
-      <p className="text-sm text-muted-foreground">
-        Place the pin at your delivery entrance. GPS and map do not verify your house number,
-        pincode or address text.
-      </p>
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" disabled={busy} onClick={() => void gps()}>
-          {busy ? "Finding destination…" : "Use GPS for delivery pin"}
-        </Button>
-        {valid && (
-          <Button type="button" variant="outline" onClick={() => setShowMap((v) => !v)}>
-            {showMap ? "Hide map" : "Adjust on map"}
+    <UiAttributes>
+      <section className="space-y-3 rounded-lg border p-3" aria-label="Delivery pin editor">
+        <h4 className="font-medium">Delivery pin (optional)</h4>
+        <p className="text-sm text-muted-foreground">
+          Place the pin at your delivery entrance. GPS and map do not verify your house number,
+          pincode or address text.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" disabled={busy} onClick={() => void gps()}>
+            <UiText>{busy ? "Finding destination…" : "Use GPS for delivery pin"}</UiText>
           </Button>
+          {valid && (
+            <Button type="button" variant="outline" onClick={() => setShowMap((v) => !v)}>
+              <UiText>{showMap ? "Hide map" : "Adjust on map"}</UiText>
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              change("", "");
+              setShowMap(false);
+            }}
+          >
+            Remove pin
+          </Button>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="text-sm">
+            Delivery latitude
+            <Input
+              type="number"
+              inputMode="decimal"
+              min={-90}
+              max={90}
+              step="any"
+              value={lat}
+              required={hasDraft}
+              onChange={(e) => change(e.target.value, lng)}
+            />
+          </label>
+          <label className="text-sm">
+            Delivery longitude
+            <Input
+              type="number"
+              inputMode="decimal"
+              min={-180}
+              max={180}
+              step="any"
+              value={lng}
+              required={hasDraft}
+              onChange={(e) => change(lat, e.target.value)}
+            />
+          </label>
+        </div>
+        {showMap && value && (
+          <>
+            <p className="text-xs text-muted-foreground">
+              Map tiles load from OpenStreetMap; opening the map shares your IP and viewed map area
+              with the tile provider.
+            </p>
+            <DeliveryMapBoundary>
+              <Suspense fallback={<p role="status">Loading map…</p>}>
+                <Map
+                  point={value.coordinates}
+                  onChange={([b, a]) => change(String(a), String(b))}
+                />
+              </Suspense>
+            </DeliveryMapBoundary>
+          </>
         )}
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => {
-            change("", "");
-            setShowMap(false);
-          }}
-        >
-          Remove pin
-        </Button>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-sm">
-          Delivery latitude
-          <Input
-            type="number"
-            inputMode="decimal"
-            min={-90}
-            max={90}
-            step="any"
-            value={lat}
-            required={hasDraft}
-            onChange={(e) => change(e.target.value, lng)}
-          />
-        </label>
-        <label className="text-sm">
-          Delivery longitude
-          <Input
-            type="number"
-            inputMode="decimal"
-            min={-180}
-            max={180}
-            step="any"
-            value={lng}
-            required={hasDraft}
-            onChange={(e) => change(lat, e.target.value)}
-          />
-        </label>
-      </div>
-      {showMap && value && (
-        <>
+        {hasDraft && (
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              required
+              checked={confirmed && valid}
+              onChange={(e) => setConfirmed(e.target.checked)}
+              disabled={!valid}
+            />
+            I confirm this pin marks my delivery entrance and I have checked the written address.
+          </label>
+        )}
+        {!hasDraft && (
           <p className="text-xs text-muted-foreground">
-            Map tiles load from OpenStreetMap; opening the map shares your IP and viewed map area
-            with the tile provider.
+            Without a pin, checkout checks configured pincode coverage only; precise distance is not
+            verified.
           </p>
-          <DeliveryMapBoundary>
-            <Suspense fallback={<p role="status">Loading map…</p>}>
-              <Map point={value.coordinates} onChange={([b, a]) => change(String(a), String(b))} />
-            </Suspense>
-          </DeliveryMapBoundary>
-        </>
-      )}
-      {hasDraft && (
-        <label className="flex items-start gap-2 text-sm">
-          <input
-            type="checkbox"
-            required
-            checked={confirmed && valid}
-            onChange={(e) => setConfirmed(e.target.checked)}
-            disabled={!valid}
-          />
-          I confirm this pin marks my delivery entrance and I have checked the written address.
-        </label>
-      )}
-      {!hasDraft && (
-        <p className="text-xs text-muted-foreground">
-          Without a pin, checkout checks configured pincode coverage only; precise distance is not
-          verified.
-        </p>
-      )}
-      {error && (
-        <p role="alert" className="text-sm">
-          {error}
-        </p>
-      )}
-    </section>
+        )}
+        {error && (
+          <p role="alert" className="text-sm">
+            {error}
+          </p>
+        )}
+      </section>
+    </UiAttributes>
   );
 }

@@ -1,3 +1,4 @@
+import { UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { PortalHeader } from "@/components/portal/PortalShell";
@@ -11,7 +12,9 @@ export const Route = createFileRoute("/admin/finance")({ component: Finance });
 function Finance() {
   return (
     <>
-      <PortalHeader title="Payments & coupons" />
+      <UiAttributes>
+        <PortalHeader title="Payments & coupons" />
+      </UiAttributes>
       <section className="grid gap-4 md:grid-cols-3">
         {["Payments", "Refunds", "Seller settlements"].map((t) => (
           <div key={t} className="border border-dashed border-border p-5 text-sm">

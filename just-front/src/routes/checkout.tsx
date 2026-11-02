@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -93,7 +94,9 @@ function Checkout() {
   if (bag.groups.length === 0) {
     return (
       <StoreLayout>
-        <PageTitle title="Checkout" />
+        <UiAttributes>
+          <PageTitle title="Checkout" />
+        </UiAttributes>
         <div className="mx-auto max-w-7xl px-4">
           <BagIssues issues={bag.issues} />
           {bag.issues.length > 0 && (
@@ -101,14 +104,18 @@ function Checkout() {
               Review your bag
             </Link>
           )}
-          <EmptyState
-            title="Nothing to check out"
-            action={
-              <Button asChild>
-                <Link to="/">Browse shops</Link>
-              </Button>
-            }
-          />
+          <UiAttributes>
+            <EmptyState
+              title="Nothing to check out"
+              action={
+                <Button asChild>
+                  <Link to="/">
+                    <UiText>{"Browse shops"}</UiText>
+                  </Link>
+                </Button>
+              }
+            />
+          </UiAttributes>
         </div>
       </StoreLayout>
     );
@@ -117,14 +124,16 @@ function Checkout() {
 
   return (
     <StoreLayout>
-      <PageTitle
-        eyebrow={step === "details" ? "Step 1 of 2" : "Step 2 of 2"}
-        title={step === "details" ? "Delivery & payment" : "Review your order"}
-      >
-        <div className="mt-5 max-w-xl">
-          <CheckoutProgress current={step === "details" ? "details" : "review"} />
-        </div>
-      </PageTitle>
+      <UiAttributes>
+        <PageTitle
+          eyebrow={step === "details" ? "Step 1 of 2" : "Step 2 of 2"}
+          title={step === "details" ? "Delivery & payment" : "Review your order"}
+        >
+          <div className="mt-5 max-w-xl">
+            <CheckoutProgress current={step === "details" ? "details" : "review"} />
+          </div>
+        </PageTitle>
+      </UiAttributes>
       <div className="checkout-page-content mx-auto grid max-w-7xl gap-10 px-4 lg:grid-cols-12">
         <div className="lg:col-span-8">
           <BagIssues issues={bag.issues} />
@@ -135,26 +144,30 @@ function Checkout() {
           )}
           {step === "details" ? (
             <div className="space-y-10">
-              <section aria-label="Shop charges and requirements" className="space-y-3">
-                <h2 className="font-display text-2xl">Each shop's charges</h2>
-                <p className="text-sm text-muted-foreground">
-                  Delivery is estimated per shop. Minimum-order requirements are shown when
-                  provided.
-                </p>
-                {bag.groups.map((g) => (
-                  <div
-                    key={g.shop.id}
-                    className="overflow-hidden rounded-xl border border-border bg-card"
-                  >
-                    <h3 className="px-4 py-3 font-semibold">
-                      {g.shop.name} · {fulfilmentLabel[g.fulfilment]}
-                    </h3>
-                    <ShopCheckoutDetails group={g} />
-                  </div>
-                ))}
-              </section>
+              <UiAttributes>
+                <section aria-label="Shop charges and requirements" className="space-y-3">
+                  <h2 className="font-display text-2xl">Each shop's charges</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Delivery is estimated per shop. Minimum-order requirements are shown when
+                    provided.
+                  </p>
+                  {bag.groups.map((g) => (
+                    <div
+                      key={g.shop.id}
+                      className="overflow-hidden rounded-xl border border-border bg-card"
+                    >
+                      <h3 className="px-4 py-3 font-semibold">
+                        {g.shop.name} · {fulfilmentLabel[g.fulfilment]}
+                      </h3>
+                      <ShopCheckoutDetails group={g} />
+                    </div>
+                  ))}
+                </section>
+              </UiAttributes>
               <fieldset>
-                <legend className="font-display text-2xl">Deliver to</legend>
+                <legend className="font-display text-2xl">
+                  <UiText>{"Deliver to"}</UiText>
+                </legend>
                 <RadioGroup
                   value={addressId}
                   onValueChange={setAddressId}
@@ -173,7 +186,9 @@ function Checkout() {
                     >
                       <RadioGroupItem value={a.id} id={a.id} className="mt-1" />
                       <span>
-                        <span className="block font-semibold">{a.label}</span>
+                        <span className="block font-semibold">
+                          <UiText>{a.label}</UiText>
+                        </span>
                         <span className="text-sm text-muted-foreground">
                           {a.line1}, {a.locality}, {a.city} {a.pincode}
                         </span>
@@ -213,7 +228,9 @@ function Checkout() {
                         className="mt-1"
                       />
                       <span>
-                        <span className="block font-semibold">{p.label}</span>
+                        <span className="block font-semibold">
+                          <UiText>{p.label}</UiText>
+                        </span>
                         <span className="text-sm text-muted-foreground">{p.note}</span>
                       </span>
                     </Label>
@@ -224,7 +241,9 @@ function Checkout() {
           ) : (
             <div className="space-y-6">
               <div className="border border-border bg-card p-4 text-sm">
-                <p className="label-stamp text-muted-foreground">Delivering to · {addr.label}</p>
+                <p className="label-stamp text-muted-foreground">
+                  Delivering to · <UiText>{addr.label}</UiText>
+                </p>
                 <p className="mt-1">
                   {addr.line1}, {addr.locality}, {addr.city} {addr.pincode}
                 </p>
@@ -233,8 +252,8 @@ function Checkout() {
               </div>
               <p className="text-sm text-muted-foreground">
                 Your order will be split into {bag.groups.length} shop order
-                {bag.groups.length > 1 ? "s" : ""}. Each is accepted, packed and delivered
-                separately.
+                <UiText>{bag.groups.length > 1 ? "s" : ""}</UiText>. Each is accepted, packed and
+                delivered separately.
               </p>
               {bag.groups.map((g, i) => (
                 <section key={g.shop.id} className="border border-border bg-card">
@@ -254,7 +273,7 @@ function Checkout() {
                       >
                         <span className="min-w-0 truncate">
                           {qty} × {product.name}
-                          {variantLabel ? ` · ${variantLabel}` : ""}
+                          <UiText>{variantLabel ? ` · ${variantLabel}` : ""}</UiText>
                         </span>
                         <span className="tabular-nums">{inr(unitPrice * qty)}</span>
                       </li>
@@ -270,9 +289,11 @@ function Checkout() {
                 >
                   <p className="font-semibold text-destructive">Order not placed</p>
                   <p className="mt-1">
-                    {place.error instanceof ApiError
-                      ? place.error.message
-                      : "Something went wrong. Nothing was charged."}
+                    <UiText>
+                      {place.error instanceof ApiError
+                        ? place.error.message
+                        : "Something went wrong. Nothing was charged."}
+                    </UiText>
                   </p>
                 </div>
               )}
@@ -322,7 +343,7 @@ function Checkout() {
                   onClick={() => setStep("details")}
                   disabled={place.isPending}
                 >
-                  Back
+                  <UiText>{"Back"}</UiText>
                 </Button>
               </div>
             )}

@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import { PublicPlatformInfo } from "./PublicPlatformInfo";
 import type { ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
@@ -49,8 +50,14 @@ export function PageTitle({
 }) {
   return (
     <div className="interior-page-title mx-auto max-w-7xl px-4 pb-6 pt-10">
-      {eyebrow && <p className="label-stamp text-muted-foreground">{eyebrow}</p>}
-      <h1 className="mt-1 font-display text-4xl md:text-5xl">{title}</h1>
+      {eyebrow && (
+        <p className="label-stamp text-muted-foreground">
+          <UiText>{eyebrow}</UiText>
+        </p>
+      )}
+      <h1 className="mt-1 font-display text-4xl md:text-5xl">
+        <UiText>{title}</UiText>
+      </h1>
       {children}
     </div>
   );

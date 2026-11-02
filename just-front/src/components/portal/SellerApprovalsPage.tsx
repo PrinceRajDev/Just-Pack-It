@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -141,7 +142,7 @@ export function SellerApprovalsPage() {
     return (
       <div className="seller-row-actions">
         <Button variant="outline" size="sm" onClick={() => view(shop)}>
-          View details
+          <UiText>{"View details"}</UiText>
         </Button>
         {shop.status === "pending" && (
           <>
@@ -160,12 +161,20 @@ export function SellerApprovalsPage() {
     <div className="seller-approvals-page">
       <section className="seller-approvals-hero">
         <div>
-          <nav aria-label="Breadcrumb">
-            <Link to="/admin">Operations</Link>
-            <ChevronRight size={13} aria-hidden="true" />
-            <span>Sellers & approvals</span>
-          </nav>
-          <h1>Sellers and shop approvals</h1>
+          <UiAttributes>
+            <nav aria-label="Breadcrumb">
+              <Link to="/admin">
+                <UiText>{"Operations"}</UiText>
+              </Link>
+              <ChevronRight size={13} aria-hidden="true" />
+              <span>
+                <UiText>{"Sellers & approvals"}</UiText>
+              </span>
+            </nav>
+          </UiAttributes>
+          <h1>
+            <UiText>{"Sellers and shop approvals"}</UiText>
+          </h1>
           <p>Review new shop applications, check seller details and approve local businesses.</p>
         </div>
         <div className="seller-hero-art">
@@ -191,31 +200,45 @@ export function SellerApprovalsPage() {
           </div>
         </div>
       </section>
-      <section className="seller-stats" aria-label="Seller statistics">
-        {stats.map(({ label, count, pending, tone, icon: Icon, hint, action }) => (
-          <button
-            type="button"
-            key={label}
-            className={`seller-stat seller-tone-${tone}`}
-            onClick={action}
-          >
-            <span>
-              <Icon size={25} aria-hidden="true" />
-            </span>
-            <div>
-              <h2>{label}</h2>
-              {pending ? <Skeleton className="mt-2 h-8 w-12" /> : <strong>{count ?? "N/A"}</strong>}
-              <p>{count === undefined && !pending ? "Unavailable" : hint}</p>
-            </div>
-            {label === "Pending approvals" && <ArrowRight size={17} aria-hidden="true" />}
-          </button>
-        ))}
-      </section>
+      <UiAttributes>
+        <section className="seller-stats" aria-label="Seller statistics">
+          {stats.map(({ label, count, pending, tone, icon: Icon, hint, action }) => (
+            <button
+              type="button"
+              key={label}
+              className={`seller-stat seller-tone-${tone}`}
+              onClick={action}
+            >
+              <span>
+                <Icon size={25} aria-hidden="true" />
+              </span>
+              <div>
+                <h2>
+                  <UiText>{label}</UiText>
+                </h2>
+                {pending ? (
+                  <Skeleton className="mt-2 h-8 w-12" />
+                ) : (
+                  <strong>{count ?? "N/A"}</strong>
+                )}
+                <p>
+                  <UiText>{count === undefined && !pending ? "Unavailable" : hint}</UiText>
+                </p>
+              </div>
+              {label === "Pending approvals" && <ArrowRight size={17} aria-hidden="true" />}
+            </button>
+          ))}
+        </section>
+      </UiAttributes>
       <div className="seller-snapshot-line">
-        <p>{time ? `Applications refreshed ${time} · IST` : "Waiting for application data"}</p>
+        <p>
+          <UiText>
+            {time ? `Applications refreshed ${time} · IST` : "Waiting for application data"}
+          </UiText>
+        </p>
         <Button variant="outline" disabled={busy} onClick={refresh}>
           <RefreshCw size={15} className={busy ? "animate-spin" : ""} />
-          Refresh data
+          <UiText>{"Refresh data"}</UiText>
         </Button>
       </div>
       {sellers.isError && (
@@ -243,50 +266,56 @@ export function SellerApprovalsPage() {
       )}
       <Tabs value={status} onValueChange={(v) => setStatus(v as typeof status)}>
         <div className="seller-controls">
-          <TabsList aria-label="Application status">
-            {(["all", "pending", "approved", "rejected", "suspended"] as const).map((s) => (
-              <TabsTrigger key={s} value={s}>
-                {s[0].toUpperCase() + s.slice(1)} ({counts[s] ?? "N/A"})
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <UiAttributes>
+            <TabsList aria-label="Application status">
+              {(["all", "pending", "approved", "rejected", "suspended"] as const).map((s) => (
+                <TabsTrigger key={s} value={s}>
+                  {s[0].toUpperCase() + s.slice(1)} ({counts[s] ?? "N/A"})
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </UiAttributes>
           <label className="seller-search">
             <Search size={18} aria-hidden="true" />
             <span className="sr-only">Search applications</span>
-            <input
-              ref={searchInput}
-              type="search"
-              placeholder="Search shop, owner or address…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <UiAttributes>
+              <input
+                ref={searchInput}
+                type="search"
+                placeholder="Search shop, owner or address…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </UiAttributes>
           </label>
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline">
                 <SlidersHorizontal size={16} />
-                Filters{category || area ? " · applied" : ""}
+                Filters<UiText>{category || area ? " · applied" : ""}</UiText>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="seller-filter-popover w-72 max-w-[calc(100vw-1rem)]">
               <label>
-                Shop category
+                <UiText>{"Shop category"}</UiText>
                 <select
                   value={category}
                   disabled={!categories.data}
                   onChange={(e) => setCategory(e.target.value)}
                 >
-                  <option value="">All categories</option>
+                  <option value="">
+                    <UiText>{"All categories"}</UiText>
+                  </option>
                   {categories.data?.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
-                      {c.active === false ? " (inactive)" : ""}
+                      <UiText>{c.active === false ? " (inactive)" : ""}</UiText>
                     </option>
                   ))}
                 </select>
               </label>
               <label>
-                Service area
+                <UiText>{"Service area"}</UiText>
                 <select
                   value={area}
                   disabled={!areas.data}
@@ -312,7 +341,7 @@ export function SellerApprovalsPage() {
             </PopoverContent>
           </Popover>
           <label className="seller-sort">
-            Sort by
+            <UiText>{"Sort by"}</UiText>
             <select value={sort} onChange={(e) => setSort(e.target.value)}>
               <option value="az">Shop name A to Z</option>
               <option value="za">Shop name Z to A</option>
@@ -324,7 +353,9 @@ export function SellerApprovalsPage() {
             <div role="alert" className="seller-load-error">
               <p>
                 Shop submissions could not be refreshed.
-                {shops.data ? " The last loaded list is kept; reload before reviewing." : ""}
+                <UiText>
+                  {shops.data ? " The last loaded list is kept; reload before reviewing." : ""}
+                </UiText>
               </p>
               <Button variant="outline" onClick={() => void shops.refetch()}>
                 Retry applications
@@ -344,11 +375,17 @@ export function SellerApprovalsPage() {
                 <NeighbourhoodIllustration />
                 <FileCheck2 size={48} aria-hidden="true" />
               </div>
-              <h2>{shops.data.length ? "No matching applications" : "No shop submissions yet"}</h2>
+              <h2>
+                <UiText>
+                  {shops.data.length ? "No matching applications" : "No shop submissions yet"}
+                </UiText>
+              </h2>
               <p>
-                {shops.data.length
-                  ? "Try another status, search or filter to find the application."
-                  : "Sellers can register their shop from the signup page. Their applications will appear here for review."}
+                <UiText>
+                  {shops.data.length
+                    ? "Try another status, search or filter to find the application."
+                    : "Sellers can register their shop from the signup page. Their applications will appear here for review."}
+                </UiText>
               </p>
               {shops.data.length ? (
                 <Button
@@ -364,10 +401,15 @@ export function SellerApprovalsPage() {
               ) : (
                 <Button disabled={busy} onClick={refresh}>
                   <RefreshCw size={16} />
-                  Refresh data
+                  <UiText>{"Refresh data"}</UiText>
                 </Button>
               )}
-              {time && <small>Last refreshed: {time} · IST</small>}
+              {time && (
+                <small>
+                  Last refreshed: {time}
+                  <UiText>{"· IST"}</UiText>
+                </small>
+              )}
             </section>
           ) : (
             <>
@@ -413,14 +455,20 @@ export function SellerApprovalsPage() {
                             )}
                             <div>
                               <strong>{shop.name}</strong>
-                              <small>{shop.active ? "Active profile" : "Inactive profile"}</small>
+                              <small>
+                                <UiText>
+                                  {shop.active ? "Active profile" : "Inactive profile"}
+                                </UiText>
+                              </small>
                             </div>
                           </div>
                         </td>
                         <td>
-                          {shop.ownerId
-                            ? (ownerById.get(shop.ownerId)?.name ?? "Owner unavailable")
-                            : "Owner unavailable"}
+                          <UiText>
+                            {shop.ownerId
+                              ? (ownerById.get(shop.ownerId)?.name ?? "Owner unavailable")
+                              : "Owner unavailable"}
+                          </UiText>
                         </td>
                         <td>
                           {shop.categoryIds
@@ -447,7 +495,7 @@ export function SellerApprovalsPage() {
                         </td>
                         <td>
                           <span className={`seller-status seller-status-${shop.status}`}>
-                            {shop.status}
+                            <UiText>{shop.status}</UiText>
                           </span>
                         </td>
                         <td>{actions(shop)}</td>
@@ -463,13 +511,15 @@ export function SellerApprovalsPage() {
                       <Store size={22} aria-hidden="true" />
                       <h2>{shop.name}</h2>
                       <span className={`seller-status seller-status-${shop.status}`}>
-                        {shop.status}
+                        <UiText>{shop.status}</UiText>
                       </span>
                     </div>
                     <p>
-                      {shop.ownerId
-                        ? (ownerById.get(shop.ownerId)?.name ?? "Owner unavailable")
-                        : "Owner unavailable"}
+                      <UiText>
+                        {shop.ownerId
+                          ? (ownerById.get(shop.ownerId)?.name ?? "Owner unavailable")
+                          : "Owner unavailable"}
+                      </UiText>
                     </p>
                     <p>{shop.address || shop.locality}</p>
                     <p>

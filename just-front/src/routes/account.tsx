@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { isDemoMode } from "@/lib/config";
@@ -56,14 +57,16 @@ function AccountPage() {
   return (
     <StoreLayout>
       <RoleGuard role="buyer">
-        <PageTitle
-          eyebrow="Your neighbourhood account"
-          title={`Hello, ${session?.name.split(" ")[0] ?? ""}`}
-        >
-          <p className="mt-3 text-sm text-muted-foreground">
-            Your orders, saved finds and everyday details, all in one place.
-          </p>
-        </PageTitle>
+        <UiAttributes>
+          <PageTitle
+            eyebrow="Your neighbourhood account"
+            title={`Hello, ${session?.name.split(" ")[0] ?? ""}`}
+          >
+            <p className="mt-3 text-sm text-muted-foreground">
+              Your orders, saved finds and everyday details, all in one place.
+            </p>
+          </PageTitle>
+        </UiAttributes>
         <div className="account-page mx-auto max-w-5xl px-4">
           <Tabs
             className="account-workspace"
@@ -97,7 +100,9 @@ function AccountPage() {
               <ul className="grid gap-3 sm:grid-cols-2">
                 {addresses.map((a) => (
                   <li key={a.id} className="border border-border bg-card p-4">
-                    <p className="font-semibold">{a.label}</p>
+                    <p className="font-semibold">
+                      <UiText>{a.label}</UiText>
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       {a.line1}, {a.locality}, {a.city} {a.pincode}
                     </p>
@@ -106,13 +111,13 @@ function AccountPage() {
                         className="text-primary hover:underline"
                         onClick={() => toast.info("Editing addresses needs the backend.")}
                       >
-                        Edit
+                        <UiText>{"Edit"}</UiText>
                       </button>
                       <button
                         className="text-destructive hover:underline"
                         onClick={() => toast.info("Removing addresses needs the backend.")}
                       >
-                        Remove
+                        <UiText>{"Remove"}</UiText>
                       </button>
                     </div>
                   </li>
@@ -122,7 +127,8 @@ function AccountPage() {
                     onClick={() => toast.info("Adding addresses needs the backend.")}
                     className="flex h-full min-h-28 w-full items-center justify-center gap-2 border border-dashed border-border text-sm hover:border-primary"
                   >
-                    <Plus className="size-4" /> Add address
+                    <Plus className="size-4" />
+                    <UiText>{"Add address"}</UiText>
                   </button>
                 </li>
               </ul>
@@ -133,10 +139,12 @@ function AccountPage() {
                 <p>Products you’ve kept close for another day.</p>
               </div>
               {wishlist.length === 0 ? (
-                <EmptyState
-                  title="Nothing saved yet"
-                  body="Tap the heart on any product to save it here."
-                />
+                <UiAttributes>
+                  <EmptyState
+                    title="Nothing saved yet"
+                    body="Tap the heart on any product to save it here."
+                  />
+                </UiAttributes>
               ) : (
                 <div className="grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-4">
                   {wishlist
@@ -161,17 +169,23 @@ function AccountPage() {
                 }}
               >
                 <div>
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name">
+                    <UiText>{"Name"}</UiText>
+                  </Label>
                   <Input id="name" defaultValue={session?.name} className="mt-1" />
                 </div>
                 <div>
                   <Label htmlFor="email">Email (for receipts)</Label>
-                  <Input id="email" type="email" placeholder="you@example.com" className="mt-1" />
+                  <UiAttributes>
+                    <Input id="email" type="email" placeholder="you@example.com" className="mt-1" />
+                  </UiAttributes>
                 </div>
                 <div className="flex gap-2">
-                  <Button type="submit">Save</Button>
+                  <Button type="submit">
+                    <UiText>{"Save"}</UiText>
+                  </Button>
                   <Button type="button" variant="outline" onClick={signOut}>
-                    Sign out
+                    <UiText>{"Sign out"}</UiText>
                   </Button>
                 </div>
               </form>

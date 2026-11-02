@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { isDemoMode } from "@/lib/config";
 import { LiveDelivery } from "@/components/portal/LiveDelivery";
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
@@ -51,46 +52,52 @@ function Shell() {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">{session?.name}</p>
           <p className="label-stamp opacity-80">
-            {online ? "Online · receiving tasks" : "Offline"}
+            <UiText>{online ? "Online · receiving tasks" : "Offline"}</UiText>
           </p>
         </div>
         <label className="flex items-center gap-2 text-sm font-semibold">
-          <Switch
-            checked={online}
-            onCheckedChange={setOnline}
-            aria-label="Go online"
-            className="data-[state=checked]:bg-citrus"
-          />
+          <UiAttributes>
+            <Switch
+              checked={online}
+              onCheckedChange={setOnline}
+              aria-label="Go online"
+              className="data-[state=checked]:bg-citrus"
+            />
+          </UiAttributes>
         </label>
-        <button onClick={signOut} aria-label="Sign out" className="p-2">
-          <LogOut className="size-5" />
-        </button>
+        <UiAttributes>
+          <button onClick={signOut} aria-label="Sign out" className="p-2">
+            <LogOut className="size-5" />
+          </button>
+        </UiAttributes>
       </header>
       <main className="delivery-main flex-1 px-4 pb-28 pt-4">
         <Outlet />
       </main>
-      <nav
-        className="delivery-navigation fixed inset-x-0 bottom-0 z-30 mx-auto grid grid-cols-2 border-t border-border bg-card"
-        aria-label="Delivery navigation"
-      >
-        <Link
-          to="/delivery"
-          activeOptions={{ exact: true }}
-          className="flex h-16 flex-col items-center justify-center gap-1 text-xs"
-          activeProps={{ className: "text-primary font-semibold" }}
+      <UiAttributes>
+        <nav
+          className="delivery-navigation fixed inset-x-0 bottom-0 z-30 mx-auto grid grid-cols-2 border-t border-border bg-card"
+          aria-label="Delivery navigation"
         >
-          <ListChecks className="size-5" />
-          Tasks
-        </Link>
-        <Link
-          to="/delivery/earnings"
-          className="flex h-16 flex-col items-center justify-center gap-1 text-xs"
-          activeProps={{ className: "text-primary font-semibold" }}
-        >
-          <Wallet className="size-5" />
-          Earnings
-        </Link>
-      </nav>
+          <Link
+            to="/delivery"
+            activeOptions={{ exact: true }}
+            className="flex h-16 flex-col items-center justify-center gap-1 text-xs"
+            activeProps={{ className: "text-primary font-semibold" }}
+          >
+            <ListChecks className="size-5" />
+            Tasks
+          </Link>
+          <Link
+            to="/delivery/earnings"
+            className="flex h-16 flex-col items-center justify-center gap-1 text-xs"
+            activeProps={{ className: "text-primary font-semibold" }}
+          >
+            <Wallet className="size-5" />
+            Earnings
+          </Link>
+        </nav>
+      </UiAttributes>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -90,16 +91,20 @@ export function ProductPhotoUpload({
   return (
     <Panel>
       {draft.dialog}
-      <h2 className="font-display text-2xl">Product photo</h2>
+      <h2 className="font-display text-2xl">
+        <UiText>{"Product photo"}</UiText>
+      </h2>
       {product.image && (
         <div className="w-36">
           <ProductImage src={product.image} alt="Current saved product photo" width={240} />
-          <p className="mt-1 text-sm text-muted-foreground">Currently saved</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            <UiText>{"Currently saved"}</UiText>
+          </p>
         </div>
       )}
       {saved && (
         <p role="status" className="text-sm text-primary">
-          Product photo saved to this listing.
+          <UiText>{"Product photo saved to this listing."}</UiText>
         </p>
       )}
       <p className="text-sm text-muted-foreground">
@@ -107,25 +112,31 @@ export function ProductPhotoUpload({
         immediately; the server checks and optimises the file.
       </p>
       {capability.isPending ? (
-        <p role="status">Checking photo uploads…</p>
+        <p role="status">
+          <UiText>{"Checking photo uploads…"}</UiText>
+        </p>
       ) : capability.error ? (
-        <ErrorState
-          message="Upload availability could not be checked."
-          onRetry={() => void capability.refetch()}
-        />
+        <UiAttributes>
+          <ErrorState
+            message="Upload availability could not be checked."
+            onRetry={() => void capability.refetch()}
+          />
+        </UiAttributes>
       ) : !capability.data.enabled ? (
         <div className="space-y-2">
           <p className="text-sm">
             Photo uploads are not configured yet. Your existing image is unchanged.
           </p>
           <Button type="button" variant="outline" onClick={() => void capability.refetch()}>
-            Check upload availability
+            <UiText>{"Check upload availability"}</UiText>
           </Button>
         </div>
       ) : (
         <fieldset disabled={disabled || upload.isPending || refreshing} className="space-y-3">
           <label className="block space-y-1 text-sm">
-            <span>Choose product photo</span>
+            <span>
+              <UiText>{"Choose product photo"}</UiText>
+            </span>
             <input
               ref={input}
               type="file"
@@ -177,11 +188,11 @@ export function ProductPhotoUpload({
           )}
           <div className="flex flex-wrap gap-3">
             <Button type="button" disabled={!file || needsRefresh} onClick={() => upload.mutate()}>
-              {upload.isPending ? "Uploading photo…" : "Upload and save photo"}
+              <UiText>{upload.isPending ? "Uploading photo…" : "Upload and save photo"}</UiText>
             </Button>
             {file && (
               <Button type="button" variant="outline" disabled={needsRefresh} onClick={clear}>
-                Discard selected photo
+                <UiText>{"Discard selected photo"}</UiText>
               </Button>
             )}
           </div>

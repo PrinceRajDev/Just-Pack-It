@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { financeDate } from "@/lib/finance-date";
 import { FinancialTable, FinanceEmpty } from "./FinancePresentation";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -36,11 +37,13 @@ export function SettlementLedger({ adminLayout = false }: { adminLayout?: boolea
     <>
       <Heading className="finance-panel-title font-display text-2xl">
         {compact && <BookOpen aria-hidden="true" />}
-        {role === "delivery"
-          ? "Cash handover ledger"
-          : role === "seller"
-            ? "Your seller settlement statement"
-            : "Cash & seller settlement ledger"}
+        <UiText>
+          {role === "delivery"
+            ? "Cash handover ledger"
+            : role === "seller"
+              ? "Your seller settlement statement"
+              : "Cash & seller settlement ledger"}
+        </UiText>
       </Heading>
       <p className="text-sm">
         Zero commission. Seller-delivery fee belongs to the seller; platform-delivery fee belongs to
@@ -50,235 +53,253 @@ export function SettlementLedger({ adminLayout = false }: { adminLayout?: boolea
     </>
   );
   return (
-    <section
-      className={
-        seller
-          ? "seller-settlement-page"
-          : compact
-            ? "finance-panel space-y-4"
-            : "my-6 space-y-4 rounded-xl border border-border bg-card p-5"
-      }
-      aria-label="Cash and seller settlement ledger"
-    >
-      {seller ? (
-        <header className="seller-settlement-hero">
-          <div>
-            <p className="workspace-eyebrow">Just Pack It · Workspace</p>
-            {intro}
-          </div>
-          <SettlementIllustration />
-        </header>
-      ) : (
-        intro
-      )}
-      {role === "delivery" && (
-        <p className="text-sm">
-          This is collected cash custody, not your earnings or delivery payout. Hand over the full
-          collected amount for each shop order.
-        </p>
-      )}
-      <form
+    <UiAttributes>
+      <section
         className={
           seller
-            ? "seller-settlement-search"
+            ? "seller-settlement-page"
             : compact
-              ? "finance-toolbar"
-              : "flex flex-wrap items-end gap-3"
+              ? "finance-panel space-y-4"
+              : "my-6 space-y-4 rounded-xl border border-border bg-card p-5"
         }
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!draft || uuid.test(draft)) setFilter(draft.toLowerCase());
-        }}
+        aria-label="Cash and seller settlement ledger"
       >
-        <label className="min-w-0 flex-1 text-sm">
-          Shop-order part ID (optional)
-          <span className={seller ? "seller-settlement-search-input" : undefined}>
-            {seller && <Search size={20} aria-hidden="true" />}
-            <Input
-              placeholder="Enter shop-order part ID…"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value.trim())}
-              aria-invalid={!!draft && !uuid.test(draft)}
-            />
-          </span>
-        </label>
-        <Button variant={seller ? "default" : "outline"} disabled={!!draft && !uuid.test(draft)}>
-          {seller && <Search size={18} aria-hidden="true" />}
-          Find settlement record
-        </Button>
-        {compact && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setDraft("");
-              setFilter("");
-            }}
-          >
-            Clear ledger lookup
-          </Button>
+        {seller ? (
+          <header className="seller-settlement-hero">
+            <div>
+              <p className="workspace-eyebrow">Just Pack It · Workspace</p>
+              {intro}
+            </div>
+            <SettlementIllustration />
+          </header>
+        ) : (
+          intro
         )}
-      </form>
-      {query.isPending ? (
-        <div role="status" aria-label="Loading delivered order settlements">
-          <Skeleton className="h-20 w-full" />
-        </div>
-      ) : (
-        <>
-          {compact ? (
-            <FinancialTable
-              rows={rows}
-              rowKey={(row) => row.id}
-              columns={[
-                {
-                  title: "Shop / order",
-                  cell: (row) => (
-                    <>
-                      <b>{row.shopName}</b>
-                      <small>{row.orderId}</small>
-                      <small>Part {row.id}</small>
-                    </>
-                  ),
-                },
-                {
-                  title: "Collected/captured allocation",
-                  cell: (row) =>
-                    row.grossAmount === null ? "Proof incomplete" : inr(row.grossAmount),
-                },
-                {
-                  title: "Partner cash custody",
-                  cell: (row) => (
-                    <>
-                      {inr(row.partnerCollection)}
-                      <small>
-                        {row.remittance?.state === "received"
-                          ? "Admin receipt acknowledged"
-                          : row.remittance?.state === "submitted"
-                            ? "Partner reports handover; receipt pending"
-                            : "No admin receipt"}
-                      </small>
-                    </>
-                  ),
-                },
-                {
-                  title: "Payout allocation",
-                  cell: (row) => (
-                    <>
-                      {row.payoutAmount === null ? "Not established" : inr(row.payoutAmount)}
-                      <small>
-                        {row.payout?.state === "recorded"
-                          ? "External transfer recorded"
-                          : row.payout?.state === "prepared"
-                            ? "Intent prepared; transfer not recorded"
-                            : "No transfer recorded"}
-                      </small>
-                    </>
-                  ),
-                },
-                {
-                  title: "Ledger",
-                  cell: (row) => (
-                    <span className={`finance-badge ${row.posted ? "" : "pending"}`}>
-                      {row.posted ? "Posted" : "Awaiting proof review"}
-                    </span>
-                  ),
-                },
-                {
-                  title: "Actions",
-                  cell: (row) => (
-                    <Button variant="outline" onClick={() => setSelected(row.id)}>
-                      View settlement details
-                    </Button>
-                  ),
-                },
-              ]}
-            />
-          ) : (
-            rows.map((row) => <LedgerRow key={row.id} row={row} role={role ?? ""} />)
-          )}
-          {query.isSuccess &&
-            !query.data.pages.some((p) => p.items.length) &&
-            (seller ? (
-              <section className="seller-settlement-empty" aria-label="No settlement records">
-                <SettlementIllustration receiptOnly />
-                <h2>No settlement records found</h2>
-                <p>
-                  No delivered live shop orders in this view. Pending collections or test orders are
-                  not payable balances.
-                </p>
-                <Button
-                  variant="outline"
-                  disabled={query.isFetching}
-                  onClick={() => void query.refetch()}
-                >
-                  <RefreshCw size={18} aria-hidden="true" />
-                  Refresh settlement ledger
-                </Button>
-              </section>
-            ) : (
-              <FinanceEmpty kind="ledger" title="No settlement records found">
-                No delivered live shop orders in this view. Pending collections or test orders are
-                not payable balances.
-              </FinanceEmpty>
-            ))}
-        </>
-      )}
-      {query.isError && (
-        <p role="alert">
-          Could not refresh the ledger. Loaded records may be stale. Refresh before any cash
-          handover or external transfer.
-        </p>
-      )}
-      {!(seller && empty && !query.hasNextPage) && (
-        <div className="seller-settlement-actions flex flex-wrap gap-3">
-          <Button
-            variant="outline"
-            disabled={query.isFetching}
-            onClick={() => void query.refetch()}
-          >
-            Refresh settlement ledger
-          </Button>
-          {query.hasNextPage && (
-            <Button disabled={query.isFetching} onClick={() => void query.fetchNextPage()}>
-              More settlement records
-            </Button>
-          )}
-        </div>
-      )}
-      {seller && query.isSuccess && (
-        <p className="seller-settlement-updated text-sm text-muted-foreground" role="status">
-          Last refreshed{" "}
-          <time dateTime={new Date(query.dataUpdatedAt).toISOString()}>
-            {new Date(query.dataUpdatedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
-          </time>{" "}
-          · IST
-        </p>
-      )}
-      {compact && (
-        <Sheet
-          open={selected !== null}
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
+        {role === "delivery" && (
+          <p className="text-sm">
+            This is collected cash custody, not your earnings or delivery payout. Hand over the full
+            collected amount for each shop order.
+          </p>
+        )}
+        <form
+          className={
+            seller
+              ? "seller-settlement-search"
+              : compact
+                ? "finance-toolbar"
+                : "flex flex-wrap items-end gap-3"
+          }
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!draft || uuid.test(draft)) setFilter(draft.toLowerCase());
           }}
         >
-          <SheetContent className="finance-drawer">
-            <SheetTitle>Settlement record details</SheetTitle>
-            <SheetDescription>
-              Cash custody, ledger posting and manual payout are separate records. This screen never
-              transfers money.
-            </SheetDescription>
-            {selectedRow ? (
-              <fieldset disabled={query.isFetching || query.isError}>
-                <legend className="sr-only">Settlement actions</legend>
-                <LedgerRow key={selectedRow.id} row={selectedRow} role={role ?? ""} />
-              </fieldset>
+          <label className="min-w-0 flex-1 text-sm">
+            Shop-order part ID (optional)
+            <span className={seller ? "seller-settlement-search-input" : undefined}>
+              {seller && <Search size={20} aria-hidden="true" />}
+              <UiAttributes>
+                <Input
+                  placeholder="Enter shop-order part ID…"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value.trim())}
+                  aria-invalid={!!draft && !uuid.test(draft)}
+                />
+              </UiAttributes>
+            </span>
+          </label>
+          <Button variant={seller ? "default" : "outline"} disabled={!!draft && !uuid.test(draft)}>
+            {seller && <Search size={18} aria-hidden="true" />}
+            <UiText>{"Find settlement record"}</UiText>
+          </Button>
+          {compact && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setDraft("");
+                setFilter("");
+              }}
+            >
+              Clear ledger lookup
+            </Button>
+          )}
+        </form>
+        {query.isPending ? (
+          <UiAttributes>
+            <div role="status" aria-label="Loading delivered order settlements">
+              <Skeleton className="h-20 w-full" />
+            </div>
+          </UiAttributes>
+        ) : (
+          <>
+            {compact ? (
+              <FinancialTable
+                rows={rows}
+                rowKey={(row) => row.id}
+                columns={[
+                  {
+                    title: "Shop / order",
+                    cell: (row) => (
+                      <>
+                        <b>{row.shopName}</b>
+                        <small>{row.orderId}</small>
+                        <small>Part {row.id}</small>
+                      </>
+                    ),
+                  },
+                  {
+                    title: "Collected/captured allocation",
+                    cell: (row) =>
+                      row.grossAmount === null ? "Proof incomplete" : inr(row.grossAmount),
+                  },
+                  {
+                    title: "Partner cash custody",
+                    cell: (row) => (
+                      <>
+                        {inr(row.partnerCollection)}
+                        <small>
+                          <UiText>
+                            {row.remittance?.state === "received"
+                              ? "Admin receipt acknowledged"
+                              : row.remittance?.state === "submitted"
+                                ? "Partner reports handover; receipt pending"
+                                : "No admin receipt"}
+                          </UiText>
+                        </small>
+                      </>
+                    ),
+                  },
+                  {
+                    title: "Payout allocation",
+                    cell: (row) => (
+                      <>
+                        <UiText>
+                          {row.payoutAmount === null ? "Not established" : inr(row.payoutAmount)}
+                        </UiText>
+                        <small>
+                          <UiText>
+                            {row.payout?.state === "recorded"
+                              ? "External transfer recorded"
+                              : row.payout?.state === "prepared"
+                                ? "Intent prepared; transfer not recorded"
+                                : "No transfer recorded"}
+                          </UiText>
+                        </small>
+                      </>
+                    ),
+                  },
+                  {
+                    title: "Ledger",
+                    cell: (row) => (
+                      <span className={`finance-badge ${row.posted ? "" : "pending"}`}>
+                        <UiText>{row.posted ? "Posted" : "Awaiting proof review"}</UiText>
+                      </span>
+                    ),
+                  },
+                  {
+                    title: "Actions",
+                    cell: (row) => (
+                      <Button variant="outline" onClick={() => setSelected(row.id)}>
+                        View settlement details
+                      </Button>
+                    ),
+                  },
+                ]}
+              />
             ) : (
-              <p>Record unavailable in this view. Close and refresh the ledger.</p>
+              rows.map((row) => <LedgerRow key={row.id} row={row} role={role ?? ""} />)
             )}
-          </SheetContent>
-        </Sheet>
-      )}
-    </section>
+            {query.isSuccess &&
+              !query.data.pages.some((p) => p.items.length) &&
+              (seller ? (
+                <UiAttributes>
+                  <section className="seller-settlement-empty" aria-label="No settlement records">
+                    <SettlementIllustration receiptOnly />
+                    <h2>
+                      <UiText>{"No settlement records found"}</UiText>
+                    </h2>
+                    <p>
+                      No delivered live shop orders in this view. Pending collections or test orders
+                      are not payable balances.
+                    </p>
+                    <Button
+                      variant="outline"
+                      disabled={query.isFetching}
+                      onClick={() => void query.refetch()}
+                    >
+                      <RefreshCw size={18} aria-hidden="true" />
+                      <UiText>{"Refresh settlement ledger"}</UiText>
+                    </Button>
+                  </section>
+                </UiAttributes>
+              ) : (
+                <UiAttributes>
+                  <FinanceEmpty kind="ledger" title="No settlement records found">
+                    No delivered live shop orders in this view. Pending collections or test orders
+                    are not payable balances.
+                  </FinanceEmpty>
+                </UiAttributes>
+              ))}
+          </>
+        )}
+        {query.isError && (
+          <p role="alert">
+            Could not refresh the ledger. Loaded records may be stale. Refresh before any cash
+            handover or external transfer.
+          </p>
+        )}
+        {!(seller && empty && !query.hasNextPage) && (
+          <div className="seller-settlement-actions flex flex-wrap gap-3">
+            <Button
+              variant="outline"
+              disabled={query.isFetching}
+              onClick={() => void query.refetch()}
+            >
+              <UiText>{"Refresh settlement ledger"}</UiText>
+            </Button>
+            {query.hasNextPage && (
+              <Button disabled={query.isFetching} onClick={() => void query.fetchNextPage()}>
+                More settlement records
+              </Button>
+            )}
+          </div>
+        )}
+        {seller && query.isSuccess && (
+          <p className="seller-settlement-updated text-sm text-muted-foreground" role="status">
+            <UiText>{"Last refreshed"}</UiText>{" "}
+            <time dateTime={new Date(query.dataUpdatedAt).toISOString()}>
+              {new Date(query.dataUpdatedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
+            </time>{" "}
+            <UiText>{"· IST"}</UiText>
+          </p>
+        )}
+        {compact && (
+          <Sheet
+            open={selected !== null}
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+          >
+            <SheetContent className="finance-drawer">
+              <SheetTitle>Settlement record details</SheetTitle>
+              <SheetDescription>
+                Cash custody, ledger posting and manual payout are separate records. This screen
+                never transfers money.
+              </SheetDescription>
+              {selectedRow ? (
+                <fieldset disabled={query.isFetching || query.isError}>
+                  <legend className="sr-only">Settlement actions</legend>
+                  <LedgerRow key={selectedRow.id} row={selectedRow} role={role ?? ""} />
+                </fieldset>
+              ) : (
+                <p>Record unavailable in this view. Close and refresh the ledger.</p>
+              )}
+            </SheetContent>
+          </Sheet>
+        )}
+      </section>
+    </UiAttributes>
   );
 }
 function LedgerRow({ row, role }: { row: SettlementRow; role: string }) {
@@ -326,7 +347,8 @@ function LedgerRow({ row, role }: { row: SettlementRow; role: string }) {
     <article className="space-y-3 rounded-xl border border-border p-4">
       <h3 className="font-semibold">{row.shopName}</h3>
       <p className="break-all text-xs">
-        Shop part {row.id} · Order {row.orderId}
+        <UiText>{"Shop part "}</UiText>
+        {row.id} · Order {row.orderId}
       </p>
       <div className="finance-event-dates">
         <p>Partner handover reported: {financeDate(row.remittance?.submittedAt)}</p>
@@ -357,17 +379,21 @@ function LedgerRow({ row, role }: { row: SettlementRow; role: string }) {
       )}
       <p className="text-sm">
         Ledger:{" "}
-        {row.posted ? "posted with balanced entries" : "awaiting admin proof review/posting"} ·
-        Policy {row.policy ?? "unverified"}
+        <UiText>
+          {row.posted ? "posted with balanced entries" : "awaiting admin proof review/posting"}
+        </UiText>{" "}
+        · Policy {row.policy ?? "unverified"}
       </p>
       {row.partnerCollection > 0 && (
         <p className="text-sm">
           Partner full cash collection: {inr(row.partnerCollection)} · Handover:{" "}
-          {row.remittance?.state === "received"
-            ? "admin receipt acknowledged"
-            : row.remittance?.state === "submitted"
-              ? "partner says handed over; admin receipt pending"
-              : "not acknowledged as handed over"}
+          <UiText>
+            {row.remittance?.state === "received"
+              ? "admin receipt acknowledged"
+              : row.remittance?.state === "submitted"
+                ? "partner says handed over; admin receipt pending"
+                : "not acknowledged as handed over"}
+          </UiText>
         </p>
       )}
       {row.partnerCollection > 0 && (
@@ -389,9 +415,11 @@ function LedgerRow({ row, role }: { row: SettlementRow; role: string }) {
       {row.payout && (
         <div className="space-y-1 rounded bg-secondary p-3 text-sm">
           <p>
-            {row.payout.state === "recorded"
-              ? "Manual payout recorded by admin: not bank/provider verified"
-              : "Payout intent prepared. Transfer externally only once, after verifying the seller/payee."}
+            <UiText>
+              {row.payout.state === "recorded"
+                ? "Manual payout recorded by admin: not bank/provider verified"
+                : "Payout intent prepared. Transfer externally only once, after verifying the seller/payee."}
+            </UiText>
           </p>
           <p className="break-all">Intent ID: {row.id}</p>
           {row.payout.reference && (
@@ -560,7 +588,7 @@ function LedgerRow({ row, role }: { row: SettlementRow; role: string }) {
       {role === "admin" && row.posted && (
         <>
           <Button variant="outline" onClick={() => setShowJournals((v) => !v)}>
-            {showJournals ? "Hide journal entries" : "View journal entries"}
+            <UiText>{showJournals ? "Hide journal entries" : "View journal entries"}</UiText>
           </Button>
           {showJournals &&
             (journals.isPending ? (

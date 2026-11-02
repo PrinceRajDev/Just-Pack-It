@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import { useMemo } from "react";
 import { productById, shopById } from "@/services/catalog";
 import { deliveryFeeFor, FREE_PLATFORM_DELIVERY_ABOVE } from "@/lib/pricing";
@@ -91,18 +92,25 @@ export function ShopCheckoutDetails({ group }: { group: ShopGroup }) {
         <dd>{inr(group.itemsTotal)}</dd>
       </div>
       <div className="flex justify-between gap-3">
-        <dt>Estimated {group.fulfilment === "pickup" ? "pickup fee" : "delivery"}</dt>
-        <dd>{group.deliveryFee ? inr(group.deliveryFee) : "Free"}</dd>
+        <dt>
+          Estimated <UiText>{group.fulfilment === "pickup" ? "pickup fee" : "delivery"}</UiText>
+        </dt>
+        <dd>
+          <UiText>{group.deliveryFee ? inr(group.deliveryFee) : "Free"}</UiText>
+        </dd>
       </div>
       <div className="flex justify-between gap-3">
         <dt>
           Minimum order <span className="text-xs text-muted-foreground">(items only)</span>
         </dt>
-        <dd>{known ? (minimum === 0 ? "No minimum" : inr(minimum)) : "Not provided"}</dd>
+        <dd>
+          <UiText>{known ? (minimum === 0 ? "No minimum" : inr(minimum)) : "Not provided"}</UiText>
+        </dd>
       </div>
       {known && minimum! > group.itemsTotal && (
         <div className="text-destructive">
-          Add {inr(minimum! - group.itemsTotal)} more from this shop.
+          <UiText>{"Add "}</UiText>
+          {inr(minimum! - group.itemsTotal)} more from this shop.
         </div>
       )}
       <div className="flex justify-between gap-3 font-semibold">
@@ -154,8 +162,12 @@ export function Totals({
         </div>
       )}
       <div className="flex justify-between">
-        <dt>Delivery</dt>
-        <dd className="tabular-nums">{delivery ? inr(delivery) : "Free"}</dd>
+        <dt>
+          <UiText>{"Delivery"}</UiText>
+        </dt>
+        <dd className="tabular-nums">
+          <UiText>{delivery ? inr(delivery) : "Free"}</UiText>
+        </dd>
       </div>
       <div className="perforated my-3" aria-hidden />
       <div className="flex justify-between text-base font-semibold">

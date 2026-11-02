@@ -1,3 +1,4 @@
+import { UiAttributes } from "@/lib/i18n/Language";
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { SellerSuborder } from "@/domain/seller-orders";
@@ -61,16 +62,18 @@ export function SellerReturnedGoods({ sub }: { sub: SellerSuborder }) {
         </label>
         <label className="block text-sm">
           Sellable stock decision
-          <select
-            className="mt-1 block w-full rounded border border-input bg-background p-2"
-            aria-label="Sellable stock decision"
-            value={restock}
-            onChange={(e) => setRestock(e.target.value)}
-          >
-            <option value="">Choose after inspecting all items</option>
-            <option value="yes">All goods sellable: restore ordered quantities</option>
-            <option value="no">Do not restock returned goods</option>
-          </select>
+          <UiAttributes>
+            <select
+              className="mt-1 block w-full rounded border border-input bg-background p-2"
+              aria-label="Sellable stock decision"
+              value={restock}
+              onChange={(e) => setRestock(e.target.value)}
+            >
+              <option value="">Choose after inspecting all items</option>
+              <option value="yes">All goods sellable: restore ordered quantities</option>
+              <option value="no">Do not restock returned goods</option>
+            </select>
+          </UiAttributes>
         </label>
         <label className="block text-sm">
           Return receipt note

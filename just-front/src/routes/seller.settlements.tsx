@@ -1,3 +1,4 @@
+import { UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute } from "@tanstack/react-router";
 import { PortalHeader } from "@/components/portal/PortalShell";
 import { EmptyState } from "@/components/common/states";
@@ -8,7 +9,9 @@ export const Route = createFileRoute("/seller/settlements")({ component: Settlem
 function Settlements() {
   return (
     <>
-      <PortalHeader title="Payouts" sub="Sales, commission and bank settlements." />
+      <UiAttributes>
+        <PortalHeader title="Payouts" sub="Sales, commission and bank settlements." />
+      </UiAttributes>
       <div className="mb-8 grid gap-4 border border-border bg-card p-5 text-sm sm:grid-cols-3">
         <p>
           <span className="label-stamp block text-muted-foreground">Settlement cycle</span>Weekly
@@ -22,14 +25,16 @@ function Settlements() {
           agreement
         </p>
       </div>
-      <EmptyState
-        title="No settlements yet"
-        body={
-          isDemoMode
-            ? "Settlement history comes from the payments backend. We don't show invented payout figures."
-            : "Your first payout will appear after your first completed week."
-        }
-      />
+      <UiAttributes>
+        <EmptyState
+          title="No settlements yet"
+          body={
+            isDemoMode
+              ? "Settlement history comes from the payments backend. We don't show invented payout figures."
+              : "Your first payout will appear after your first completed week."
+          }
+        />
+      </UiAttributes>
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { FinancialTable, FinanceEmpty } from "./FinancePresentation";
 import { Scale } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,7 +28,7 @@ function Paging({
         <p role="alert">Could not refresh this view. Previously loaded records may be outdated.</p>
       )}
       <Button variant="outline" disabled={busy} onClick={onRefresh}>
-        Refresh records
+        <UiText>{"Refresh records"}</UiText>
       </Button>
       {more && (
         <Button disabled={busy} onClick={onMore}>
@@ -90,9 +91,11 @@ export function Reconciliation() {
         </Button>
       </form>
       {query.isPending ? (
-        <div role="status" aria-label="Loading payment and cash allocations">
-          <Skeleton className="h-20 w-full" />
-        </div>
+        <UiAttributes>
+          <div role="status" aria-label="Loading payment and cash allocations">
+            <Skeleton className="h-20 w-full" />
+          </div>
+        </UiAttributes>
       ) : (
         <>
           <FinancialTable
@@ -114,7 +117,9 @@ export function Reconciliation() {
                 cell: (row) => (
                   <>
                     {row.method.toUpperCase()}
-                    <small>{row.status}</small>
+                    <small>
+                      <UiText>{row.status}</UiText>
+                    </small>
                   </>
                 ),
               },
@@ -123,7 +128,10 @@ export function Reconciliation() {
                 cell: (row) => (
                   <>
                     {inr(row.originalAmount)}
-                    <small>Cancelled {inr(row.cancelledAmount)}</small>
+                    <small>
+                      <UiText>{"Cancelled "}</UiText>
+                      {inr(row.cancelledAmount)}
+                    </small>
                   </>
                 ),
               },
@@ -154,10 +162,12 @@ export function Reconciliation() {
             ]}
           />
           {query.isSuccess && !query.data.pages.some((p) => p.items.length) && (
-            <FinanceEmpty kind="ledger" title="No matching reconciliation records">
-              Try another shop ID or refresh. These allocations do not establish seller payout or
-              bank settlement.
-            </FinanceEmpty>
+            <UiAttributes>
+              <FinanceEmpty kind="ledger" title="No matching reconciliation records">
+                Try another shop ID or refresh. These allocations do not establish seller payout or
+                bank settlement.
+              </FinanceEmpty>
+            </UiAttributes>
           )}
         </>
       )}

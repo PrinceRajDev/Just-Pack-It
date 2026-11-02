@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { SellerReturnedGoods } from "./SellerReturnedGoods";
 import { delivery } from "@/services/delivery";
 import { DeliveryPinLink } from "@/components/store/DeliveryPinLink";
@@ -53,7 +54,9 @@ export function LiveSellerOrders({ shop }: { shop: ManagedShop }) {
         }}
       />
       <div className="seller-orders-toolbar">
-        <Label htmlFor="seller-order-filter">Order status</Label>
+        <Label htmlFor="seller-order-filter">
+          <UiText>{"Order status"}</UiText>
+        </Label>
         <select
           id="seller-order-filter"
           className="rounded-lg border border-input bg-background p-2 text-sm"
@@ -71,7 +74,7 @@ export function LiveSellerOrders({ shop }: { shop: ManagedShop }) {
             "all",
           ].map((value) => (
             <option key={value} value={value}>
-              {value === "placed" ? "New / awaiting acceptance" : value}
+              <UiText>{value === "placed" ? "New / awaiting acceptance" : value}</UiText>
             </option>
           ))}
         </select>
@@ -89,7 +92,7 @@ export function LiveSellerOrders({ shop }: { shop: ManagedShop }) {
             aria-hidden="true"
             className={query.isFetching ? "animate-spin" : ""}
           />
-          Refresh orders
+          <UiText>{"Refresh orders"}</UiText>
         </Button>
       </div>
       {notice && (
@@ -109,21 +112,25 @@ export function LiveSellerOrders({ shop }: { shop: ManagedShop }) {
           </Button>
         </div>
       ) : !query.data.length ? (
-        <section className="seller-orders-empty" aria-label="No matching orders">
-          <OrderBoxIllustration />
-          <h2>No orders in this view.</h2>
-          <p>When customers place an order, it will appear here based on the selected status.</p>
-        </section>
+        <UiAttributes>
+          <section className="seller-orders-empty" aria-label="No matching orders">
+            <OrderBoxIllustration />
+            <h2>No orders in this view.</h2>
+            <p>When customers place an order, it will appear here based on the selected status.</p>
+          </section>
+        </UiAttributes>
       ) : (
         <ul className="seller-orders-list space-y-5">
           {query.data.map((sub) => (
             <li key={`${sub.orderId}:${sub.id}`}>
-              <SellerOrderCard
-                key={`${sub.id}:${sub.version}:${refreshToken}`}
-                sub={sub}
-                canProcess={shop.active && shop.status === "approved"}
-                onSaved={(value) => setNotice(`Order status saved: ${value}.`)}
-              />
+              <UiAttributes key={`${sub.id}:${sub.version}:${refreshToken}`}>
+                <SellerOrderCard
+                  key={`${sub.id}:${sub.version}:${refreshToken}`}
+                  sub={sub}
+                  canProcess={shop.active && shop.status === "approved"}
+                  onSaved={(value) => setNotice(`Order status saved: ${value}.`)}
+                />
+              </UiAttributes>
             </li>
           ))}
         </ul>
@@ -196,20 +203,23 @@ export function SellerOrderCard({
         </p>
       )}
       <h2 className="font-display text-xl">
-        Order {sub.orderId.slice(0, 8)} · {sub.shopName}
+        <UiText>{"Order "}</UiText>
+        {sub.orderId.slice(0, 8)} · {sub.shopName}
       </h2>
       <time className="seller-order-created" dateTime={sub.createdAt}>
-        {Number.isFinite(new Date(sub.createdAt).getTime())
-          ? new Date(sub.createdAt).toLocaleString("en-IN", {
-              timeZone: "Asia/Kolkata",
-              dateStyle: "medium",
-              timeStyle: "short",
-            }) + " · IST"
-          : "Order time unavailable"}
+        <UiText>
+          {Number.isFinite(new Date(sub.createdAt).getTime())
+            ? new Date(sub.createdAt).toLocaleString("en-IN", {
+                timeZone: "Asia/Kolkata",
+                dateStyle: "medium",
+                timeStyle: "short",
+              }) + " · IST"
+            : "Order time unavailable"}
+        </UiText>
       </time>
       <p className="seller-order-state text-sm">
-        {sub.status} · {fulfilmentLabel[sub.fulfilment]} ·{" "}
-        {sub.paymentMethod === "razorpay" ? "Prepaid online" : "COD"} ·{" "}
+        <UiText>{sub.status}</UiText> · {fulfilmentLabel[sub.fulfilment]} ·{" "}
+        <UiText>{sub.paymentMethod === "razorpay" ? "Prepaid online" : "COD"}</UiText> ·{" "}
         {cashLabel(sub.paymentStatus)}
       </p>
       <ul className="divide-y divide-border text-sm">
@@ -220,18 +230,22 @@ export function SellerOrderCard({
           >
             <span>
               {line.name}
-              {line.variantLabel ? ` · ${line.variantLabel}` : ""} · {line.unit} × {line.qty}
+              <UiText>{line.variantLabel ? ` · ${line.variantLabel}` : ""}</UiText> · {line.unit} ×{" "}
+              {line.qty}
             </span>
             <span>{inr(line.price * line.qty)}</span>
           </li>
         ))}
       </ul>
       <p className="text-sm">
-        Items: {inr(sub.itemsSubtotal)} · Delivery: {inr(sub.deliveryFee)}
+        <UiText>{"Items: "}</UiText>
+        {inr(sub.itemsSubtotal)} · Delivery: {inr(sub.deliveryFee)}
       </p>
       <p className="font-semibold">
-        {sub.paymentMethod === "razorpay" ? "Online amount due" : "COD amount due for your shop"}:{" "}
-        {inr(sub.amountDue)}
+        <UiText>
+          {sub.paymentMethod === "razorpay" ? "Online amount due" : "COD amount due for your shop"}
+        </UiText>
+        : {inr(sub.amountDue)}
       </p>
       {sub.deliveryAddress && (
         <p className="text-sm">
@@ -278,8 +292,15 @@ export function SellerOrderCard({
           )}
         </div>
       )}
-      <SellerReturnedGoods sub={sub} />
-      {sub.cancelReason && <p className="text-sm">Cancellation reason: {sub.cancelReason}</p>}
+      <UiAttributes>
+        <SellerReturnedGoods sub={sub} />
+      </UiAttributes>
+      {sub.cancelReason && (
+        <p className="text-sm">
+          <UiText>{"Cancellation reason: "}</UiText>
+          {sub.cancelReason}
+        </p>
+      )}
       {sub.refund && <RefundNotice refund={sub.refund} />}
       {error && (
         <p role="alert" className="text-sm text-destructive">
@@ -299,15 +320,17 @@ export function SellerOrderCard({
       )}
       {next && (
         <Button disabled={busy || !!error || !canProcess} onClick={() => void change(next)}>
-          {busy
-            ? "Saving…"
-            : next === "accepted"
-              ? "Accept order"
-              : next === "preparing"
-                ? "Start preparing"
-                : next === "ready"
-                  ? "Mark ready"
-                  : "Mark out for delivery"}
+          <UiText>
+            {busy
+              ? "Saving…"
+              : next === "accepted"
+                ? "Accept order"
+                : next === "preparing"
+                  ? "Start preparing"
+                  : next === "ready"
+                    ? "Mark ready"
+                    : "Mark out for delivery"}
+          </UiText>
         </Button>
       )}
       {next && !canProcess && (
@@ -332,7 +355,9 @@ export function SellerOrderCard({
             disabled={busy || !!error || reason.trim().length < 3}
             onClick={() => void change("cancelled")}
           >
-            {sub.status === "placed" ? "Reject this suborder" : "Cancel before preparation"}
+            <UiText>
+              {sub.status === "placed" ? "Reject this suborder" : "Cancel before preparation"}
+            </UiText>
           </Button>
           <p className="text-xs text-muted-foreground">
             This returns your shop's reserved units once. For prepaid orders it creates a refund
@@ -348,11 +373,16 @@ export function SellerOrderCard({
       )}
       {((sub.fulfilment === "pickup" && sub.status === "ready") ||
         (sub.fulfilment === "seller_delivery" && sub.status === "out_for_delivery")) &&
-        !sub.cashCollection && <SellerCashHandoff sub={sub} onSaved={() => onSaved("delivered")} />}
+        !sub.cashCollection && (
+          <UiAttributes>
+            <SellerCashHandoff sub={sub} onSaved={() => onSaved("delivered")} />
+          </UiAttributes>
+        )}
       {sub.cashCollection && (
         <p className="text-sm">
-          Cash recorded: {inr(sub.cashCollection.amount)}. Buyer receipt code and seller report
-          recorded; not gateway-verified or settled.
+          <UiText>{"Cash recorded: "}</UiText>
+          {inr(sub.cashCollection.amount)}. Buyer receipt code and seller report recorded; not
+          gateway-verified or settled.
         </p>
       )}
       {sub.status === "cancelled" && (

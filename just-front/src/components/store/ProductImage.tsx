@@ -1,3 +1,4 @@
+import { UiAttributes } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { ImageOff } from "lucide-react";
 import { imageUrl } from "@/lib/image";
@@ -63,16 +64,18 @@ function LoadedImage({
   }
   if (!url || broken) {
     return (
-      <div
-        role={alt ? "img" : undefined}
-        aria-label={alt ? `${alt}: image unavailable` : undefined}
-        className={cn(
-          "flex aspect-square items-center justify-center bg-muted text-muted-foreground",
-          className,
-        )}
-      >
-        <ImageOff className="size-6" aria-hidden />
-      </div>
+      <UiAttributes>
+        <div
+          role={alt ? "img" : undefined}
+          aria-label={alt ? `${alt}: image unavailable` : undefined}
+          className={cn(
+            "flex aspect-square items-center justify-center bg-muted text-muted-foreground",
+            className,
+          )}
+        >
+          <ImageOff className="size-6" aria-hidden />
+        </div>
+      </UiAttributes>
     );
   }
   return (

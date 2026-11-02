@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Order, SubOrder } from "@/domain/types";
@@ -28,9 +29,11 @@ export function BuyerCancellation({ order, sub }: { order: Order; sub: SubOrder 
   if (!eligible)
     return (
       <p className="text-sm text-muted-foreground">
-        {order.paymentMethod === "razorpay" && order.paymentStatus !== "paid"
-          ? "Online payment is not yet verified. Self-service cancellation is unavailable; check payment status or contact the platform."
-          : "Self-service cancellation closes when preparation starts. Contact the shop for help; cancellation is not guaranteed."}
+        <UiText>
+          {order.paymentMethod === "razorpay" && order.paymentStatus !== "paid"
+            ? "Online payment is not yet verified. Self-service cancellation is unavailable; check payment status or contact the platform."
+            : "Self-service cancellation closes when preparation starts. Contact the shop for help; cancellation is not guaranteed."}
+        </UiText>
       </p>
     );
   return (
@@ -49,9 +52,11 @@ export function BuyerCancellation({ order, sub }: { order: Order; sub: SubOrder 
         >
           <p className="text-sm">
             Cancel only {sub.shopName ?? "this shop"}’s part? Other shops stay unchanged.{" "}
-            {order.paymentMethod === "razorpay"
-              ? "A refund request will be recorded; this does not confirm money returned to your bank."
-              : "No cash is due for this cancelled part."}
+            <UiText>
+              {order.paymentMethod === "razorpay"
+                ? "A refund request will be recorded; this does not confirm money returned to your bank."
+                : "No cash is due for this cancelled part."}
+            </UiText>
           </p>
           <label className="block text-sm">
             Cancellation reason
@@ -84,7 +89,7 @@ export function BuyerCancellation({ order, sub }: { order: Order; sub: SubOrder 
               type="submit"
               disabled={!confirmed || reason.trim().length < 3 || cancel.isPending}
             >
-              {cancel.isPending ? "Cancelling…" : "Confirm shop cancellation"}
+              <UiText>{cancel.isPending ? "Cancelling…" : "Confirm shop cancellation"}</UiText>
             </Button>
             <Button
               type="button"

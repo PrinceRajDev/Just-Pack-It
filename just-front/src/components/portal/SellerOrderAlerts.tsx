@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { sellerOrders } from "@/services/seller-orders";
@@ -57,33 +58,37 @@ export function SellerOrderAlerts({ shopId, onReview }: { shopId: string; onRevi
     }
   }
   return (
-    <section className="seller-order-alerts" aria-label="New order alerts">
-      <PackageCheck className="seller-alert-icon" aria-hidden="true" />
-      <p role="status" className="seller-alert-count">
-        {query.isError
-          ? "New-order checks unavailable"
-          : query.isPending
-            ? "Checking new orders…"
-            : `${query.data.length} orders awaiting acceptance`}
-      </p>
-      <Button variant="outline" onClick={() => void toggle()} aria-pressed={enabled}>
-        {enabled ? (
-          <VolumeX size={18} aria-hidden="true" />
-        ) : (
-          <Volume2 size={18} aria-hidden="true" />
-        )}
-        {enabled ? "Turn sound off" : "Enable order sound"}
-      </Button>
-      <Button variant="outline" onClick={onReview}>
-        <Bell size={18} aria-hidden="true" />
-        Review new orders
-      </Button>
-      <p className="seller-alert-help text-sm text-muted-foreground">
-        <Info size={18} aria-hidden="true" />
-        Checks every 15 seconds while this screen is active. Sound needs this page open; background
-        alerts are not guaranteed.
-      </p>
-      {error && <p role="alert">{error}</p>}
-    </section>
+    <UiAttributes>
+      <section className="seller-order-alerts" aria-label="New order alerts">
+        <PackageCheck className="seller-alert-icon" aria-hidden="true" />
+        <p role="status" className="seller-alert-count">
+          <UiText>
+            {query.isError
+              ? "New-order checks unavailable"
+              : query.isPending
+                ? "Checking new orders…"
+                : `${query.data.length} orders awaiting acceptance`}
+          </UiText>
+        </p>
+        <Button variant="outline" onClick={() => void toggle()} aria-pressed={enabled}>
+          {enabled ? (
+            <VolumeX size={18} aria-hidden="true" />
+          ) : (
+            <Volume2 size={18} aria-hidden="true" />
+          )}
+          <UiText>{enabled ? "Turn sound off" : "Enable order sound"}</UiText>
+        </Button>
+        <Button variant="outline" onClick={onReview}>
+          <Bell size={18} aria-hidden="true" />
+          <UiText>{"Review new orders"}</UiText>
+        </Button>
+        <p className="seller-alert-help text-sm text-muted-foreground">
+          <Info size={18} aria-hidden="true" />
+          Checks every 15 seconds while this screen is active. Sound needs this page open;
+          background alerts are not guaranteed.
+        </p>
+        {error && <p role="alert">{error}</p>}
+      </section>
+    </UiAttributes>
   );
 }

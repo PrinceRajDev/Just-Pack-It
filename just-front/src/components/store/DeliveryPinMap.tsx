@@ -1,3 +1,4 @@
+import { UiAttributes } from "@/lib/i18n/Language";
 import { config } from "@/lib/config";
 import { useEffect, useRef, useState } from "react";
 import type { Map as LeafletMap, Marker } from "leaflet";
@@ -80,12 +81,14 @@ export default function DeliveryPinMap({
   }, [point]);
   return (
     <div className="space-y-2">
-      <div
-        ref={container}
-        className="relative z-0 h-64 w-full rounded-lg"
-        aria-label="Delivery map: click or drag pin to adjust"
-        role="region"
-      />
+      <UiAttributes>
+        <div
+          ref={container}
+          className="relative z-0 h-64 w-full rounded-lg"
+          aria-label="Delivery map: click or drag pin to adjust"
+          role="region"
+        />
+      </UiAttributes>
       {!imageryReady && !error && (
         <p role="status" className="text-sm">
           Loading map imagery…

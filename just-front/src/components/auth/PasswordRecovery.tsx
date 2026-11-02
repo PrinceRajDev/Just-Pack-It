@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { authentication } from "@/services/auth";
@@ -45,12 +46,16 @@ export function PasswordRecovery({ onClose }: { onClose: () => void }) {
           Password reset complete. All previous sessions have been signed out. Sign in with your new
           password.
         </p>
-        <Button onClick={onClose}>Back to sign in</Button>
+        <Button onClick={onClose}>
+          <UiText>{"Back to sign in"}</UiText>
+        </Button>
       </div>
     );
   return (
     <div className="mt-6 space-y-4">
-      <h2 className="font-display text-2xl">Find your way back.</h2>
+      <h2 className="font-display text-2xl">
+        <UiText>{"Find your way back."}</UiText>
+      </h2>
       <p className="text-sm text-muted-foreground">
         Use the email you previously verified. Accounts without a verified email need help from the
         platform.
@@ -62,7 +67,9 @@ export function PasswordRecovery({ onClose }: { onClose: () => void }) {
           request.mutate();
         }}
       >
-        <Label htmlFor="recovery-email">Verified email address</Label>
+        <Label htmlFor="recovery-email">
+          <UiText>{"Verified email address"}</UiText>
+        </Label>
         <Input
           id="recovery-email"
           required
@@ -109,7 +116,9 @@ export function PasswordRecovery({ onClose }: { onClose: () => void }) {
             if (password === repeat) reset.mutate();
           }}
         >
-          <Label htmlFor="recovery-code">Six-digit recovery code</Label>
+          <Label htmlFor="recovery-code">
+            <UiText>{"Six-digit recovery code"}</UiText>
+          </Label>
           <Input
             id="recovery-code"
             required
@@ -120,7 +129,9 @@ export function PasswordRecovery({ onClose }: { onClose: () => void }) {
             autoComplete="one-time-code"
             onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
           />
-          <Label htmlFor="recovery-password">New password</Label>
+          <Label htmlFor="recovery-password">
+            <UiText>{"New password"}</UiText>
+          </Label>
           <Input
             id="recovery-password"
             type="password"
@@ -131,7 +142,9 @@ export function PasswordRecovery({ onClose }: { onClose: () => void }) {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
-          <Label htmlFor="recovery-confirm">Confirm new password</Label>
+          <Label htmlFor="recovery-confirm">
+            <UiText>{"Confirm new password"}</UiText>
+          </Label>
           <Input
             id="recovery-confirm"
             type="password"
@@ -144,7 +157,7 @@ export function PasswordRecovery({ onClose }: { onClose: () => void }) {
           />
           {repeat && password !== repeat && (
             <p className="text-sm" role="alert">
-              Passwords do not match.
+              <UiText>{"Passwords do not match."}</UiText>
             </p>
           )}
           {reset.isError && (
@@ -164,12 +177,14 @@ export function PasswordRecovery({ onClose }: { onClose: () => void }) {
               Date.parse(challenge.expiresAt) <= now
             }
           >
-            {reset.isPending ? "Resetting…" : "Reset password and sign out devices"}
+            <UiText>
+              {reset.isPending ? "Resetting…" : "Reset password and sign out devices"}
+            </UiText>
           </Button>
         </form>
       )}
       <Button variant="ghost" disabled={request.isPending || reset.isPending} onClick={onClose}>
-        Back to sign in
+        <UiText>{"Back to sign in"}</UiText>
       </Button>
     </div>
   );

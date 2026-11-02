@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import { useEffect, useId, useState } from "react";
 import { imageUrl } from "@/lib/image";
 export function ShopPhotoPicker({
@@ -24,7 +25,7 @@ export function ShopPhotoPicker({
   return (
     <div className="space-y-2 rounded-xl border border-border bg-secondary/30 p-4">
       <label htmlFor={id} className="block text-sm font-medium">
-        Shop photo (optional)
+        <UiText>{"Shop photo (optional)"}</UiText>
       </label>
       <p id={`${id}-hint`} className="text-xs text-muted-foreground">
         Choose a clear storefront photo. JPEG, PNG or WebP, up to 5 MiB. Your photo will be reviewed
@@ -73,7 +74,7 @@ export function ShopPhotoPicker({
             if (input) input.value = "";
           }}
         >
-          Remove selected photo
+          <UiText>{"Remove selected photo"}</UiText>
         </button>
       )}
       {error && (

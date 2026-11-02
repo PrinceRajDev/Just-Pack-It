@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -16,7 +17,12 @@ function Inventory() {
   );
   return (
     <>
-      <PortalHeader title="Stock" sub="Lowest stock first. Changes apply instantly in the demo." />
+      <UiAttributes>
+        <PortalHeader
+          title="Stock"
+          sub="Lowest stock first. Changes apply instantly in the demo."
+        />
+      </UiAttributes>
       <ul className="workspace-stock-list divide-y divide-border border-y border-border">
         {list.map((p) => (
           <li key={p.id} className="flex flex-wrap items-center gap-4 py-4">
@@ -32,44 +38,52 @@ function Inventory() {
                 {listingStock(p)} across {p.variants.length} options
               </span>
             )}
-            <div
-              className={`${p.variants?.length ? "hidden" : "flex"} items-center rounded-md border border-border bg-card`}
-              role="group"
-              aria-label={`Stock for ${p.name}`}
-            >
-              <button
-                className="flex size-11 items-center justify-center hover:bg-muted"
-                onClick={() => updateProduct(p.id, { stock: Math.max(0, p.stock - 1) })}
-                aria-label="Decrease"
+            <UiAttributes>
+              <div
+                className={`${p.variants?.length ? "hidden" : "flex"} items-center rounded-md border border-border bg-card`}
+                role="group"
+                aria-label={`Stock for ${p.name}`}
               >
-                <Minus className="size-4" />
-              </button>
-              <input
-                type="number"
-                min={0}
-                value={p.stock}
-                onChange={(e) =>
-                  updateProduct(p.id, {
-                    stock: Math.max(0, Math.trunc(Number(e.target.value) || 0)),
-                  })
-                }
-                className="h-11 w-16 border-x border-border bg-transparent text-center tabular-nums"
-                aria-label="Stock count"
-              />
-              <button
-                className="flex size-11 items-center justify-center hover:bg-muted"
-                onClick={() => updateProduct(p.id, { stock: p.stock + 1 })}
-                aria-label="Increase"
-              >
-                <Plus className="size-4" />
-              </button>
-            </div>
+                <UiAttributes>
+                  <button
+                    className="flex size-11 items-center justify-center hover:bg-muted"
+                    onClick={() => updateProduct(p.id, { stock: Math.max(0, p.stock - 1) })}
+                    aria-label="Decrease"
+                  >
+                    <Minus className="size-4" />
+                  </button>
+                </UiAttributes>
+                <UiAttributes>
+                  <input
+                    type="number"
+                    min={0}
+                    value={p.stock}
+                    onChange={(e) =>
+                      updateProduct(p.id, {
+                        stock: Math.max(0, Math.trunc(Number(e.target.value) || 0)),
+                      })
+                    }
+                    className="h-11 w-16 border-x border-border bg-transparent text-center tabular-nums"
+                    aria-label="Stock count"
+                  />
+                </UiAttributes>
+                <UiAttributes>
+                  <button
+                    className="flex size-11 items-center justify-center hover:bg-muted"
+                    onClick={() => updateProduct(p.id, { stock: p.stock + 1 })}
+                    aria-label="Increase"
+                  >
+                    <Plus className="size-4" />
+                  </button>
+                </UiAttributes>
+              </div>
+            </UiAttributes>
             <Link
               to="/seller/products/$id/edit"
               params={{ id: p.id }}
               className="inline-flex min-h-11 items-center rounded-lg border border-border px-3 text-sm text-primary"
             >
-              {p.variants?.length ? "Manage variant stock" : "Edit listing"}
+              <UiText>{p.variants?.length ? "Manage variant stock" : "Edit listing"}</UiText>
             </Link>
             <label className="flex items-center gap-2 text-sm">
               <Switch
@@ -79,7 +93,7 @@ function Inventory() {
                   toast(v ? "Listed" : "Marked unavailable");
                 }}
               />
-              Available
+              <UiText>{"Available"}</UiText>
             </label>
           </li>
         ))}

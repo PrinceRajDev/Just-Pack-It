@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { createOnlineAttempt } from "@/services/online-payments";
@@ -39,35 +40,37 @@ export function OnlineOrderAction({
     }
   }
   return (
-    <section className="space-y-3 rounded-lg border p-4" aria-label="Online payment order">
-      <p className="text-sm">
-        Create a reserved order, then pay through Razorpay. Shops receive it only after verified
-        capture. Closing checkout does not cancel the reservation.
-      </p>
-      {input && (
-        <label className="flex gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={consent}
-            disabled={busy}
-            onChange={(event) => setConsent(event.target.checked)}
-          />
-          I reviewed the total and want to continue to secure online payment.
-        </label>
-      )}
-      {input && (
-        <Button disabled={busy || !consent} onClick={() => void submit()}>
-          Continue to secure payment
-        </Button>
-      )}
-      <Button variant="outline" disabled={busy} onClick={() => void submit(true)}>
-        Recover online order attempt
-      </Button>
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
+    <UiAttributes>
+      <section className="space-y-3 rounded-lg border p-4" aria-label="Online payment order">
+        <p className="text-sm">
+          Create a reserved order, then pay through Razorpay. Shops receive it only after verified
+          capture. Closing checkout does not cancel the reservation.
         </p>
-      )}
-    </section>
+        {input && (
+          <label className="flex gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={consent}
+              disabled={busy}
+              onChange={(event) => setConsent(event.target.checked)}
+            />
+            I reviewed the total and want to continue to secure online payment.
+          </label>
+        )}
+        {input && (
+          <Button disabled={busy || !consent} onClick={() => void submit()}>
+            <UiText>{"Continue to secure payment"}</UiText>
+          </Button>
+        )}
+        <Button variant="outline" disabled={busy} onClick={() => void submit(true)}>
+          Recover online order attempt
+        </Button>
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
+      </section>
+    </UiAttributes>
   );
 }

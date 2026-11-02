@@ -1,3 +1,4 @@
+import { UiAttributes } from "@/lib/i18n/Language";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -19,7 +20,9 @@ function Partners() {
   };
   return (
     <>
-      <PortalHeader title="Sellers & riders" />
+      <UiAttributes>
+        <PortalHeader title="Sellers & riders" />
+      </UiAttributes>
       <Tabs defaultValue="sellers">
         <TabsList>
           <TabsTrigger value="sellers">Seller approvals</TabsTrigger>

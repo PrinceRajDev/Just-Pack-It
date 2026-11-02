@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -48,31 +49,36 @@ export function RecentAdminActivity({ preview = false }: { preview?: boolean }) 
       <div className="admin-panel-heading">
         <h2 id="admin-activity-heading">
           <History aria-hidden="true" />
-          Recent activity
+          <UiText>{"Recent activity"}</UiText>
         </h2>
         <Link to="/admin/settings" hash="admin-audit-log" className="admin-small-link">
-          View audit log <ArrowUpRight size={14} aria-hidden="true" />
+          <UiText>{"View audit log "}</UiText>
+          <ArrowUpRight size={14} aria-hidden="true" />
         </Link>
       </div>
       <Tabs value={group} onValueChange={(v) => setGroup(v as Group)}>
-        <TabsList aria-label="Activity type">
-          {groups.map((g) => (
-            <TabsTrigger key={g} value={g}>
-              {g}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <UiAttributes>
+          <TabsList aria-label="Activity type">
+            {groups.map((g) => (
+              <TabsTrigger key={g} value={g}>
+                {g}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </UiAttributes>
         {groups.map((g) => (
           <TabsContent key={g} value={g}>
             {!preview && query.isPending ? (
               <div role="status" className="admin-panel-empty">
-                Loading recorded actions…
+                <UiText>{"Loading recorded actions…"}</UiText>
               </div>
             ) : !preview && query.isError ? (
               <div role="alert" className="admin-panel-empty">
-                <p>Activity could not be loaded.</p>
+                <p>
+                  <UiText>{"Activity could not be loaded."}</UiText>
+                </p>
                 <Button variant="outline" onClick={() => void query.refetch()}>
-                  Retry activity
+                  <UiText>{"Retry activity"}</UiText>
                 </Button>
               </div>
             ) : rows.length ? (
@@ -98,7 +104,12 @@ export function RecentAdminActivity({ preview = false }: { preview?: boolean }) 
                       </span>
                       <div className="admin-activity-copy">
                         <strong>{row.action.replaceAll(/[._]/g, " ")}</strong>
-                        <span title={row.targetId}>Reference {row.targetId}</span>
+                        <UiAttributes>
+                          <span title={row.targetId}>
+                            <UiText>{"Reference "}</UiText>
+                            {row.targetId}
+                          </span>
+                        </UiAttributes>
                       </div>
                       <time dateTime={row.createdAt}>
                         {new Date(row.createdAt).toLocaleString("en-IN", {
@@ -109,7 +120,9 @@ export function RecentAdminActivity({ preview = false }: { preview?: boolean }) 
                           minute: "2-digit",
                         })}
                       </time>
-                      <span className="admin-recorded-badge">Recorded</span>
+                      <span className="admin-recorded-badge">
+                        <UiText>{"Recorded"}</UiText>
+                      </span>
                     </li>
                   );
                 })}
@@ -118,9 +131,11 @@ export function RecentAdminActivity({ preview = false }: { preview?: boolean }) 
               <div className="admin-panel-empty">
                 <History size={25} aria-hidden="true" />
                 <p>
-                  {preview
-                    ? "No recorded activity in this demo."
-                    : `No ${g === "All" ? "recorded" : g.toLowerCase()} actions in the latest audit page.`}
+                  <UiText>
+                    {preview
+                      ? "No recorded activity in this demo."
+                      : `No ${g === "All" ? "recorded" : g.toLowerCase()} actions in the latest audit page.`}
+                  </UiText>
                 </p>
               </div>
             )}
@@ -128,9 +143,11 @@ export function RecentAdminActivity({ preview = false }: { preview?: boolean }) 
         ))}
       </Tabs>
       <p className="admin-panel-footnote">
-        {preview
-          ? "Demo preview · no live activity."
-          : `Latest ${query.data?.items.length ?? 0} audit records; up to 5 shown per tab. ${query.data?.next ? "More records in the audit log. " : ""}This log does not cover every marketplace event.`}
+        <UiText>
+          {preview
+            ? "Demo preview · no live activity."
+            : `Latest ${query.data?.items.length ?? 0} audit records; up to 5 shown per tab. ${query.data?.next ? "More records in the audit log. " : ""}This log does not cover every marketplace event.`}
+        </UiText>
       </p>
     </section>
   );
@@ -173,10 +190,10 @@ export function AdminPlatformHealth({ preview = false }: { preview?: boolean }) 
       <div className="admin-panel-heading">
         <h2 id="admin-health-heading">
           <HeartPulse aria-hidden="true" />
-          Platform health
+          <UiText>{"Platform health"}</UiText>
         </h2>
         <span className="admin-health-overall">
-          {api.isError || db.isError ? "Check unavailable" : "Checks incomplete"}
+          <UiText>{api.isError || db.isError ? "Check unavailable" : "Checks incomplete"}</UiText>
         </span>
       </div>
       <ul>
@@ -186,22 +203,24 @@ export function AdminPlatformHealth({ preview = false }: { preview?: boolean }) 
             <span>{name}</span>
             <small>
               <i className={ok ? "is-healthy" : ""} />
-              {label}
+              <UiText>{label}</UiText>
             </small>
           </li>
         ))}
       </ul>
       <p className="admin-panel-footnote">
-        {preview
-          ? "Health is not checked in demo mode."
-          : "Database connection and API response only. Payment and delivery providers have no health probe here."}
+        <UiText>
+          {preview
+            ? "Health is not checked in demo mode."
+            : "Database connection and API response only. Payment and delivery providers have no health probe here."}
+        </UiText>
       </p>
       {!preview && (api.isError || db.isError) && (
         <Button
           variant="outline"
           onClick={() => void Promise.allSettled([api.refetch(), db.refetch()])}
         >
-          Retry health checks
+          <UiText>{"Retry health checks"}</UiText>
         </Button>
       )}
     </section>
@@ -220,14 +239,14 @@ export function AdminQuickActions() {
     <section className="admin-panel admin-quick-actions" aria-labelledby="admin-actions-heading">
       <h2 id="admin-actions-heading">
         <Zap size={19} aria-hidden="true" />
-        Quick actions
+        <UiText>{"Quick actions"}</UiText>
       </h2>
       <ul>
         {actions.map((a) => (
           <li key={a.title}>
             <Link to={a.to} hash={a.hash}>
               <a.icon size={17} aria-hidden="true" />
-              {a.title}
+              <UiText>{a.title}</UiText>
             </Link>
           </li>
         ))}

@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { CatalogueMore } from "@/components/store/CatalogueMore";
 import { Button } from "@/components/ui/button";
 import { useLocationArea } from "@/stores/location";
@@ -62,12 +63,14 @@ function ShopPage() {
       <section className="shop-page-hero border-b border-border paper-grain">
         <ShopCover shop={shop} className="shop-page-cover" />
         <div className="shop-page-identity mx-auto max-w-7xl px-4 py-12">
-          <nav className="text-xs text-muted-foreground" aria-label="Breadcrumb">
-            <Link to="/" className="hover:underline">
-              Home
-            </Link>{" "}
-            / Shops / {shop.name}
-          </nav>
+          <UiAttributes>
+            <nav className="text-xs text-muted-foreground" aria-label="Breadcrumb">
+              <Link to="/" className="hover:underline">
+                <UiText>{"Home"}</UiText>
+              </Link>{" "}
+              / Shops / {shop.name}
+            </nav>
+          </UiAttributes>
           <div className="shop-page-summary mt-5 flex flex-col gap-4 md:flex-row md:items-start">
             <ShopInitials shop={shop} className="size-20 text-3xl" />
             <div className="min-w-0 flex-1">
@@ -113,9 +116,11 @@ function ShopPage() {
       <div className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-7xl flex-wrap gap-x-8 gap-y-2 px-4 py-3 text-sm text-muted-foreground">
           <span>
-            {shop.fulfilment.includes("pickup")
-              ? (shop.pickupNote ?? "Pickup available at the shop")
-              : "Pickup is not available"}
+            <UiText>
+              {shop.fulfilment.includes("pickup")
+                ? (shop.pickupNote ?? "Pickup available at the shop")
+                : "Pickup is not available"}
+            </UiText>
           </span>
           {shop.deliveryFee !== undefined && <span>Rider delivery from ₹{shop.deliveryFee}</span>}
           <span>Each listing has this shop’s own price and stock.</span>
@@ -130,25 +135,29 @@ function ShopPage() {
                 className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
                 aria-hidden
               />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder={`Search in ${shop.name}`}
-                className="h-10 w-full rounded-md border border-input bg-card pl-9 pr-3 text-sm"
-              />
+              <UiAttributes>
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder={`Search in ${shop.name}`}
+                  className="h-10 w-full rounded-md border border-input bg-card pl-9 pr-3 text-sm"
+                />
+              </UiAttributes>
             </label>
-            <nav aria-label="Shop sections" className="hidden md:block">
-              <ul className="space-y-1 text-sm">
-                {groups.map((g) => (
-                  <li key={g.c.slug}>
-                    <a href={`#sec-${g.c.slug}`} className="hover:text-primary">
-                      {g.c.name}{" "}
-                      <span className="text-muted-foreground">({g.items.length} loaded)</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </nav>
+            <UiAttributes>
+              <nav aria-label="Shop sections" className="hidden md:block">
+                <ul className="space-y-1 text-sm">
+                  {groups.map((g) => (
+                    <li key={g.c.slug}>
+                      <a href={`#sec-${g.c.slug}`} className="hover:text-primary">
+                        {g.c.name}{" "}
+                        <span className="text-muted-foreground">({g.items.length} loaded)</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </UiAttributes>
           </div>
         </aside>
         <div className="md:col-span-9">
@@ -162,7 +171,9 @@ function ShopPage() {
               </Button>
             </div>
           ) : groups.length === 0 ? (
-            <EmptyState title="No products match" body="Try a different word." />
+            <UiAttributes>
+              <EmptyState title="No products match" body="Try a different word." />
+            </UiAttributes>
           ) : (
             groups.map((g) => (
               <section key={g.c.slug} id={`sec-${g.c.slug}`} className="mb-14 scroll-mt-40">

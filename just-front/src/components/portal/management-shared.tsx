@@ -1,3 +1,4 @@
+import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState, useRef, type ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/api/client";
@@ -27,18 +28,22 @@ export function Field({
 }) {
   return (
     <label className="block space-y-1 text-sm">
-      <span>{label}</span>
-      <Input
-        name={name}
-        type={type}
-        defaultValue={value}
-        required={required}
-        min={min}
-        max={max}
-        step={step}
-        placeholder={placeholder}
-        onWheel={name === "stock" ? (event) => event.currentTarget.blur() : undefined}
-      />
+      <span>
+        <UiText>{label}</UiText>
+      </span>
+      <UiAttributes>
+        <Input
+          name={name}
+          type={type}
+          defaultValue={value}
+          required={required}
+          min={min}
+          max={max}
+          step={step}
+          placeholder={placeholder}
+          onWheel={name === "stock" ? (event) => event.currentTarget.blur() : undefined}
+        />
+      </UiAttributes>
     </label>
   );
 }
@@ -66,11 +71,13 @@ export function SaveError({ error }: { error: Error | null }) {
       role="alert"
       className="rounded-lg border border-destructive/30 p-3 text-sm text-destructive"
     >
-      {error instanceof ApiError && error.code === "VERSION_CONFLICT"
-        ? "This record changed elsewhere. Your changes were not saved. Copy your changes, then reload the latest record before retrying."
-        : error instanceof ApiError && error.fields?.length
-          ? `${error.message}: ${error.fields.join(", ")}`
-          : error.message}
+      <UiText>
+        {error instanceof ApiError && error.code === "VERSION_CONFLICT"
+          ? "This record changed elsewhere. Your changes were not saved. Copy your changes, then reload the latest record before retrying."
+          : error instanceof ApiError && error.fields?.length
+            ? `${error.message}: ${error.fields.join(", ")}`
+            : error.message}
+      </UiText>
     </p>
   );
 }
@@ -98,16 +105,22 @@ export function Attributes({
       </p>
       {rows.map((row, index) => (
         <div className="flex gap-2" key={row.key}>
-          <Field label="Detail" name={`${prefix}-label-${index}`} value={row.label} required />
-          <Field label="Value" name={`${prefix}-value-${index}`} value={row.value} required />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setRows(rows.filter((_, i) => i !== index))}
-            aria-label={`Remove detail ${index + 1}`}
-          >
-            Remove
-          </Button>
+          <UiAttributes>
+            <Field label="Detail" name={`${prefix}-label-${index}`} value={row.label} required />
+          </UiAttributes>
+          <UiAttributes>
+            <Field label="Value" name={`${prefix}-value-${index}`} value={row.value} required />
+          </UiAttributes>
+          <UiAttributes>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setRows(rows.filter((_, i) => i !== index))}
+              aria-label={`Remove detail ${index + 1}`}
+            >
+              <UiText>{"Remove"}</UiText>
+            </Button>
+          </UiAttributes>
         </div>
       ))}
       <Button

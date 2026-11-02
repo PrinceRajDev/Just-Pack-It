@@ -1,3 +1,4 @@
+import { UiAttributes } from "@/lib/i18n/Language";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { StatusBadge } from "@/components/common/StatusBadge";
@@ -22,14 +23,16 @@ export function OrdersList() {
   if (isError) return <ErrorState onRetry={() => refetch()} />;
   if (!data.length)
     return (
-      <EmptyState
-        title="No orders yet"
-        action={
-          <Button asChild>
-            <Link to="/">Start shopping</Link>
-          </Button>
-        }
-      />
+      <UiAttributes>
+        <EmptyState
+          title="No orders yet"
+          action={
+            <Button asChild>
+              <Link to="/">Start shopping</Link>
+            </Button>
+          }
+        />
+      </UiAttributes>
     );
   return (
     <ul className="order-history-list">

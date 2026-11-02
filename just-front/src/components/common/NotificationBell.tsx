@@ -1,3 +1,4 @@
+import { UiText } from "@/lib/i18n/Language";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -54,27 +55,31 @@ export function NotificationBell() {
               aria-hidden
               className="absolute right-0 top-0 rounded-full bg-promo px-1.5 text-xs font-semibold text-white"
             >
-              {count.data.count > 99 ? "99+" : count.data.count}
+              <UiText>{count.data.count > 99 ? "99+" : count.data.count}</UiText>
             </span>
           )}
         </button>
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-md">
-        <SheetTitle className="font-display text-2xl">Your updates</SheetTitle>
+        <SheetTitle className="font-display text-2xl">
+          <UiText>{"Your updates"}</UiText>
+        </SheetTitle>
         <SheetDescription>
           Order and marketplace updates. Refreshes while you browse.
         </SheetDescription>
         <PushSettings />
         {list.isPending && (
           <p className="mt-6" role="status">
-            Loading updates…
+            <UiText>{"Loading updates…"}</UiText>
           </p>
         )}
         {list.isError && (
           <div className="mt-6" role="alert">
-            <p>Couldn’t load updates.</p>
+            <p>
+              <UiText>{"Couldn’t load updates."}</UiText>
+            </p>
             <Button variant="outline" onClick={() => list.refetch()}>
-              Try again
+              <UiText>{"Try again"}</UiText>
             </Button>
           </div>
         )}
@@ -96,8 +101,12 @@ export function NotificationBell() {
                 key={item.id}
                 className={`py-5 ${item.read ? "" : "border-l-2 border-l-primary pl-3"}`}
               >
-                <h3 className="font-semibold">{item.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{item.body}</p>
+                <h3 className="font-semibold">
+                  <UiText>{item.title}</UiText>
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  <UiText>{item.body}</UiText>
+                </p>
                 <time
                   className="mt-2 block text-xs text-muted-foreground"
                   dateTime={item.createdAt}
@@ -110,7 +119,7 @@ export function NotificationBell() {
                     onClick={() => setOpen(false)}
                     className="text-sm font-medium text-primary underline underline-offset-4"
                   >
-                    View details
+                    <UiText>{"View details"}</UiText>
                   </Link>
                   {!item.read && (
                     <Button
@@ -119,7 +128,7 @@ export function NotificationBell() {
                       disabled={read.isPending}
                       onClick={() => read.mutate(item.id)}
                     >
-                      Mark as read
+                      <UiText>{"Mark as read"}</UiText>
                     </Button>
                   )}
                 </div>
@@ -132,7 +141,7 @@ export function NotificationBell() {
             disabled={list.isFetchingNextPage}
             onClick={() => list.fetchNextPage()}
           >
-            {list.isFetchingNextPage ? "Loading…" : "Older updates"}
+            <UiText>{list.isFetchingNextPage ? "Loading…" : "Older updates"}</UiText>
           </Button>
         )}
       </SheetContent>

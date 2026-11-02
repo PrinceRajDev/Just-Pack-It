@@ -9,7 +9,7 @@ vi.mock("@/stores/auth", () => ({
   useAuth: () => ({ session: { userId: "partner", name: "TEST PARTNER" }, signOut: vi.fn() }),
 }));
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
+  Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
   useRouterState: () => "/delivery",
 }));
 vi.mock("@/services/delivery", () => ({
@@ -59,6 +59,10 @@ it("requires approval without showing fake tasks or payouts", async () => {
   vi.mocked(delivery.active).mockResolvedValue(null);
   mount();
   await screen.findByText(/Admin must approve/);
+  expect(screen.getByRole("link", { name: "Delivery tasks" })).toHaveAttribute(
+    "href",
+    "/delivery/tasks",
+  );
   expect(delivery.available).not.toHaveBeenCalled();
   expect(screen.queryByText("Approved")).toBeNull();
 });

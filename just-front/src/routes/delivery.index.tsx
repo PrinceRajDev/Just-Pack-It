@@ -42,7 +42,7 @@ function TaskRow({ t, action }: { t: DeliveryTask; action?: React.ReactNode }) {
   );
 }
 
-function Tasks() {
+export function Tasks() {
   const { online, setOnline, tasks, setStatus } = useDelivery();
   const active = tasks.filter((t) =>
     ["assigned", "picked_up", "out_for_delivery"].includes(t.status),

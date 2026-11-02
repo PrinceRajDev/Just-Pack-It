@@ -104,12 +104,9 @@ export function LiveDelivery() {
             <Home size={21} aria-hidden="true" />
             <UiText>Overview</UiText>
           </Link>
-          <a
-            href={
-              path !== "/delivery" && path !== "/delivery/"
-                ? "/delivery#rider-task-board"
-                : "#rider-task-board"
-            }
+          <Link
+            to="/delivery/tasks"
+            className={path.startsWith("/delivery/tasks") ? "is-active" : ""}
           >
             <ClipboardList size={21} aria-hidden="true" />
             <UiText>Delivery tasks</UiText>
@@ -119,7 +116,7 @@ export function LiveDelivery() {
                 {tasks.hasNextPage ? "+" : ""}
               </span>
             )}
-          </a>
+          </Link>
           <Link to="/delivery/earnings" className={path.includes("earnings") ? "is-active" : ""}>
             <Wallet size={21} aria-hidden="true" />
             <UiText>Cash handover</UiText>
@@ -190,7 +187,9 @@ export function LiveDelivery() {
               JUST PACK IT · <UiText>Delivery partner</UiText>
             </p>
             <h1>
-              <UiText>Your delivery desk</UiText>
+              <UiText>
+                {path.startsWith("/delivery/tasks") ? "Your delivery tasks" : "Your delivery desk"}
+              </UiText>
             </h1>
             <p>
               <UiText>From a local counter to someone’s doorstep.</UiText>
@@ -244,7 +243,7 @@ export function LiveDelivery() {
           <SettlementLedger />
         ) : (
           <>
-            {profile.data?.approved && (
+            {profile.data?.approved && !path.startsWith("/delivery/tasks") && (
               <RiderOverview
                 profile={profile.data}
                 task={active.data}

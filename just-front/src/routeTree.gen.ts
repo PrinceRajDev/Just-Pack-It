@@ -34,6 +34,7 @@ import { Route as DeliveryIndexRouteImport } from './routes/delivery.index'
 import { Route as DeliveryIdRouteImport } from './routes/delivery.$id'
 import { Route as DeliveryEarningsRouteImport } from './routes/delivery.earnings'
 import { Route as DeliveryProfileRouteImport } from './routes/delivery.profile'
+import { Route as DeliveryTasksRouteImport } from './routes/delivery.tasks'
 import { Route as OrdersIndexRouteImport } from './routes/orders.index'
 import { Route as OrdersIdRouteImport } from './routes/orders.$id'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
@@ -173,6 +174,11 @@ const DeliveryProfileRoute = DeliveryProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => DeliveryRoute,
 } as any)
+const DeliveryTasksRoute = DeliveryTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => DeliveryRoute,
+} as any)
 const OrdersIndexRoute = OrdersIndexRouteImport.update({
   id: '/orders/',
   path: '/orders/',
@@ -263,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/delivery/$id': typeof DeliveryIdRoute
   '/delivery/earnings': typeof DeliveryEarningsRoute
   '/delivery/profile': typeof DeliveryProfileRoute
+  '/delivery/tasks': typeof DeliveryTasksRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
   '/seller/inventory': typeof SellerInventoryRoute
@@ -300,6 +307,7 @@ export interface FileRoutesByTo {
   '/delivery/$id': typeof DeliveryIdRoute
   '/delivery/earnings': typeof DeliveryEarningsRoute
   '/delivery/profile': typeof DeliveryProfileRoute
+  '/delivery/tasks': typeof DeliveryTasksRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
   '/seller/inventory': typeof SellerInventoryRoute
@@ -341,6 +349,7 @@ export interface FileRoutesById {
   '/delivery/$id': typeof DeliveryIdRoute
   '/delivery/earnings': typeof DeliveryEarningsRoute
   '/delivery/profile': typeof DeliveryProfileRoute
+  '/delivery/tasks': typeof DeliveryTasksRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
   '/seller/inventory': typeof SellerInventoryRoute
@@ -383,6 +392,7 @@ export interface FileRouteTypes {
     | '/delivery/$id'
     | '/delivery/earnings'
     | '/delivery/profile'
+    | '/delivery/tasks'
     | '/orders/$id'
     | '/product/$id'
     | '/seller/inventory'
@@ -420,6 +430,7 @@ export interface FileRouteTypes {
     | '/delivery/$id'
     | '/delivery/earnings'
     | '/delivery/profile'
+    | '/delivery/tasks'
     | '/orders/$id'
     | '/product/$id'
     | '/seller/inventory'
@@ -460,6 +471,7 @@ export interface FileRouteTypes {
     | '/delivery/$id'
     | '/delivery/earnings'
     | '/delivery/profile'
+    | '/delivery/tasks'
     | '/orders/$id'
     | '/product/$id'
     | '/seller/inventory'
@@ -672,6 +684,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DeliveryProfileRouteImport
       parentRoute: typeof DeliveryRoute
     }
+    '/delivery/tasks': {
+      id: '/delivery/tasks'
+      path: '/tasks'
+      fullPath: '/delivery/tasks'
+      preLoaderRoute: typeof DeliveryTasksRouteImport
+      parentRoute: typeof DeliveryRoute
+    }
     '/orders/': {
       id: '/orders/'
       path: '/orders'
@@ -798,6 +817,7 @@ interface DeliveryRouteChildren {
   DeliveryIdRoute: typeof DeliveryIdRoute
   DeliveryEarningsRoute: typeof DeliveryEarningsRoute
   DeliveryProfileRoute: typeof DeliveryProfileRoute
+  DeliveryTasksRoute: typeof DeliveryTasksRoute
   DeliveryIndexRoute: typeof DeliveryIndexRoute
 }
 
@@ -805,6 +825,7 @@ const DeliveryRouteChildren: DeliveryRouteChildren = {
   DeliveryIdRoute: DeliveryIdRoute,
   DeliveryEarningsRoute: DeliveryEarningsRoute,
   DeliveryProfileRoute: DeliveryProfileRoute,
+  DeliveryTasksRoute: DeliveryTasksRoute,
   DeliveryIndexRoute: DeliveryIndexRoute,
 }
 

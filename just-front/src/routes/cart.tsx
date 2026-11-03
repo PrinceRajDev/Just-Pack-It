@@ -33,8 +33,7 @@ export const Route = createFileRoute("/cart")({
 });
 
 function CartPage() {
-  const { groups, itemsTotal, delivery, savings, total, issues, canCheckout } =
-    useBagGroups();
+  const { groups, itemsTotal, delivery, savings, total, issues, canCheckout } = useBagGroups();
   const { remove, lines } = useCart();
 
   return (
@@ -194,9 +193,7 @@ function CartPage() {
                     </ul>
                     <ShopCheckoutDetails group={g} />
                     <footer className="flex flex-wrap justify-between gap-y-2 border-t border-dashed border-border px-4 py-3 text-sm text-muted-foreground">
-                      <span>
-                        Final availability and charges are confirmed at checkout.
-                      </span>
+                      <span>Final availability and charges are confirmed at checkout.</span>
                     </footer>
                   </section>
                 </UiAttributes>

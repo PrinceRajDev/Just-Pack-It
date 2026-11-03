@@ -1,3 +1,4 @@
+import {riderEarningRoutes} from "./settlements/rider-earnings.js";
 import { productDraftRoutes } from "./ai/product-draft.js";
 import {platformAdminRoutes,platformPublicRoutes} from "./platform/settings.js";
 import {adminReportRoutes} from "./admin/reports.js";
@@ -101,6 +102,7 @@ export function createApp(config: Config) {
   app.use("/auth", authRoutes(config));
   app.use("/notifications",authenticate(config),pushRoutes(config),notificationRoutes(config));
   app.use("/payments/razorpay",razorpayBuyerRoutes(config));
+  app.use("/rider-earnings",authenticate(config),riderEarningRoutes(config));
   app.use("/settlements",authenticate(config),settlementRoutes(config));
   app.use("/support", authenticate(config), supportRoutes(config));
   app.use("/addresses", authenticate(config), addressRoutes());

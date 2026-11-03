@@ -61,7 +61,7 @@ export async function createCodOrder(who:Actor,key:string,raw:z.infer<typeof ord
       }
       const subtotal=lines.reduce((sum,line)=>sum+line.qty*line.priceCents,0);
       if(shop.minimumOrderCents!==undefined && subtotal<shop.minimumOrderCents)fail(409,"MINIMUM_NOT_MET","A shop's item minimum is not met");
-      subOrders.push({_id:randomUUID(),shopId,shopName:shop.name,shopAddress:shop.address,status:"placed",fulfilment:method,lines,deliveryFeeCents:fee,itemsSubtotalCents:subtotal});
+      subOrders.push({_id:randomUUID(),shopId,shopName:shop.name,shopAddress:shop.address,status:"placed",fulfilment:method,lines,deliveryFeeCents:fee,...(method==="platform_delivery"?{riderEarningCents:3000}:{}),itemsSubtotalCents:subtotal});
     }
     const totalCents=subOrders.reduce((sum,sub)=>sum+sub.itemsSubtotalCents+sub.deliveryFeeCents,0);
     if(!Number.isSafeInteger(totalCents))fail(409,"TOTAL_UNAVAILABLE","Order total exceeds supported limits");

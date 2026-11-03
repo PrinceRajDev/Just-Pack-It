@@ -1,6 +1,9 @@
 import { it, expect, vi } from "vitest";
 import { render, screen, within, cleanup } from "@testing-library/react";
 import { AdminFinance } from "@/components/portal/AdminFinance";
+vi.mock("@/components/portal/RiderEarnings", () => ({
+  RiderEarnings: () => <p>Rider earnings ledger</p>,
+}));
 vi.mock("@/components/portal/SettlementLedger", () => ({
   SettlementLedger: () => <p>Existing ledger</p>,
 }));
@@ -18,5 +21,6 @@ it("does not fabricate financial totals from paginated or absent data", () => {
   expect(screen.getByText("Existing ledger")).toBeInTheDocument();
   expect(screen.getByText("Existing payments")).toBeInTheDocument();
   expect(screen.getByText("Existing allocations")).toBeInTheDocument();
+  expect(screen.getByText("Rider earnings ledger")).toBeInTheDocument();
   cleanup();
 });

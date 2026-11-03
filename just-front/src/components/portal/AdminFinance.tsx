@@ -1,3 +1,4 @@
+import { RiderEarnings } from "./RiderEarnings";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { Wallet, Banknote, Store, RotateCcw, ShieldCheck, ChevronRight } from "lucide-react";
 import { imageUrl } from "@/lib/image";
@@ -64,6 +65,7 @@ export function AdminFinance() {
         refunds and prepared payouts are never counted as completed money movements.
       </p>
       <SettlementLedger adminLayout />
+      <RiderEarnings />
       <AdminPayments />
       <Reconciliation />
     </div>

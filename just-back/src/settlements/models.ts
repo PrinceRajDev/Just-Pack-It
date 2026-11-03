@@ -8,3 +8,5 @@ export interface RemittanceRecord {_id:string;partnerId:string;state:"submitted"
 export const Remittance=model<RemittanceRecord>("CashRemittance",new Schema<RemittanceRecord>({_id:String,partnerId:String,state:String,version:Number,submittedAt:Date,receivedAt:Date,receivedBy:String,reference:String,referenceHash:String},{versionKey:false}));Remittance.schema.index({referenceHash:1},{unique:true,sparse:true});
 export interface PayoutRecord {_id:string;state:"prepared"|"recorded";version:number;preparedAt:Date;preparedBy:string;recordedAt?:Date;recordedBy?:string;reference?:string;referenceHash?:string}
 export const Payout=model<PayoutRecord>("ManualSellerPayout",new Schema<PayoutRecord>({_id:String,state:String,version:Number,preparedAt:Date,preparedBy:String,recordedAt:Date,recordedBy:String,reference:String,referenceHash:String},{versionKey:false}));Payout.schema.index({referenceHash:1},{unique:true,sparse:true});
+
+export const RiderPayout=model<PayoutRecord>("ManualRiderPayout",Payout.schema.clone());

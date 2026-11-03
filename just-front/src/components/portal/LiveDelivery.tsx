@@ -1,3 +1,4 @@
+import { RiderEarnings } from "./RiderEarnings";
 import { RiderProfile } from "./RiderProfile";
 import { NeighbourhoodIllustration } from "./NeighbourhoodIllustration";
 import { Home, CircleHelp, ChartNoAxesCombined, UserRound } from "lucide-react";
@@ -125,15 +126,15 @@ export function LiveDelivery() {
             <UserRound size={21} aria-hidden="true" />
             <UiText>Profile</UiText>
           </Link>
-          <span className="dispatch-disabled">
+          <a href="/delivery/earnings#rider-earnings">
             <ChartNoAxesCombined size={21} aria-hidden="true" />
             <span>
               <UiText>Earnings</UiText>
               <small>
-                <UiText>Partner payouts not configured</UiText>
+                <UiText>INR 30 per completed delivery</UiText>
               </small>
             </span>
-          </span>
+          </a>
           <a
             href={
               path !== "/delivery" && path !== "/delivery/" ? "/delivery#rider-help" : "#rider-help"
@@ -240,7 +241,12 @@ export function LiveDelivery() {
             error={profile.isError}
           />
         ) : path.includes("earnings") ? (
-          <SettlementLedger />
+          <>
+            <div id="rider-earnings">
+              <RiderEarnings />
+            </div>
+            <SettlementLedger />
+          </>
         ) : (
           <>
             {profile.data?.approved && !path.startsWith("/delivery/tasks") && (

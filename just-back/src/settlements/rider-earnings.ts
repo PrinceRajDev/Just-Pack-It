@@ -1,0 +1,27 @@
+import {Router} from "express";
+import {z} from "zod";
+import {actor,requireRole} from "../auth/middleware.js";
+import type {Config} from "../config/env.js";
+import {Order,type OrderRecord,type SubOrderRecord} from "../orders/models.js";
+import {RiderPayout,Remittance,Settlement} from "./models.js";
+import {checkedPosted,snapshot,payoutHold,journal,referenceHash,holdMessage} from "./service.js";
+import {transaction} from "../catalogue/service.js";
+import {fail} from "../common/errors.js";
+import {audit} from "../admin/audit.js";
+import {decodeCursor,encodeCursor} from "../common/cursor.js";
+export function riderReward(sub:SubOrderRecord){
+ if(sub.fulfilment!=="platform_delivery"||sub.status!=="delivered"||sub.delivery?.state!=="delivered"||!sub.delivery.partnerId||sub.riderEarningCents!==3000)fail(409,"EARNING_UNAVAILABLE","No eligible completed rider earning for this order");
+ return {partnerId:sub.delivery.partnerId,cents:sub.riderEarningCents};
+}
+const reference=z.string().trim().min(6).max(120).regex(/^[A-Za-z0-9][A-Za-z0-9 /_.:-]*$/).transform(v=>v.toUpperCase());
+export function riderEarningRoutes(config:Config){const router=Router();router.use(requireRole("admin","delivery"));
+ router.get("/",async(req,res)=>{res.setHeader("Cache-Control","private, no-store");const who=actor(req),q=z.object({cursor:z.string().max(2048).optional()}).strict().parse(req.query),scope=JSON.stringify(["rider-earnings",who.id,who.role]),cursor=q.cursor?decodeCursor(q.cursor,scope,"id",config.CURSOR_SECRET):undefined;
+ const orders=await Order.aggregate<OrderRecord>([{$match:{testMode:{$ne:true}}},{$unwind:"$subOrders"},{$match:{"subOrders.status":"delivered","subOrders.fulfilment":"platform_delivery","subOrders.riderEarningCents":3000,...(who.role==="delivery"?{"subOrders.delivery.partnerId":who.id}:{}),...(cursor?{"subOrders._id":{$gt:cursor.id}}:{})}},{$sort:{"subOrders._id":1}},{$limit:26},{$set:{subOrders:["$subOrders"]}}]).option({maxTimeMS:5000});
+ const items=[];for(const order of orders.slice(0,25)){const sub=order.subOrders[0],payout=await RiderPayout.findById(sub._id).lean();let hold:string|null=null;try{riderReward(sub);const source=await snapshot(order,sub);hold=await payoutHold(source);if(!hold&&!await Settlement.exists({_id:sub._id}))hold="Admin must review and post the order settlement first.";if(order.paymentMethod==="cod"&&!await Remittance.exists({_id:sub._id,state:"received"}))hold="Full COD cash receipt must be confirmed by admin.";}catch(e){hold=holdMessage(e);}items.push({id:sub._id,shopName:sub.shopName,partnerId:sub.delivery?.partnerId,amount:30,holdReason:hold,payout:payout?{state:payout.state,version:payout.version,reference:payout.reference}:null});}
+ res.json({items,next:orders.length>25?encodeCursor({scope,sort:"id",key:orders[24].subOrders[0]._id,id:orders[24].subOrders[0]._id},config.CURSOR_SECRET):undefined});});
+ for(const action of ["prepare","record"] as const)router.post(`/:id/${action}`,requireRole("admin"),async(req,res)=>{const id=z.uuid().parse(req.params.id),input=z.object({confirm:z.literal(true),...(action==="record"?{version:z.number().int().nonnegative(),reference}: {})}).strict().parse(req.body);
+ const indexes=await RiderPayout.collection.indexes();if(!indexes.some(i=>i.unique&&i.sparse&&i.key.referenceHash===1))fail(503,"LEDGER_INDEXES_REQUIRED","Create declared rider payout indexes before recording payouts.");
+ res.json(await transaction(async session=>{const source=await checkedPosted(id,session),order=await Order.findById(source.orderId).session(session).lean(),reward=riderReward(order!.subOrders.find(s=>s._id===id)!);const hold=await payoutHold(source,session);if(hold)fail(409,"PAYOUT_HELD",hold);
+ if(source.method==="cod"&&!await Remittance.exists({_id:id,state:"received"}).session(session))fail(409,"PAYOUT_HELD","Full COD cash receipt required.");
+ const payout=await RiderPayout.findById(id).session(session);if(action==="prepare"){if(payout)return{state:payout.state};await RiderPayout.create([{_id:id,state:"prepared",version:0,preparedAt:new Date(),preparedBy:actor(req).id}],{session});await journal(`rider-earned:${id}`,id,"rider_earning",actor(req).id,[{account:"expense:rider_delivery",deltaCents:reward.cents},{account:`payable:rider:${reward.partnerId}`,deltaCents:-reward.cents}],session);await audit(actor(req),"rider_payout.prepared",id,session,0);return{state:"prepared"};}
+ if(!payout)fail(409,"INTENT_REQUIRED","Prepare payout before making an external transfer.");const data=input as {version:number;reference:string};if(payout.state==="recorded"){if(payout.referenceHash===referenceHash(data.reference)&&payout.version===data.version+1)return{state:"recorded"};fail(409,"ALREADY_RECORDED","Already recorded. Never transfer again.");}if(payout.version!==data.version)fail(409,"VERSION_CONFLICT","Refresh payout before recording.");payout.state="recorded";payout.version++;payout.reference=data.reference;payout.referenceHash=referenceHash(data.reference);payout.recordedAt=new Date();payout.recordedBy=actor(req).id;await payout.save({session});await journal(`rider-paid:${id}`,id,"manual_rider_payout",actor(req).id,[{account:`payable:rider:${reward.partnerId}`,deltaCents:reward.cents},{account:"clearing:manual_bank_payout",deltaCents:-reward.cents}],session);await audit(actor(req),"rider_payout.recorded",id,session,payout.version);return{state:"recorded"};}));});return router;}

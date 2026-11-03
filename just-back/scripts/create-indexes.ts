@@ -1,5 +1,5 @@
 import {PlatformSettings} from "../src/platform/settings.js";
-import {Settlement,Journal,Remittance,Payout} from "../src/settlements/models.js";
+import {Settlement,Journal,Remittance,Payout,RiderPayout} from "../src/settlements/models.js";
 import {Audit} from "../src/admin/audit.js";
 import {SupportMessage} from "../src/support/conversation.js";
 import {Partner} from "../src/delivery/models.js";
@@ -23,7 +23,7 @@ async function main() {
   try {
     for (const model of [
       PlatformSettings,
-      Settlement,Journal,Remittance,Payout,
+      Settlement,Journal,Remittance,Payout,RiderPayout,
       SupportTicket,
       Audit,
       SupportMessage,

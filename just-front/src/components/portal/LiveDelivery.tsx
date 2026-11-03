@@ -1,3 +1,4 @@
+import { RiderTaskAlerts } from "./RiderTaskAlerts";
 import { RiderEarnings } from "./RiderEarnings";
 import { RiderProfile } from "./RiderProfile";
 import { NeighbourhoodIllustration } from "./NeighbourhoodIllustration";
@@ -221,6 +222,15 @@ export function LiveDelivery() {
             </svg>
           </div>
         </section>
+        <RiderTaskAlerts
+          key={`${session?.userId}:${[...(profile.data?.areaIds ?? [])].sort().join(",")}`}
+          tasks={tasks.data?.pages[0]?.items ?? []}
+          watching={
+            !!profile.data?.approved && !!profile.data.online && active.isSuccess && !active.data
+          }
+          ready={tasks.isSuccess}
+          error={tasks.isError}
+        />
         <nav className="rider-tabs" aria-label="Delivery workspace sections">
           <Link
             to="/delivery"

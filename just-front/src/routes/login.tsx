@@ -1,4 +1,3 @@
-import { MarketLoginArt } from "@/components/auth/MarketLoginArt";
 import { LanguageSwitcher } from "@/lib/i18n/Language";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState } from "react";
@@ -78,38 +77,30 @@ function Login() {
               <UiText>{"One familiar place."}</UiText>
             </em>
           </p>
-          <MarketLoginArt className="auth-brand-illustration" />
+          <NeighbourhoodIllustration className="auth-brand-illustration" />
         </div>
         <div className="auth-market-note">
           <span className="auth-note-number" aria-hidden>
-            <UiText>01 / LOCAL FIRST</UiText>
+            01 / LOCAL FIRST
           </span>
           <p>
-            <UiText>From the shop around the corner to the bag at your door.</UiText>
+            From the shop around the corner
+            <br />
+            to the bag at your door.
           </p>
           <div className="tape h-2 w-40" aria-hidden />
         </div>
       </div>
       <div className="login-form-panel flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
-          <div className="auth-topbar mb-4 flex items-center justify-between gap-3">
-            <Link to="/" className="auth-back-link" aria-label="Back to the market">
-              <span aria-hidden="true">←</span>
-              <span className="auth-back-copy">
-                <UiText>Back to the market</UiText>
-              </span>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <Link to="/" className="auth-back-link">
+              ← <UiText>Back to the market</UiText>
             </Link>
             <LanguageSwitcher />
           </div>
-          <div className="auth-mobile-brand md:hidden">
+          <div className="md:hidden">
             <Logo />
-            <div className="auth-mobile-scene">
-              <NeighbourhoodIllustration className="auth-mobile-market" />
-              <Bike className="auth-mobile-rider" size={62} strokeWidth={1.5} aria-hidden="true" />
-              <span className="auth-mobile-scene-label" aria-hidden="true">
-                <UiText>LOCAL SHOPS · REAL PEOPLE</UiText>
-              </span>
-            </div>
           </div>
           <p className="auth-eyebrow">
             <span aria-hidden="true" />

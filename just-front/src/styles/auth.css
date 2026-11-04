@@ -533,3 +533,198 @@
   font-size: 12px;
   color: #627257;
 }
+
+/* Local-market paper treatment, scoped to the existing authentication screen. */
+.market-login {
+  background: #f5f2eb;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.market-login .login-brand-panel {
+  background: #0d3e26;
+  color: #f6efd0;
+  padding: clamp(28px, 4vw, 64px);
+  position: relative;
+  overflow: hidden;
+}
+.market-login .login-brand-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.12;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23fff' filter='url(%23n)' opacity='.35' d='M0 0h180v180H0z'/%3E%3C/svg%3E");
+}
+.market-login .login-brand-panel > * {
+  position: relative;
+  z-index: 1;
+}
+.market-login .auth-brand-kicker {
+  display: none;
+}
+.market-login .auth-brand-story > p {
+  font-family: var(--font-sans, sans-serif);
+  font-size: clamp(32px, 3.1vw, 52px);
+  font-weight: 750;
+  line-height: 1.13;
+  letter-spacing: -0.035em;
+  max-width: 16ch;
+  margin: 30px 0 12px;
+  color: #f3edc8;
+  text-shadow: 1px 2px #082a1d;
+}
+.market-login .auth-brand-story em {
+  font-style: normal;
+  color: inherit;
+}
+.market-login .auth-brand-illustration {
+  width: min(100%, 460px);
+  display: block;
+  margin: 12px auto 0;
+}
+.market-login .auth-market-note {
+  border: 0;
+  padding-top: 14px;
+}
+.market-login .auth-market-note p {
+  line-height: 1.6;
+  color: #f4efd9;
+}
+.market-login .login-form-panel {
+  position: relative;
+  background: #f5f2eb;
+  padding: 28px clamp(24px, 5vw, 76px);
+  align-items: center;
+}
+.market-login .login-form-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 18px;
+  background:
+    radial-gradient(ellipse at center, transparent 30%, #b9ae7e66 34%, transparent 42%) 0 0/16px
+      22px,
+    radial-gradient(ellipse at center, transparent 30%, #b9ae7e55 34%, transparent 42%) 8px
+      11px/16px 22px;
+  opacity: 0.55;
+}
+.market-login .login-form-panel > div {
+  background: #fafaf5;
+  border: 1px solid #d6cfb9;
+  border-radius: 18px 21px 15px 19px;
+  box-shadow:
+    0 8px 17px #403d2520,
+    0 2px 3px #403d2510;
+  padding: clamp(22px, 3vw, 38px);
+  max-width: 460px;
+}
+.market-login .login-form-panel > div::before {
+  display: none;
+}
+.market-login .auth-back-link {
+  margin-bottom: 0;
+  font-size: 13px;
+}
+.market-login .auth-eyebrow {
+  margin-top: 24px;
+  font-size: 12px;
+  color: #575b40;
+}
+.market-login .login-form-panel h1 {
+  font-family: var(--font-sans, sans-serif);
+  font-size: clamp(25px, 2.2vw, 34px);
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+  margin-top: 8px;
+}
+.auth-hindi-welcome {
+  font-size: 21px;
+  font-weight: 650;
+  line-height: 1.5;
+  color: #163b29;
+  margin-top: 3px;
+}
+.market-login .auth-live-form form {
+  gap: 18px;
+}
+.market-login .auth-live-form {
+  margin-top: 20px;
+}
+.market-login .auth-live-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) {
+  min-height: 46px;
+  border: 1px solid #cfcbb8;
+  background: #f9f8f0;
+  border-radius: 11px;
+  box-shadow: inset 0 1px 3px #76674608;
+}
+.market-login .auth-live-form button[type="submit"] {
+  background: #0d3e26;
+  color: #fafaf5;
+  min-height: 48px;
+  border-radius: 13px 11px 14px 10px;
+  box-shadow: 0 3px 0 #a3ad7560;
+}
+.market-login .auth-mode-switch {
+  background: #edf2cf;
+  border-radius: 20px;
+}
+.market-login .login-form-panel > div > div:last-child img {
+  width: 24px;
+  height: 24px;
+}
+.market-login .login-form-panel > div > div:last-child {
+  font-size: 12px;
+  margin-top: 22px;
+}
+.auth-mobile-market {
+  display: block;
+  width: 205px;
+  height: 128px;
+  margin: 6px auto 0;
+}
+@media (max-width: 767px) {
+  .market-login {
+    display: block;
+    min-height: 100dvh;
+  }
+  .market-login .login-brand-panel {
+    display: none;
+  }
+  .market-login .login-form-panel {
+    min-height: 100dvh;
+    padding: 20px 18px 28px;
+    align-items: flex-start;
+  }
+  .market-login .login-form-panel::before {
+    display: none;
+  }
+  .market-login .login-form-panel > div {
+    max-width: 460px;
+    padding: 20px;
+    border-radius: 18px;
+  }
+  .auth-mobile-brand .brand-logo {
+    margin-inline: auto;
+  }
+  .market-login .auth-eyebrow {
+    margin-top: 8px;
+  }
+  .market-login .login-form-panel h1 {
+    margin-top: 8px;
+    font-size: 27px;
+  }
+  .market-login .auth-hindi-welcome {
+    font-size: 20px;
+  }
+  .market-login .auth-live-form {
+    margin-top: 18px;
+  }
+  .market-login .auth-live-form form {
+    gap: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .market-login * {
+    scroll-behavior: auto;
+  }
+}

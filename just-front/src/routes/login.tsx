@@ -1,3 +1,4 @@
+import { MarketLoginArt } from "@/components/auth/MarketLoginArt";
 import { LanguageSwitcher } from "@/lib/i18n/Language";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useState } from "react";
@@ -77,7 +78,7 @@ function Login() {
               <UiText>{"One familiar place."}</UiText>
             </em>
           </p>
-          <NeighbourhoodIllustration className="auth-brand-illustration" />
+          <MarketLoginArt className="auth-brand-illustration" />
         </div>
         <div className="auth-market-note">
           <span className="auth-note-number" aria-hidden>
@@ -99,8 +100,9 @@ function Login() {
             </Link>
             <LanguageSwitcher />
           </div>
-          <div className="md:hidden">
+          <div className="auth-mobile-brand md:hidden">
             <Logo />
+            <NeighbourhoodIllustration className="auth-mobile-market" />
           </div>
           <p className="auth-eyebrow">
             <span aria-hidden="true" />
@@ -119,6 +121,11 @@ function Login() {
                     : "Good to have you back."}
             </UiText>
           </h1>
+          {!session && !registering && !recovering && (
+            <p className="auth-hindi-welcome" lang="hi">
+              वापस आपका स्वागत है
+            </p>
+          )}
           {!ready ? (
             <p role="status" className="mt-6">
               Checking your session…

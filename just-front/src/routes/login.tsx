@@ -94,15 +94,22 @@ function Login() {
       </div>
       <div className="login-form-panel flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <Link to="/" className="auth-back-link">
-              ← Back to the market
+          <div className="auth-topbar mb-4 flex items-center justify-between gap-3">
+            <Link to="/" className="auth-back-link" aria-label="Back to the market">
+              <span aria-hidden="true">←</span>
+              <span className="auth-back-copy"> Back to the market</span>
             </Link>
             <LanguageSwitcher />
           </div>
           <div className="auth-mobile-brand md:hidden">
             <Logo />
-            <NeighbourhoodIllustration className="auth-mobile-market" />
+            <div className="auth-mobile-scene">
+              <NeighbourhoodIllustration className="auth-mobile-market" />
+              <Bike className="auth-mobile-rider" size={62} strokeWidth={1.5} aria-hidden="true" />
+              <span className="auth-mobile-scene-label" aria-hidden="true">
+                LOCAL SHOPS · REAL PEOPLE
+              </span>
+            </div>
           </div>
           <p className="auth-eyebrow">
             <span aria-hidden="true" />

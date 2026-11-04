@@ -728,3 +728,175 @@
     scroll-behavior: auto;
   }
 }
+@media (max-width: 767px) {
+  .market-login .login-form-panel {
+    padding: 0;
+    background: #f5f2eb;
+  }
+  .market-login .login-form-panel > div {
+    width: 100%;
+    max-width: 480px;
+    margin-inline: auto;
+    padding: 22px clamp(20px, 6vw, 32px) calc(24px + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    min-height: 100dvh;
+    background: #fafaf5;
+  }
+  .market-login .auth-topbar {
+    position: relative;
+    z-index: 2;
+    margin-bottom: 0;
+    min-height: 44px;
+  }
+  .market-login .auth-back-link {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #eaf0da;
+    color: #0d3e26;
+    font-size: 24px;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .market-login .auth-back-copy {
+    display: none;
+  }
+  .market-login .auth-topbar select {
+    max-width: 104px;
+    min-height: 44px;
+    font-size: 13px;
+  }
+  .market-login .auth-mobile-brand > .brand-logo {
+    width: 150px;
+    max-width: calc(100% - 128px);
+    margin: -42px auto 6px;
+    position: relative;
+    z-index: 3;
+    min-height: 40px;
+  }
+  .market-login .auth-mobile-brand .brand-logo-image {
+    width: 100%;
+    height: auto;
+    max-height: 44px;
+    object-fit: contain;
+  }
+  .auth-mobile-scene {
+    position: relative;
+    width: 230px;
+    max-width: 100%;
+    margin: 12px auto 15px;
+    padding-bottom: 22px;
+  }
+  .market-login .auth-mobile-market {
+    width: 220px;
+    max-width: 100%;
+    height: 138px;
+    margin: 0 auto;
+  }
+  .auth-mobile-rider {
+    position: absolute;
+    right: 3px;
+    bottom: 23px;
+    background: #fafaf5;
+    border-radius: 50%;
+    color: #0d3e26;
+    transform: rotate(-4deg);
+  }
+  .auth-mobile-scene-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: #66774e;
+    font-size: 10px;
+    font-weight: 650;
+    letter-spacing: 0.15em;
+  }
+  .market-login .auth-eyebrow {
+    display: none;
+  }
+  .market-login .login-form-panel h1 {
+    font-size: 28px;
+    line-height: 1.18;
+    max-width: 17ch;
+    margin-top: 5px;
+    letter-spacing: -0.04em;
+  }
+  .market-login .auth-hindi-welcome {
+    font-size: 21px;
+    line-height: 1.45;
+    margin-top: 5px;
+  }
+  .market-login .auth-live-form {
+    margin-top: 22px;
+  }
+  .market-login .auth-live-form label {
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 550;
+  }
+  .market-login
+    .auth-live-form
+    input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) {
+    font-size: 16px;
+    min-height: 48px;
+    border-radius: 12px;
+    padding: 11px 13px;
+  }
+  .market-login .auth-live-form .auth-password-field input {
+    padding-right: 48px;
+  }
+  .market-login .auth-password-field button {
+    width: 44px;
+    height: 44px;
+    right: 2px;
+    top: 2px;
+  }
+  .market-login .auth-field-hint {
+    font-size: 12px;
+    line-height: 1.5;
+    margin-top: 5px;
+  }
+  .market-login .auth-live-form button[type="submit"] {
+    min-height: 50px;
+    border-radius: 16px;
+    font-weight: 650;
+    font-size: 16px;
+  }
+  .market-login .login-form-panel button:not(.auth-password-field button) {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .market-login .auth-mode-switch {
+    min-height: 46px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .market-login .auth-role-options {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .market-login .auth-role-choice {
+    padding: 12px;
+  }
+  .market-login .auth-shop-fields {
+    padding: 14px;
+  }
+}
+@media (max-width: 359px) {
+  .market-login .auth-mobile-brand > .brand-logo {
+    width: 124px;
+  }
+  .market-login .auth-topbar select {
+    max-width: 88px;
+  }
+  .market-login .login-form-panel h1 {
+    font-size: 25px;
+  }
+}

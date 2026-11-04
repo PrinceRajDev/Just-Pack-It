@@ -900,3 +900,116 @@
     font-size: 25px;
   }
 }
+/* Compact sign-in spacing; longer registration/recovery forms retain natural scrolling. */
+.market-login .login-form-panel {
+  padding-block: 20px;
+}
+.market-login .login-form-panel > div {
+  padding: 22px 30px;
+}
+.market-login .auth-eyebrow {
+  margin-top: 15px;
+}
+.market-login .auth-live-form {
+  margin-top: 16px;
+}
+.market-login .auth-live-form form {
+  gap: 12px;
+}
+.market-login .auth-live-form form label {
+  margin-bottom: 4px;
+}
+.market-login .auth-live-form form p:empty {
+  display: none;
+}
+.market-login .auth-live-form > div.mt-5 {
+  margin-top: 14px;
+}
+.market-login .auth-live-form > div.mt-5 > p {
+  margin-bottom: 8px;
+}
+.market-login .auth-mode-switch {
+  margin-top: 4px;
+}
+.market-login .login-form-panel > div > div:last-child {
+  margin-top: 12px;
+}
+@media (min-width: 768px) {
+  .market-login .auth-brand-story > p {
+    font-size: clamp(30px, 3vw, 46px);
+    margin-top: 14px;
+  }
+  .market-login .auth-brand-illustration {
+    width: min(100%, 380px);
+    max-height: 36dvh;
+  }
+  .market-login .login-brand-panel {
+    padding-block: 28px;
+  }
+  .market-login .auth-market-note p {
+    margin: 6px 0 10px;
+  }
+}
+@media (max-width: 767px) {
+  .market-login .login-form-panel {
+    padding: 0;
+  }
+  .market-login .login-form-panel > div {
+    padding: 12px 22px calc(12px + env(safe-area-inset-bottom));
+  }
+  .auth-mobile-scene {
+    width: 180px;
+    margin: 3px auto 8px;
+    padding-bottom: 17px;
+  }
+  .market-login .auth-mobile-market {
+    width: 174px;
+    height: 96px;
+  }
+  .auth-mobile-rider {
+    width: 46px;
+    height: 46px;
+    bottom: 18px;
+  }
+  .auth-mobile-scene-label {
+    font-size: 9px;
+  }
+  .market-login .login-form-panel h1 {
+    font-size: 26px;
+    max-width: none;
+    margin-top: 4px;
+  }
+  .market-login .auth-live-form {
+    margin-top: 16px;
+  }
+  .market-login .auth-live-form form {
+    gap: 10px;
+  }
+  .market-login .auth-field-hint {
+    margin-top: 3px;
+  }
+  .market-login .auth-live-form > div.mt-5 {
+    margin-top: 12px;
+  }
+  .market-login .auth-live-form button[type="submit"] {
+    min-height: 46px;
+  }
+  .market-login .auth-mode-switch {
+    min-height: 44px;
+  }
+}
+@media (max-width: 767px) and (max-height: 700px) {
+  .auth-mobile-scene {
+    margin-block: 0 5px;
+  }
+  .market-login .auth-mobile-market {
+    height: 68px;
+  }
+  .auth-mobile-rider {
+    width: 38px;
+    height: 38px;
+  }
+  .market-login .login-form-panel h1 {
+    font-size: 24px;
+  }
+}

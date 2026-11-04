@@ -759,3 +759,21 @@ Object.assign(hindi, {
   "This is taking longer than usual. Please check your connection.":
     "इसमें सामान्य से अधिक समय लग रहा है। कृपया अपना इंटरनेट कनेक्शन जाँचें।",
 });
+
+Object.assign(hindi, {
+  "Good to have you back.": "वापस आपका स्वागत है।",
+  "Back to the market": "बाज़ार में वापस जाएँ",
+  "Your neighbourhood is waiting": "आपका मोहल्ला आपका इंतज़ार कर रहा है",
+  "A new face in the neighbourhood": "मोहल्ले में आपका स्वागत है",
+  "Make yourself local.": "अपने बाज़ार से जुड़ें।",
+  "Let’s get you back in.": "खाते में वापस आएँ।",
+  "You’re already home.": "आप साइन इन कर चुके हैं।",
+  "01 / LOCAL FIRST": "01 / अपना मोहल्ला पहले",
+  "From the shop around the corner to the bag at your door.":
+    "मोहल्ले की दुकान से आपके दरवाज़े तक।",
+  "LOCAL SHOPS · REAL PEOPLE": "अपनी दुकानें · अपने लोग",
+  "New here? Create an account": "नए हैं? खाता बनाएँ",
+  "Already have an account? Sign in": "पहले से खाता है? साइन इन करें",
+  "Indian number? Enter 10 digits, or include +91.": "10 अंकों का मोबाइल नंबर डालें या +91 लगाएँ।",
+  "Mobile number with country code": "मोबाइल नंबर",
+});

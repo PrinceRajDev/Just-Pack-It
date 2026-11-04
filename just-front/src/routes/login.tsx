@@ -82,12 +82,10 @@ function Login() {
         </div>
         <div className="auth-market-note">
           <span className="auth-note-number" aria-hidden>
-            01 / LOCAL FIRST
+            <UiText>01 / LOCAL FIRST</UiText>
           </span>
           <p>
-            From the shop around the corner
-            <br />
-            to the bag at your door.
+            <UiText>From the shop around the corner to the bag at your door.</UiText>
           </p>
           <div className="tape h-2 w-40" aria-hidden />
         </div>
@@ -97,7 +95,9 @@ function Login() {
           <div className="auth-topbar mb-4 flex items-center justify-between gap-3">
             <Link to="/" className="auth-back-link" aria-label="Back to the market">
               <span aria-hidden="true">←</span>
-              <span className="auth-back-copy"> Back to the market</span>
+              <span className="auth-back-copy">
+                <UiText>Back to the market</UiText>
+              </span>
             </Link>
             <LanguageSwitcher />
           </div>
@@ -107,7 +107,7 @@ function Login() {
               <NeighbourhoodIllustration className="auth-mobile-market" />
               <Bike className="auth-mobile-rider" size={62} strokeWidth={1.5} aria-hidden="true" />
               <span className="auth-mobile-scene-label" aria-hidden="true">
-                LOCAL SHOPS · REAL PEOPLE
+                <UiText>LOCAL SHOPS · REAL PEOPLE</UiText>
               </span>
             </div>
           </div>
@@ -128,11 +128,6 @@ function Login() {
                     : "Good to have you back."}
             </UiText>
           </h1>
-          {!session && !registering && !recovering && (
-            <p className="auth-hindi-welcome" lang="hi">
-              वापस आपका स्वागत है
-            </p>
-          )}
           {!ready ? (
             <p role="status" className="mt-6">
               Checking your session…

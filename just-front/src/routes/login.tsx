@@ -19,6 +19,7 @@ import { LiveAuthForm } from "@/components/auth/LiveAuthForm";
 import { authDestination, accountLabels } from "@/lib/auth-flow";
 import { Link } from "@tanstack/react-router";
 import "@/styles/auth.css";
+import "@/styles/auth-refined.css";
 import { imageUrl } from "@/lib/image";
 
 export const Route = createFileRoute("/login")({
@@ -63,11 +64,13 @@ function Login() {
     navigate({ to: registered ? roleHome[role] : authDestination(role, redirect), replace: true });
 
   return (
-    <main id="main" className="market-login grid min-h-dvh md:grid-cols-2">
+    <main id="main" className="market-login auth-refined grid min-h-dvh md:grid-cols-2">
       <div className="login-brand-panel hidden flex-col justify-between bg-primary p-10 text-primary-foreground md:flex">
         <Logo inverse className="[&_span]:text-primary-foreground" />
         <div className="auth-brand-story">
-          <span className="auth-brand-kicker">Your local market, a little closer.</span>
+          <span className="auth-brand-kicker">
+            <UiText>Your local market, a little closer.</UiText>
+          </span>
           <p className="font-display text-5xl leading-tight">
             <UiText>{"Your market."}</UiText>
             <br />
@@ -93,14 +96,15 @@ function Login() {
       </div>
       <div className="login-form-panel flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
-          <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="auth-navigation mb-4 flex items-center justify-between gap-3">
             <Link to="/" className="auth-back-link">
               ← <UiText>Back to the market</UiText>
             </Link>
             <LanguageSwitcher />
           </div>
-          <div className="md:hidden">
+          <div className="auth-mobile-welcome md:hidden">
             <Logo />
+            <NeighbourhoodIllustration className="auth-mobile-counter" />
           </div>
           <p className="auth-eyebrow">
             <span aria-hidden="true" />

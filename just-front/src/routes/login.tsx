@@ -64,7 +64,11 @@ function Login() {
     navigate({ to: registered ? roleHome[role] : authDestination(role, redirect), replace: true });
 
   return (
-    <main id="main" className="market-login auth-refined grid min-h-dvh md:grid-cols-2">
+    <main
+      id="main"
+      className="market-login auth-refined grid min-h-dvh md:grid-cols-2"
+      data-auth-mode={registering ? "signup" : recovering ? "recovery" : "signin"}
+    >
       <div className="login-brand-panel hidden flex-col justify-between bg-primary p-10 text-primary-foreground md:flex">
         <Logo inverse className="[&_span]:text-primary-foreground" />
         <div className="auth-brand-story">
@@ -84,12 +88,10 @@ function Login() {
         </div>
         <div className="auth-market-note">
           <span className="auth-note-number" aria-hidden>
-            01 / LOCAL FIRST
+            <UiText>01 / LOCAL FIRST</UiText>
           </span>
           <p>
-            From the shop around the corner
-            <br />
-            to the bag at your door.
+            <UiText>From the shop around the corner to the bag at your door.</UiText>
           </p>
           <div className="tape h-2 w-40" aria-hidden />
         </div>
@@ -123,6 +125,15 @@ function Login() {
                     : "Good to have you back."}
             </UiText>
           </h1>
+          {!session && !recovering && (
+            <p className="auth-welcome-description">
+              <UiText>
+                {registering
+                  ? "One account. Your own place in the neighbourhood."
+                  : "Your favourite local shops are a sign-in away."}
+              </UiText>
+            </p>
+          )}
           {!ready ? (
             <p role="status" className="mt-6">
               Checking your session…

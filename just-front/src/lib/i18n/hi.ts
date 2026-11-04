@@ -777,3 +777,9 @@ Object.assign(hindi, {
   "Indian number? Enter 10 digits, or include +91.": "10 अंकों का मोबाइल नंबर डालें या +91 लगाएँ।",
   "Mobile number with country code": "मोबाइल नंबर",
 });
+
+Object.assign(hindi, {
+  "One account. Your own place in the neighbourhood.": "एक खाता। अपने मोहल्ले से जुड़ने की शुरुआत।",
+  "Your favourite local shops are a sign-in away.":
+    "साइन इन करें और अपनी पसंद की स्थानीय दुकानों से जुड़ें।",
+});

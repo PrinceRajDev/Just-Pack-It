@@ -76,15 +76,26 @@ function Login() {
             <UiText>Your local market, a little closer.</UiText>
           </span>
           <p className="font-display text-5xl leading-tight">
-            <UiText>{"Your market."}</UiText>
+            <span className="auth-headline-line">
+              <UiText>{"Your market."}</UiText>
+            </span>
             <br />
-            <UiText>{"Your people."}</UiText>
+            <span className="auth-headline-line">
+              <UiText>{"Your people."}</UiText>
+            </span>
             <br />
             <em>
               <UiText>{"One familiar place."}</UiText>
             </em>
           </p>
-          <NeighbourhoodIllustration className="auth-brand-illustration" />
+          <div className="auth-counter-stage">
+            <span className="auth-counter-seal" aria-hidden="true">
+              JPI
+              <br />
+              LOCAL
+            </span>
+            <NeighbourhoodIllustration className="auth-brand-illustration" />
+          </div>
         </div>
         <div className="auth-market-note">
           <span className="auth-note-number" aria-hidden>
@@ -105,7 +116,7 @@ function Login() {
             <LanguageSwitcher />
           </div>
           <div className="auth-mobile-welcome md:hidden">
-            <Logo />
+            <Logo inverse />
             <NeighbourhoodIllustration className="auth-mobile-counter" />
           </div>
           <p className="auth-eyebrow">
@@ -122,7 +133,7 @@ function Login() {
                   ? "Let’s get you back in."
                   : registering
                     ? "Make yourself local."
-                    : "Good to have you back."}
+                    : "A little closer to home."}
             </UiText>
           </h1>
           {!session && !recovering && (

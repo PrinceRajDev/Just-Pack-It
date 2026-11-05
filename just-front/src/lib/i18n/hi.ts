@@ -783,3 +783,5 @@ Object.assign(hindi, {
   "Your favourite local shops are a sign-in away.":
     "साइन इन करें और अपनी पसंद की स्थानीय दुकानों से जुड़ें।",
 });
+
+Object.assign(hindi, { "A little closer to home.": "अपने मोहल्ले के और करीब।" });

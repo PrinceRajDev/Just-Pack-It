@@ -11,7 +11,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   return (
     <div
-      className={`store-shell flex min-h-screen flex-col ${pathname === "/" ? "" : "store-interior"}`}
+      className={`store-shell flex min-h-screen flex-col ${pathname === "/" ? "store-home" : "store-interior"}`}
     >
       <a
         href="#main"

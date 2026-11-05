@@ -1,3 +1,4 @@
+import "@/styles/home-premium.css";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { CatalogueMore } from "@/components/store/CatalogueMore";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -17,11 +18,11 @@ import { isDemoMode } from "@/lib/config";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Just Pack It: Groceries from your neighbourhood shops" },
+      { title: "Just Pack It: Your neighbourhood market" },
       {
         name: "description",
         content:
-          "Order fresh vegetables, dairy, staples and bakes from trusted local shops near you, delivered by the shop or a Just Pack It rider.",
+          "Discover neighbourhood shops for food, fashion, daily essentials and more. Browse local catalogues and order delivery to your door.",
       },
       { property: "og:title", content: "Just Pack It: Your neighbourhood, packed and delivered" },
       {
@@ -64,10 +65,12 @@ function Home() {
               </em>
             </h1>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-foreground/85 md:text-lg">
-              Fresh groceries, daily essentials and everything from your neighbourhood shops: packed
-              with care.
+              <UiText>
+                From everyday essentials to your next favourite find. Shop your neighbourhood, all
+                in one place.
+              </UiText>
             </p>
-            <div className="mt-7 flex flex-wrap items-center gap-4">
+            <div className="hero-market-actions mt-7 flex flex-wrap items-center gap-4">
               <Link
                 to="/"
                 hash="shops-h"
@@ -78,11 +81,13 @@ function Home() {
               </Link>
               <span className="max-w-52 border-l-2 border-citrus pl-3 text-caption text-muted-foreground">
                 <UiText>
-                  {area
-                    ? `Browsing the ${area.name} pilot area.`
-                    : "Choose an area to see local shops."}
+                  {area ? `Shopping in ${area.name}` : "Choose an area to see local shops."}
                 </UiText>
               </span>
+            </div>
+            <div className="home-hero-note">
+              <span aria-hidden="true">✳</span>
+              <UiText>Independent shops. One neighbourhood.</UiText>
             </div>
           </div>
           <figure className="hero-market-image overflow-hidden">

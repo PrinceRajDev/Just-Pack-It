@@ -1,0 +1,319 @@
+/* Buyer homepage: a neighbourhood market with an editorial hierarchy. */
+.store-home {
+  background: #faf8f0;
+}
+.store-home #main > p {
+  font-size: 12px;
+  padding-block: 7px;
+  background: #f1f2e6;
+  color: #52634b;
+}
+.store-home #main > section[aria-label="Shopping area"] {
+  margin: 14px clamp(18px, 3vw, 52px);
+  padding: 12px 18px;
+  border-color: #dce4d0;
+  background: #f3f6e9;
+  border-radius: 13px;
+  gap: 12px;
+}
+.store-home #main > section[aria-label="Shopping area"] > div:first-child {
+  flex: 1;
+  min-width: 180px;
+}
+.store-home #main > section[aria-label="Shopping area"] > button {
+  background: transparent;
+  color: #174a32;
+  border: 1px solid #c4d1b4;
+  border-radius: 9px;
+  min-height: 40px;
+  font-weight: 600;
+  font-size: 12px;
+}
+.marketplace-home .hero-market {
+  margin: 18px clamp(18px, 3vw, 52px) 0;
+  min-height: 390px;
+  border: 1px solid #e1e4d4;
+  border-radius: 22px;
+  background: #f4f2e5;
+  overflow: hidden;
+}
+.marketplace-home .hero-market-copy {
+  width: 48%;
+  min-height: 390px;
+  padding: 34px clamp(24px, 3.6vw, 60px);
+  padding-right: 20px;
+  background: linear-gradient(90deg, #f6f3e8 90%, #f6f3e800);
+}
+.marketplace-home .hero-market .eyebrow {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.marketplace-home .hero-market .eyebrow::before {
+  content: "";
+  height: 1px;
+  width: 24px;
+  background: #6c8844;
+}
+.marketplace-home .hero-market h1 {
+  font-family: Georgia, "Nirmala UI", serif;
+  font-size: clamp(40px, 4.4vw, 72px);
+  line-height: 1.01;
+  letter-spacing: -0.05em;
+  font-weight: 400;
+  margin-top: 16px;
+}
+.marketplace-home .hero-script {
+  font-family: inherit;
+  font-weight: 400;
+  text-decoration: none;
+  position: relative;
+  white-space: normal;
+}
+.marketplace-home .hero-script::after {
+  content: "";
+  position: absolute;
+  left: 1%;
+  right: 0;
+  bottom: -5px;
+  height: 5px;
+  border-top: 3px solid #b2cf43;
+  border-radius: 50%;
+  transform: rotate(-2deg);
+}
+.marketplace-home .hero-market-copy > p:nth-of-type(2) {
+  font-size: 14px;
+  line-height: 1.7;
+  max-width: 37ch;
+  margin-top: 22px;
+  color: #52614e;
+}
+.marketplace-home .hero-market-actions {
+  gap: 14px;
+  margin-top: 23px;
+}
+.marketplace-home .hero-market-actions > a {
+  border-radius: 11px;
+  padding: 13px 20px;
+  box-shadow: 0 3px 0 #0a3020;
+  font-size: 13px;
+}
+.marketplace-home .hero-market-actions > span {
+  font-size: 12px;
+  border-color: #a1bb60;
+  max-width: 170px;
+  line-height: 1.5;
+}
+.marketplace-home .hero-market-image {
+  left: 33%;
+}
+.marketplace-home .hero-market-image > img {
+  object-position: 63% center;
+}
+.home-hero-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #657257;
+  margin-top: 22px;
+}
+.home-hero-note > span {
+  color: #6c8844;
+  font-size: 19px;
+  line-height: 1;
+}
+.marketplace-home .market-section {
+  padding-inline: clamp(18px, 3vw, 52px);
+}
+.marketplace-home .home-categories {
+  padding-top: 22px;
+  padding-bottom: 20px;
+}
+.marketplace-home .home-categories > .section-heading {
+  display: flex;
+  margin-bottom: 17px;
+  align-items: flex-end;
+  gap: 12px;
+}
+.marketplace-home .section-heading .eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #66734f;
+  margin-bottom: 5px;
+}
+.marketplace-home .section-heading h2 {
+  font-family: Georgia, "Nirmala UI", serif;
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+}
+.marketplace-home .category-ribbon {
+  gap: 12px;
+  padding-bottom: 7px;
+  scroll-snap-type: x proximity;
+}
+.marketplace-home .category-ribbon > li {
+  scroll-snap-align: start;
+}
+.marketplace-home .category-tile {
+  border: 1px solid #e4e6d9;
+  border-radius: 14px;
+  overflow: hidden;
+  transition:
+    border-color 0.18s,
+    transform 0.18s;
+}
+.marketplace-home .category-tile:hover {
+  border-color: #97b573;
+  transform: translateY(-3px);
+}
+.marketplace-home .category-tile-name {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 10px 7px;
+}
+.marketplace-home .home-shops {
+  padding-top: 20px;
+}
+.marketplace-home .home-shops h2 {
+  font-family: Georgia, "Nirmala UI", serif;
+  font-style: normal;
+  font-size: 34px;
+  letter-spacing: -0.035em;
+  text-decoration: none;
+}
+.marketplace-home .shop-card {
+  border-radius: 16px;
+  border: 1px solid #e0e4d5;
+  background: #fffef9;
+  box-shadow: 0 4px 10px #273d1e04;
+  transition:
+    box-shadow 0.18s,
+    transform 0.18s;
+}
+.marketplace-home .shop-card:hover {
+  box-shadow: 0 9px 24px #273d1e10;
+  transform: translateY(-3px);
+}
+.marketplace-home .shop-card h3 {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+.marketplace-home .shop-card-image {
+  height: 145px;
+  object-fit: cover;
+}
+.marketplace-home a:focus-visible {
+  outline: 2px solid #537c3c;
+  outline-offset: 4px;
+}
+@media (max-width: 767px) {
+  .store-home #main > p {
+    font-size: 11px;
+    line-height: 1.5;
+    padding-inline: 16px;
+  }
+  .store-home #main > section[aria-label="Shopping area"] {
+    margin: 10px 14px;
+    padding: 11px 13px;
+    gap: 10px;
+  }
+  .store-home #main > section[aria-label="Shopping area"] > div:first-child {
+    min-width: 0;
+    flex-basis: 100%;
+  }
+  .store-home #main > section[aria-label="Shopping area"] > div:first-child p:first-child {
+    font-size: 13px;
+  }
+  .store-home #main > section[aria-label="Shopping area"] > div:first-child p:nth-child(2) {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .marketplace-home .hero-market {
+    margin: 12px 14px 0;
+    border-radius: 17px;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .marketplace-home .hero-market-copy {
+    width: 100%;
+    min-height: 0;
+    padding: 24px 22px 20px;
+    background: #f6f3e8;
+  }
+  .marketplace-home .hero-market h1 {
+    font-size: 44px;
+    max-width: 15ch;
+    line-height: 1.02;
+  }
+  .marketplace-home .hero-market-copy > p:nth-of-type(2) {
+    font-size: 13px;
+    line-height: 1.6;
+    margin-top: 18px;
+    max-width: 36ch;
+  }
+  .marketplace-home .hero-market-actions {
+    margin-top: 19px;
+  }
+  .marketplace-home .hero-market-image {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: 180px;
+    min-height: 180px;
+  }
+  .marketplace-home .hero-market-image > img {
+    object-position: center 48%;
+  }
+  .home-hero-note {
+    margin-top: 16px;
+    font-size: 10px;
+  }
+  .marketplace-home .market-section {
+    padding-inline: 16px;
+  }
+  .marketplace-home .home-categories {
+    padding-top: 24px;
+  }
+  .marketplace-home .section-heading h2,
+  .marketplace-home .home-shops h2 {
+    font-size: 27px;
+  }
+  .marketplace-home .home-categories > .section-heading > span {
+    display: none;
+  }
+  .marketplace-home .category-ribbon {
+    gap: 9px;
+  }
+  .marketplace-home .category-tile-name {
+    font-size: 11px;
+  }
+  .marketplace-home .shop-shelf > li {
+    width: 240px;
+    min-width: 240px;
+  }
+}
+@media (max-width: 359px) {
+  .marketplace-home .hero-market h1 {
+    font-size: 38px;
+  }
+  .marketplace-home .hero-market-copy {
+    padding-inline: 18px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marketplace-home * {
+    transition: none !important;
+  }
+}

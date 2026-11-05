@@ -785,3 +785,9 @@ Object.assign(hindi, {
 });
 
 Object.assign(hindi, { "A little closer to home.": "अपने मोहल्ले के और करीब।" });
+
+Object.assign(hindi, {
+  "From everyday essentials to your next favourite find. Shop your neighbourhood, all in one place.":
+    "रोज़ की ज़रूरतों से लेकर आपकी पसंद की चीज़ों तक। अपने मोहल्ले की दुकानों से खरीदें, एक ही जगह।",
+  "Independent shops. One neighbourhood.": "अपनी दुकानें। अपना मोहल्ला।",
+});

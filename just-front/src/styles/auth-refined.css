@@ -819,3 +819,62 @@
     gap: 10px;
   }
 }
+/* Restore the form frame and centre the password toggle within the input. */
+.auth-refined.market-login .login-form-panel > div {
+  max-width: 490px;
+  padding: 24px 30px;
+  border: 1px solid #dce1d1;
+  border-radius: 22px;
+  background: #fffef9;
+  box-shadow:
+    0 14px 48px #183b2609,
+    0 2px 6px #183b2605;
+}
+.auth-refined .auth-password-field {
+  position: relative;
+}
+.auth-refined .auth-password-field button {
+  position: absolute;
+  inset: 50% 4px auto auto;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  line-height: 1;
+}
+.auth-refined .auth-password-field button:hover {
+  background: #edf2e5;
+}
+.auth-refined .auth-password-field button svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+.auth-refined .login-form-panel h1 {
+  font-size: clamp(34px, 3vw, 44px);
+}
+.auth-refined .auth-navigation {
+  margin-bottom: 22px;
+}
+@media (max-width: 767px) {
+  .auth-refined.market-login .login-form-panel {
+    padding: 12px 14px calc(16px + env(safe-area-inset-bottom));
+  }
+  .auth-refined.market-login .login-form-panel > div {
+    padding: 16px 20px 20px;
+    border-radius: 18px;
+  }
+  .auth-refined .login-form-panel h1 {
+    font-size: 34px;
+  }
+  .auth-refined .auth-navigation {
+    margin-bottom: 0;
+  }
+}

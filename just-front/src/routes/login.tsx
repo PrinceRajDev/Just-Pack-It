@@ -5,7 +5,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ShoppingBasket, Store, Bike, ShieldCheck, Loader2 } from "lucide-react";
+import { ArrowLeft, ShoppingBasket, Store, Bike, ShieldCheck, Loader2 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { NeighbourhoodIllustration } from "@/components/portal/NeighbourhoodIllustration";
 import { Button } from "@/components/ui/button";
@@ -69,40 +69,20 @@ function Login() {
       className="market-login auth-refined grid min-h-dvh md:grid-cols-2"
       data-auth-mode={registering ? "signup" : recovering ? "recovery" : "signin"}
     >
-      <div className="login-brand-panel hidden flex-col justify-between bg-primary p-10 text-primary-foreground md:flex">
+      <div className="login-brand-panel hidden flex-col justify-between text-primary-foreground md:flex">
         <Logo inverse className="[&_span]:text-primary-foreground" />
         <div className="auth-brand-story">
-          <span className="auth-brand-kicker">
-            <UiText>Your local market, a little closer.</UiText>
-          </span>
           <p className="font-display text-5xl leading-tight">
-            <span className="auth-headline-line">
-              <UiText>{"Your market."}</UiText>
+            <UiText>From your local shop</UiText>
+            <span className="auth-brand-accent">
+              <UiText>to your doorstep</UiText>
             </span>
-            <br />
-            <span className="auth-headline-line">
-              <UiText>{"Your people."}</UiText>
-            </span>
-            <br />
-            <em>
-              <UiText>{"One familiar place."}</UiText>
-            </em>
           </p>
-          <div className="auth-counter-stage">
-            <span className="auth-counter-seal" aria-hidden="true">
-              JPI
-              <br />
-              LOCAL
-            </span>
-            <NeighbourhoodIllustration className="auth-brand-illustration" />
-          </div>
+          <NeighbourhoodIllustration className="auth-brand-illustration" />
         </div>
         <div className="auth-market-note">
-          <span className="auth-note-number" aria-hidden>
-            <UiText>01 / LOCAL FIRST</UiText>
-          </span>
           <p>
-            <UiText>From the shop around the corner to the bag at your door.</UiText>
+            <UiText>Your neighbourhood, delivered</UiText>
           </p>
           <div className="tape h-2 w-40" aria-hidden />
         </div>
@@ -111,7 +91,8 @@ function Login() {
         <div className="w-full max-w-md">
           <div className="auth-navigation mb-4 flex items-center justify-between gap-3">
             <Link to="/" className="auth-back-link">
-              ← <UiText>Back to the market</UiText>
+              <ArrowLeft size={16} strokeWidth={1.5} aria-hidden />
+              <UiText>Back to the market</UiText>
             </Link>
             <LanguageSwitcher />
           </div>
@@ -119,29 +100,23 @@ function Login() {
             <Logo inverse />
             <NeighbourhoodIllustration className="auth-mobile-counter" />
           </div>
-          <p className="auth-eyebrow">
-            <span aria-hidden="true" />
-            <UiText>
-              {registering ? "A new face in the neighbourhood" : "Your neighbourhood is waiting"}
-            </UiText>
-          </p>
-          <h1 className="mt-8 font-display text-4xl md:mt-0">
+          <h1 className="font-display">
             <UiText>
               {session
-                ? "You’re already home."
+                ? "Your account"
                 : recovering
-                  ? "Let’s get you back in."
+                  ? "Reset your password"
                   : registering
-                    ? "Make yourself local."
-                    : "A little closer to home."}
+                    ? "Create an account"
+                    : "Sign in"}
             </UiText>
           </h1>
           {!session && !recovering && (
             <p className="auth-welcome-description">
               <UiText>
                 {registering
-                  ? "One account. Your own place in the neighbourhood."
-                  : "Your favourite local shops are a sign-in away."}
+                  ? "Shop, sell or deliver in your neighbourhood"
+                  : "Find your local shops and keep track of your orders"}
               </UiText>
             </p>
           )}
@@ -284,7 +259,7 @@ function Login() {
               </ul>
             </div>
           )}
-          <div className="mt-6 flex items-center justify-center gap-3 text-sm text-muted-foreground">
+          <div className="auth-credit flex items-center justify-center gap-2 text-muted-foreground">
             <p>
               Developed by{" "}
               <UiAttributes>

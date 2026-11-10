@@ -13,7 +13,7 @@ const browser = await chromium.launch({ headless: true }),
   errors = [];
 await mkdir("docs/admin-audit", { recursive: true });
 const routes = [
-  ["/admin", "What needs attention"],
+  ["/admin", "Needs attention"],
   ["/admin/partners", "Sellers and shop approvals"],
   ["/admin/orders", "Orders & cash records"],
   ["/admin/catalog", "Marketplace taxonomy"],
@@ -104,7 +104,7 @@ try {
     assert.equal((await response).status(), 200);
     results.push({ action: "persist versioned shop approval", status: "pass" });
     for (const [path, title, endpoint] of [
-      ["/admin", "What needs attention", "/admin/operations"],
+      ["/admin", "Needs attention", "/admin/operations"],
       ["/admin/catalog", "Marketplace taxonomy", "/admin/categories"],
       ["/admin/support", "Order support", "/support?"],
     ]) {

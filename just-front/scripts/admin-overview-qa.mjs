@@ -66,8 +66,12 @@ try {
       .count(),
     1,
   );
-  assert.equal(await p.getByText("Reporting unavailable", { exact: true }).count(), 5);
-  checks.push("queue counts match existing operations API; five unsupported metrics unavailable");
+  await p
+    .getByText("Orders today, active users, and GMV are not available in this overview.", {
+      exact: true,
+    })
+    .waitFor();
+  checks.push("queue counts match the operations API and unsupported reporting is disclosed");
   assert.equal(await p.getByText("All systems operational", { exact: true }).count(), 0);
   assert.equal(await p.getByText("Not checked", { exact: true }).count(), 2);
   checks.push("API/database checked; provider health unknown, never fabricated");
@@ -77,13 +81,24 @@ try {
       .evaluateAll((es) =>
         es.map((e) => ({ href: e.getAttribute("href"), name: e.textContent.trim() })),
       );
-  assert.equal(links.length, 7);
+  assert.deepEqual(links.map(({ href }) => href).sort(), [
+    "/admin",
+    "/admin/catalog",
+    "/admin/finance",
+    "/admin/orders",
+    "/admin/partners",
+    "/admin/platform",
+    "/admin/reports",
+    "/admin/settings",
+    "/admin/support",
+    "/admin/users",
+  ]);
   for (const l of links) {
     await nav.getByRole("link", { name: l.name, exact: true }).click();
     await p.waitForURL((u) => u.pathname === l.href);
     assert.notEqual(new URL(p.url()).pathname, "/login");
   }
-  checks.push("all seven existing sidebar destinations navigate under admin guard");
+  checks.push("all ten sidebar destinations navigate under admin guard");
   await p.goto("http://localhost:8083/admin");
   await p.getByRole("heading", { name: "Marketplace operations", exact: true }).waitFor();
   const search = p.getByRole("searchbox", { name: "Search admin workspaces" });

@@ -222,7 +222,7 @@ it("shows database-backed admin queues with honest empty states and review links
     refunds: { count: 0, items: [] },
   });
   const client = mount(<OperationsDashboard />);
-  expect(await screen.findByRole("heading", { name: "What needs attention" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "Needs attention" })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Test shop → Review" })).toHaveAttribute(
     "href",
     "/admin/partners",

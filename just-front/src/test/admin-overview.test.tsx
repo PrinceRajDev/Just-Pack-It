@@ -82,9 +82,12 @@ it("preserves server attention counts and marks unsupported performance reportin
     screen.getByRole("link", { name: "Payment attention: 4. Open workspace" }),
   ).toHaveAttribute("href", "/admin/finance");
   expect(screen.getByText("5 refund records also need review.")).toBeInTheDocument();
-  expect(screen.getAllByText("Reporting unavailable")).toHaveLength(5);
+  expect(
+    screen.getByText("Orders today, active users, and GMV are not available in this overview."),
+  ).toBeInTheDocument();
+  expect(screen.getAllByText("Unavailable")).toHaveLength(2);
   expect(screen.queryByText("₹0")).not.toBeInTheDocument();
-  expect(screen.getByText(/Welcome back, Test Administrator/)).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Needs attention" })).toBeInTheDocument();
 });
 it("filters only actual audit records and shows honest empty tabs", async () => {
   mount();
@@ -138,7 +141,9 @@ it("keeps demo totals explicitly labelled and never fetches live metrics or heal
   );
   expect(screen.getByText("Demo preview · no live timestamp")).toBeInTheDocument();
   expect(screen.getAllByText("From demo records")).toHaveLength(2);
-  expect(screen.getAllByText("Reporting unavailable")).toHaveLength(3);
+  expect(
+    screen.getByText("Orders today, active users, and GMV are not available in this overview."),
+  ).toBeInTheDocument();
   expect(
     screen.getByRole("link", { name: "Payment attention: Unavailable. Open workspace" }),
   ).toBeInTheDocument();
@@ -155,7 +160,7 @@ it("renders actual shop and product totals, including zero, and refreshes them",
     expect(screen.getByText("Total shops").closest("article")).toHaveTextContent("1"),
   );
   expect(screen.getByText("Total products").closest("article")).toHaveTextContent("0");
-  expect(screen.getAllByText("Reporting unavailable")).toHaveLength(3);
+  expect(screen.queryByText("Unavailable")).not.toBeInTheDocument();
   vi.mocked(operationsSummary).mockResolvedValue({ ...summary, totals: { shops: 2, products: 3 } });
   fireEvent.click(screen.getByRole("button", { name: "Refresh data" }));
   await waitFor(() =>

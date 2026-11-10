@@ -333,9 +333,25 @@ export function LiveAuthForm({
             </p>
           </div>
           <div>
-            <Label htmlFor="live-password">
-              <UiText>{"Password"}</UiText>
-            </Label>
+            <div className="auth-password-label">
+              <Label htmlFor="live-password">
+                <UiText>{"Password"}</UiText>
+              </Label>
+              {!registering && (
+                <button
+                  type="button"
+                  className="auth-text-action"
+                  disabled={form.formState.isSubmitting || googleBusy}
+                  onClick={() => {
+                    form.reset();
+                    setRecovering(true);
+                    onRecoveryChange?.(true);
+                  }}
+                >
+                  <UiText>{"Forgot password?"}</UiText>
+                </button>
+              )}
+            </div>
             <div className="auth-password-field">
               <UiAttributes>
                 <Input
@@ -516,23 +532,9 @@ export function LiveAuthForm({
         </div>
       )}
 
-      {!registering && (
-        <Button
-          variant="ghost"
-          className="mt-2 w-full"
-          disabled={form.formState.isSubmitting || googleBusy}
-          onClick={() => {
-            form.reset();
-            setRecovering(true);
-            onRecoveryChange?.(true);
-          }}
-        >
-          <UiText>{"Forgot password?"}</UiText>
-        </Button>
-      )}
-      <Button
-        variant="ghost"
-        className="auth-mode-switch mt-3 w-full"
+      <button
+        type="button"
+        className="auth-mode-switch auth-text-action"
         disabled={form.formState.isSubmitting || googleBusy}
         onClick={() => {
           setRegistering(!registering);
@@ -548,7 +550,7 @@ export function LiveAuthForm({
         <UiText>
           {registering ? "Already have an account? Sign in" : "New here? Create an account"}
         </UiText>
-      </Button>
+      </button>
     </div>
   );
 }

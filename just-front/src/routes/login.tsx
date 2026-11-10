@@ -1,13 +1,12 @@
 import { LanguageSwitcher } from "@/lib/i18n/Language";
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, ShoppingBasket, Store, Bike, ShieldCheck, Loader2 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
-import { NeighbourhoodIllustration } from "@/components/portal/NeighbourhoodIllustration";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,6 +54,13 @@ function Login() {
   const [registering, setRegistering] = useState(false);
   const [recovering, setRecovering] = useState(false);
   const [switching, setSwitching] = useState(false);
+  const mode = registering ? "signup" : recovering ? "recovery" : "signin";
+  const previousMode = useRef(mode);
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (previousMode.current !== mode) heading.current?.focus();
+    previousMode.current = mode;
+  }, [mode]);
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: { phone: "", otp: "" },
@@ -64,43 +70,21 @@ function Login() {
     navigate({ to: registered ? roleHome[role] : authDestination(role, redirect), replace: true });
 
   return (
-    <main
-      id="main"
-      className="market-login auth-refined grid min-h-dvh md:grid-cols-2"
-      data-auth-mode={registering ? "signup" : recovering ? "recovery" : "signin"}
-    >
-      <div className="login-brand-panel hidden flex-col justify-between text-primary-foreground md:flex">
-        <Logo inverse className="[&_span]:text-primary-foreground" />
-        <div className="auth-brand-story">
-          <p className="font-display text-5xl leading-tight">
-            <UiText>From your local shop</UiText>
-            <span className="auth-brand-accent">
-              <UiText>to your doorstep</UiText>
-            </span>
-          </p>
-          <NeighbourhoodIllustration className="auth-brand-illustration" />
-        </div>
-        <div className="auth-market-note">
-          <p>
-            <UiText>Your neighbourhood, delivered</UiText>
-          </p>
-          <div className="tape h-2 w-40" aria-hidden />
-        </div>
-      </div>
-      <div className="login-form-panel flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
-          <div className="auth-navigation mb-4 flex items-center justify-between gap-3">
-            <Link to="/" className="auth-back-link">
-              <ArrowLeft size={16} strokeWidth={1.5} aria-hidden />
-              <UiText>Back to the market</UiText>
-            </Link>
-            <LanguageSwitcher />
-          </div>
-          <div className="auth-mobile-welcome md:hidden">
-            <Logo inverse />
-            <NeighbourhoodIllustration className="auth-mobile-counter" />
-          </div>
-          <h1 className="font-display">
+    <main id="main" className="market-login auth-refined min-h-dvh">
+      <header className="auth-navigation">
+        <Link to="/" className="auth-back-link">
+          <ArrowLeft size={16} strokeWidth={1.5} aria-hidden />
+          <span className="max-sm:sr-only">
+            <UiText>Back to the market</UiText>
+          </span>
+        </Link>
+        <Logo />
+        <LanguageSwitcher />
+      </header>
+      <div className="login-form-panel">
+        <div className="auth-packing-label" aria-labelledby="auth-title">
+          <span className="auth-label-tape tape" aria-hidden />
+          <h1 id="auth-title" ref={heading} tabIndex={-1} className="font-display">
             <UiText>
               {session
                 ? "Your account"
@@ -259,31 +243,31 @@ function Login() {
               </ul>
             </div>
           )}
-          <div className="auth-credit flex items-center justify-center gap-2 text-muted-foreground">
-            <p>
-              Developed by{" "}
-              <UiAttributes>
-                <a
-                  href="https://prince-newportfolio.vercel.app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-sm font-semibold text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
-                  aria-label="Prince’s portfolio (opens in a new tab)"
-                >
-                  Prince
-                </a>
-              </UiAttributes>
-            </p>
-            <img
-              src={imageUrl("/brand/prince-developer.jpg")}
-              alt="Prince"
-              width={48}
-              height={48}
-              loading="lazy"
-              decoding="async"
-              className="size-12 shrink-0 rounded-full border border-primary/20 object-cover object-top"
-            />
-          </div>
+        </div>
+        <div className="auth-credit flex items-center justify-center gap-2 text-muted-foreground">
+          <p>
+            Developed by{" "}
+            <UiAttributes>
+              <a
+                href="https://prince-newportfolio.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-sm font-semibold text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+                aria-label="Prince’s portfolio (opens in a new tab)"
+              >
+                Prince
+              </a>
+            </UiAttributes>
+          </p>
+          <img
+            src={imageUrl("/brand/prince-developer.jpg")}
+            alt="Prince"
+            width={48}
+            height={48}
+            loading="lazy"
+            decoding="async"
+            className="size-12 shrink-0 rounded-full border border-primary/20 object-cover object-top"
+          />
         </div>
       </div>
     </main>

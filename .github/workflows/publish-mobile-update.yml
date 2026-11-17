@@ -1,0 +1,48 @@
+name: Publish Just Pack It mobile update
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "just-mobile/**"
+      - ".github/workflows/publish-mobile-update.yml"
+  workflow_dispatch:
+
+jobs:
+  publish-preview-update:
+    name: Publish preview OTA update
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: just-mobile
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: just-mobile/package-lock.json
+
+      - name: Require Expo access token
+        run: |
+          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
+            echo "Missing EXPO_TOKEN. Add it in GitHub repository Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - name: Set up Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install mobile dependencies
+        run: npm ci
+
+      - name: Publish preview update
+        run: eas update --channel preview --environment preview --auto --non-interactive

@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Just Pack It",
+    "slug": "just-pack-it",
+    "scheme": "justpackit",
+    "plugins": [
+      "expo-router"
+    ],
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/just-pack-it-icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.princeraj.justpackit",
+      "adaptiveIcon": {
+        "backgroundColor": "#F7F1E4",
+        "foregroundImage": "./assets/just-pack-it-icon.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "d952500f-8128-4b94-97a9-b82d52d6c091"
+      }
+    },
+    "owner": "vickyyadav12t",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/d952500f-8128-4b94-97a9-b82d52d6c091"
+    }
+  }
+}

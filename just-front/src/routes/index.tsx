@@ -47,7 +47,6 @@ function Home() {
   const fresh = products.filter((p) => p.tags?.includes("fresh") || p.tags?.includes("new"));
   const essentials = products.filter((p) => p.tags?.includes("essential"));
   const bestsellers = products.filter((p) => p.tags?.includes("bestseller"));
-  const visibleCategories = categories.slice(0, 6);
 
   return (
     <StoreLayout>
@@ -55,17 +54,20 @@ function Home() {
         <section className="hero-market overflow-hidden" aria-labelledby="market-hero-title">
           <div className="hero-market-copy flex flex-col justify-center">
             <p className="eyebrow text-primary">
-              <MapPin className="size-4" aria-hidden />
-              <UiText>{area ? `Shopping in ${area.name}` : "Choose an area to shop nearby"}</UiText>
+              <UiText>{"Local shops. Real people."}</UiText>
             </p>
             <h1 id="market-hero-title" className="mt-3 font-display font-medium leading-[0.95]">
-              <UiText>{"Your neighbourhood,"}</UiText>
+              <UiText>{"Your market,"}</UiText>
               <br />
-              <UiText>{"ready when you are"}</UiText>
+              <UiText>{"now "}</UiText>
+              <em className="hero-script text-primary">
+                <UiText>{"at your door."}</UiText>
+              </em>
             </h1>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-foreground/85 md:text-lg">
               <UiText>
-                Choose a nearby shop, see what is available, and get your order packed with care.
+                From everyday essentials to your next favourite find. Shop your neighbourhood, all
+                in one place.
               </UiText>
             </p>
             <div className="hero-market-actions mt-7 flex flex-wrap items-center gap-4">
@@ -74,12 +76,18 @@ function Home() {
                 hash="shops-h"
                 className="inline-flex min-h-11 items-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:-translate-y-0.5 hover:bg-primary/90"
               >
-                <UiText>{"Browse nearby shops"}</UiText>
+                <UiText>{"Explore shops "}</UiText>
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
-              <span className="hero-market-note">
-                <UiText>Your bag stays organised shop by shop.</UiText>
+              <span className="max-w-52 border-l-2 border-citrus pl-3 text-caption text-muted-foreground">
+                <UiText>
+                  {area ? `Shopping in ${area.name}` : "Choose an area to see local shops."}
+                </UiText>
               </span>
+            </div>
+            <div className="home-hero-note">
+              <span aria-hidden="true">✳</span>
+              <UiText>Independent shops. One neighbourhood.</UiText>
             </div>
           </div>
           <figure className="hero-market-image overflow-hidden">
@@ -91,9 +99,13 @@ function Home() {
               height={1600}
               className="absolute inset-0 size-full object-cover object-center"
             />
-            <figcaption className="hero-market-caption">
-              <span>Neighbourhood first</span>
-              Orders are packed by the shop you choose
+            <div
+              className="absolute inset-0 bg-gradient-to-r from-primary/25 via-transparent to-transparent"
+              aria-hidden
+            />
+            <figcaption className="absolute bottom-5 left-5 max-w-52 bg-card/95 px-3 py-2 text-caption text-foreground shadow-lift">
+              <span className="eyebrow block text-primary">Neighbourhood first</span>
+              Orders are packed by the shop you choose.
             </figcaption>
           </figure>
         </section>
@@ -101,23 +113,19 @@ function Home() {
         <section className="market-section home-categories" aria-labelledby="cat-h">
           <div className="section-heading">
             <div>
-              <p className="eyebrow text-primary">Browse by category</p>
+              <p className="eyebrow text-primary">Browse the market</p>
               <h2 id="cat-h" className="font-display text-3xl md:text-4xl">
-                Start with what you need
+                What do you need today?
               </h2>
             </div>
-            <Link to="/categories" className="market-directory-link">
-              <Grid2X2 size={16} aria-hidden />
-              <UiText>Categories</UiText> ({categories.length})
-            </Link>
+            <span className="text-caption text-muted-foreground">
+              {categories.length} neighbourhood lanes
+            </span>
           </div>
           <UiAttributes>
             <ul className="category-ribbon no-scrollbar" aria-label="Marketplace categories">
-              {visibleCategories.map((category, index) => (
-                <li
-                  key={category.slug}
-                  className={index >= 3 ? "category-mobile-extra" : undefined}
-                >
+              {categories.map((category, index) => (
+                <li key={category.slug}>
                   <Link
                     to="/category/$slug"
                     params={{ slug: category.slug }}
@@ -133,16 +141,14 @@ function Home() {
                   </Link>
                 </li>
               ))}
-              {categories.length > visibleCategories.length && (
-                <li className="category-mobile-more">
-                  <Link to="/categories" className="category-tile category-tile-more">
-                    <Grid2X2 className="size-7" aria-hidden />
-                    <span className="category-tile-name">
-                      <UiText>More categories</UiText>
-                    </span>
-                  </Link>
-                </li>
-              )}
+              <li>
+                <Link to="/categories" className="category-tile category-tile-more">
+                  <Grid2X2 className="size-7" aria-hidden />
+                  <span className="category-tile-name">
+                    <UiText>{"More categories"}</UiText>
+                  </span>
+                </Link>
+              </li>
             </ul>
           </UiAttributes>
         </section>
@@ -151,9 +157,7 @@ function Home() {
           <div className="section-heading">
             <div>
               <h2 id="shops-h" className="font-display text-3xl md:text-4xl">
-                <UiText>
-                  {area ? `Nearby shops in ${area.name}` : "Nearby neighbourhood shops"}
-                </UiText>
+                <UiText>{area ? `Shops in ${area.name}` : "Your neighbourhood shops"}</UiText>
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Independent counters. One neighbourhood.

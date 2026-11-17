@@ -1,7 +1,7 @@
 import { UiText, UiAttributes } from "@/lib/i18n/Language";
 import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Settings, ShieldCheck, ChevronRight, Mail, Phone, Megaphone } from "lucide-react";
+import { ChevronRight, Clock, Mail, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import { platformSettings } from "@/services/platform-settings";
@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmAction } from "@/components/common/ConfirmAction";
 import { financeDate } from "@/lib/finance-date";
+import { inr } from "@/lib/image";
+import { DELIVERY_FEE } from "@/lib/pricing";
 import "@/styles/platform-settings.css";
 export function PlatformSettingsPage() {
   const q = useQuery({
@@ -24,29 +26,17 @@ export function PlatformSettingsPage() {
       <header className="platform-hero">
         <UiAttributes>
           <nav aria-label="Breadcrumb">
-            <UiText>{"OPERATIONS "}</UiText>
-            <ChevronRight size={13} />
-            <b>PLATFORM SETTINGS</b>
+            <UiText>Operations</UiText>
+            <ChevronRight aria-hidden="true" />
+            <span aria-current="page">
+              <UiText>Platform settings</UiText>
+            </span>
           </nav>
         </UiAttributes>
-        <div>
-          <section>
-            <h1>A considered local market.</h1>
-            <p>
-              Publish support details and a clear marketplace notice. Keep operational policy and
-              provider credentials under controlled configuration.
-            </p>
-          </section>
-          <aside>
-            <ShieldCheck />
-            <h2>
-              Useful controls.
-              <br />
-              Protected foundations.
-            </h2>
-            <p>Publishing changes information, not payment or delivery eligibility.</p>
-          </aside>
-        </div>
+        <h1>
+          <UiText>Platform settings</UiText>
+        </h1>
+        <p>Manage the support details and announcement buyers see on Just Pack It.</p>
       </header>
       {q.isPending ? (
         <UiAttributes>
@@ -151,18 +141,14 @@ function SettingsEditor({
     }
   };
   const c = data.configuration;
+  const hasNotice = draft.noticeEnabled && Boolean(draft.noticeText.trim());
+  const hasSupport = Boolean(draft.supportPhone || draft.supportEmail || draft.supportHours);
   return (
     <>
       <div className="platform-layout">
         <section className="platform-panel">
-          <h2>
-            <Settings />
-            Public marketplace information
-          </h2>
-          <p>
-            Blank contact fields stay hidden. These details are for customer support, not the sender
-            used for login OTPs.
-          </p>
+          <h2>Public marketplace information</h2>
+          <p>Blank contact fields stay hidden from buyers.</p>
           {data.version !== baseVersion && (
             <p role="alert">
               Settings changed elsewhere. Your draft is retained; copy it before reloading or
@@ -170,7 +156,7 @@ function SettingsEditor({
             </p>
           )}
           <form ref={form} onSubmit={(e) => e.preventDefault()}>
-            <fieldset disabled={busy || refreshing} className="space-y-4">
+            <fieldset disabled={busy || refreshing} className="platform-fields">
               <label>
                 Support email
                 <UiAttributes>
@@ -229,8 +215,8 @@ function SettingsEditor({
                 />
               </label>
               <p className="platform-note">
-                Informational text only. This does not close shops, pause checkout or override
-                availability.
+                This announcement is for information only. Shop availability and checkout follow
+                their existing rules.
               </p>
               <label>
                 Reason for publishing
@@ -282,8 +268,10 @@ function SettingsEditor({
               <p role="alert">{error} Copy your draft before reloading the latest settings.</p>
             )}
           </form>
-          <p className="platform-note">
-            Last saved: {financeDate(data.updatedAt)} (IST).{" "}
+          <p className="platform-save-state" role="status">
+            {data.updatedAt
+              ? `Last saved ${financeDate(data.updatedAt)} (IST).`
+              : "No publication recorded."}{" "}
             <UiText>{dirty ? "You have unpublished changes." : "No unpublished changes."}</UiText>
           </p>
           <UiAttributes>
@@ -315,45 +303,51 @@ function SettingsEditor({
             className="platform-panel platform-preview"
             aria-label="Public information preview"
           >
-            <h2>
-              <Megaphone />
-              Customer preview
-            </h2>
-            {draft.noticeEnabled && draft.noticeText ? (
-              <p className="platform-notice-preview">{draft.noticeText}</p>
-            ) : (
-              <p>No announcement published in this draft.</p>
-            )}
-            {draft.supportPhone && (
-              <p>
-                <Phone size={16} />
-                {draft.supportPhone}
+            <h2>Customer preview</h2>
+            <div className="platform-noticeboard">
+              <p className="platform-preview-status">
+                {stale
+                  ? "Draft · Publication unconfirmed"
+                  : dirty
+                    ? "Draft · Changes go live after publishing"
+                    : data.updatedAt
+                      ? "Published settings"
+                      : "Preview · Nothing published yet"}
               </p>
-            )}
-            {draft.supportEmail && (
-              <p className="break-all">
-                <Mail size={16} />
-                {draft.supportEmail}
+              <p className={hasNotice ? "platform-notice-preview" : "platform-preview-empty"}>
+                {hasNotice ? draft.noticeText : "No announcement to show"}
               </p>
-            )}
-            {draft.supportHours && <p>{draft.supportHours}</p>}
-            <small>
-              Preview only until confirmed publication. Storefront updates on refresh or its next
-              background check.
-            </small>
+              {hasSupport && (
+                <ul className="platform-preview-contacts" aria-label="Customer support details">
+                  {draft.supportPhone && (
+                    <li>
+                      <Phone aria-hidden="true" />
+                      {draft.supportPhone}
+                    </li>
+                  )}
+                  {draft.supportEmail && (
+                    <li>
+                      <Mail aria-hidden="true" />
+                      {draft.supportEmail}
+                    </li>
+                  )}
+                  {draft.supportHours && (
+                    <li>
+                      <Clock aria-hidden="true" />
+                      {draft.supportHours}
+                    </li>
+                  )}
+                </ul>
+              )}
+            </div>
+            <p>Buyers see published changes on refresh or the next background check.</p>
           </aside>
         </UiAttributes>
       </div>
       <section className="platform-panel">
-        <h2>
-          <ShieldCheck />
-          Deployment configuration
-        </h2>
-        <p>
-          Read-only configuration flags, not live provider or worker health. Secrets remain on the
-          server; deployment settings cannot be changed here.
-        </p>
-        <div className="platform-config-grid">
+        <h2>Deployment configuration</h2>
+        <p>Read-only settings from the backend. Live service health is checked separately.</p>
+        <dl className="platform-config">
           {[
             ["Cash on delivery", c.codEnabled ? "Enabled" : "Disabled"],
             ["Online payments", c.onlineEnabled ? `Enabled (${c.paymentMode})` : "Disabled"],
@@ -375,14 +369,14 @@ function SettingsEditor({
               c.paymentWorkerEnabled ? "Enabled flag; process not checked" : "Disabled flag",
             ],
           ].map(([label, value]) => (
-            <article key={label}>
-              <h3>
+            <div key={label}>
+              <dt>
                 <UiText>{label}</UiText>
-              </h3>
-              <p>{value}</p>
-            </article>
+              </dt>
+              <dd>{value}</dd>
+            </div>
           ))}
-        </div>
+        </dl>
       </section>
       <section className="platform-panel">
         <h2>Marketplace policies</h2>
@@ -396,8 +390,8 @@ function SettingsEditor({
             prices.
           </li>
           <li>
-            Delivery fee: shop-listed fee; seller delivery belongs to seller, platform delivery
-            belongs to platform.
+            Delivery fees: shops set and keep their own delivery fee. Just Pack It receives{" "}
+            {inr(DELIVERY_FEE.platform_delivery)} per shop order delivered by a platform rider.
           </li>
           <li>
             Account access: one active login session; role migrations require separate controlled

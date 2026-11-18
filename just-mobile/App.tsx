@@ -243,6 +243,10 @@ export default function App() {
         />
       }
       session={session}
+      onBag={() => {
+        setPicked(null);
+        setScreen("bag");
+      }}
       onAccount={() => setScreen("account")}
       onQuickSearch={(value) => {
         setQuery(value);
@@ -425,6 +429,7 @@ function Header({
 }
 function Home({
   header,
+  onBag,
   onQuickSearch,
   session,
   onAccount,
@@ -440,6 +445,7 @@ function Home({
   onClear,
 }: {
   header: ReactNode;
+  onBag: () => void;
   onQuickSearch: (query: string) => void;
   session: Session | null;
   onAccount: () => void;
@@ -503,6 +509,7 @@ function Home({
       ? categoryResult.items
       : []
     : products;
+  const categoryBagCount = bag.reduce((sum, line) => sum + line.quantity, 0);
   const loadMore = async () => {
     if (!area || !picked || !categoryResult?.cursor || loadingMore) return;
     const snapshot = categoryResult;
@@ -553,12 +560,139 @@ function Home({
       setShopsBusy(false);
     }
   };
+  const productResults = (
+    <>
+      {picked && categoryFailure?.key === categoryKey ? (
+        <State
+          title="Category could not load"
+          copy={categoryFailure.message}
+          action="Try again"
+          onAction={() => {
+            setCategoryFailure(null);
+            setCategoryAttempt((value) => value + 1);
+          }}
+        />
+      ) : picked && categoryResult?.key !== categoryKey ? (
+        <ActivityIndicator color={c.green} />
+      ) : categoryProducts.length ? (
+        <View style={s.grid}>
+          {categoryProducts.slice(0, picked ? undefined : 12).map((x) => (
+            <ProductCard
+              key={x.id}
+              item={x}
+              shopName={shops.find((shop) => shop.id === x.shopId)?.name}
+              bag={bag}
+              quantity={bag.find((line) => line.id === x.id)?.quantity ?? 0}
+              onAdd={onAdd}
+            />
+          ))}
+        </View>
+      ) : (
+        <Empty
+          copy={
+            picked
+              ? "No active products are available in this category"
+              : "No products are available in this area yet. Try another delivery area."
+          }
+        />
+      )}
+      {picked &&
+      categoryResult?.key === categoryKey &&
+      categoryResult.cursor ? (
+        <View style={{ padding: 16 }}>
+          {moreError === categoryKey ? (
+            <Text style={{ color: "#B3432B", marginBottom: 8 }}>
+              More products could not load. Try again.
+            </Text>
+          ) : null}
+          <Pressable
+            disabled={loadingMore}
+            onPress={() => void loadMore()}
+            style={s.secondary}
+          >
+            <Text style={s.secondaryText}>
+              {loadingMore ? "Loading…" : "Load more products"}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
+    </>
+  );
   return (
     <ScrollView
       contentContainerStyle={s.content}
       showsVerticalScrollIndicator={false}
     >
       {header}
+      {picked && (
+        <Modal visible animationType="slide" onRequestClose={onClear}>
+          <SafeAreaView style={s.safe}>
+            <View
+              style={{
+                padding: 20,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 16,
+              }}
+            >
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Back to Home"
+                onPress={onClear}
+                style={{ paddingVertical: 12, paddingRight: 8 }}
+              >
+                <Text style={s.back}>←</Text>
+              </Pressable>
+              <View style={{ flex: 1 }}>
+                <Text style={s.pageTitle}>
+                  {categories.find((item) => item.slug === picked)?.name ??
+                    "Category"}
+                </Text>
+                <Text style={s.pageCopy}>
+                  {area?.name} · Products in this category
+                </Text>
+              </View>
+            </View>
+            <ScrollView
+              contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 }}
+            >
+              {productResults}
+              {categoryResult?.key === categoryKey &&
+                categoryProducts.length === 0 && (
+                  <Pressable
+                    onPress={onClear}
+                    style={[s.secondary, { marginHorizontal: 20 }]}
+                  >
+                    <Text style={s.secondaryText}>Browse other categories</Text>
+                  </Pressable>
+                )}
+            </ScrollView>
+            {bag.length > 0 && (
+              <Pressable
+                accessibilityRole="button"
+                onPress={onBag}
+                style={{
+                  margin: 20,
+                  padding: 16,
+                  borderRadius: 12,
+                  backgroundColor: c.green,
+                }}
+              >
+                <Text
+                  style={{
+                    textAlign: "center",
+                    color: "#fff",
+                    fontWeight: "600",
+                  }}
+                >
+                  View bag · {categoryBagCount}{" "}
+                  {categoryBagCount === 1 ? "item" : "items"}
+                </Text>
+              </Pressable>
+            )}
+          </SafeAreaView>
+        </Modal>
+      )}
       <View testID="home-hero" style={s.referenceHero}>
         <View style={s.referenceHeroCopy}>
           <Text style={s.referenceEyebrow}>DISCOVER LOCAL. LOVE LOCAL.</Text>
@@ -730,14 +864,6 @@ function Home({
           );
         })}
       </View>
-      {picked ? (
-        <View style={s.filter}>
-          <Text style={s.filterText}>Showing one category</Text>
-          <Pressable onPress={onClear}>
-            <Text style={s.clear}>Clear filter</Text>
-          </Pressable>
-        </View>
-      ) : null}
       <Section
         title="Good shops. Close by."
         action="See all"
@@ -816,60 +942,7 @@ function Home({
           Local favourites, across your everyday.
         </Text>
       </View>
-      {picked && categoryFailure?.key === categoryKey ? (
-        <State
-          title="Category could not load"
-          copy={categoryFailure.message}
-          action="Try again"
-          onAction={() => {
-            setCategoryFailure(null);
-            setCategoryAttempt((value) => value + 1);
-          }}
-        />
-      ) : picked && categoryResult?.key !== categoryKey ? (
-        <ActivityIndicator color={c.green} />
-      ) : categoryProducts.length ? (
-        <View style={s.grid}>
-          {categoryProducts.slice(0, picked ? undefined : 12).map((x) => (
-            <ProductCard
-              key={x.id}
-              item={x}
-              shopName={shops.find((shop) => shop.id === x.shopId)?.name}
-              bag={bag}
-              quantity={bag.find((line) => line.id === x.id)?.quantity ?? 0}
-              onAdd={onAdd}
-            />
-          ))}
-        </View>
-      ) : (
-        <Empty
-          copy={
-            picked
-              ? "No active products are available in this category"
-              : "No products are available in this area yet. Try another delivery area."
-          }
-        />
-      )}
-      {picked &&
-      categoryResult?.key === categoryKey &&
-      categoryResult.cursor ? (
-        <View style={{ padding: 16 }}>
-          {moreError === categoryKey ? (
-            <Text style={{ color: "#B3432B", marginBottom: 8 }}>
-              More products could not load. Try again.
-            </Text>
-          ) : null}
-          <Pressable
-            disabled={loadingMore}
-            onPress={() => void loadMore()}
-            style={s.secondary}
-          >
-            <Text style={s.secondaryText}>
-              {loadingMore ? "Loading…" : "Load more products"}
-            </Text>
-          </Pressable>
-        </View>
-      ) : null}
+      {!picked && productResults}
       <BuyAgain
         onAdd={onAdd}
         key={session?.userId ?? "guest"}

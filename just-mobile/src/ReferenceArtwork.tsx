@@ -15,6 +15,7 @@ export function ReferenceArtwork({
   const scale = Math.max(size.width / w, size.height / h);
   return (
     <View
+      pointerEvents="none"
       onLayout={(event) => {
         const { width, height } = event.nativeEvent.layout;
         setSize((old) =>

@@ -77,9 +77,9 @@ export const marketApi = {
     if (!response.ok) throw new Error("Shop products could not load. Please retry.");
     return { items: asList<Product>(await response.json() as ListPayload<Product>, "shop products"), cursor: response.headers.get("X-Has-More") === "true" ? response.headers.get("X-Next-Cursor") : null };
   },
-  async categoryPage(areaId: string, slug: string, cursor?: string) {
+  async categoryPage(areaId: string, slug: string, cursor?: string, text?: string) {
     if (!apiUrl) throw new Error("Marketplace connection is missing");
-    const query = `area=${encodeURIComponent(areaId)}&category=${encodeURIComponent(slug)}&limit=24${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
+    const query = `area=${encodeURIComponent(areaId)}&category=${encodeURIComponent(slug)}&limit=24${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}${text?.trim() ? `&q=${encodeURIComponent(text.trim())}` : ""}`;
     const response = await fetchWithTimeout(`${apiUrl}/products?${query}`, { headers: { Accept: "application/json" } });
     if (!response.ok) throw new Error("Products could not load. Please retry.");
     return { items: asList<Product>(await response.json() as ListPayload<Product>, "products"), cursor: response.headers.get("X-Has-More") === "true" ? response.headers.get("X-Next-Cursor") : null };

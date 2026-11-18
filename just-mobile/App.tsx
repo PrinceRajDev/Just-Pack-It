@@ -10,7 +10,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -34,6 +33,7 @@ import { resolveImage } from "./src/images";
 import { MarketIcon, type MarketIconName } from "./src/MarketIcon";
 import { HomeNotifications, BuyAgain } from "./src/HomeExtras";
 import { ReferenceArtwork } from "./src/ReferenceArtwork";
+import { BuyerBrowse } from "./src/BuyerBrowse";
 
 type Screen =
   "home" | "browse" | "bag" | "shop" | "account" | "orders" | "checkout";
@@ -268,18 +268,32 @@ export default function App() {
       onClear={() => setPicked(null)}
     />
   ) : screen === "browse" ? (
-    <Browse
+    <BuyerBrowse
       areaId={area?.id}
-      onShop={(next) => {
-        setShop(next);
-        setScreen("shop");
-      }}
-      products={displayed}
-      bag={bag}
+      categories={categories}
+      hasBag={count > 0}
       query={query}
       setQuery={setQuery}
-      onBack={goHome}
-      onAdd={add}
+      renderProduct={(item) => (
+        <ProductCard
+          key={item.id}
+          item={item}
+          shopName={shops.find((shop) => shop.id === item.shopId)?.name}
+          bag={bag}
+          quantity={bag.find((line) => line.id === item.id)?.quantity ?? 0}
+          onAdd={add}
+        />
+      )}
+      renderShop={(item) => (
+        <ShopRow
+          key={item.id}
+          item={item}
+          onPress={() => {
+            setShop(item);
+            setScreen("shop");
+          }}
+        />
+      )}
     />
   ) : screen === "shop" && shop ? (
     <ShopPage
@@ -319,10 +333,14 @@ export default function App() {
     />
   );
   return (
-    <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
+    <SafeAreaView
+      testID="buyer-shell"
+      style={s.safe}
+      edges={["top", "left", "right", "bottom"]}
+    >
       <StatusBar style="dark" />
       <View style={s.app}>
-        {screen !== "home" && (
+        {screen !== "home" && screen !== "browse" && (
           <Header
             session={session}
             area={area}
@@ -959,216 +977,6 @@ function Home({
         )}
       />
     </ScrollView>
-  );
-}
-function Browse({
-  areaId,
-  onShop,
-  products,
-  bag,
-  query,
-  setQuery,
-  onBack,
-  onAdd,
-}: {
-  areaId?: string;
-  onShop: (shop: Shop) => void;
-  products: Product[];
-  bag: BagLine[];
-  query: string;
-  setQuery: (x: string) => void;
-  onBack: () => void;
-  onAdd: (x: Product) => void;
-}) {
-  const [result, setResult] = useState<{
-    products: Product[];
-    shops: Shop[];
-    productCursor: string | null;
-    shopCursor: string | null;
-    query: string;
-  } | null>(null);
-  const [failure, setFailure] = useState<string | null>(null);
-  const [retry, setRetry] = useState(0);
-  const [moreBusy, setMoreBusy] = useState(false);
-  const [moreFailed, setMoreFailed] = useState(false);
-  const moreLock = useRef(false);
-  useEffect(() => {
-    if (!areaId) return;
-    let active = true;
-    const timer = setTimeout(() => {
-      void marketApi
-        .search(areaId, query)
-        .then((data) => {
-          if (active) {
-            setResult({ ...data, query });
-            setFailure(null);
-          }
-        })
-        .catch((error: unknown) => {
-          if (active)
-            setFailure(
-              error instanceof Error ? error.message : "Search could not load",
-            );
-        });
-    }, 300);
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [areaId, query, retry]);
-  const pending = result?.query !== query;
-  const moreSearch = async (kind: "products" | "shops") => {
-    if (!areaId || !result || moreLock.current || result.query !== query)
-      return;
-    const cursor =
-      kind === "products" ? result.productCursor : result.shopCursor;
-    if (!cursor) return;
-    const snapshot = result;
-    moreLock.current = true;
-    setMoreBusy(true);
-    setMoreFailed(false);
-    try {
-      if (kind === "products") {
-        const page = await marketApi.searchProducts(areaId, query, cursor);
-        setResult((current) =>
-          current?.query === snapshot.query && current.productCursor === cursor
-            ? {
-                ...current,
-                productCursor: page.cursor,
-                products: [
-                  ...current.products,
-                  ...page.items.filter(
-                    (item) =>
-                      !current.products.some((old) => old.id === item.id),
-                  ),
-                ],
-              }
-            : current,
-        );
-      } else {
-        const page = await marketApi.searchShops(areaId, query, cursor);
-        setResult((current) =>
-          current?.query === snapshot.query && current.shopCursor === cursor
-            ? {
-                ...current,
-                shopCursor: page.cursor,
-                shops: [
-                  ...current.shops,
-                  ...page.items.filter(
-                    (item) => !current.shops.some((old) => old.id === item.id),
-                  ),
-                ],
-              }
-            : current,
-        );
-      }
-    } catch {
-      setMoreFailed(true);
-    } finally {
-      moreLock.current = false;
-      setMoreBusy(false);
-    }
-  };
-  return (
-    <View style={s.fill}>
-      <Title
-        title="Browse products"
-        copy="Search your neighbourhood catalogue"
-        onBack={onBack}
-      />
-      <View style={s.searchPage}>
-        <TextInput
-          autoFocus
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Try milk, bread or rice"
-          placeholderTextColor={c.muted}
-          style={s.searchInput}
-          returnKeyType="search"
-          clearButtonMode="while-editing"
-        />
-      </View>
-      <FlatList
-        data={pending || failure ? [] : (result?.products ?? products)}
-        ListFooterComponent={
-          !pending &&
-          !failure &&
-          (result?.productCursor || result?.shopCursor) ? (
-            <View>
-              {moreFailed ? (
-                <Text style={s.pageCopy}>
-                  More results could not load. Try again.
-                </Text>
-              ) : null}
-              {result.productCursor ? (
-                <Pressable
-                  disabled={moreBusy}
-                  style={s.secondary}
-                  onPress={() => void moreSearch("products")}
-                >
-                  <Text style={s.secondaryText}>
-                    {moreBusy ? "Loading…" : "More products"}
-                  </Text>
-                </Pressable>
-              ) : null}
-              {result.shopCursor ? (
-                <Pressable
-                  disabled={moreBusy}
-                  style={s.secondary}
-                  onPress={() => void moreSearch("shops")}
-                >
-                  <Text style={s.secondaryText}>
-                    {moreBusy ? "Loading…" : "More shops"}
-                  </Text>
-                </Pressable>
-              ) : null}
-            </View>
-          ) : undefined
-        }
-        keyExtractor={(x) => x.id}
-        numColumns={2}
-        columnWrapperStyle={s.gridRow}
-        contentContainerStyle={s.gridList}
-        ListHeaderComponent={
-          !pending && !failure && result?.shops.length ? (
-            <View style={{ gap: 8, marginBottom: 16 }}>
-              {result.shops.map((item) => (
-                <ShopRow
-                  key={item.id}
-                  item={item}
-                  onPress={() => onShop(item)}
-                />
-              ))}
-            </View>
-          ) : undefined
-        }
-        ListEmptyComponent={
-          failure ? (
-            <State
-              title="Search unavailable"
-              copy={failure}
-              action="Try again"
-              onAction={() => {
-                setFailure(null);
-                setRetry((value) => value + 1);
-              }}
-            />
-          ) : pending ? (
-            <ActivityIndicator color={c.green} />
-          ) : (
-            <Empty copy="No matching products found" />
-          )
-        }
-        renderItem={({ item }) => (
-          <ProductCard
-            item={item}
-            bag={bag}
-            quantity={bag.find((x) => x.id === item.id)?.quantity ?? 0}
-            onAdd={onAdd}
-          />
-        )}
-      />
-    </View>
   );
 }
 function ShopPage({

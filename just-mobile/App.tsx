@@ -576,7 +576,7 @@ function Home({
         </SafeAreaView>
       </Modal>
       <View style={{ flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 20, justifyContent: "space-between", rowGap: 20 }}>
-{[{slug:"fruits-vegetables",label:"Vegetables & Fruits"},{slug:"grocery-kirana",label:"Grocery"},{slug:"fashion",label:"Fashion"},{slug:"dairy-eggs",label:"Dairy & Eggs"},{slug:"electronics",label:"Electronics"},{slug:"stationery-books",label:"Stationery"},{slug:"personal-care-household",label:"Beauty & Personal Care"},{slug:"more",label:"More"}].map((entry) => { const item=categories.find((category)=>category.slug===entry.slug); return <Pressable key={entry.slug} onPress={()=> entry.slug==="more" ? setShowCategories(true) : item ? onChoose(item.slug) : onQuickSearch(entry.label)} style={{width:"23%"}}><View style={{height:64,borderRadius:12,overflow:"hidden",backgroundColor:c.pale,alignItems:"center",justifyContent:"center"}}>{item ? <CategoryPicture item={item} style={{width:"100%",height:"100%"}}/> : <MarketIcon name="browse"/>}</View><Text numberOfLines={2} style={{textAlign:"center",fontSize:10,lineHeight:14,marginTop:8,color:c.ink}}>{entry.label}</Text></Pressable>;})}
+{[{slug:"fruits-vegetables",label:"Vegetables & Fruits"},{slug:"grocery-kirana",label:"Grocery"},{slug:"fashion",label:"Fashion"},{slug:"dairy-eggs",label:"Dairy & Eggs"},{slug:"electronics",label:"Electronics"},{slug:"stationery-books",label:"Stationery"},{slug:"personal-care-household",label:"Beauty & Personal Care"},{slug:"more",label:"More"}].map((entry) => { const item=categories.find((category)=>category.slug===entry.slug); return <Pressable key={entry.slug} onPress={()=> entry.slug==="more" ? setShowCategories(true) : item ? onChoose(item.slug) : onQuickSearch(entry.label)} style={{width:"23%",minHeight:100}}><View style={{height:64,borderRadius:12,overflow:"hidden",backgroundColor:c.pale,alignItems:"center",justifyContent:"center"}}>{item ? <CategoryPicture item={item} style={{width:"100%",height:"100%"}}/> : <MarketIcon name="browse"/>}</View><Text numberOfLines={2} style={{textAlign:"center",fontSize:10,lineHeight:14,marginTop:8,minHeight:28,color:c.ink}}>{entry.label}</Text></Pressable>;})}
 </View>
       {picked ? (
         <View style={s.filter}>
@@ -1617,7 +1617,7 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   logo: { width: 44, height: 44, borderRadius: 10, marginRight: 8 },
-  brand: { color: c.green, fontSize: 24, lineHeight: 28, fontWeight: "600" },
+  brand: { color: c.green, fontSize: 22, lineHeight: 26, fontWeight: "600" },
   tagline: { color: c.secondary, marginTop: 2, fontSize: 10 },
   bagTop: {
     height: 36,
@@ -1645,7 +1645,7 @@ const s = StyleSheet.create({
   },
   location: {
     minHeight: 48,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     borderTopWidth: 0,
     borderTopColor: c.line,
     flexDirection: "row",
@@ -1661,7 +1661,7 @@ const s = StyleSheet.create({
   },
   pinText: { color: c.green, fontSize: 18 },
   locationLabel: { color: c.secondary, fontSize: 8 },
-  locationName: { color: c.ink, marginTop: 1, fontSize: 14, fontWeight: "600" },
+  locationName: { color: c.ink, marginTop: 2, fontSize: 13, fontWeight: "600" },
   change: { color: c.green, fontSize: 12, fontWeight: "600" },
   search: {
     height: 48,
@@ -1675,7 +1675,7 @@ const s = StyleSheet.create({
     backgroundColor: c.pale,
   },
   searchIcon: { color: c.secondary, marginRight: 10, fontSize: 22 },
-  searchText: { color: c.muted, fontSize: 12 },
+  searchText: { color: c.muted, fontSize: 12, flex: 1, flexShrink: 1 },
   content: {
     paddingBottom: 156,
     width: "100%",
@@ -1718,14 +1718,16 @@ const s = StyleSheet.create({
     backgroundColor: c.pale,
   },
   section: {
-    height: 44,
-    paddingHorizontal: 16,
-    marginTop: 16,
+    minHeight: 56,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginTop: 12,
+    gap: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  sectionTitle: { color: c.ink, fontSize: 20, fontWeight: "600", flex: 1 },
+  sectionTitle: { color: c.ink, fontSize: 20, lineHeight: 25, fontWeight: "600", flex: 1, flexShrink: 1 },
   sectionAction: { color: c.green, fontSize: 13, fontWeight: "600" },
   rail: { paddingHorizontal: 16, gap: 12 },
   category: {
@@ -1793,7 +1795,7 @@ const s = StyleSheet.create({
     lineHeight: 30,
   },
   grid: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
@@ -1802,7 +1804,7 @@ const s = StyleSheet.create({
   gridList: { padding: 16, paddingBottom: 108, gap: 12 },
   gridRow: { justifyContent: "space-between" },
   product: {
-    width: "48.4%",
+    width: "48%",
     minHeight: 232,
     padding: 8,
     borderWidth: 1,
@@ -1825,7 +1827,7 @@ const s = StyleSheet.create({
     backgroundColor: c.pale,
   },
   productName: {
-    minHeight: 38,
+    minHeight: 40,
     color: c.ink,
     marginTop: 10,
     fontSize: 13,
@@ -1946,7 +1948,7 @@ const s = StyleSheet.create({
   bagBar: {
     position: "absolute",
     right: 16,
-    bottom: 76,
+    bottom: 72,
     left: 16,
     minHeight: 56,
     paddingHorizontal: 16,

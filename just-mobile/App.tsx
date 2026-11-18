@@ -327,6 +327,7 @@ function Home({
   onClear: () => void;
 }) {
   const feature = categories[0];
+  const [showCategories, setShowCategories] = useState(false);
   return (
     <ScrollView
       contentContainerStyle={s.content}
@@ -354,10 +355,21 @@ function Home({
           </View>
         )}
       </View>
-      <Section title="Shop by category" action="Browse" onPress={onBrowse} />
+      <Section title="Shop by category" action="More" onPress={() => setShowCategories(true)} />
+      <Modal visible={showCategories} animationType="slide" onRequestClose={() => setShowCategories(false)}>
+        <SafeAreaView style={s.safe}>
+          <View style={{ padding: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <Text style={s.pageTitle}>All categories</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Close categories" onPress={() => setShowCategories(false)} style={{ padding: 12 }}><Text style={s.clear}>Close</Text></Pressable>
+          </View>
+          <ScrollView contentContainerStyle={{ padding: 16, gap: 12, flexDirection: "row", flexWrap: "wrap" }}>
+            {categories.map((item) => <CategoryCard key={item.slug} item={item} active={picked === item.slug} onPress={() => { setShowCategories(false); onChoose(item.slug); }} />)}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
       <FlatList
         horizontal
-        data={categories}
+        data={categories.slice(0, 6)}
         keyExtractor={(x) => x.slug}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={s.rail}

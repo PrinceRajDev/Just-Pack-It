@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { buyerApi, type BuyerOrder, type Session } from "./api";
 import { BuyerAddresses } from "./BuyerAddresses";
+import { BuyerOrderDetails } from "./BuyerOrderDetails";
 
 const c = {
   paper: "#F7F4EE",
@@ -143,6 +144,7 @@ export function BuyerOrders({
   back: () => void;
 }) {
   const [orders, setOrders] = useState<BuyerOrder[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">(
     session ? "loading" : "ready",
   );
@@ -156,6 +158,7 @@ export function BuyerOrders({
       })
       .catch(() => setState("error"));
   }, [session]);
+  if (session && selectedOrder) return <BuyerOrderDetails token={session.token} id={selectedOrder} back={() => setSelectedOrder(null)} />;
   if (!session)
     return (
       <View style={s.center}>
@@ -203,7 +206,7 @@ export function BuyerOrders({
         </View>
       }
       renderItem={({ item }) => (
-        <View style={s.order}>
+        <Pressable style={s.order} onPress={() => setSelectedOrder(item.id)}>
           <Text style={s.rowTitle}>Order {item.id.slice(0, 8)}</Text>
           <Text style={s.rowCopy}>
             {new Date(item.createdAt).toLocaleDateString("en-IN")} ·{" "}
@@ -212,7 +215,7 @@ export function BuyerOrders({
           <Text style={s.total}>
             ₹{(item.amountDue ?? item.total).toLocaleString("en-IN")}
           </Text>
-        </View>
+        </Pressable>
       )}
     />
   );

@@ -8,7 +8,7 @@ export type Address = { id: string; label: string; line1: string; locality: stri
 export type CheckoutLine = { productId: string; variantId?: string; qty: number };
 export type CheckoutReview = { checkoutAvailable: boolean; itemsSubtotal: number; deliveryTotal: number | null; grandTotal: number | null; paymentMethods: string[]; issues: { message: string }[]; lines: { issues: { message: string }[] }[]; shops: { shop: Shop; issues: { message: string }[] }[]; fulfilments: { shopId: string; listedFee: number | null; issues: { message: string }[] }[] };
 export type BuyerProfile = { name: string; phone: string; email?: string; emailVerified: boolean; version: number };
-export type BuyerOrder = { id: string; total: number; amountDue?: number; paymentStatus: string; createdAt: string; suborders?: { id: string; shopName?: string; status: string; total?: number }[] };
+export type BuyerOrder = { id: string; total: number; amountDue?: number; cancelledAmount?: number; paymentStatus: string; paymentMethod: string; createdAt: string; address: { label: string; line1: string; locality: string; city: string; pincode: string }; subOrders: { id: string; shopName: string; status: string; deliveryState?: string; amountDue: number; deliveryFee: number; cancelReason?: string; lines: { productId: string; variantId?: string; variantLabel?: string; name: string; unit: string; qty: number; price: number }[] }[] };
 
 type ListPayload<T> = T[] | { items?: T[] };
 const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
@@ -68,6 +68,7 @@ export const marketApi = {
 };
 
 export const buyerApi = {
+  order: (token: string, id: string) => request<BuyerOrder>(`/orders/${encodeURIComponent(id)}`, token),
   placeCod: (token: string, key: string, input: { areaId: string; addressId: string; addressVersion: number; expectedTotal: number; paymentMethod: "cod"; items: CheckoutLine[]; fulfilments: { shopId: string; method: "platform_delivery" }[] }) => request<BuyerOrder>("/orders", token, { method: "POST", headers: { "Idempotency-Key": key }, body: JSON.stringify(input) }),
   reviewCheckout: (token: string, areaId: string, address: Address, items: CheckoutLine[], shopIds: string[]) => request<CheckoutReview>("/checkout/review", token, { method: "POST", body: JSON.stringify({ areaId, addressId: address.id, addressVersion: address.version, items, fulfilments: shopIds.map((shopId) => ({ shopId, method: "platform_delivery" })) }) }),
   login: (phone: string, password: string) => request<Session>("/auth/login", undefined, { method: "POST", body: JSON.stringify({ phone, password }) }),

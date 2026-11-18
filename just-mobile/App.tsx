@@ -706,7 +706,7 @@ function Bag({
           contentContainerStyle={s.bagList}
           renderItem={({ item }) => (
             <View style={s.bagLine}>
-              <Thumb item={item} />
+              <Thumb item={item} compact />
               <View style={s.bagInfo}>
                 <Text numberOfLines={2} style={s.bagName}>
                   {item.name}
@@ -715,11 +715,11 @@ function Bag({
                 <Text style={s.price}>{money(item.price)}</Text>
               </View>
               <View style={s.stepper}>
-                <Pressable onPress={() => onChange(item.id, -1)}>
+                <Pressable accessibilityLabel={`Remove one ${item.name}`} hitSlop={8} onPress={() => onChange(item.id, -1)}>
                   <Text style={s.step}>−</Text>
                 </Pressable>
                 <Text style={s.stepCount}>{item.quantity}</Text>
-                <Pressable onPress={() => onChange(item.id, 1)}>
+                <Pressable accessibilityLabel={`Add one ${item.name}`} disabled={item.quantity >= item.stock} hitSlop={8} onPress={() => onChange(item.id, 1)}>
                   <Text style={s.step}>+</Text>
                 </Pressable>
               </View>
@@ -966,16 +966,16 @@ function ProductCard({
     </View>
   );
 }
-function Thumb({ item }: { item: Product }) {
+function Thumb({ item, compact = false }: { item: Product; compact?: boolean }) {
   const [failed, setFailed] = useState(false);
   return item.image && !failed ? (
     <Image
       source={{ uri: item.image }}
-      style={s.productImage}
+      style={[s.productImage, compact && { width: 64, height: 64, flexShrink: 0 }]}
       onError={() => setFailed(true)}
     />
   ) : (
-    <View style={s.productFallback}>
+    <View style={[s.productFallback, compact && { width: 64, height: 64, flexShrink: 0 }]}>
       <Text style={s.fallbackText}>{item.name.slice(0, 1)}</Text>
     </View>
   );

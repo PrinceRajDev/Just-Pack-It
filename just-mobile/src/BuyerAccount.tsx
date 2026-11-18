@@ -13,6 +13,7 @@ import {
 import { buyerApi, type BuyerOrder, type Session } from "./api";
 import { BuyerAddresses } from "./BuyerAddresses";
 import { BuyerOrderDetails } from "./BuyerOrderDetails";
+import { BuyerProfile } from "./BuyerProfile";
 
 const c = {
   paper: "#F7F4EE",
@@ -38,6 +39,7 @@ export function BuyerAccount({
   const [register, setRegister] = useState(false);
   const [busy, setBusy] = useState(false);
   const [addressesOpen, setAddressesOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const submit = async () => {
     setBusy(true);
     try {
@@ -57,12 +59,14 @@ export function BuyerAccount({
     }
   };
   if (session && addressesOpen) return <BuyerAddresses key={session.userId} token={session.token} back={() => setAddressesOpen(false)} />;
+  if (session && profileOpen) return <BuyerProfile key={session.userId} token={session.token} back={() => setProfileOpen(false)} onSaved={(updatedName) => save({ ...session, name: updatedName })} />;
   if (session)
     return (
       <ScrollView contentContainerStyle={s.page}>
         <Text style={s.kicker}>Buyer account</Text>
         <Text style={s.title}>{session.name}</Text>
         <Text style={s.copy}>Signed in securely on this device</Text>
+        <Pressable style={s.row} onPress={() => setProfileOpen(true)}><Text style={s.rowTitle}>Your profile</Text><Text style={s.rowCopy}>View account details and update your name</Text></Pressable>
         <Pressable style={s.row} onPress={() => setAddressesOpen(true)}><Text style={s.rowTitle}>Saved addresses</Text><Text style={s.rowCopy}>Add or update your delivery places</Text></Pressable>
         <Pressable style={s.row} onPress={openOrders}>
           <Text style={s.rowTitle}>Your orders</Text>

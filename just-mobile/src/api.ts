@@ -82,12 +82,14 @@ export const marketApi = {
 };
 
 export const buyerApi = {
+  registrationOptions: () => request<{ emailOtpRequired: boolean; emailOtpAvailable: boolean }>("/auth/registration-options"),
+  sendEmailOtp: (email: string) => request<{ challengeId: string; expiresAt: string; resendAfterSeconds: number }>("/auth/email-otp/send", undefined, { method: "POST", body: JSON.stringify({ email }) }),
   receiptCode: (token: string, orderId: string, subId: string, version: number, cod: boolean) => request<{ code: string; expiresAt: string; amount: number }>(`/orders/${encodeURIComponent(orderId)}/suborders/${encodeURIComponent(subId)}/receipt-code`, token, { method: "POST", body: JSON.stringify({ version, confirmReceived: true, ...(cod ? { confirmCashPaid: true } : {}) }) }),
   order: (token: string, id: string) => request<BuyerOrder>(`/orders/${encodeURIComponent(id)}`, token),
   placeCod: (token: string, key: string, input: { areaId: string; addressId: string; addressVersion: number; expectedTotal: number; paymentMethod: "cod"; items: CheckoutLine[]; fulfilments: { shopId: string; method: "platform_delivery" }[] }) => request<BuyerOrder>("/orders", token, { method: "POST", headers: { "Idempotency-Key": key }, body: JSON.stringify(input) }),
   reviewCheckout: (token: string, areaId: string, address: Address, items: CheckoutLine[], shopIds: string[]) => request<CheckoutReview>("/checkout/review", token, { method: "POST", body: JSON.stringify({ areaId, addressId: address.id, addressVersion: address.version, items, fulfilments: shopIds.map((shopId) => ({ shopId, method: "platform_delivery" })) }) }),
   login: (phone: string, password: string) => request<Session>("/auth/login", undefined, { method: "POST", body: JSON.stringify({ phone, password }) }),
-  register: (name: string, phone: string, password: string) => request<Session>("/auth/register", undefined, { method: "POST", body: JSON.stringify({ name, phone, password }) }),
+  register: (name: string, phone: string, password: string, proof?: { email: string; emailChallengeId: string; emailOtp: string }) => request<Session>("/auth/register", undefined, { method: "POST", body: JSON.stringify({ name, phone, password, ...proof }) }),
   me: (token: string) => request<Omit<Session, "token">>("/auth/me", token),
   logout: (token: string) => request<void>("/auth/logout", token, { method: "POST" }),
   profile: (token: string) => request<BuyerProfile>("/auth/profile", token),

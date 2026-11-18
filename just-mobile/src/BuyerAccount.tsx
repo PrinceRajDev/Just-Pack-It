@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -40,12 +40,33 @@ export function BuyerAccount({
   const [busy, setBusy] = useState(false);
   const [addressesOpen, setAddressesOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [options, setOptions] = useState<{ emailOtpRequired: boolean; emailOtpAvailable: boolean } | null>(null);
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [challenge, setChallenge] = useState<{ id: string; email: string; expiresAt: string; resendAt: number } | null>(null);
+  const [optionsError, setOptionsError] = useState(false);
+  const authLock = useRef(false);
+  useEffect(() => { let active = true; void buyerApi.registrationOptions().then((value) => { if (active) setOptions(value); }).catch(() => { if (active) setOptionsError(true); }); return () => { active = false; }; }, []);
+  const sendCode = async () => {
+    if (authLock.current) return;
+    if (challenge && Date.now() < challenge.resendAt) { Alert.alert("Please wait", "Wait before requesting another email code."); return; }
+    authLock.current = true; setBusy(true);
+    try { const address = email.trim().toLowerCase(); const result = await buyerApi.sendEmailOtp(address); setChallenge({ id: result.challengeId, email: address, expiresAt: result.expiresAt, resendAt: Date.now() + result.resendAfterSeconds * 1000 }); setOtp(""); Alert.alert("Check your email", "Enter the verification code sent to your inbox."); }
+    catch (reason) { Alert.alert("Could not send code", reason instanceof Error ? reason.message : "Please retry"); }
+    finally { authLock.current = false; setBusy(false); }
+  };
   const submit = async () => {
+    if (authLock.current) return;
+    authLock.current = true;
     setBusy(true);
     try {
+      const normalizedPhone = /^\d{10}$/.test(phone.trim()) ? `+91${phone.trim()}` : phone.trim();
+      if (register && (!options || (options.emailOtpRequired && !options.emailOtpAvailable))) throw new Error("Registration is unavailable. Please try again later.");
+      if (register && (name.trim().length < 2 || password.length < 12)) throw new Error("Enter your name and a password with at least 12 characters.");
+      if (register && options?.emailOtpRequired && (!challenge || challenge.email !== email.trim().toLowerCase() || Date.now() >= Date.parse(challenge.expiresAt) || !/^\d{6}$/.test(otp))) throw new Error("Request an email code and enter the valid 6-digit code before creating your account.");
       const next = register
-        ? await buyerApi.register(name.trim(), phone.trim(), password)
-        : await buyerApi.login(phone.trim(), password);
+        ? await buyerApi.register(name.trim(), normalizedPhone, password, options?.emailOtpRequired && challenge ? { email: challenge.email, emailChallengeId: challenge.id, emailOtp: otp } : undefined)
+        : await buyerApi.login(normalizedPhone, password);
       if (next.role !== "buyer")
         throw new Error("Use the matching workspace for this account.");
       await save(next);
@@ -55,6 +76,7 @@ export function BuyerAccount({
         error instanceof Error ? error.message : "Please try again",
       );
     } finally {
+      authLock.current = false;
       setBusy(false);
     }
   };
@@ -122,7 +144,7 @@ export function BuyerAccount({
         style={s.input}
       />
       <Pressable
-        disabled={busy}
+        disabled={busy || (register && (!options || (options.emailOtpRequired && !options.emailOtpAvailable)))}
         style={s.primary}
         onPress={() => void submit()}
       >
@@ -130,7 +152,9 @@ export function BuyerAccount({
           {busy ? "Please wait" : register ? "Create account" : "Sign in"}
         </Text>
       </Pressable>
-      <Pressable onPress={() => setRegister((old) => !old)}>
+      {register && optionsError ? <Text style={s.copy}>Registration settings could not load. Reopen Account to retry.</Text> : null}
+      {register && options?.emailOtpRequired ? <View><Text style={s.copy}>Verify your email to create an account</Text><TextInput editable={!busy} accessibilityLabel="Email" value={email} onChangeText={(value) => { setEmail(value); setChallenge(null); setOtp(""); }} autoCapitalize="none" keyboardType="email-address" placeholder="Email address" style={s.input} /><Pressable disabled={busy || !options.emailOtpAvailable} onPress={() => void sendCode()} style={s.signout}><Text style={s.signoutText}>{challenge ? "Resend email code" : "Send email code"}</Text></Pressable>{challenge ? <TextInput editable={!busy} accessibilityLabel="Email verification code" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} placeholder="6-digit email code" style={s.input} /> : null}{!options.emailOtpAvailable ? <Text style={s.copy}>Email verification is temporarily unavailable</Text> : null}</View> : null}
+      <Pressable disabled={busy} onPress={() => setRegister((old) => !old)}>
         <Text style={s.switch}>
           {register
             ? "Already have an account? Sign in"

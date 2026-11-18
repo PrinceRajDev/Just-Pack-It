@@ -1,6 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import * as SecureStore from "expo-secure-store";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -632,12 +632,23 @@ function ShopPage({
 }) {
   const [catalogue, setCatalogue] = useState<Product[] | null>(null);
   const [catalogueError, setCatalogueError] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [moreBusy, setMoreBusy] = useState(false);
+  const [moreError, setMoreError] = useState(false);
+  const pageLock = useRef(false);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
-    void marketApi.shopProducts(shop.id).then((items) => { if (active) setCatalogue(items); }).catch((error: unknown) => { if (active) setCatalogueError(error instanceof Error ? error.message : "Products could not load"); });
+    void marketApi.shopPage(shop.id).then((page) => { if (active) { setCatalogue(page.items); setNextCursor(page.cursor); } }).catch((error: unknown) => { if (active) setCatalogueError(error instanceof Error ? error.message : "Products could not load"); });
     return () => { active = false; };
   }, [shop.id, attempt]);
+  const more = async () => {
+    if (!nextCursor || pageLock.current) return;
+    pageLock.current = true; setMoreBusy(true); setMoreError(false);
+    try { const page = await marketApi.shopPage(shop.id, nextCursor); setCatalogue((old) => [...(old ?? []), ...page.items.filter((item) => !old?.some((existing) => existing.id === item.id))]); setNextCursor(page.cursor); }
+    catch { setMoreError(true); }
+    finally { pageLock.current = false; setMoreBusy(false); }
+  };
   return (
     <View style={s.fill}>
       <Title
@@ -647,6 +658,7 @@ function ShopPage({
       />
       <FlatList
         data={catalogue ?? []}
+        ListFooterComponent={nextCursor ? <View>{moreError ? <Text style={s.pageCopy}>More products could not load. Please retry.</Text> : null}<Pressable disabled={moreBusy} style={s.secondary} onPress={() => void more()}><Text style={s.secondaryText}>{moreBusy ? "Loading…" : "Load more products"}</Text></Pressable></View> : undefined}
         keyExtractor={(x) => x.id}
         numColumns={2}
         columnWrapperStyle={s.gridRow}

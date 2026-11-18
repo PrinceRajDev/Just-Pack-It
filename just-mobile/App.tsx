@@ -385,16 +385,16 @@ function Header({
           <Text style={s.pinText}>⌖</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={s.locationLabel}>Delivering to</Text>
+          <Text style={s.locationLabel}>DELIVERING TO</Text>
           <Text numberOfLines={1} style={s.locationName}>
-            {area?.name ?? "Choose area"} ⌄
+            {area ? `${area.name}, ${area.city}` : "Choose area"}  ⌄
           </Text>
         </View>
         <Text style={s.change}>Change</Text>
       </Pressable>
       <Pressable onPress={onBrowse} style={s.search}>
         <MarketIcon name="search" />
-        <Text style={s.searchText}>Search products and shops</Text>
+        <Text style={s.searchText}>Search products, shops & brands</Text>
       </Pressable>
     </View>
   );
@@ -695,6 +695,7 @@ function Home({
         </View>
       ) : null}
       <BuyAgain
+        onAdd={onAdd}
         key={session?.userId ?? "guest"}
         session={session}
         onAccount={onAccount}
@@ -1325,135 +1326,12 @@ function ShopRow({ item, onPress }: { item: Shop; onPress: () => void }) {
     </Pressable>
   );
 }
-function ShopPreview({
-  item,
-  onPress,
-  scope,
-}: {
-  item: Shop;
-  onPress: () => void;
-  scope: string;
-}) {
-  const [failed, setFailed] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const saveKey = `jpi.shop.saved.${scope}.${item.id}`;
-  useEffect(() => {
-    let active = true;
-    void SecureStore.getItemAsync(saveKey)
-      .then((value) => {
-        if (active) setSaved(value === "true");
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [saveKey]);
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`View ${item.name}`}
-      onPress={onPress}
-      style={{
-        width: "100%",
-        borderRadius: 20,
-        padding: 6,
-        backgroundColor: c.card,
-        borderWidth: 1,
-        borderColor: c.line,
-      }}
-    >
-      <Pressable
-        disabled={saving}
-        accessibilityLabel={saved ? `Unsave ${item.name}` : `Save ${item.name}`}
-        onPress={(event) => {
-          event.stopPropagation();
-          setSaving(true);
-          void SecureStore.setItemAsync(saveKey, String(!saved))
-            .then(() => setSaved(!saved))
-            .catch(() => undefined)
-            .finally(() => setSaving(false));
-        }}
-        style={{
-          position: "absolute",
-          zIndex: 2,
-          top: 12,
-          right: 12,
-          borderRadius: 16,
-          paddingHorizontal: 10,
-          paddingVertical: 8,
-          backgroundColor: c.card,
-        }}
-      >
-        <Text style={{ color: c.green, fontSize: 12, fontWeight: "600" }}>
-          {saved ? "Saved" : "Save"}
-        </Text>
-      </Pressable>
-      {resolveImage(item.coverImage) && !failed ? (
-        <Image
-          source={{ uri: resolveImage(item.coverImage)! }}
-          onError={() => setFailed(true)}
-          style={{ width: "100%", height: 96, borderRadius: 14 }}
-        />
-      ) : (
-        <View
-          style={{
-            height: 120,
-            backgroundColor: c.pale,
-            borderRadius: 14,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Text style={s.fallbackText}>
-            {item.initials || item.name.slice(0, 1)}
-          </Text>
-        </View>
-      )}
-      <View style={{ padding: 10, gap: 8 }}>
-        <Text
-          numberOfLines={2}
-          style={{
-            color: c.ink,
-            fontSize: 17,
-            lineHeight: 22,
-            fontWeight: "600",
-            minHeight: 44,
-          }}
-        >
-          {item.name}
-        </Text>
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 8,
-          }}
-        >
-          <Text
-            numberOfLines={1}
-            style={{ color: c.secondary, flex: 1, fontSize: 12 }}
-          >
-            {item.locality}
-          </Text>
-          <Text
-            style={{
-              paddingHorizontal: 8,
-              paddingVertical: 4,
-              borderRadius: 8,
-              backgroundColor: item.isOpen ? c.pale : "#FBE8DF",
-              color: item.isOpen ? c.green : "#A63826",
-              fontSize: 12,
-              fontWeight: "600",
-            }}
-          >
-            {item.isOpen ? "Open" : "Closed"}
-          </Text>
-        </View>
-      </View>
-    </Pressable>
-  );
+function ShopPreview({item,onPress}:{item:Shop;onPress:()=>void;scope:string}) {
+const [failed,setFailed]=useState(false);
+return <Pressable onPress={onPress} accessibilityRole="button" style={{width:"100%",borderRadius:16,overflow:"hidden",backgroundColor:"#fff"}}>
+{resolveImage(item.coverImage)&&!failed?<Image source={{uri:resolveImage(item.coverImage)!}} onError={()=>setFailed(true)} style={{width:"100%",height:98}}/>:<View style={{height:98,backgroundColor:c.pale,alignItems:"center",justifyContent:"center"}}><Text style={s.fallbackText}>{item.initials||item.name.slice(0,1)}</Text></View>}
+<Text style={{position:"absolute",top:8,left:8,paddingHorizontal:8,paddingVertical:5,borderRadius:6,backgroundColor:c.pale,color:c.green,fontSize:9}}>{item.isOpen?"OPEN":"CLOSED"}</Text>
+<View style={{padding:12,gap:6}}><Text numberOfLines={1} style={{fontSize:14,fontWeight:"600",color:c.ink}}>{item.name}</Text><Text numberOfLines={1} style={{fontSize:11,color:c.secondary}}>{item.tagline||item.locality}</Text><Text style={{fontSize:11,color:c.green,marginTop:4}}>{item.isOpen?"Open now":"Currently closed"}</Text><View style={{height:30,borderRadius:10,backgroundColor:c.pale,alignItems:"center",justifyContent:"center",marginTop:2}}><Text style={{fontSize:12,fontWeight:"600",color:c.green}}>View Shop</Text></View></View></Pressable>;
 }
 function ProductCard({
   fullWidth = false,
@@ -1727,7 +1605,7 @@ const s = StyleSheet.create({
   },
   top: {
     height: 64,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -1738,7 +1616,7 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  logo: { width: 40, height: 40, borderRadius: 10, marginRight: 8 },
+  logo: { width: 44, height: 44, borderRadius: 10, marginRight: 8 },
   brand: { color: c.green, fontSize: 24, lineHeight: 28, fontWeight: "600" },
   tagline: { color: c.secondary, marginTop: 2, fontSize: 10 },
   bagTop: {
@@ -1766,9 +1644,9 @@ const s = StyleSheet.create({
     lineHeight: 18,
   },
   location: {
-    minHeight: 52,
+    minHeight: 48,
     paddingHorizontal: 16,
-    borderTopWidth: 1,
+    borderTopWidth: 0,
     borderTopColor: c.line,
     flexDirection: "row",
     alignItems: "center",
@@ -1782,22 +1660,22 @@ const s = StyleSheet.create({
     backgroundColor: c.pale,
   },
   pinText: { color: c.green, fontSize: 18 },
-  locationLabel: { color: c.secondary, fontSize: 11 },
+  locationLabel: { color: c.secondary, fontSize: 8 },
   locationName: { color: c.ink, marginTop: 1, fontSize: 14, fontWeight: "600" },
   change: { color: c.green, fontSize: 12, fontWeight: "600" },
   search: {
     height: 48,
     paddingHorizontal: 14,
-    marginHorizontal: 16,
-    marginBottom: 12,
-    borderRadius: 24,
+    marginHorizontal: 20,
+    marginBottom: 0,
+    borderRadius: 14,
     gap: 12,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: c.pale,
   },
   searchIcon: { color: c.secondary, marginRight: 10, fontSize: 22 },
-  searchText: { color: c.muted, fontSize: 15 },
+  searchText: { color: c.muted, fontSize: 12 },
   content: {
     paddingBottom: 156,
     width: "100%",
@@ -1847,7 +1725,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  sectionTitle: { color: c.green, fontSize: 21, fontWeight: "600", flex: 1 },
+  sectionTitle: { color: c.ink, fontSize: 20, fontWeight: "600", flex: 1 },
   sectionAction: { color: c.green, fontSize: 13, fontWeight: "600" },
   rail: { paddingHorizontal: 16, gap: 12 },
   category: {
@@ -1925,7 +1803,7 @@ const s = StyleSheet.create({
   gridRow: { justifyContent: "space-between" },
   product: {
     width: "48.4%",
-    minHeight: 240,
+    minHeight: 232,
     padding: 8,
     borderWidth: 1,
     borderColor: c.line,
@@ -2082,8 +1960,8 @@ const s = StyleSheet.create({
   bagBarCopy: { color: "#D9E4D6", marginTop: 2, fontSize: 11 },
   bagBarAction: { color: c.lime, fontSize: 13, fontWeight: "600" },
   nav: {
-    height: 80,
-    paddingHorizontal: 16,
+    height: 64,
+    paddingHorizontal: 12,
     borderTopWidth: 1,
     borderTopColor: c.line,
     flexDirection: "row",
@@ -2092,8 +1970,8 @@ const s = StyleSheet.create({
     backgroundColor: c.card,
   },
   navButton: {
-    height: 60,
-    gap: 6,
+    height: 48,
+    gap: 4,
     flex: 1,
     minWidth: 0,
     paddingHorizontal: 4,
@@ -2102,7 +1980,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   navActive: { backgroundColor: c.pale },
-  navText: { color: c.secondary, fontSize: 13, fontWeight: "500" },
+  navText: { color: c.secondary, fontSize: 10, fontWeight: "500" },
   navTextActive: { color: c.green, fontWeight: "600" },
   state: {
     flex: 1,

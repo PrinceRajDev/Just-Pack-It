@@ -97,12 +97,15 @@ export function HomeNotifications({ session }: { session: Session | null }) {
 export function BuyAgain({
   session,
   renderProduct,
+  onAdd,
   onAccount,
 }: {
   session: Session | null;
   renderProduct: (product: Product) => ReactNode;
+  onAdd: (product: Product) => void;
   onAccount: () => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [done, setDone] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -137,52 +140,13 @@ export function BuyAgain({
       .finally(() => {
         if (active) setDone(true);
       });
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [session]);
-  return (
-    <View
-      style={{
-        margin: 16,
-        padding: 16,
-        borderRadius: 20,
-        backgroundColor: "#EAF0D9",
-      }}
-    >
-      <View style={{ minHeight: 96, justifyContent: "center" }}><View style={{ width: "58%", zIndex: 1 }}><Text style={{ fontSize: 23, lineHeight: 27, fontWeight: "600", color: "#07552F" }}>Buy Again<Text style={{ color: "#202820" }}>{"\n"}in One Tap</Text></Text><Text style={{ marginTop: 8, color: "#202820", fontSize: 12 }}>Your frequently bought items</Text></View><Image source={require("../assets/buy-again-reference.png")} style={{ position: "absolute", right: -12, width: "52%", height: 120, resizeMode: "contain" }} /></View>
-      {!session ? (
-        <Pressable onPress={onAccount}>
-          <Text
-            style={{ paddingVertical: 16, color: "#07552F", fontWeight: "600" }}
-          >
-            Sign in to see your past purchases →
-          </Text>
-        </Pressable>
-      ) : !done ? (
-        <ActivityIndicator style={{ marginTop: 16 }} color="#07552F" />
-      ) : products.length ? (
-        <View
-          style={{
-            flexDirection: "row",
-            flexWrap: "wrap",
-            gap: 8,
-            marginTop: 16,
-          }}
-        >
-          {products.map((product) => (
-            <View key={product.id} style={{ width: "48%" }}>
-              {renderProduct(product)}
-            </View>
-          ))}
-        </View>
-      ) : (
-        <Text style={{ marginTop: 16, color: "#5E554A", lineHeight: 20 }}>
-          {failed
-            ? "Purchase history could not load. Your orders are available from the Orders tab."
-            : "Your recent purchases will appear here when they are available to buy again."}
-        </Text>
-      )}
-    </View>
-  );
+  const product=products[0];
+return <View style={{margin:20,marginTop:28,padding:14,borderRadius:16,backgroundColor:"#EAF0D9"}}>
+<View style={{flexDirection:"row",alignItems:"center",gap:10}}><MarketIcon name="bag"/><Text style={{fontSize:18,fontWeight:"600",color:"#07552F",flex:1}}>Buy Again</Text><Pressable onPress={()=>setExpanded(!expanded)} accessibilityLabel="Show recent purchases"><Text style={{fontSize:20,color:"#07552F"}}>→</Text></Pressable></View>
+<Text style={{fontSize:11,color:"#687161",marginTop:6}}>Your favourites, one tap away</Text>
+{!session?<Pressable onPress={onAccount}><Text style={{fontSize:12,color:"#07552F",marginTop:16}}>Sign in to see your purchases →</Text></Pressable>:!done?<ActivityIndicator color="#07552F" style={{marginTop:16}}/>:product?<View style={{flexDirection:"row",alignItems:"center",gap:10,marginTop:16}}>
+<Image source={{uri:product.image}} style={{width:40,height:40,borderRadius:8,backgroundColor:"#FAF8F1"}}/><View style={{flex:1}}><Text numberOfLines={1} style={{fontSize:11,fontWeight:"600"}}>{product.name}</Text><Text style={{fontSize:10,color:"#687161",marginTop:4}}>{product.unit}</Text></View><Text style={{fontSize:12,color:"#07552F",fontWeight:"600"}}>₹{product.price.toLocaleString("en-IN")}</Text><Pressable disabled={product.stock<=0} onPress={()=>product.variants?.length?setExpanded(true):onAdd(product)} style={{padding:8}}><Text style={{fontSize:11,color:"#07552F",fontWeight:"600"}}>{product.stock<=0?"Out":"+ Add"}</Text></Pressable></View>:<Text style={{fontSize:12,lineHeight:18,color:"#687161",marginTop:16}}>{failed?"Purchase history could not load":"Your purchases will appear here"}</Text>}
+{expanded?products.map((item)=><View key={item.id} style={{marginTop:12}}>{renderProduct(item)}</View>):null}</View>;
 }

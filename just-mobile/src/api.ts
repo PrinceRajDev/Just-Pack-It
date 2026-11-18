@@ -82,6 +82,8 @@ export const marketApi = {
 };
 
 export const buyerApi = {
+  recoveryCode: (email: string) => request<{ challengeId: string; expiresAt: string; resendAfterSeconds: number }>("/auth/password-recovery/request", undefined, { method: "POST", body: JSON.stringify({ email }) }),
+  resetPassword: (input: { email: string; emailChallengeId: string; emailOtp: string; newPassword: string }) => request<void>("/auth/password-recovery/reset", undefined, { method: "POST", body: JSON.stringify(input) }),
   registrationOptions: () => request<{ emailOtpRequired: boolean; emailOtpAvailable: boolean }>("/auth/registration-options"),
   sendEmailOtp: (email: string) => request<{ challengeId: string; expiresAt: string; resendAfterSeconds: number }>("/auth/email-otp/send", undefined, { method: "POST", body: JSON.stringify({ email }) }),
   receiptCode: (token: string, orderId: string, subId: string, version: number, cod: boolean) => request<{ code: string; expiresAt: string; amount: number }>(`/orders/${encodeURIComponent(orderId)}/suborders/${encodeURIComponent(subId)}/receipt-code`, token, { method: "POST", body: JSON.stringify({ version, confirmReceived: true, ...(cod ? { confirmCashPaid: true } : {}) }) }),

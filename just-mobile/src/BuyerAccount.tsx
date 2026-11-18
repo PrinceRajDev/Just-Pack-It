@@ -14,6 +14,7 @@ import { buyerApi, type BuyerOrder, type Session } from "./api";
 import { BuyerAddresses } from "./BuyerAddresses";
 import { BuyerOrderDetails } from "./BuyerOrderDetails";
 import { BuyerProfile } from "./BuyerProfile";
+import { BuyerRecovery } from "./BuyerRecovery";
 
 const c = {
   paper: "#F7F4EE",
@@ -40,6 +41,7 @@ export function BuyerAccount({
   const [busy, setBusy] = useState(false);
   const [addressesOpen, setAddressesOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [recoveryOpen, setRecoveryOpen] = useState(false);
   const [options, setOptions] = useState<{ emailOtpRequired: boolean; emailOtpAvailable: boolean } | null>(null);
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -81,6 +83,7 @@ export function BuyerAccount({
     }
   };
   if (session && addressesOpen) return <BuyerAddresses key={session.userId} token={session.token} back={() => setAddressesOpen(false)} />;
+  if (!session && recoveryOpen) return <BuyerRecovery back={() => { setPassword(""); setRecoveryOpen(false); }} />;
   if (session && profileOpen) return <BuyerProfile key={session.userId} token={session.token} back={() => setProfileOpen(false)} onSaved={(updatedName) => save({ ...session, name: updatedName })} />;
   if (session)
     return (
@@ -154,6 +157,7 @@ export function BuyerAccount({
       </Pressable>
       {register && optionsError ? <Text style={s.copy}>Registration settings could not load. Reopen Account to retry.</Text> : null}
       {register && options?.emailOtpRequired ? <View><Text style={s.copy}>Verify your email to create an account</Text><TextInput editable={!busy} accessibilityLabel="Email" value={email} onChangeText={(value) => { setEmail(value); setChallenge(null); setOtp(""); }} autoCapitalize="none" keyboardType="email-address" placeholder="Email address" style={s.input} /><Pressable disabled={busy || !options.emailOtpAvailable} onPress={() => void sendCode()} style={s.signout}><Text style={s.signoutText}>{challenge ? "Resend email code" : "Send email code"}</Text></Pressable>{challenge ? <TextInput editable={!busy} accessibilityLabel="Email verification code" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} placeholder="6-digit email code" style={s.input} /> : null}{!options.emailOtpAvailable ? <Text style={s.copy}>Email verification is temporarily unavailable</Text> : null}</View> : null}
+      {!register ? <Pressable disabled={busy} onPress={() => setRecoveryOpen(true)}><Text style={s.switch}>Forgot password?</Text></Pressable> : null}
       <Pressable disabled={busy} onPress={() => setRegister((old) => !old)}>
         <Text style={s.switch}>
           {register

@@ -1,0 +1,11 @@
+# Shop Details reference implementation
+
+Scope: Shop Details only. Home and Browse components and their appearance are preserved. Shop navigation hides the shared header, five-tab nav and old floating bag overlay on this screen, matching the supplied reference. Back remembers Home/Browse as the entry point. Existing Product Details, variants, auth and bag remain in use.
+
+The cover (156px), overlapping 120px information card, 42px shop search, horizontal 30px filter pills, section heading, two-column 169 × 153px cards at 390px, and 56px sticky cart follow the screenshot. Photos, shop names, descriptions, opening information, products and prices come from existing public APIs. Current live shops differ from the sample greengrocer and each has only one product; no sample tomatoes/bananas/rating/distance are inserted. Optional rating/distance are displayed only if provided.
+
+The full paginated shop catalogue is loaded before client-side search/category filtering and sorting, so these actions cover more than the first page. Category pills are derived from actual product category slugs. The sort sheet offers recommended, ascending/descending price, name and in-stock-only. Compact non-variant cards use the existing shared stock-limited add/quantity functions; zero quantity returns to Add. Existing variant selection remains in Product Details.
+
+No server wishlist API exists. The heart saves a shop preference in the existing device storage, scoped by guest/account and shop ID. Native storage is encrypted; this is not described as server-synced. Storage errors are visible and retryable.
+
+Validation: `scripts/check-shop-reference.cjs` navigates Browse → Shops → real pet shop using a fresh public shop-catalogue snapshot through the browser test relay. It verifies favourite persistence/removal, search/no-match, category selection, sort/stock controls, unchanged Product Details, Add/increment/decrement/zero, dynamic ₹50/₹100 totals, sticky cart, Bag navigation and 360/375/390/430px overflow/safe-area checks. Screenshots in ignored `qa/shop-reference/` were visually compared against the reference. Browser QA simulates the reference's native safe-area inset; no fake OS status bar is shipped. Physical-device and checkout verification are not claimed.

@@ -1,6 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import * as SecureStore from "./src/deviceStorage";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -34,6 +34,7 @@ import { MarketIcon, type MarketIconName } from "./src/MarketIcon";
 import { HomeNotifications, BuyAgain } from "./src/HomeExtras";
 import { ReferenceArtwork } from "./src/ReferenceArtwork";
 import { BuyerBrowse } from "./src/BuyerBrowse";
+import { BuyerShopPage } from "./src/BuyerShopPage";
 
 type Screen =
   "home" | "browse" | "bag" | "shop" | "account" | "orders" | "checkout";
@@ -65,6 +66,7 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [picked, setPicked] = useState<string | null>(null);
   const [shop, setShop] = useState<Shop | null>(null);
+  const [shopOrigin, setShopOrigin] = useState<"home" | "browse">("home");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [picker, setPicker] = useState(false);
@@ -84,7 +86,8 @@ export default function App() {
       goHome();
       return true;
     }
-    if (screen === "checkout") setScreen("bag");
+    if (screen === "shop" && shopOrigin === "browse") setScreen("browse");
+    else if (screen === "checkout") setScreen("bag");
     else if (screen === "orders") setScreen("account");
     else goHome();
     return true;
@@ -261,6 +264,7 @@ export default function App() {
       onChoose={choose}
       onBrowse={() => setScreen("browse")}
       onShop={(x) => {
+        setShopOrigin("home");
         setShop(x);
         setScreen("shop");
       }}
@@ -289,6 +293,7 @@ export default function App() {
           key={item.id}
           item={item}
           onPress={() => {
+            setShopOrigin("browse");
             setShop(item);
             setScreen("shop");
           }}
@@ -296,12 +301,26 @@ export default function App() {
       )}
     />
   ) : screen === "shop" && shop ? (
-    <ShopPage
+    <BuyerShopPage
+      key={shop.id}
       shop={shop}
-      products={products.filter((x) => x.shopId === shop.id)}
+      categories={categories}
+      userId={session?.userId}
       bag={bag}
-      onBack={goHome}
-      onAdd={add}
+      onBack={() => (shopOrigin === "home" ? goHome() : setScreen("browse"))}
+      onBag={() => setScreen("bag")}
+      renderProduct={(item, cardWidth) => (
+        <ProductCard
+          key={item.id}
+          item={item}
+          compact
+          cardWidth={cardWidth}
+          bag={bag}
+          quantity={bag.find((line) => line.id === item.id)?.quantity ?? 0}
+          onAdd={add}
+          onQuantity={quantity}
+        />
+      )}
     />
   ) : screen === "account" ? (
     <BuyerAccount
@@ -340,7 +359,7 @@ export default function App() {
     >
       <StatusBar style="dark" />
       <View style={s.app}>
-        {screen !== "home" && screen !== "browse" && (
+        {screen !== "home" && screen !== "browse" && screen !== "shop" && (
           <Header
             session={session}
             area={area}
@@ -351,8 +370,7 @@ export default function App() {
           />
         )}
         {body}
-        {(screen === "home" || screen === "browse" || screen === "shop") &&
-        count > 0 ? (
+        {(screen === "home" || screen === "browse") && count > 0 ? (
           <Pressable style={s.bagBar} onPress={() => setScreen("bag")}>
             <View>
               <Text style={s.bagBarTitle}>
@@ -363,15 +381,17 @@ export default function App() {
             <Text style={s.bagBarAction}>View bag</Text>
           </Pressable>
         ) : null}
-        <Nav
-          screen={screen}
-          count={count}
-          home={goHome}
-          browse={() => setScreen("browse")}
-          bag={() => setScreen("bag")}
-          account={() => setScreen("account")}
-          orders={() => setScreen("orders")}
-        />
+        {screen !== "shop" && (
+          <Nav
+            screen={screen}
+            count={count}
+            home={goHome}
+            browse={() => setScreen("browse")}
+            bag={() => setScreen("bag")}
+            account={() => setScreen("account")}
+            orders={() => setScreen("orders")}
+          />
+        )}
         <AreaSheet
           open={picker}
           areas={areas}
@@ -979,145 +999,6 @@ function Home({
     </ScrollView>
   );
 }
-function ShopPage({
-  shop,
-  products,
-  bag,
-  onBack,
-  onAdd,
-}: {
-  shop: Shop;
-  products: Product[];
-  bag: BagLine[];
-  onBack: () => void;
-  onAdd: (x: Product) => void;
-}) {
-  const [catalogue, setCatalogue] = useState<Product[] | null>(null);
-  const [catalogueError, setCatalogueError] = useState<string | null>(null);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [moreBusy, setMoreBusy] = useState(false);
-  const [moreError, setMoreError] = useState(false);
-  const pageLock = useRef(false);
-  const [attempt, setAttempt] = useState(0);
-  useEffect(() => {
-    let active = true;
-    void marketApi
-      .shopPage(shop.id)
-      .then((page) => {
-        if (active) {
-          setCatalogue(page.items);
-          setNextCursor(page.cursor);
-        }
-      })
-      .catch((error: unknown) => {
-        if (active)
-          setCatalogueError(
-            error instanceof Error ? error.message : "Products could not load",
-          );
-      });
-    return () => {
-      active = false;
-    };
-  }, [shop.id, attempt]);
-  const more = async () => {
-    if (!nextCursor || pageLock.current) return;
-    pageLock.current = true;
-    setMoreBusy(true);
-    setMoreError(false);
-    try {
-      const page = await marketApi.shopPage(shop.id, nextCursor);
-      setCatalogue((old) => [
-        ...(old ?? []),
-        ...page.items.filter(
-          (item) => !old?.some((existing) => existing.id === item.id),
-        ),
-      ]);
-      setNextCursor(page.cursor);
-    } catch {
-      setMoreError(true);
-    } finally {
-      pageLock.current = false;
-      setMoreBusy(false);
-    }
-  };
-  return (
-    <View style={s.fill}>
-      <Title
-        title={shop.name}
-        copy={`${shop.locality} · ${shop.isOpen ? "Open now" : "Currently closed"}`}
-        onBack={onBack}
-      />
-      <FlatList
-        data={catalogue ?? []}
-        ListFooterComponent={
-          nextCursor ? (
-            <View>
-              {moreError ? (
-                <Text style={s.pageCopy}>
-                  More products could not load. Please retry.
-                </Text>
-              ) : null}
-              <Pressable
-                disabled={moreBusy}
-                style={s.secondary}
-                onPress={() => void more()}
-              >
-                <Text style={s.secondaryText}>
-                  {moreBusy ? "Loading…" : "Load more products"}
-                </Text>
-              </Pressable>
-            </View>
-          ) : undefined
-        }
-        keyExtractor={(x) => x.id}
-        numColumns={2}
-        columnWrapperStyle={s.gridRow}
-        contentContainerStyle={s.gridList}
-        ListHeaderComponent={
-          <View style={s.intro}>
-            <Text style={s.introTitle}>
-              {shop.tagline || "Your neighbourhood shop"}
-            </Text>
-            <Text style={s.introCopy}>
-              {shop.description ||
-                "Browse what is available from this shop today"}
-            </Text>
-            {shop.minimumOrderAmount ? (
-              <Text style={s.minimum}>
-                Minimum order {money(shop.minimumOrderAmount)}
-              </Text>
-            ) : null}
-          </View>
-        }
-        ListEmptyComponent={
-          catalogueError ? (
-            <State
-              title="Products could not load"
-              copy={catalogueError}
-              action="Try again"
-              onAction={() => {
-                setCatalogueError(null);
-                setAttempt((value) => value + 1);
-              }}
-            />
-          ) : catalogue === null ? (
-            <ActivityIndicator color={c.green} />
-          ) : (
-            <Empty copy="This shop has no active products right now" />
-          )
-        }
-        renderItem={({ item }) => (
-          <ProductCard
-            item={item}
-            bag={bag}
-            quantity={bag.find((x) => x.id === item.id)?.quantity ?? 0}
-            onAdd={onAdd}
-          />
-        )}
-      />
-    </View>
-  );
-}
 function Bag({
   onCheckout,
   bag,
@@ -1488,6 +1369,9 @@ function ShopPreview({
   );
 }
 function ProductCard({
+  compact = false,
+  cardWidth,
+  onQuantity,
   shopName,
   fullWidth = false,
   item,
@@ -1496,6 +1380,9 @@ function ProductCard({
   onAdd,
 }: {
   item: Product;
+  compact?: boolean;
+  cardWidth?: number;
+  onQuantity?: (id: string, delta: number) => void;
   shopName?: string;
   fullWidth?: boolean;
   quantity: number;
@@ -1525,58 +1412,159 @@ function ProductCard({
     : quantity;
   const unavailable = selected.stock <= 0 || selectedQuantity >= selected.stock;
   return (
-    <View style={[s.product, fullWidth && { width: "100%" }]}>
+    <View
+      style={[
+        s.product,
+        fullWidth && { width: "100%" },
+        compact && {
+          width: cardWidth ?? "48.3%",
+          minHeight: 153,
+          padding: 0,
+          overflow: "hidden",
+        },
+      ]}
+    >
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`View ${item.name}`}
         onPress={() => setDetailsOpen(true)}
       >
-        <Thumb item={item} />
+        <Thumb item={item} shopImage={compact} />
       </Pressable>
       <Text
         onPress={() => setDetailsOpen(true)}
-        numberOfLines={2}
-        style={s.productName}
+        numberOfLines={compact ? 1 : 2}
+        style={[
+          s.productName,
+          compact && {
+            fontSize: 11,
+            lineHeight: 14,
+            minHeight: 14,
+            marginHorizontal: 10,
+            marginTop: 8,
+          },
+        ]}
       >
         {item.name}
       </Text>
       <Text
         numberOfLines={1}
-        style={[s.unit, { minHeight: 16, lineHeight: 16 }]}
+        style={[
+          s.unit,
+          { minHeight: 16, lineHeight: 16 },
+          compact && {
+            marginHorizontal: 10,
+            fontSize: 10,
+            minHeight: 12,
+            lineHeight: 12,
+          },
+        ]}
       >
         {item.unit}
       </Text>
-      <Text
-        numberOfLines={1}
-        style={{
-          color: c.secondary,
-          fontSize: 10,
-          lineHeight: 16,
-          minHeight: 16,
-          marginTop: 2,
-        }}
-      >
-        {shopName ?? ""}
-      </Text>
-      <View style={s.productBottom}>
-        <Text style={s.price}>{money(item.price)}</Text>
-        <Pressable
-          disabled={variant ? item.stock <= 0 : unavailable}
-          style={[s.add, unavailable && s.addDisabled]}
-          onPress={() => (variant ? setDetailsOpen(true) : onAdd(item))}
+      {!compact && (
+        <Text
+          numberOfLines={1}
+          style={{
+            color: c.secondary,
+            fontSize: 10,
+            lineHeight: 16,
+            minHeight: 16,
+            marginTop: 2,
+          }}
         >
-          <Text style={[s.addText, unavailable && s.addTextDisabled]}>
-            {variant
-              ? "Options"
-              : item.stock <= 0
-                ? "Out"
-                : unavailable
-                  ? "Limit"
-                  : quantity
-                    ? `Add · ${quantity}`
-                    : "+ Add"}
-          </Text>
-        </Pressable>
+          {shopName ?? ""}
+        </Text>
+      )}
+      <View
+        style={[
+          s.productBottom,
+          compact && { marginHorizontal: 10, marginBottom: 10, paddingTop: 2 },
+        ]}
+      >
+        <Text style={[s.price, compact && { fontSize: 14 }]}>
+          {money(item.price)}
+        </Text>
+        {compact && quantity > 0 && !item.variants?.length && onQuantity ? (
+          <View
+            style={{
+              height: 28,
+              width: 76,
+              borderRadius: 8,
+              backgroundColor: c.pale,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Decrease ${item.name}`}
+              hitSlop={6}
+              onPress={() => onQuantity(item.id, -1)}
+              style={{
+                width: 28,
+                height: 28,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text style={{ color: c.green, fontWeight: "600" }}>−</Text>
+            </Pressable>
+            <Text
+              accessibilityLabel={`${quantity} in bag`}
+              style={{ fontSize: 11, color: c.green, fontWeight: "600" }}
+            >
+              {quantity}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Increase ${item.name}`}
+              hitSlop={6}
+              disabled={unavailable}
+              onPress={() => onQuantity(item.id, 1)}
+              style={{
+                width: 28,
+                height: 28,
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: unavailable ? 0.4 : 1,
+              }}
+            >
+              <Text style={{ color: c.green, fontWeight: "600" }}>+</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={compact ? `Add ${item.name}` : undefined}
+            disabled={variant ? item.stock <= 0 : unavailable}
+            style={[
+              s.add,
+              unavailable && s.addDisabled,
+              compact && { height: 28, minWidth: 76, borderRadius: 8 },
+            ]}
+            onPress={() => (variant ? setDetailsOpen(true) : onAdd(item))}
+          >
+            <Text
+              style={[
+                s.addText,
+                unavailable && s.addTextDisabled,
+                compact && { fontSize: 10 },
+              ]}
+            >
+              {variant
+                ? "Options"
+                : item.stock <= 0
+                  ? "Out"
+                  : unavailable
+                    ? "Limit"
+                    : quantity
+                      ? `Add · ${quantity}`
+                      : "+ Add"}
+            </Text>
+          </Pressable>
+        )}
       </View>
       <Modal
         visible={detailsOpen}
@@ -1657,9 +1645,11 @@ function ProductCard({
 function Thumb({
   item,
   compact = false,
+  shopImage = false,
 }: {
   item: Product;
   compact?: boolean;
+  shopImage?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   return resolveImage(item.image) && !failed ? (
@@ -1668,6 +1658,7 @@ function Thumb({
       style={[
         s.productImage,
         compact && { width: 64, height: 64, flexShrink: 0 },
+        shopImage && { width: "100%", height: 76, borderRadius: 0 },
       ]}
       onError={() => setFailed(true)}
     />
@@ -1676,6 +1667,7 @@ function Thumb({
       style={[
         s.productFallback,
         compact && { width: 64, height: 64, flexShrink: 0 },
+        shopImage && { width: "100%", height: 76, borderRadius: 0 },
       ]}
     >
       <Text style={s.fallbackText}>{item.name.slice(0, 1)}</Text>

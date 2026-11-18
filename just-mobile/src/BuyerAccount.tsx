@@ -38,6 +38,7 @@ export function BuyerAccount({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [register, setRegister] = useState(false);
   const [busy, setBusy] = useState(false);
   const [addressesOpen, setAddressesOpen] = useState(false);
@@ -118,7 +119,7 @@ export function BuyerAccount({
       </ScrollView>
     );
   return (
-    <ScrollView contentContainerStyle={s.page}>
+    <ScrollView contentContainerStyle={s.page} keyboardShouldPersistTaps="handled">
       <Text style={s.kicker}>Buyer account</Text>
       <Text style={s.title}>
         {register ? "Create your account" : "Sign in to shop"}
@@ -129,15 +130,24 @@ export function BuyerAccount({
           : "View orders and save delivery addresses"}
       </Text>
       {register ? (
+        <View><Text style={s.copy}>Your name</Text>
         <TextInput
+          accessibilityLabel="Your name"
+          editable={!busy}
+          maxLength={100}
           value={name}
           onChangeText={setName}
           placeholder="Your name"
           placeholderTextColor={c.muted}
           style={s.input}
         />
+        </View>
       ) : null}
+      <Text style={s.copy}>Mobile number</Text>
       <TextInput
+        accessibilityLabel="Mobile number"
+        editable={!busy}
+        maxLength={16}
         value={phone}
         onChangeText={setPhone}
         placeholder="Mobile number with +91"
@@ -145,14 +155,21 @@ export function BuyerAccount({
         keyboardType="phone-pad"
         style={s.input}
       />
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}><Text style={s.copy}>Password</Text><Pressable accessibilityRole="button" accessibilityLabel={passwordVisible ? "Hide password" : "Show password"} disabled={busy} onPress={() => setPasswordVisible((value) => !value)} style={{ padding: 12 }}><Text style={{ color: c.green, fontWeight: "600" }}>{passwordVisible ? "Hide" : "Show"}</Text></Pressable></View>
       <TextInput
+        accessibilityLabel="Password"
+        editable={!busy}
+        autoCapitalize="none"
+        autoCorrect={false}
+        maxLength={128}
         value={password}
         onChangeText={setPassword}
         placeholder="Password"
         placeholderTextColor={c.muted}
-        secureTextEntry
+        secureTextEntry={!passwordVisible}
         style={s.input}
       />
+      {register ? <Text style={s.copy}>Use 12–128 characters for your password</Text> : null}
       <Pressable
         disabled={busy || (register && (!options || (options.emailOtpRequired && !options.emailOtpAvailable)))}
         style={s.primary}

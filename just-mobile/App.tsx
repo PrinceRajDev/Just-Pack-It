@@ -16,6 +16,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   marketApi,
+  buyerApi,
+  ApiError,
+  onSessionExpired,
   type Category,
   type Product,
   type ServiceArea,
@@ -59,6 +62,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [picker, setPicker] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
   const { bag, setBag, ready: bagReady, error: bagError } = useBuyerBag(session?.userId);
   const load = async (wanted?: ServiceArea | null) => {
     setLoading(true);
@@ -85,17 +89,30 @@ export default function App() {
   };
   useEffect(() => {
     const id = setTimeout(() => void load(), 0);
-    void SecureStore.getItemAsync("jpi.buyer.session").then((saved) => {
-      if (saved) {
+    void (async () => {
+      try {
+        const saved = await SecureStore.getItemAsync("jpi.buyer.session");
+        if (!saved) return;
+        const candidate = JSON.parse(saved) as Session;
+        if (!candidate || typeof candidate.token !== "string" || typeof candidate.userId !== "string" || candidate.role !== "buyer") { await SecureStore.deleteItemAsync("jpi.buyer.session"); return; }
         try {
-          setSession(JSON.parse(saved) as Session);
-        } catch {
-          void SecureStore.deleteItemAsync("jpi.buyer.session");
+          const verified = await buyerApi.me(candidate.token);
+          if (verified.role === "buyer" && verified.userId === candidate.userId) setSession({ ...verified, token: candidate.token });
+          else await SecureStore.deleteItemAsync("jpi.buyer.session");
+        } catch (reason) {
+          if (reason instanceof ApiError && reason.status === 401) await SecureStore.deleteItemAsync("jpi.buyer.session");
+          else setSession(candidate);
         }
-      }
-    });
+      } catch { /* An unreadable session requires a new sign-in. */ }
+      finally { setSessionReady(true); }
+    })();
     return () => clearTimeout(id);
   }, []);
+  useEffect(() => onSessionExpired((token) => {
+    if (session?.token !== token) return;
+    setSession(null); setScreen("account");
+    void SecureStore.deleteItemAsync("jpi.buyer.session").catch(() => undefined);
+  }), [session]);
   const displayed = useMemo(
     () =>
       products.filter(
@@ -139,7 +156,7 @@ export default function App() {
       await SecureStore.setItemAsync("jpi.buyer.session", JSON.stringify(next));
     else await SecureStore.deleteItemAsync("jpi.buyer.session");
   };
-  const body = bagError ? <State title="Bag unavailable" copy={bagError} /> : !bagReady ? <State title="Loading your bag" copy="Restoring your saved items" loading /> : loading ? (
+  const body = !sessionReady ? <State title="Opening your account" copy="Restoring your session" loading /> : bagError ? <State title="Bag unavailable" copy={bagError} /> : !bagReady ? <State title="Loading your bag" copy="Restoring your saved items" loading /> : loading ? (
     <State
       title="Loading Raiyam"
       copy="Finding nearby shops and fresh stock"

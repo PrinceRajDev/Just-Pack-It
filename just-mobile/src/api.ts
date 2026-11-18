@@ -12,6 +12,9 @@ export type BuyerOrder = { id: string; total: number; amountDue?: number; cancel
 
 type ListPayload<T> = T[] | { items?: T[] };
 const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
+export class ApiError extends Error { constructor(message: string, public status: number) { super(message); } }
+const sessionListeners = new Set<(token: string) => void>();
+export function onSessionExpired(listener: (token: string) => void) { sessionListeners.add(listener); return () => { sessionListeners.delete(listener); }; }
 
 function asList<T>(payload: ListPayload<T>, resource: string): T[] {
   if (Array.isArray(payload)) return payload;
@@ -36,7 +39,10 @@ async function request<T>(path: string, token?: string, options: RequestInit = {
   } catch { throw new Error("We could not reach Just Pack It. Check your internet and try again."); }
   if (response.status === 204) return undefined as T;
   const payload = await response.json().catch(() => ({})) as { message?: string };
-  if (!response.ok) throw new Error(payload.message || `Marketplace request failed (${response.status}). Please try again.`);
+  if (!response.ok) {
+    if (response.status === 401 && token) sessionListeners.forEach((listener) => listener(token));
+    throw new ApiError(payload.message || `Marketplace request failed (${response.status}). Please try again.`, response.status);
+  }
   return payload as T;
 }
 

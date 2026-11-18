@@ -177,19 +177,35 @@ export function BuyerOrders({
 }) {
   const [orders, setOrders] = useState<BuyerOrder[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const [moreBusy, setMoreBusy] = useState(false);
+  const [moreError, setMoreError] = useState(false);
+  const pageLock = useRef(false);
   const [state, setState] = useState<"loading" | "ready" | "error">(
     session ? "loading" : "ready",
   );
   useEffect(() => {
     if (!session) return;
+    let active = true;
     void buyerApi
-      .orders(session.token)
+      .ordersPage(session.token)
       .then((data) => {
-        setOrders(data);
+        if (!active) return;
+        setOrders(data.items);
+        setCursor(data.cursor);
         setState("ready");
       })
-      .catch(() => setState("error"));
-  }, [session]);
+      .catch(() => { if (active) setState("error"); });
+    return () => { active = false; };
+  }, [session, attempt]);
+  const more = async () => {
+    if (!session || !cursor || pageLock.current) return;
+    pageLock.current = true; setMoreBusy(true); setMoreError(false);
+    try { const page = await buyerApi.ordersPage(session.token, cursor); setOrders((current) => [...current, ...page.items.filter((item) => !current.some((old) => old.id === item.id))]); setCursor(page.cursor); }
+    catch { setMoreError(true); }
+    finally { pageLock.current = false; setMoreBusy(false); }
+  };
   if (session && selectedOrder) return <BuyerOrderDetails token={session.token} id={selectedOrder} back={() => setSelectedOrder(null)} />;
   if (!session)
     return (
@@ -211,6 +227,7 @@ export function BuyerOrders({
     return (
       <View style={s.center}>
         <Text style={s.title}>Orders could not load</Text>
+        <Pressable style={s.primary} onPress={() => { setState("loading"); setAttempt((value) => value + 1); }}><Text style={s.primaryText}>Try again</Text></Pressable>
         <Pressable style={s.primary} onPress={back}>
           <Text style={s.primaryText}>Back to account</Text>
         </Pressable>
@@ -221,6 +238,7 @@ export function BuyerOrders({
       data={orders}
       keyExtractor={(item) => item.id}
       contentContainerStyle={s.list}
+      ListFooterComponent={cursor ? <View>{moreError ? <Text style={s.copy}>Older orders could not load. Please retry.</Text> : null}<Pressable disabled={moreBusy} style={s.primary} onPress={() => void more()}><Text style={s.primaryText}>{moreBusy ? "Loading…" : "Load older orders"}</Text></Pressable></View> : undefined}
       ListHeaderComponent={
         <View>
           <Pressable onPress={back}>
@@ -245,6 +263,7 @@ export function BuyerOrders({
             {item.paymentStatus.replaceAll("_", " ")}
           </Text>
           <Text style={s.total}>
+            Remaining due: {" "}
             ₹{(item.amountDue ?? item.total).toLocaleString("en-IN")}
           </Text>
         </Pressable>

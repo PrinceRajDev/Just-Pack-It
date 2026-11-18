@@ -82,6 +82,13 @@ export const marketApi = {
 };
 
 export const buyerApi = {
+  async ordersPage(token: string, cursor?: string) {
+    if (!apiUrl) throw new Error("Marketplace connection is missing");
+    const response = await fetch(`${apiUrl}/orders?limit=30${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`, { headers: { Accept: "application/json", Authorization: `Bearer ${token}` } });
+    if (response.status === 401) sessionListeners.forEach((listener) => listener(token));
+    if (!response.ok) throw new Error("Orders could not load. Please retry.");
+    return { items: asList<BuyerOrder>(await response.json() as ListPayload<BuyerOrder>, "orders"), cursor: response.headers.get("X-Has-More") === "true" ? response.headers.get("X-Next-Cursor") : null };
+  },
   recoveryCode: (email: string) => request<{ challengeId: string; expiresAt: string; resendAfterSeconds: number }>("/auth/password-recovery/request", undefined, { method: "POST", body: JSON.stringify({ email }) }),
   resetPassword: (input: { email: string; emailChallengeId: string; emailOtp: string; newPassword: string }) => request<void>("/auth/password-recovery/reset", undefined, { method: "POST", body: JSON.stringify(input) }),
   registrationOptions: () => request<{ emailOtpRequired: boolean; emailOtpAvailable: boolean }>("/auth/registration-options"),

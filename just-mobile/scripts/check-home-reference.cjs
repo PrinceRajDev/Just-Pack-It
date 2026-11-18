@@ -60,10 +60,14 @@ const assert = require('node:assert/strict');
     await page.getByText('Choose delivery area', { exact: true }).waitFor();
     await page.getByText('Raiyam', { exact: true }).last().click();
     await page.getByText('Good shops. Close by.', { exact: true }).waitFor();
-    for (const width of [360, 430]) {
+    for (const width of [320, 360, 390, 430]) {
       await page.setViewportSize({ width, height: 844 });
       await page.waitForTimeout(250);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+      const hero = await page.getByTestId('home-hero').boundingBox();
+      const cta = await page.getByRole('button', { name: 'Explore shops', exact: true }).boundingBox();
+      assert.ok(cta.y >= hero.y && cta.y + cta.height <= hero.y + hero.height - 10,
+        `Explore shops must fit completely inside the ${width}px banner`);
       await page.screenshot({ path: path.join(output, `home-${width}-top.png`) });
     }
     assert.deepEqual(errors, []);

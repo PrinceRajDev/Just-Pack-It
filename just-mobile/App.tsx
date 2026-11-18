@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -454,6 +455,11 @@ function Home({
   onAdd: (x: Product) => void;
   onClear: () => void;
 }) {
+  const { width } = useWindowDimensions();
+  const heroFontSize = Math.min(
+    25,
+    Math.max(18, ((Math.min(width, 600) - 40) / 350) * 25),
+  );
   const [categoryResult, setCategoryResult] = useState<{
     key: string;
     items: Product[];
@@ -553,17 +559,34 @@ function Home({
       showsVerticalScrollIndicator={false}
     >
       {header}
-      <View style={s.referenceHero}>
+      <View testID="home-hero" style={s.referenceHero}>
         <View style={s.referenceHeroCopy}>
           <Text style={s.referenceEyebrow}>DISCOVER LOCAL. LOVE LOCAL.</Text>
-          <Text style={s.referenceHeadline}>
-            Your Local{"\n"}Market,{"\n"}Just a Tap Away
-          </Text>
+          <View style={{ marginTop: 16 }}>
+            {["Your Local", "Market,", "Just a Tap Away"].map((line) => (
+              <Text
+                key={line}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.7}
+                style={[
+                  s.referenceHeadline,
+                  {
+                    fontSize: heroFontSize,
+                    lineHeight: Math.ceil(heroFontSize * 1.16),
+                  },
+                ]}
+              >
+                {line}
+              </Text>
+            ))}
+          </View>
           <Text style={s.referenceSupport}>
             From the shops you know & love.
           </Text>
           <Pressable
             accessibilityRole="button"
+            accessibilityLabel="Explore shops"
             onPress={() => void openShops()}
             style={s.referenceCta}
           >
@@ -1963,7 +1986,7 @@ const s = StyleSheet.create({
   referenceHero: {
     marginHorizontal: 20,
     marginTop: 18,
-    height: 220,
+    minHeight: 220,
     borderRadius: 16,
     overflow: "hidden",
     backgroundColor: c.green,
@@ -1972,6 +1995,7 @@ const s = StyleSheet.create({
   referenceHeroCopy: {
     width: "61.43%",
     padding: 18,
+    paddingBottom: 14,
     paddingRight: 5,
     zIndex: 1,
   },
@@ -1981,7 +2005,7 @@ const s = StyleSheet.create({
     fontSize: 25,
     lineHeight: 29,
     fontWeight: "600",
-    marginTop: 16,
+    includeFontPadding: false,
     letterSpacing: -0.4,
   },
   referenceSupport: {

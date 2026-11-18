@@ -14,6 +14,16 @@ type ListPayload<T> = T[] | { items?: T[] };
 const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
 export class ApiError extends Error { constructor(message: string, public status: number) { super(message); } }
 const sessionListeners = new Set<(token: string) => void>();
+async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30_000);
+  try { return await fetch(url, { ...options, signal: controller.signal }); }
+  catch {
+    throw new Error(controller.signal.aborted
+      ? "The request timed out. Check your connection and retry. If placing an order, check Your orders or retry the same checkout."
+      : "We could not reach Just Pack It. Check your internet and retry.");
+  } finally { clearTimeout(timer); }
+}
 export function onSessionExpired(listener: (token: string) => void) { sessionListeners.add(listener); return () => { sessionListeners.delete(listener); }; }
 
 function asList<T>(payload: ListPayload<T>, resource: string): T[] {
@@ -25,8 +35,8 @@ function asList<T>(payload: ListPayload<T>, resource: string): T[] {
 async function get<T>(path: string): Promise<T> {
   if (!apiUrl) throw new Error("The marketplace connection is missing. Please install the latest app build.");
   let response: Response;
-  try { response = await fetch(`${apiUrl}${path}`, { headers: { Accept: "application/json" } }); }
-  catch { throw new Error("We could not reach Just Pack It. Check your internet and try again."); }
+  try { response = await fetchWithTimeout(`${apiUrl}${path}`, { headers: { Accept: "application/json" } }); }
+  catch (reason) { throw reason instanceof Error ? reason : new Error("Check your internet and try again."); }
   if (!response.ok) throw new Error(`Marketplace request failed (${response.status}). Please try again.`);
   return response.json() as Promise<T>;
 }
@@ -35,8 +45,8 @@ async function request<T>(path: string, token?: string, options: RequestInit = {
   if (!apiUrl) throw new Error("The marketplace connection is missing. Please install the latest app build.");
   let response: Response;
   try {
-    response = await fetch(`${apiUrl}${path}`, { ...options, headers: { Accept: "application/json", ...(options.body ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers ?? {}) } });
-  } catch { throw new Error("We could not reach Just Pack It. Check your internet and try again."); }
+    response = await fetchWithTimeout(`${apiUrl}${path}`, { ...options, headers: { Accept: "application/json", ...(options.body ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers ?? {}) } });
+  } catch (reason) { throw reason instanceof Error ? reason : new Error("Check your internet and try again."); }
   if (response.status === 204) return undefined as T;
   const payload = await response.json().catch(() => ({})) as { message?: string };
   if (!response.ok) {
@@ -54,7 +64,7 @@ export const marketApi = {
   async categoryPage(areaId: string, slug: string, cursor?: string) {
     if (!apiUrl) throw new Error("Marketplace connection is missing");
     const query = `area=${encodeURIComponent(areaId)}&category=${encodeURIComponent(slug)}&limit=24${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
-    const response = await fetch(`${apiUrl}/products?${query}`, { headers: { Accept: "application/json" } });
+    const response = await fetchWithTimeout(`${apiUrl}/products?${query}`, { headers: { Accept: "application/json" } });
     if (!response.ok) throw new Error("Products could not load. Please retry.");
     return { items: asList<Product>(await response.json() as ListPayload<Product>, "products"), cursor: response.headers.get("X-Has-More") === "true" ? response.headers.get("X-Next-Cursor") : null };
   },
@@ -84,7 +94,7 @@ export const marketApi = {
 export const buyerApi = {
   async ordersPage(token: string, cursor?: string) {
     if (!apiUrl) throw new Error("Marketplace connection is missing");
-    const response = await fetch(`${apiUrl}/orders?limit=30${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`, { headers: { Accept: "application/json", Authorization: `Bearer ${token}` } });
+    const response = await fetchWithTimeout(`${apiUrl}/orders?limit=30${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`, { headers: { Accept: "application/json", Authorization: `Bearer ${token}` } });
     if (response.status === 401) sessionListeners.forEach((listener) => listener(token));
     if (!response.ok) throw new Error("Orders could not load. Please retry.");
     return { items: asList<BuyerOrder>(await response.json() as ListPayload<BuyerOrder>, "orders"), cursor: response.headers.get("X-Has-More") === "true" ? response.headers.get("X-Next-Cursor") : null };

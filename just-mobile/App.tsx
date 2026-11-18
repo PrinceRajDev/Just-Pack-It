@@ -111,6 +111,7 @@ export default function App() {
   const add = (item: Product) =>
     setBag((old) => {
       const row = old.find((x) => x.id === item.id);
+      if (item.stock <= 0 || (row?.quantity ?? 0) >= item.stock) return old;
       return row
         ? old.map((x) =>
             x.id === item.id ? { ...x, quantity: x.quantity + 1 } : x,
@@ -123,7 +124,7 @@ export default function App() {
         x.id !== id
           ? [x]
           : x.quantity + delta > 0
-            ? [{ ...x, quantity: x.quantity + delta }]
+            ? [{ ...x, quantity: Math.min(x.stock, x.quantity + delta) }]
             : [],
       ),
     );
@@ -877,11 +878,12 @@ function ProductCard({
   quantity: number;
   onAdd: (x: Product) => void;
 }) {
-  const unavailable = item.stock <= 0;
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const unavailable = item.stock <= 0 || quantity >= item.stock;
   return (
     <View style={s.product}>
-      <Thumb item={item} />
-      <Text numberOfLines={2} style={s.productName}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`View ${item.name}`} onPress={() => setDetailsOpen(true)}><Thumb item={item} /></Pressable>
+      <Text onPress={() => setDetailsOpen(true)} numberOfLines={2} style={s.productName}>
         {item.name}
       </Text>
       <Text style={s.unit}>{item.unit}</Text>
@@ -893,10 +895,24 @@ function ProductCard({
           onPress={() => onAdd(item)}
         >
           <Text style={[s.addText, unavailable && s.addTextDisabled]}>
-            {unavailable ? "Out" : quantity ? `Add · ${quantity}` : "Add"}
+            {item.stock <= 0 ? "Out" : unavailable ? "Limit" : quantity ? `Add · ${quantity}` : "Add"}
           </Text>
         </Pressable>
       </View>
+      <Modal visible={detailsOpen} animationType="slide" onRequestClose={() => setDetailsOpen(false)}>
+        <SafeAreaView style={s.safe}>
+          <Title title="Product details" copy={item.name} onBack={() => setDetailsOpen(false)} />
+          <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
+            <Thumb item={item} />
+            <Text style={s.pageTitle}>{item.name}</Text>
+            <Text style={s.pageCopy}>{item.unit}</Text>
+            <Text style={s.totalValue}>{money(item.price)}</Text>
+            {item.description ? <Text style={{ color: c.secondary, fontSize: 15, lineHeight: 22 }}>{item.description}</Text> : null}
+            <Text style={s.pageCopy}>{item.stock > 0 ? `${item.stock} available · ${quantity} in your bag` : "Currently out of stock"}</Text>
+            <Pressable disabled={unavailable} style={[s.checkoutButton, unavailable && s.addDisabled]} onPress={() => onAdd(item)}><Text style={[s.checkoutText, unavailable && s.addTextDisabled]}>{item.stock <= 0 ? "Out of stock" : unavailable ? "Stock limit reached" : "Add to bag"}</Text></Pressable>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </View>
   );
 }

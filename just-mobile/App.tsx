@@ -30,20 +30,22 @@ import { BuyerCheckout } from "./src/BuyerCheckout";
 import { useBuyerBag } from "./src/useBuyerBag";
 import { useAndroidBack } from "./src/useAndroidBack";
 import { resolveImage } from "./src/images";
+import { MarketIcon, type MarketIconName } from "./src/MarketIcon";
+import { HomeNotifications, BuyAgain } from "./src/HomeExtras";
 
 type Screen = "home" | "browse" | "bag" | "shop" | "account" | "orders" | "checkout";
 type BagLine = Product & { quantity: number };
 const c = {
-  paper: "#F7F4EE",
+  paper: "#FAF8F1",
   card: "#FDFBF7",
   raised: "#EFE9DF",
-  ink: "#1F2A22",
+  ink: "#202820",
   secondary: "#5E554A",
   muted: "#7B7266",
   line: "#DDD6C9",
-  green: "#174B34",
-  lime: "#D6ED93",
-  pale: "#EDF3DF",
+  green: "#07552F",
+  lime: "#E8C94A",
+  pale: "#EAF0D9",
 };
 const money = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 const categoryImage = (x: Category) =>
@@ -177,6 +179,8 @@ export default function App() {
     />
   ) : screen === "home" ? (
     <Home
+      session={session}
+      onAccount={() => setScreen("account")}
       area={area}
       categories={categories}
       shops={shops}
@@ -238,6 +242,7 @@ export default function App() {
       <StatusBar style="dark" />
       <View style={s.app}>
         <Header
+          session={session}
           area={area}
           count={count}
           onArea={() => setPicker(true)}
@@ -263,6 +268,7 @@ export default function App() {
           browse={() => setScreen("browse")}
           bag={() => setScreen("bag")}
           account={() => setScreen("account")}
+          orders={() => setScreen("orders")}
         />
         <AreaSheet
           open={picker}
@@ -284,12 +290,14 @@ export default function App() {
 }
 
 function Header({
+  session,
   area,
   count,
   onArea,
   onBrowse,
   onBag,
 }: {
+  session: Session | null;
   area: ServiceArea | null;
   count: number;
   onArea: () => void;
@@ -304,13 +312,14 @@ function Header({
             source={require("./assets/just-pack-it-icon.png")}
             style={s.logo}
           />
-          <View>
-            <Text style={s.brand}>just pack it</Text>
-            <Text style={s.tagline}>YOUR NEIGHBOURHOOD, DELIVERED</Text>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text numberOfLines={1} adjustsFontSizeToFit style={s.brand}>JustPackIt</Text>
+            <Text numberOfLines={1} style={s.tagline}>Your Neighbourhood, Delivered.</Text>
           </View>
         </View>
+        <HomeNotifications session={session} />
         <Pressable onPress={onBag} style={s.bagTop}>
-          <Text style={s.bagTopText}>Bag</Text>
+          <MarketIcon name="bag" color={c.green} />
           <Text style={s.bagCount}>{count}</Text>
         </Pressable>
       </View>
@@ -327,13 +336,15 @@ function Header({
         <Text style={s.change}>Change</Text>
       </Pressable>
       <Pressable onPress={onBrowse} style={s.search}>
-        <Text style={s.searchIcon}>⌕</Text>
+        <MarketIcon name="search" />
         <Text style={s.searchText}>Search products and shops</Text>
       </Pressable>
     </View>
   );
 }
 function Home({
+  session,
+  onAccount,
   area,
   categories,
   shops,
@@ -346,6 +357,8 @@ function Home({
   onAdd,
   onClear,
 }: {
+  session: Session | null;
+  onAccount: () => void;
   area: ServiceArea | null;
   categories: Category[];
   shops: Shop[];
@@ -358,7 +371,8 @@ function Home({
   onAdd: (x: Product) => void;
   onClear: () => void;
 }) {
-  const feature = categories[0];
+  const shortcuts = ["fruits-vegetables", "grocery-kirana", "fashion", "dairy-eggs"].flatMap((slug) => { const category = categories.find((item) => item.slug === slug); return category ? [category] : []; });
+  const quickCategories = [...shortcuts, ...categories.filter((item) => !shortcuts.some((chosen) => chosen.id === item.id))].slice(0, 5);
   const [categoryResult, setCategoryResult] = useState<{ key: string; items: Product[]; cursor: string | null } | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [moreError, setMoreError] = useState<string | null>(null);
@@ -399,28 +413,10 @@ function Home({
       contentContainerStyle={s.content}
       showsVerticalScrollIndicator={false}
     >
-      <View style={s.market}>
-        <View style={{ flex: 1 }}>
-          <Text style={s.marketLabel}>Your local market</Text>
-          <Text style={s.marketTitle}>
-            {area
-              ? `Shop your neighbourhood in ${area.name}`
-              : "Choose an area to begin"}
-          </Text>
-          <Text style={s.marketCopy}>
-            {shops.length
-              ? `${shops.filter((shop) => shop.isOpen).length} open now among ${shops.length} shops shown`
-              : "Select an area to find nearby shops"}
-          </Text>
-        </View>
-        {feature ? (
-          <CategoryPicture item={feature} style={s.marketPicture} />
-        ) : (
-          <View style={[s.marketPicture, s.fallback]}>
-            <Text style={s.fallbackText}>JP</Text>
-          </View>
-        )}
-      </View>
+      <Pressable accessibilityRole="button" accessibilityLabel="Browse fruits and vegetables" onPress={() => { const category = categories.find((item) => item.slug === "fruits-vegetables"); if (category) onChoose(category.slug); else onBrowse(); }} style={{ margin: 16, borderRadius: 24, minHeight: 204, flexDirection: "row", overflow: "hidden", backgroundColor: c.green }}>
+        <View style={{ width: "56%", padding: 20, zIndex: 1 }}><Text style={{ color: "#fff", fontSize: 25, lineHeight: 29, fontWeight: "600" }}>Fresh<Text style={{ color: c.lime }}>{"\n"}vegetables</Text>{"\n"}from local shops</Text><View style={{ width: 64, height: 3, backgroundColor: c.lime, marginTop: 12 }} /><Text style={{ color: "#EAF0D9", fontSize: 12, lineHeight: 17, marginTop: 12 }}>Discover fresh picks from your neighbourhood</Text><Text style={{ color: c.lime, fontSize: 12, marginTop: 12, fontWeight: "600" }}>Explore produce →</Text></View>
+        <Image accessibilityLabel="Fresh vegetables in baskets" source={require("./assets/home-vegetables.jpg")} style={{ width: "44%", height: "100%", position: "absolute", right: 0, resizeMode: "cover" }} />
+      </Pressable>
       <Section title="Shop by category" action="More" onPress={() => setShowCategories(true)} />
       <Modal visible={showCategories} animationType="slide" onRequestClose={() => setShowCategories(false)}>
         <SafeAreaView style={s.safe}>
@@ -435,7 +431,8 @@ function Home({
       </Modal>
       <FlatList
         horizontal
-        data={categories.slice(0, 6)}
+        data={quickCategories}
+        ListFooterComponent={<Pressable style={s.category} onPress={() => setShowCategories(true)} accessibilityLabel="All categories"><View style={[s.categoryImage, { alignItems: "center", justifyContent: "center" }]}><MarketIcon name="browse" /></View><Text style={s.categoryName}>All categories</Text></Pressable>}
         keyExtractor={(x) => x.slug}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={s.rail}
@@ -456,7 +453,7 @@ function Home({
         </View>
       ) : null}
       <Section
-        title={area ? `Shops in ${area.name}` : "Nearby shops"}
+        title={area ? `Near you in ${area.name}` : "Near you"}
         action="See all"
         onPress={() => void openShops()}
       />
@@ -467,14 +464,11 @@ function Home({
         </SafeAreaView>
       </Modal>
       {shops.length ? (
-        <View style={s.shopList}>
-          {shops.slice(0, 4).map((x) => (
-            <ShopRow key={x.id} item={x} onPress={() => onShop(x)} />
-          ))}
-        </View>
+        <FlatList horizontal data={shops} keyExtractor={(item) => item.id} showsHorizontalScrollIndicator={false} contentContainerStyle={s.rail} renderItem={({ item }) => <ShopPreview key={`${session?.userId ?? "guest"}:${item.id}`} scope={session?.userId ?? "guest"} item={item} onPress={() => onShop(item)} />} />
       ) : (
         <Empty copy="No shops are available in this area yet" />
       )}
+      <BuyAgain key={session?.userId ?? "guest"} session={session} onAccount={onAccount} renderProduct={(item) => <ProductCard fullWidth item={item} bag={bag} quantity={bag.find((line) => line.id === item.id)?.quantity ?? 0} onAdd={onAdd} />} />
       <Section
         title={picked ? "Available products" : "Products from nearby shops"}
         action="Search"
@@ -802,6 +796,7 @@ function Nav({
   browse,
   bag,
   account,
+  orders,
 }: {
   screen: Screen;
   count: number;
@@ -809,6 +804,7 @@ function Nav({
   browse: () => void;
   bag: () => void;
   account: () => void;
+  orders: () => void;
 }) {
   return (
     <View style={s.nav}>
@@ -824,8 +820,13 @@ function Nav({
         onPress={bag}
       />
       <NavButton
+        label="Orders"
+        active={screen === "orders"}
+        onPress={orders}
+      />
+      <NavButton
         label="Account"
-        active={screen === "account" || screen === "orders"}
+        active={screen === "account"}
         onPress={account}
       />
     </View>
@@ -842,6 +843,7 @@ function NavButton({
 }) {
   return (
     <Pressable onPress={onPress} style={[s.navButton, active && s.navActive]}>
+      <MarketIcon name={(label.startsWith("Bag") ? "bag" : label.toLowerCase()) as MarketIconName} color={active ? "#fff" : c.green} />
       <Text style={[s.navText, active && s.navTextActive]}>{label}</Text>
     </Pressable>
   );
@@ -962,13 +964,27 @@ function ShopRow({ item, onPress }: { item: Shop; onPress: () => void }) {
     </Pressable>
   );
 }
+function ShopPreview({ item, onPress, scope }: { item: Shop; onPress: () => void; scope: string }) {
+  const [failed, setFailed] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const saveKey = `jpi.shop.saved.${scope}.${item.id}`;
+  useEffect(() => { let active = true; void SecureStore.getItemAsync(saveKey).then((value) => { if (active) setSaved(value === "true"); }).catch(() => undefined); return () => { active = false; }; }, [saveKey]);
+  return <Pressable accessibilityRole="button" accessibilityLabel={`View ${item.name}`} onPress={onPress} style={{ width: 216, borderRadius: 20, padding: 6, backgroundColor: c.card, borderWidth: 1, borderColor: c.line }}>
+    <Pressable disabled={saving} accessibilityLabel={saved ? `Unsave ${item.name}` : `Save ${item.name}`} onPress={(event) => { event.stopPropagation(); setSaving(true); void SecureStore.setItemAsync(saveKey, String(!saved)).then(() => setSaved(!saved)).catch(() => undefined).finally(() => setSaving(false)); }} style={{ position: "absolute", zIndex: 2, top: 12, right: 12, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: c.card }}><Text style={{ color: c.green, fontSize: 12, fontWeight: "600" }}>{saved ? "Saved" : "Save"}</Text></Pressable>
+    {resolveImage(item.coverImage) && !failed ? <Image source={{ uri: resolveImage(item.coverImage)! }} onError={() => setFailed(true)} style={{ width: "100%", height: 120, borderRadius: 14 }} /> : <View style={{ height: 120, backgroundColor: c.pale, borderRadius: 14, alignItems: "center", justifyContent: "center" }}><Text style={s.fallbackText}>{item.initials || item.name.slice(0, 1)}</Text></View>}
+    <View style={{ padding: 10, gap: 8 }}><Text numberOfLines={2} style={{ color: c.ink, fontSize: 17, lineHeight: 22, fontWeight: "600", minHeight: 44 }}>{item.name}</Text><View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}><Text numberOfLines={1} style={{ color: c.secondary, flex: 1, fontSize: 12 }}>{item.locality}</Text><Text style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: item.isOpen ? c.pale : "#FBE8DF", color: item.isOpen ? c.green : "#A63826", fontSize: 12, fontWeight: "600" }}>{item.isOpen ? "Open" : "Closed"}</Text></View></View>
+  </Pressable>;
+}
 function ProductCard({
+  fullWidth = false,
   item,
   quantity,
   bag = [],
   onAdd,
 }: {
   item: Product;
+  fullWidth?: boolean;
   quantity: number;
   bag?: BagLine[];
   onAdd: (x: Product) => void;
@@ -980,7 +996,7 @@ function ProductCard({
   const selectedQuantity = variant ? bag.find((line) => line.id === selected.id)?.quantity ?? 0 : quantity;
   const unavailable = selected.stock <= 0 || selectedQuantity >= selected.stock;
   return (
-    <View style={s.product}>
+    <View style={[s.product, fullWidth && { width: "100%" }]}>
       <Pressable accessibilityRole="button" accessibilityLabel={`View ${item.name}`} onPress={() => setDetailsOpen(true)}><Thumb item={item} /></Pressable>
       <Text onPress={() => setDetailsOpen(true)} numberOfLines={2} style={s.productName}>
         {item.name}
@@ -1137,19 +1153,19 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  logo: { width: 36, height: 36, borderRadius: 10, marginRight: 8 },
-  brand: { color: c.green, fontSize: 18, lineHeight: 20, fontWeight: "600" },
-  tagline: { color: c.muted, marginTop: 2, fontSize: 8, letterSpacing: 0.5 },
+  logo: { width: 40, height: 40, borderRadius: 10, marginRight: 8 },
+  brand: { color: c.green, fontSize: 24, lineHeight: 28, fontWeight: "600" },
+  tagline: { color: c.secondary, marginTop: 2, fontSize: 10 },
   bagTop: {
     height: 36,
-    minWidth: 68,
-    paddingHorizontal: 10,
+    minWidth: 48,
+    paddingHorizontal: 4,
     borderRadius: 8,
     gap: 6,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: c.green,
+    backgroundColor: c.card,
   },
   bagTopText: { color: "#FFFDF7", fontSize: 13, fontWeight: "500" },
   bagCount: {
@@ -1189,14 +1205,15 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     marginHorizontal: 16,
     marginBottom: 12,
-    borderRadius: 10,
+    borderRadius: 24,
+    gap: 12,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: c.raised,
+    backgroundColor: c.pale,
   },
   searchIcon: { color: c.secondary, marginRight: 10, fontSize: 22 },
   searchText: { color: c.muted, fontSize: 15 },
-  content: { paddingBottom: 156 },
+  content: { paddingBottom: 156, width: "100%", maxWidth: 1120, alignSelf: "center" },
   market: {
     minHeight: 152,
     padding: 20,
@@ -1240,7 +1257,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  sectionTitle: { color: c.ink, fontSize: 20, fontWeight: "500" },
+  sectionTitle: { color: c.green, fontSize: 21, fontWeight: "600", flex: 1 },
   sectionAction: { color: c.green, fontSize: 13, fontWeight: "600" },
   rail: { paddingHorizontal: 16, gap: 12 },
   category: {
@@ -1475,7 +1492,7 @@ const s = StyleSheet.create({
   bagBarCopy: { color: "#D9E4D6", marginTop: 2, fontSize: 11 },
   bagBarAction: { color: c.lime, fontSize: 13, fontWeight: "600" },
   nav: {
-    height: 64,
+    height: 80,
     paddingHorizontal: 16,
     borderTopWidth: 1,
     borderTopColor: c.line,
@@ -1485,17 +1502,18 @@ const s = StyleSheet.create({
     backgroundColor: c.card,
   },
   navButton: {
-    height: 40,
+    height: 60,
+    gap: 6,
     flex: 1,
     minWidth: 0,
     paddingHorizontal: 4,
-    borderRadius: 8,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
   },
-  navActive: { backgroundColor: c.pale },
+  navActive: { backgroundColor: c.green },
   navText: { color: c.secondary, fontSize: 13, fontWeight: "500" },
-  navTextActive: { color: c.green, fontWeight: "600" },
+  navTextActive: { color: "#fff", fontWeight: "600" },
   state: {
     flex: 1,
     padding: 32,

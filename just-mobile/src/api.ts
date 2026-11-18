@@ -68,6 +68,7 @@ async function searchPage<T>(kind: "products" | "shops", areaId: string, text: s
   return { items: asList<T>(await response.json() as ListPayload<T>, kind), cursor: response.headers.get("X-Has-More") === "true" ? response.headers.get("X-Next-Cursor") : null };
 }
 export const marketApi = {
+  product: (id: string) => get<Product>(`/products/${encodeURIComponent(id)}`),
   searchProducts: (areaId: string, text: string, cursor?: string) => searchPage<Product>("products", areaId, text, cursor),
   searchShops: (areaId: string, text: string, cursor?: string) => searchPage<Shop>("shops", areaId, text, cursor),
   async shopPage(shopId: string, cursor?: string) {
@@ -106,6 +107,7 @@ export const marketApi = {
 };
 
 export const buyerApi = {
+  notifications: (token: string) => request<{ id: string; title: string; body: string; read: boolean }[]>("/notifications?limit=20", token),
   cancelSuborder: (token: string, orderId: string, subId: string, version: number, reason: string) => request<void>(`/orders/${encodeURIComponent(orderId)}/suborders/${encodeURIComponent(subId)}/cancel`, token, { method: "POST", body: JSON.stringify({ version, reason }) }),
   async ordersPage(token: string, cursor?: string) {
     if (!apiUrl) throw new Error("Marketplace connection is missing");

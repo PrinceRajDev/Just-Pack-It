@@ -60,7 +60,16 @@ async function getList<T>(path: string, resource: string): Promise<T[]> {
   return asList(await get<ListPayload<T>>(path), resource);
 }
 
+async function searchPage<T>(kind: "products" | "shops", areaId: string, text: string, cursor?: string) {
+  if (!apiUrl) throw new Error("Marketplace connection is missing");
+  const query = `area=${encodeURIComponent(areaId)}&q=${encodeURIComponent(text.trim())}&limit=24${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
+  const response = await fetchWithTimeout(`${apiUrl}/${kind}?${query}`, { headers: { Accept: "application/json" } });
+  if (!response.ok) throw new Error("Search could not load. Please retry.");
+  return { items: asList<T>(await response.json() as ListPayload<T>, kind), cursor: response.headers.get("X-Has-More") === "true" ? response.headers.get("X-Next-Cursor") : null };
+}
 export const marketApi = {
+  searchProducts: (areaId: string, text: string, cursor?: string) => searchPage<Product>("products", areaId, text, cursor),
+  searchShops: (areaId: string, text: string, cursor?: string) => searchPage<Shop>("shops", areaId, text, cursor),
   async shopPage(shopId: string, cursor?: string) {
     if (!apiUrl) throw new Error("Marketplace connection is missing");
     const response = await fetchWithTimeout(`${apiUrl}/shops/${encodeURIComponent(shopId)}/products?limit=24${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`, { headers: { Accept: "application/json" } });
@@ -78,12 +87,11 @@ export const marketApi = {
   shops: (areaId: string) => getList<Shop>(`/shops?area=${encodeURIComponent(areaId)}&limit=100`, "shops"),
   shopProducts: (shopId: string) => getList<Product>(`/shops/${encodeURIComponent(shopId)}/products?limit=100`, "shop products"),
   async search(areaId: string, text: string) {
-    const query = `?area=${encodeURIComponent(areaId)}&q=${encodeURIComponent(text.trim())}&limit=100`;
     const [products, shops] = await Promise.all([
-      getList<Product>(`/products${query}`, "products"),
-      getList<Shop>(`/shops${query}`, "shops"),
+      searchPage<Product>("products", areaId, text),
+      searchPage<Shop>("shops", areaId, text),
     ]);
-    return { products, shops };
+    return { products: products.items, shops: shops.items, productCursor: products.cursor, shopCursor: shops.cursor };
   },
   async loadHome(areaId?: string) {
     const areas = await getList<ServiceArea>("/areas", "delivery areas");

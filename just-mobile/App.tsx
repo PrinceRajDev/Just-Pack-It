@@ -521,10 +521,15 @@ function Browse({
   const [result, setResult] = useState<{
     products: Product[];
     shops: Shop[];
+    productCursor: string | null;
+    shopCursor: string | null;
     query: string;
   } | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
+  const [moreBusy, setMoreBusy] = useState(false);
+  const [moreFailed, setMoreFailed] = useState(false);
+  const moreLock = useRef(false);
   useEffect(() => {
     if (!areaId) return;
     let active = true;
@@ -550,6 +555,23 @@ function Browse({
     };
   }, [areaId, query, retry]);
   const pending = result?.query !== query;
+  const moreSearch = async (kind: "products" | "shops") => {
+    if (!areaId || !result || moreLock.current || result.query !== query) return;
+    const cursor = kind === "products" ? result.productCursor : result.shopCursor;
+    if (!cursor) return;
+    const snapshot = result;
+    moreLock.current = true; setMoreBusy(true); setMoreFailed(false);
+    try {
+      if (kind === "products") {
+        const page = await marketApi.searchProducts(areaId, query, cursor);
+        setResult((current) => current?.query === snapshot.query && current.productCursor === cursor ? { ...current, productCursor: page.cursor, products: [...current.products, ...page.items.filter((item) => !current.products.some((old) => old.id === item.id))] } : current);
+      } else {
+        const page = await marketApi.searchShops(areaId, query, cursor);
+        setResult((current) => current?.query === snapshot.query && current.shopCursor === cursor ? { ...current, shopCursor: page.cursor, shops: [...current.shops, ...page.items.filter((item) => !current.shops.some((old) => old.id === item.id))] } : current);
+      }
+    } catch { setMoreFailed(true); }
+    finally { moreLock.current = false; setMoreBusy(false); }
+  };
   return (
     <View style={s.fill}>
       <Title
@@ -571,6 +593,7 @@ function Browse({
       </View>
       <FlatList
         data={pending || failure ? [] : (result?.products ?? products)}
+        ListFooterComponent={!pending && !failure && (result?.productCursor || result?.shopCursor) ? <View>{moreFailed ? <Text style={s.pageCopy}>More results could not load. Try again.</Text> : null}{result.productCursor ? <Pressable disabled={moreBusy} style={s.secondary} onPress={() => void moreSearch("products")}><Text style={s.secondaryText}>{moreBusy ? "Loading…" : "More products"}</Text></Pressable> : null}{result.shopCursor ? <Pressable disabled={moreBusy} style={s.secondary} onPress={() => void moreSearch("shops")}><Text style={s.secondaryText}>{moreBusy ? "Loading…" : "More shops"}</Text></Pressable> : null}</View> : undefined}
         keyExtractor={(x) => x.id}
         numColumns={2}
         columnWrapperStyle={s.gridRow}

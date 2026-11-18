@@ -349,17 +349,30 @@ function Home({
   onClear: () => void;
 }) {
   const feature = categories[0];
-  const [categoryResult, setCategoryResult] = useState<{ key: string; items: Product[] } | null>(null);
+  const [categoryResult, setCategoryResult] = useState<{ key: string; items: Product[]; cursor: string | null } | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [moreError, setMoreError] = useState<string | null>(null);
   const [categoryFailure, setCategoryFailure] = useState<{ key: string; message: string } | null>(null);
   const [categoryAttempt, setCategoryAttempt] = useState(0);
   const categoryKey = `${area?.id ?? ""}:${picked ?? ""}`;
   useEffect(() => {
     if (!area || !picked) return;
     let active = true;
-    void marketApi.categoryProducts(area.id, picked).then((items) => { if (active) { setCategoryResult({ key: categoryKey, items }); setCategoryFailure(null); } }).catch((reason: unknown) => { if (active) setCategoryFailure({ key: categoryKey, message: reason instanceof Error ? reason.message : "Category could not load" }); });
+    void marketApi.categoryPage(area.id, picked).then((page) => { if (active) { setCategoryResult({ key: categoryKey, ...page }); setCategoryFailure(null); } }).catch((reason: unknown) => { if (active) setCategoryFailure({ key: categoryKey, message: reason instanceof Error ? reason.message : "Category could not load" }); });
     return () => { active = false; };
   }, [area, picked, categoryKey, categoryAttempt]);
   const categoryProducts = picked ? categoryResult?.key === categoryKey ? categoryResult.items : [] : products;
+  const loadMore = async () => {
+    if (!area || !picked || !categoryResult?.cursor || loadingMore) return;
+    const snapshot = categoryResult;
+    setLoadingMore(true);
+    setMoreError(null);
+    try {
+      const page = await marketApi.categoryPage(area.id, picked, snapshot.cursor ?? undefined);
+      setCategoryResult((current) => current?.key === snapshot.key && current.cursor === snapshot.cursor ? { key: snapshot.key, cursor: page.cursor, items: [...current.items, ...page.items.filter((item) => !current.items.some((old) => old.id === item.id))] } : current);
+    } catch { setMoreError(snapshot.key); }
+    finally { setLoadingMore(false); }
+  };
   const [showCategories, setShowCategories] = useState(false);
   const [showShops, setShowShops] = useState(false);
   const [allShops, setAllShops] = useState<Shop[]>([]);
@@ -459,7 +472,7 @@ function Home({
       />
       {picked && categoryFailure?.key === categoryKey ? <State title="Category could not load" copy={categoryFailure.message} action="Try again" onAction={() => { setCategoryFailure(null); setCategoryAttempt((value) => value + 1); }} /> : picked && categoryResult?.key !== categoryKey ? <ActivityIndicator color={c.green} /> : categoryProducts.length ? (
         <View style={s.grid}>
-          {categoryProducts.slice(0, picked ? 100 : 12).map((x) => (
+          {categoryProducts.slice(0, picked ? undefined : 12).map((x) => (
             <ProductCard
               key={x.id}
               item={x}
@@ -472,6 +485,7 @@ function Home({
       ) : (
         <Empty copy="No active products are available in this category" />
       )}
+      {picked && categoryResult?.key === categoryKey && categoryResult.cursor ? <View style={{ padding: 16 }}>{moreError === categoryKey ? <Text style={{ color: "#B3432B", marginBottom: 8 }}>More products could not load. Try again.</Text> : null}<Pressable disabled={loadingMore} onPress={() => void loadMore()} style={s.secondary}><Text style={s.secondaryText}>{loadingMore ? "Loading…" : "Load more products"}</Text></Pressable></View> : null}
     </ScrollView>
   );
 }

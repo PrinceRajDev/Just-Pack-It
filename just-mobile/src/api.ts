@@ -51,6 +51,13 @@ async function getList<T>(path: string, resource: string): Promise<T[]> {
 }
 
 export const marketApi = {
+  async categoryPage(areaId: string, slug: string, cursor?: string) {
+    if (!apiUrl) throw new Error("Marketplace connection is missing");
+    const query = `area=${encodeURIComponent(areaId)}&category=${encodeURIComponent(slug)}&limit=24${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
+    const response = await fetch(`${apiUrl}/products?${query}`, { headers: { Accept: "application/json" } });
+    if (!response.ok) throw new Error("Products could not load. Please retry.");
+    return { items: asList<Product>(await response.json() as ListPayload<Product>, "products"), cursor: response.headers.get("X-Has-More") === "true" ? response.headers.get("X-Next-Cursor") : null };
+  },
   categoryProducts: (areaId: string, slug: string) => getList<Product>(`/products?area=${encodeURIComponent(areaId)}&category=${encodeURIComponent(slug)}&limit=100`, "category products"),
   shops: (areaId: string) => getList<Shop>(`/shops?area=${encodeURIComponent(areaId)}&limit=100`, "shops"),
   shopProducts: (shopId: string) => getList<Product>(`/shops/${encodeURIComponent(shopId)}/products?limit=100`, "shop products"),

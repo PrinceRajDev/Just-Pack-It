@@ -1,6 +1,6 @@
 import { StatusBar } from "expo-status-bar";
-import * as SecureStore from "expo-secure-store";
-import { useEffect, useMemo, useRef, useState } from "react";
+import * as SecureStore from "./src/deviceStorage";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -32,6 +32,7 @@ import { useAndroidBack } from "./src/useAndroidBack";
 import { resolveImage } from "./src/images";
 import { MarketIcon, type MarketIconName } from "./src/MarketIcon";
 import { HomeNotifications, BuyAgain } from "./src/HomeExtras";
+import { ReferenceArtwork } from "./src/ReferenceArtwork";
 
 type Screen =
   "home" | "browse" | "bag" | "shop" | "account" | "orders" | "checkout";
@@ -68,11 +69,23 @@ export default function App() {
   const [picker, setPicker] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
+  const [homeVisit, setHomeVisit] = useState(0);
+  const goHome = () => {
+    setPicked(null);
+    setQuery("");
+    setShop(null);
+    setHomeVisit((visit) => visit + 1);
+    setScreen("home");
+  };
   useAndroidBack(() => {
-    if (screen === "home") return false;
-    setScreen(
-      screen === "checkout" ? "bag" : screen === "orders" ? "account" : "home",
-    );
+    if (screen === "home") {
+      if (!picked) return false;
+      goHome();
+      return true;
+    }
+    if (screen === "checkout") setScreen("bag");
+    else if (screen === "orders") setScreen("account");
+    else goHome();
     return true;
   });
   const {
@@ -217,6 +230,17 @@ export default function App() {
     />
   ) : screen === "home" ? (
     <Home
+      key={homeVisit}
+      header={
+        <Header
+          session={session}
+          area={area}
+          count={count}
+          onArea={() => setPicker(true)}
+          onBrowse={() => setScreen("browse")}
+          onBag={() => setScreen("bag")}
+        />
+      }
       session={session}
       onAccount={() => setScreen("account")}
       onQuickSearch={(value) => {
@@ -249,7 +273,7 @@ export default function App() {
       bag={bag}
       query={query}
       setQuery={setQuery}
-      onBack={() => setScreen("home")}
+      onBack={goHome}
       onAdd={add}
     />
   ) : screen === "shop" && shop ? (
@@ -257,7 +281,7 @@ export default function App() {
       shop={shop}
       products={products.filter((x) => x.shopId === shop.id)}
       bag={bag}
-      onBack={() => setScreen("home")}
+      onBack={goHome}
       onAdd={add}
     />
   ) : screen === "account" ? (
@@ -286,21 +310,23 @@ export default function App() {
       total={total}
       onChange={quantity}
       onCheckout={() => setScreen("checkout")}
-      onBrowse={() => setScreen("home")}
+      onBrowse={goHome}
     />
   );
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
       <StatusBar style="dark" />
       <View style={s.app}>
-        <Header
-          session={session}
-          area={area}
-          count={count}
-          onArea={() => setPicker(true)}
-          onBrowse={() => setScreen("browse")}
-          onBag={() => setScreen("bag")}
-        />
+        {screen !== "home" && (
+          <Header
+            session={session}
+            area={area}
+            count={count}
+            onArea={() => setPicker(true)}
+            onBrowse={() => setScreen("browse")}
+            onBag={() => setScreen("bag")}
+          />
+        )}
         {body}
         {(screen === "home" || screen === "browse" || screen === "shop") &&
         count > 0 ? (
@@ -317,7 +343,7 @@ export default function App() {
         <Nav
           screen={screen}
           count={count}
-          home={() => setScreen("home")}
+          home={goHome}
           browse={() => setScreen("browse")}
           bag={() => setScreen("bag")}
           account={() => setScreen("account")}
@@ -361,10 +387,7 @@ function Header({
     <View style={s.header}>
       <View style={s.top}>
         <View style={s.brandBlock}>
-          <Image
-            source={require("./assets/just-pack-it-icon.png")}
-            style={s.logo}
-          />
+          <ReferenceArtwork crop={[20, 47, 46, 46]} style={s.logo} />
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text numberOfLines={1} adjustsFontSizeToFit style={s.brand}>
               JustPackIt
@@ -382,12 +405,12 @@ function Header({
       </View>
       <Pressable onPress={onArea} style={s.location}>
         <View style={s.pin}>
-          <Text style={s.pinText}>⌖</Text>
+          <ReferenceArtwork crop={[22, 120, 16, 20]} style={{ width: 16 }} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={s.locationLabel}>DELIVERING TO</Text>
           <Text numberOfLines={1} style={s.locationName}>
-            {area ? `${area.name}, ${area.city}` : "Choose area"}  ⌄
+            {area ? `${area.name}, ${area.city}` : "Choose area"} ⌄
           </Text>
         </View>
         <Text style={s.change}>Change</Text>
@@ -400,6 +423,7 @@ function Header({
   );
 }
 function Home({
+  header,
   onQuickSearch,
   session,
   onAccount,
@@ -410,11 +434,11 @@ function Home({
   bag,
   picked,
   onChoose,
-  onBrowse,
   onShop,
   onAdd,
   onClear,
 }: {
+  header: ReactNode;
   onQuickSearch: (query: string) => void;
   session: Session | null;
   onAccount: () => void;
@@ -528,7 +552,35 @@ function Home({
       contentContainerStyle={s.content}
       showsVerticalScrollIndicator={false}
     >
-      <View style={{ margin: 20, marginTop: 16, borderRadius: 16, overflow: "hidden", minHeight: 220, backgroundColor: c.green, flexDirection: "row" }}><View style={{ width: "62%", padding: 18 }}><Text style={{ color: "#fff", fontSize: 8 }}>DISCOVER LOCAL. LOVE LOCAL.</Text><Text style={{ color: "#fff", fontSize: 25, lineHeight: 29, fontWeight: "600", marginTop: 16 }}>Your Local{"\n"}Market,{"\n"}Just a Tap Away</Text><Text style={{ color: "#EAF0D9", fontSize: 10, marginTop: 12 }}>From the shops you know &amp; love.</Text><Pressable onPress={() => void openShops()} style={{ alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 10, marginTop: 16, backgroundColor: c.lime, borderRadius: 10 }}><Text style={{ color: c.green, fontSize: 11, fontWeight: "600" }}>Explore shops      →</Text></Pressable></View><Image source={require("./assets/home-market-reference.webp")} style={{ position: "absolute", right: 0, width: "38%", height: "100%", resizeMode: "cover" }} /></View><Section title="A little of everything" action="View all" onPress={() => setShowCategories(true)} />
+      {header}
+      <View style={s.referenceHero}>
+        <View style={s.referenceHeroCopy}>
+          <Text style={s.referenceEyebrow}>DISCOVER LOCAL. LOVE LOCAL.</Text>
+          <Text style={s.referenceHeadline}>
+            Your Local{"\n"}Market,{"\n"}Just a Tap Away
+          </Text>
+          <Text style={s.referenceSupport}>
+            From the shops you know & love.
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => void openShops()}
+            style={s.referenceCta}
+          >
+            <Text style={s.referenceCtaText}>Explore shops</Text>
+            <Text style={s.referenceCtaArrow}>→</Text>
+          </Pressable>
+        </View>
+        <ReferenceArtwork
+          crop={[235, 225, 135, 220]}
+          style={s.referenceHeroImage}
+        />
+      </View>
+      <Section
+        title="A little of everything"
+        action="View all"
+        onPress={() => setShowCategories(true)}
+      />
       <Modal
         visible={showCategories}
         animationType="slide"
@@ -575,9 +627,86 @@ function Home({
           </ScrollView>
         </SafeAreaView>
       </Modal>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 20, justifyContent: "space-between", rowGap: 20 }}>
-{[{slug:"fruits-vegetables",label:"Vegetables & Fruits"},{slug:"grocery-kirana",label:"Grocery"},{slug:"fashion",label:"Fashion"},{slug:"dairy-eggs",label:"Dairy & Eggs"},{slug:"electronics",label:"Electronics"},{slug:"stationery-books",label:"Stationery"},{slug:"personal-care-household",label:"Beauty & Personal Care"},{slug:"more",label:"More"}].map((entry) => { const item=categories.find((category)=>category.slug===entry.slug); return <Pressable key={entry.slug} onPress={()=> entry.slug==="more" ? setShowCategories(true) : item ? onChoose(item.slug) : onQuickSearch(entry.label)} style={{width:"23%",minHeight:100}}><View style={{height:64,borderRadius:12,overflow:"hidden",backgroundColor:c.pale,alignItems:"center",justifyContent:"center"}}>{item ? <CategoryPicture item={item} style={{width:"100%",height:"100%"}}/> : <MarketIcon name="browse"/>}</View><Text numberOfLines={2} style={{textAlign:"center",fontSize:10,lineHeight:14,marginTop:8,minHeight:28,color:c.ink}}>{entry.label}</Text></Pressable>;})}
-</View>
+      <View
+        style={{
+          flexDirection: "row",
+          flexWrap: "wrap",
+          paddingHorizontal: 20,
+          justifyContent: "space-between",
+          rowGap: 20,
+        }}
+      >
+        {[
+          { slug: "fruits-vegetables", label: "Vegetables\n& Fruits" },
+          { slug: "grocery-kirana", label: "Grocery" },
+          { slug: "fashion", label: "Fashion" },
+          { slug: "dairy-eggs", label: "Dairy & Eggs" },
+          { slug: "electronics", label: "Electronics" },
+          { slug: "stationery-books", label: "Stationery" },
+          { slug: "personal-care-household", label: "Beauty &\nPersonal Care" },
+          { slug: "more", label: "More" },
+        ].map((entry, index) => {
+          const item = categories.find(
+            (category) => category.slug === entry.slug,
+          );
+          return (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={entry.label.replace(/\n/g, " ")}
+              accessibilityState={{ selected: picked === entry.slug }}
+              key={entry.slug}
+              onPress={() =>
+                entry.slug === "more"
+                  ? setShowCategories(true)
+                  : item
+                    ? onChoose(item.slug)
+                    : onQuickSearch(entry.label)
+              }
+              style={{ width: "23%" }}
+            >
+              <View
+                style={{
+                  aspectRatio: 1.25,
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  backgroundColor: c.pale,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: picked === entry.slug ? 2 : 0,
+                  borderColor: c.green,
+                }}
+              >
+                {index < 7 ? (
+                  <ReferenceArtwork
+                    crop={[
+                      20 + (index % 4) * 90,
+                      index < 4 ? 510 : 629,
+                      80,
+                      64,
+                    ]}
+                    style={{ width: "100%" }}
+                  />
+                ) : (
+                  <MarketIcon name="browse" color="#747D6E" />
+                )}
+              </View>
+              <Text
+                numberOfLines={2}
+                style={{
+                  textAlign: "center",
+                  fontSize: 11,
+                  lineHeight: 14,
+                  marginTop: 9,
+                  minHeight: 28,
+                  color: c.ink,
+                }}
+              >
+                {entry.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
       {picked ? (
         <View style={s.filter}>
           <Text style={s.filterText}>Showing one category</Text>
@@ -637,16 +766,33 @@ function Home({
         </SafeAreaView>
       </Modal>
       {shops.length ? (
-        <View style={{flexDirection:"row",paddingHorizontal:20,gap:12}}>{shops.slice(0,2).map((item)=><View key={item.id} style={{flex:1,minWidth:0}}><ShopPreview scope={session?.userId ?? "guest"} item={item} onPress={()=>onShop(item)}/></View>)}</View>
+        <View style={{ flexDirection: "row", paddingHorizontal: 20, gap: 12 }}>
+          {shops.slice(0, 2).map((item) => (
+            <View key={item.id} style={{ flex: 1, minWidth: 0 }}>
+              <ShopPreview
+                categoryLabel={
+                  categories.find((category) =>
+                    item.categories?.includes(category.slug),
+                  )?.name
+                }
+                item={item}
+                onPress={() => onShop(item)}
+              />
+            </View>
+          ))}
+        </View>
       ) : (
         <Empty copy="No shops are available in this area yet" />
       )}
 
-      <Section
-        title={picked ? "Available products" : "Popular in Your Neighbourhood"}
-        action="Search"
-        onPress={onBrowse}
-      />
+      <View style={s.popularHeading}>
+        <Text style={s.popularTitle}>
+          {picked ? "Available products" : "Popular in Your\nNeighbourhood"}
+        </Text>
+        <Text style={s.popularSubtitle}>
+          Local favourites, across your everyday.
+        </Text>
+      </View>
       {picked && categoryFailure?.key === categoryKey ? (
         <State
           title="Category could not load"
@@ -673,7 +819,13 @@ function Home({
           ))}
         </View>
       ) : (
-        <Empty copy="No active products are available in this category" />
+        <Empty
+          copy={
+            picked
+              ? "No active products are available in this category"
+              : "No products are available in this area yet. Try another delivery area."
+          }
+        />
       )}
       {picked &&
       categoryResult?.key === categoryKey &&
@@ -1327,12 +1479,109 @@ function ShopRow({ item, onPress }: { item: Shop; onPress: () => void }) {
     </Pressable>
   );
 }
-function ShopPreview({item,onPress}:{item:Shop;onPress:()=>void;scope:string}) {
-const [failed,setFailed]=useState(false);
-return <Pressable onPress={onPress} accessibilityRole="button" style={{width:"100%",borderRadius:16,overflow:"hidden",backgroundColor:"#fff"}}>
-{resolveImage(item.coverImage)&&!failed?<Image source={{uri:resolveImage(item.coverImage)!}} onError={()=>setFailed(true)} style={{width:"100%",height:98}}/>:<View style={{height:98,backgroundColor:c.pale,alignItems:"center",justifyContent:"center"}}><Text style={s.fallbackText}>{item.initials||item.name.slice(0,1)}</Text></View>}
-<Text style={{position:"absolute",top:8,left:8,paddingHorizontal:8,paddingVertical:5,borderRadius:6,backgroundColor:c.pale,color:c.green,fontSize:9}}>{item.isOpen?"OPEN":"CLOSED"}</Text>
-<View style={{padding:12,gap:6}}><Text numberOfLines={1} style={{fontSize:14,fontWeight:"600",color:c.ink}}>{item.name}</Text><Text numberOfLines={1} style={{fontSize:11,color:c.secondary}}>{item.tagline||item.locality}</Text><Text style={{fontSize:11,color:c.green,marginTop:4}}>{item.isOpen?"Open now":"Currently closed"}</Text><View style={{height:30,borderRadius:10,backgroundColor:c.pale,alignItems:"center",justifyContent:"center",marginTop:2}}><Text style={{fontSize:12,fontWeight:"600",color:c.green}}>View Shop</Text></View></View></Pressable>;
+function ShopPreview({
+  item,
+  onPress,
+  categoryLabel,
+}: {
+  item: Shop;
+  onPress: () => void;
+  categoryLabel?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={{
+        width: "100%",
+        borderRadius: 16,
+        overflow: "hidden",
+        backgroundColor: "#fff",
+      }}
+    >
+      {resolveImage(item.coverImage) && !failed ? (
+        <Image
+          source={{ uri: resolveImage(item.coverImage)! }}
+          onError={() => setFailed(true)}
+          style={{ width: "100%", height: 98 }}
+        />
+      ) : (
+        <View
+          style={{
+            height: 98,
+            backgroundColor: c.pale,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Text style={s.fallbackText}>
+            {item.initials || item.name.slice(0, 1)}
+          </Text>
+        </View>
+      )}
+      <Text
+        style={{
+          position: "absolute",
+          top: 8,
+          left: 8,
+          paddingHorizontal: 8,
+          paddingVertical: 5,
+          borderRadius: 6,
+          backgroundColor: c.pale,
+          color: c.green,
+          fontSize: 9,
+        }}
+      >
+        {item.isOpen ? "OPEN" : "CLOSED"}
+      </Text>
+      <View style={{ padding: 11, gap: 6 }}>
+        <Text
+          numberOfLines={1}
+          style={{
+            fontSize: 13,
+            lineHeight: 17,
+            minHeight: 17,
+            fontWeight: "600",
+            color: c.ink,
+          }}
+        >
+          {item.name}
+        </Text>
+        <Text numberOfLines={1} style={{ fontSize: 11, color: c.secondary }}>
+          {categoryLabel || item.tagline || item.locality}
+        </Text>
+        <Text
+          numberOfLines={1}
+          style={{ fontSize: 11, lineHeight: 16, color: c.green }}
+        >
+          {typeof item.rating === "number"
+            ? `☆ ${item.rating.toFixed(1)} · `
+            : ""}
+          {typeof item.distanceKm === "number"
+            ? `${item.distanceKm.toFixed(1)} km`
+            : item.locality}
+        </Text>
+        <Text style={{ fontSize: 11, color: c.green, marginTop: 4 }}>
+          {item.isOpen ? "Open now" : "Currently closed"}
+        </Text>
+        <View
+          style={{
+            height: 30,
+            borderRadius: 10,
+            backgroundColor: c.pale,
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: 2,
+          }}
+        >
+          <Text style={{ fontSize: 12, fontWeight: "600", color: c.green }}>
+            View Shop
+          </Text>
+        </View>
+      </View>
+    </Pressable>
+  );
 }
 function ProductCard({
   shopName,
@@ -1387,8 +1636,24 @@ function ProductCard({
       >
         {item.name}
       </Text>
-      <Text numberOfLines={1} style={[s.unit, { minHeight: 16, lineHeight: 16 }]}>{item.unit}</Text>
-      <Text numberOfLines={1} style={{ color: c.secondary, fontSize: 10, lineHeight: 16, minHeight: 16, marginTop: 2 }}>{shopName ?? ""}</Text>
+      <Text
+        numberOfLines={1}
+        style={[s.unit, { minHeight: 16, lineHeight: 16 }]}
+      >
+        {item.unit}
+      </Text>
+      <Text
+        numberOfLines={1}
+        style={{
+          color: c.secondary,
+          fontSize: 10,
+          lineHeight: 16,
+          minHeight: 16,
+          marginTop: 2,
+        }}
+      >
+        {shopName ?? ""}
+      </Text>
       <View style={s.productBottom}>
         <Text style={s.price}>{money(item.price)}</Text>
         <Pressable
@@ -1405,7 +1670,7 @@ function ProductCard({
                   ? "Limit"
                   : quantity
                     ? `Add · ${quantity}`
-                    : "Add"}
+                    : "+ Add"}
           </Text>
         </Pressable>
       </View>
@@ -1603,9 +1868,8 @@ const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: c.paper },
   fill: { flex: 1 },
   header: {
-    backgroundColor: c.card,
-    borderBottomWidth: 1,
-    borderBottomColor: c.line,
+    backgroundColor: c.paper,
+    paddingTop: 8,
   },
   top: {
     height: 64,
@@ -1620,22 +1884,31 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  logo: { width: 44, height: 44, borderRadius: 10, marginRight: 8 },
-  brand: { color: c.green, fontSize: 22, lineHeight: 26, fontWeight: "600" },
-  tagline: { color: c.secondary, marginTop: 2, fontSize: 10 },
+  logo: { width: 46, height: 46, marginRight: 11 },
+  brand: {
+    color: c.green,
+    fontSize: 24,
+    lineHeight: 28,
+    fontWeight: "700",
+    letterSpacing: -0.8,
+  },
+  tagline: { color: c.green, marginTop: 0, fontSize: 9 },
   bagTop: {
     height: 36,
-    minWidth: 48,
+    width: 32,
     paddingHorizontal: 4,
     borderRadius: 8,
     gap: 6,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: c.card,
+    backgroundColor: c.paper,
   },
   bagTopText: { color: "#FFFDF7", fontSize: 13, fontWeight: "500" },
   bagCount: {
+    position: "absolute",
+    top: -3,
+    right: -4,
     minWidth: 18,
     height: 18,
     borderRadius: 9,
@@ -1648,7 +1921,7 @@ const s = StyleSheet.create({
     lineHeight: 18,
   },
   location: {
-    minHeight: 48,
+    height: 55,
     paddingHorizontal: 20,
     borderTopWidth: 0,
     borderTopColor: c.line,
@@ -1656,22 +1929,23 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   pin: {
-    width: 28,
+    width: 20,
     height: 28,
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: c.pale,
+    marginRight: 10,
   },
   pinText: { color: c.green, fontSize: 18 },
-  locationLabel: { color: c.secondary, fontSize: 8 },
+  locationLabel: { color: c.secondary, fontSize: 8, lineHeight: 12 },
   locationName: { color: c.ink, marginTop: 2, fontSize: 13, fontWeight: "600" },
-  change: { color: c.green, fontSize: 12, fontWeight: "600" },
+  change: { color: c.green, fontSize: 11, fontWeight: "600" },
   search: {
     height: 48,
     paddingHorizontal: 14,
     marginHorizontal: 20,
     marginBottom: 0,
+    marginTop: 9,
     borderRadius: 14,
     gap: 12,
     flexDirection: "row",
@@ -1681,10 +1955,72 @@ const s = StyleSheet.create({
   searchIcon: { color: c.secondary, marginRight: 10, fontSize: 22 },
   searchText: { color: c.muted, fontSize: 12, flex: 1, flexShrink: 1 },
   content: {
-    paddingBottom: 156,
+    paddingBottom: 24,
     width: "100%",
-    maxWidth: 1120,
+    maxWidth: 600,
     alignSelf: "center",
+  },
+  referenceHero: {
+    marginHorizontal: 20,
+    marginTop: 18,
+    height: 220,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: c.green,
+    flexDirection: "row",
+  },
+  referenceHeroCopy: {
+    width: "61.43%",
+    padding: 18,
+    paddingRight: 5,
+    zIndex: 1,
+  },
+  referenceEyebrow: { color: "#FFFFFF", fontSize: 8, lineHeight: 10 },
+  referenceHeadline: {
+    color: "#FFFFFF",
+    fontSize: 25,
+    lineHeight: 29,
+    fontWeight: "600",
+    marginTop: 16,
+    letterSpacing: -0.4,
+  },
+  referenceSupport: {
+    color: "#EAF0D9",
+    fontSize: 10,
+    lineHeight: 14,
+    marginTop: 12,
+  },
+  referenceCta: {
+    width: 132,
+    height: 32,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    marginTop: 16,
+    backgroundColor: c.lime,
+    borderRadius: 10,
+  },
+  referenceCtaText: { color: c.green, fontSize: 11, fontWeight: "600" },
+  referenceCtaArrow: { color: c.green, fontSize: 22, lineHeight: 24 },
+  referenceHeroImage: {
+    position: "absolute",
+    right: 0,
+    width: "38.57%",
+    height: "100%",
+  },
+  popularHeading: { marginHorizontal: 20, marginTop: 28, marginBottom: 16 },
+  popularTitle: {
+    color: c.ink,
+    fontSize: 20,
+    lineHeight: 25,
+    fontWeight: "600",
+  },
+  popularSubtitle: {
+    color: "#727A6C",
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 8,
   },
   market: {
     minHeight: 152,
@@ -1722,17 +2058,24 @@ const s = StyleSheet.create({
     backgroundColor: c.pale,
   },
   section: {
-    minHeight: 56,
+    minHeight: 65,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    marginTop: 12,
+    marginTop: 0,
     gap: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  sectionTitle: { color: c.ink, fontSize: 20, lineHeight: 25, fontWeight: "600", flex: 1, flexShrink: 1 },
-  sectionAction: { color: c.green, fontSize: 13, fontWeight: "600" },
+  sectionTitle: {
+    color: c.ink,
+    fontSize: 20,
+    lineHeight: 25,
+    fontWeight: "600",
+    flex: 1,
+    flexShrink: 1,
+  },
+  sectionAction: { color: c.green, fontSize: 11, fontWeight: "600" },
   rail: { paddingHorizontal: 16, gap: 12 },
   category: {
     width: 104,
@@ -1809,16 +2152,14 @@ const s = StyleSheet.create({
   gridRow: { justifyContent: "space-between" },
   product: {
     width: "48%",
-    minHeight: 232,
+    minHeight: 239,
     padding: 8,
-    borderWidth: 1,
-    borderColor: c.line,
-    borderRadius: 12,
-    backgroundColor: c.card,
+    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
   },
   productImage: {
     width: "100%",
-    height: 116,
+    height: 107,
     borderRadius: 8,
     backgroundColor: c.raised,
     resizeMode: "cover",
@@ -1831,12 +2172,12 @@ const s = StyleSheet.create({
     backgroundColor: c.pale,
   },
   productName: {
-    minHeight: 40,
+    minHeight: 18,
     color: c.ink,
     marginTop: 10,
-    fontSize: 13,
+    fontSize: 12,
     lineHeight: 18,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   unit: { color: c.muted, marginTop: 2, fontSize: 11 },
   productBottom: {
@@ -1846,12 +2187,12 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  price: { color: c.ink, fontSize: 14, fontWeight: "600" },
+  price: { color: c.ink, fontSize: 16, fontWeight: "600" },
   add: {
-    minWidth: 48,
+    minWidth: 64,
     height: 32,
     paddingHorizontal: 8,
-    borderRadius: 6,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: c.pale,
@@ -1966,22 +2307,20 @@ const s = StyleSheet.create({
   bagBarCopy: { color: "#D9E4D6", marginTop: 2, fontSize: 11 },
   bagBarAction: { color: c.lime, fontSize: 13, fontWeight: "600" },
   nav: {
-    height: 64,
+    height: 62,
     paddingHorizontal: 12,
-    borderTopWidth: 1,
-    borderTopColor: c.line,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: c.card,
+    backgroundColor: "#FFFFFF",
   },
   navButton: {
     height: 48,
     gap: 4,
-    flex: 1,
+    width: 56,
     minWidth: 0,
     paddingHorizontal: 4,
-    borderRadius: 20,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
   },

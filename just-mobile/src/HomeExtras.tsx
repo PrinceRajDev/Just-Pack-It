@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { buyerApi, marketApi, type Product, type Session } from "./api";
 import { MarketIcon } from "./MarketIcon";
+import { resolveImage } from "./images";
 export function HomeNotifications({ session }: { session: Session | null }) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<
@@ -140,13 +141,109 @@ export function BuyAgain({
       .finally(() => {
         if (active) setDone(true);
       });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [session]);
-  const product=products[0];
-return <View style={{margin:20,marginTop:28,padding:14,borderRadius:16,backgroundColor:"#EAF0D9"}}>
-<View style={{flexDirection:"row",alignItems:"center",gap:10}}><MarketIcon name="bag"/><Text style={{fontSize:18,fontWeight:"600",color:"#07552F",flex:1}}>Buy Again</Text><Pressable onPress={()=>setExpanded(!expanded)} accessibilityLabel="Show recent purchases"><Text style={{fontSize:20,color:"#07552F"}}>→</Text></Pressable></View>
-<Text style={{fontSize:11,color:"#687161",marginTop:6}}>Your favourites, one tap away</Text>
-{!session?<Pressable onPress={onAccount}><Text style={{fontSize:12,color:"#07552F",marginTop:16}}>Sign in to see your purchases →</Text></Pressable>:!done?<ActivityIndicator color="#07552F" style={{marginTop:16}}/>:product?<View style={{flexDirection:"row",alignItems:"center",gap:10,marginTop:16}}>
-<Image source={{uri:product.image}} style={{width:40,height:40,borderRadius:8,backgroundColor:"#FAF8F1"}}/><View style={{flex:1}}><Text numberOfLines={1} style={{fontSize:11,fontWeight:"600"}}>{product.name}</Text><Text style={{fontSize:10,color:"#687161",marginTop:4}}>{product.unit}</Text></View><Text style={{fontSize:12,color:"#07552F",fontWeight:"600"}}>₹{product.price.toLocaleString("en-IN")}</Text><Pressable disabled={product.stock<=0} onPress={()=>product.variants?.length?setExpanded(true):onAdd(product)} style={{padding:8}}><Text style={{fontSize:11,color:"#07552F",fontWeight:"600"}}>{product.stock<=0?"Out":"+ Add"}</Text></Pressable></View>:<Text style={{fontSize:12,lineHeight:18,color:"#687161",marginTop:16}}>{failed?"Purchase history could not load":"Your purchases will appear here"}</Text>}
-{expanded?products.map((item)=><View key={item.id} style={{marginTop:12}}>{renderProduct(item)}</View>):null}</View>;
+  const product = products[0];
+  return (
+    <View
+      style={{
+        margin: 20,
+        marginTop: 28,
+        padding: 14,
+        minHeight: 128,
+        borderRadius: 16,
+        backgroundColor: "#EAF0D9",
+      }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <MarketIcon name="bag" />
+        <Text
+          style={{ fontSize: 18, fontWeight: "600", color: "#07552F", flex: 1 }}
+        >
+          Buy Again
+        </Text>
+        <Pressable
+          onPress={() => (session ? setExpanded(!expanded) : onAccount())}
+          accessibilityLabel="Show recent purchases"
+        >
+          <Text style={{ fontSize: 20, color: "#07552F" }}>→</Text>
+        </Pressable>
+      </View>
+      <Text style={{ fontSize: 11, color: "#687161", marginTop: 6 }}>
+        Your favourites, one tap away
+      </Text>
+      {!session ? (
+        <Pressable onPress={onAccount}>
+          <Text style={{ fontSize: 12, color: "#07552F", marginTop: 16 }}>
+            Sign in to see your purchases →
+          </Text>
+        </Pressable>
+      ) : !done ? (
+        <ActivityIndicator color="#07552F" style={{ marginTop: 16 }} />
+      ) : product ? (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            marginTop: 16,
+          }}
+        >
+          <Image
+            source={{ uri: resolveImage(product.image) }}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 8,
+              backgroundColor: "#FAF8F1",
+            }}
+          />
+          <View style={{ flex: 1 }}>
+            <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: "600" }}>
+              {product.name}
+            </Text>
+            <Text style={{ fontSize: 10, color: "#687161", marginTop: 4 }}>
+              {product.unit}
+            </Text>
+          </View>
+          <Text style={{ fontSize: 12, color: "#07552F", fontWeight: "600" }}>
+            ₹{product.price.toLocaleString("en-IN")}
+          </Text>
+          <Pressable
+            disabled={product.stock <= 0}
+            onPress={() =>
+              product.variants?.length ? setExpanded(true) : onAdd(product)
+            }
+            style={{ padding: 8 }}
+          >
+            <Text style={{ fontSize: 11, color: "#07552F", fontWeight: "600" }}>
+              {product.stock <= 0 ? "Out" : "+ Add"}
+            </Text>
+          </Pressable>
+        </View>
+      ) : (
+        <Text
+          style={{
+            fontSize: 12,
+            lineHeight: 18,
+            color: "#687161",
+            marginTop: 16,
+          }}
+        >
+          {failed
+            ? "Purchase history could not load"
+            : "Your purchases will appear here"}
+        </Text>
+      )}
+      {expanded
+        ? products.map((item) => (
+            <View key={item.id} style={{ marginTop: 12 }}>
+              {renderProduct(item)}
+            </View>
+          ))
+        : null}
+    </View>
+  );
 }

@@ -1,6 +1,13 @@
 import { useRef, useState } from "react";
-import * as SecureStore from "expo-secure-store";
-import { ActivityIndicator, Alert, Modal, Pressable, Text, View } from "react-native";
+import * as SecureStore from "./deviceStorage";
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Pressable,
+  Text,
+  View,
+} from "react-native";
 import { buyerApi, type Address, type CheckoutLine, type Session } from "./api";
 
 export function PlaceCodOrder({
@@ -83,12 +90,48 @@ export function PlaceCodOrder({
   };
   return (
     <View style={{ marginTop: 16, gap: 12 }}>
-      <Modal visible={busy} transparent animationType="fade" onRequestClose={() => undefined}>
-        <View style={{ flex: 1, backgroundColor: "rgba(31,42,34,0.5)", justifyContent: "center", padding: 24 }}>
-          <View accessibilityViewIsModal style={{ padding: 24, borderRadius: 16, backgroundColor: "#FDFBF7", alignItems: "center", gap: 16 }}>
+      <Modal
+        visible={busy}
+        transparent
+        animationType="fade"
+        onRequestClose={() => undefined}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(31,42,34,0.5)",
+            justifyContent: "center",
+            padding: 24,
+          }}
+        >
+          <View
+            accessibilityViewIsModal
+            style={{
+              padding: 24,
+              borderRadius: 16,
+              backgroundColor: "#FDFBF7",
+              alignItems: "center",
+              gap: 16,
+            }}
+          >
             <ActivityIndicator color="#174B34" size="large" />
-            <Text accessibilityRole="header" style={{ fontSize: 22, color: "#1F2A22" }}>Confirming your order</Text>
-            <Text style={{ color: "#5E554A", fontSize: 14, lineHeight: 21, textAlign: "center" }}>Please keep the app open while we check your order. Your confirmation will appear here.</Text>
+            <Text
+              accessibilityRole="header"
+              style={{ fontSize: 22, color: "#1F2A22" }}
+            >
+              Confirming your order
+            </Text>
+            <Text
+              style={{
+                color: "#5E554A",
+                fontSize: 14,
+                lineHeight: 21,
+                textAlign: "center",
+              }}
+            >
+              Please keep the app open while we check your order. Your
+              confirmation will appear here.
+            </Text>
           </View>
         </View>
       </Modal>

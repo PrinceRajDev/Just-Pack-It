@@ -35,6 +35,8 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+qa/
+home-current-390.png
 
 # generated native folders
 /ios

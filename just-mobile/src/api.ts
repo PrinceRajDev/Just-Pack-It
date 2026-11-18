@@ -68,6 +68,7 @@ export const marketApi = {
 };
 
 export const buyerApi = {
+  receiptCode: (token: string, orderId: string, subId: string, version: number, cod: boolean) => request<{ code: string; expiresAt: string; amount: number }>(`/orders/${encodeURIComponent(orderId)}/suborders/${encodeURIComponent(subId)}/receipt-code`, token, { method: "POST", body: JSON.stringify({ version, confirmReceived: true, ...(cod ? { confirmCashPaid: true } : {}) }) }),
   order: (token: string, id: string) => request<BuyerOrder>(`/orders/${encodeURIComponent(id)}`, token),
   placeCod: (token: string, key: string, input: { areaId: string; addressId: string; addressVersion: number; expectedTotal: number; paymentMethod: "cod"; items: CheckoutLine[]; fulfilments: { shopId: string; method: "platform_delivery" }[] }) => request<BuyerOrder>("/orders", token, { method: "POST", headers: { "Idempotency-Key": key }, body: JSON.stringify(input) }),
   reviewCheckout: (token: string, areaId: string, address: Address, items: CheckoutLine[], shopIds: string[]) => request<CheckoutReview>("/checkout/review", token, { method: "POST", body: JSON.stringify({ areaId, addressId: address.id, addressVersion: address.version, items, fulfilments: shopIds.map((shopId) => ({ shopId, method: "platform_delivery" })) }) }),

@@ -328,6 +328,16 @@ function Home({
 }) {
   const feature = categories[0];
   const [showCategories, setShowCategories] = useState(false);
+  const [showShops, setShowShops] = useState(false);
+  const [allShops, setAllShops] = useState<Shop[]>([]);
+  const [shopsBusy, setShopsBusy] = useState(false);
+  const [shopsError, setShopsError] = useState<string | null>(null);
+  const openShops = async () => {
+    setShowShops(true); setShopsBusy(true); setShopsError(null);
+    try { setAllShops(area ? await marketApi.shops(area.id) : []); }
+    catch (error) { setShopsError(error instanceof Error ? error.message : "Shops could not load"); }
+    finally { setShopsBusy(false); }
+  };
   return (
     <ScrollView
       contentContainerStyle={s.content}
@@ -392,8 +402,14 @@ function Home({
       <Section
         title={area ? `Shops in ${area.name}` : "Nearby shops"}
         action="See all"
-        onPress={onBrowse}
+        onPress={() => void openShops()}
       />
+      <Modal visible={showShops} animationType="slide" onRequestClose={() => setShowShops(false)}>
+        <SafeAreaView style={s.safe}>
+          <Title title={area ? `Shops in ${area.name}` : "Nearby shops"} copy="Choose a shop to browse its products" onBack={() => setShowShops(false)} />
+          {shopsBusy ? <State title="Loading shops" copy="Checking your selected area" loading /> : shopsError ? <State title="Shops could not load" copy={shopsError} action="Try again" onAction={() => void openShops()} /> : <FlatList data={allShops} keyExtractor={(item) => item.id} contentContainerStyle={{ padding: 16, gap: 12 }} ListEmptyComponent={<Empty copy="No shops are available in this area yet" />} renderItem={({ item }) => <ShopRow item={item} onPress={() => { setShowShops(false); onShop(item); }} />} />}
+        </SafeAreaView>
+      </Modal>
       {shops.length ? (
         <View style={s.shopList}>
           {shops.slice(0, 4).map((x) => (
@@ -555,6 +571,14 @@ function ShopPage({
   onBack: () => void;
   onAdd: (x: Product) => void;
 }) {
+  const [catalogue, setCatalogue] = useState<Product[] | null>(null);
+  const [catalogueError, setCatalogueError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let active = true;
+    void marketApi.shopProducts(shop.id).then((items) => { if (active) setCatalogue(items); }).catch((error: unknown) => { if (active) setCatalogueError(error instanceof Error ? error.message : "Products could not load"); });
+    return () => { active = false; };
+  }, [shop.id, attempt]);
   return (
     <View style={s.fill}>
       <Title
@@ -563,7 +587,7 @@ function ShopPage({
         onBack={onBack}
       />
       <FlatList
-        data={products}
+        data={catalogue ?? []}
         keyExtractor={(x) => x.id}
         numColumns={2}
         columnWrapperStyle={s.gridRow}
@@ -585,7 +609,7 @@ function ShopPage({
           </View>
         }
         ListEmptyComponent={
-          <Empty copy="This shop has no active products right now" />
+          catalogueError ? <State title="Products could not load" copy={catalogueError} action="Try again" onAction={() => { setCatalogueError(null); setAttempt((value) => value + 1); }} /> : catalogue === null ? <ActivityIndicator color={c.green} /> : <Empty copy="This shop has no active products right now" />
         }
         renderItem={({ item }) => (
           <ProductCard

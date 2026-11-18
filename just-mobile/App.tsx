@@ -349,6 +349,17 @@ function Home({
   onClear: () => void;
 }) {
   const feature = categories[0];
+  const [categoryResult, setCategoryResult] = useState<{ key: string; items: Product[] } | null>(null);
+  const [categoryFailure, setCategoryFailure] = useState<{ key: string; message: string } | null>(null);
+  const [categoryAttempt, setCategoryAttempt] = useState(0);
+  const categoryKey = `${area?.id ?? ""}:${picked ?? ""}`;
+  useEffect(() => {
+    if (!area || !picked) return;
+    let active = true;
+    void marketApi.categoryProducts(area.id, picked).then((items) => { if (active) { setCategoryResult({ key: categoryKey, items }); setCategoryFailure(null); } }).catch((reason: unknown) => { if (active) setCategoryFailure({ key: categoryKey, message: reason instanceof Error ? reason.message : "Category could not load" }); });
+    return () => { active = false; };
+  }, [area, picked, categoryKey, categoryAttempt]);
+  const categoryProducts = picked ? categoryResult?.key === categoryKey ? categoryResult.items : [] : products;
   const [showCategories, setShowCategories] = useState(false);
   const [showShops, setShowShops] = useState(false);
   const [allShops, setAllShops] = useState<Shop[]>([]);
@@ -446,9 +457,9 @@ function Home({
         action="Search"
         onPress={onBrowse}
       />
-      {products.length ? (
+      {picked && categoryFailure?.key === categoryKey ? <State title="Category could not load" copy={categoryFailure.message} action="Try again" onAction={() => { setCategoryFailure(null); setCategoryAttempt((value) => value + 1); }} /> : picked && categoryResult?.key !== categoryKey ? <ActivityIndicator color={c.green} /> : categoryProducts.length ? (
         <View style={s.grid}>
-          {products.slice(0, 12).map((x) => (
+          {categoryProducts.slice(0, picked ? 100 : 12).map((x) => (
             <ProductCard
               key={x.id}
               item={x}

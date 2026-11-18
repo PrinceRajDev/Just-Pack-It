@@ -51,6 +51,7 @@ async function getList<T>(path: string, resource: string): Promise<T[]> {
 }
 
 export const marketApi = {
+  categoryProducts: (areaId: string, slug: string) => getList<Product>(`/products?area=${encodeURIComponent(areaId)}&category=${encodeURIComponent(slug)}&limit=100`, "category products"),
   shops: (areaId: string) => getList<Shop>(`/shops?area=${encodeURIComponent(areaId)}&limit=100`, "shops"),
   shopProducts: (shopId: string) => getList<Product>(`/shops/${encodeURIComponent(shopId)}/products?limit=100`, "shop products"),
   async search(areaId: string, text: string) {

@@ -33,7 +33,8 @@ import { resolveImage } from "./src/images";
 import { MarketIcon, type MarketIconName } from "./src/MarketIcon";
 import { HomeNotifications, BuyAgain } from "./src/HomeExtras";
 
-type Screen = "home" | "browse" | "bag" | "shop" | "account" | "orders" | "checkout";
+type Screen =
+  "home" | "browse" | "bag" | "shop" | "account" | "orders" | "checkout";
 type BagLine = Product & { quantity: number };
 const c = {
   paper: "#FAF8F1",
@@ -69,17 +70,29 @@ export default function App() {
   const [sessionReady, setSessionReady] = useState(false);
   useAndroidBack(() => {
     if (screen === "home") return false;
-    setScreen(screen === "checkout" ? "bag" : screen === "orders" ? "account" : "home");
+    setScreen(
+      screen === "checkout" ? "bag" : screen === "orders" ? "account" : "home",
+    );
     return true;
   });
-  const { bag, setBag, ready: bagReady, error: bagError } = useBuyerBag(session?.userId);
+  const {
+    bag,
+    setBag,
+    ready: bagReady,
+    error: bagError,
+  } = useBuyerBag(session?.userId);
   const load = async (wanted?: ServiceArea | null) => {
     setLoading(true);
     setError(null);
     try {
-      const savedAreaId = wanted ? wanted.id : await SecureStore.getItemAsync("jpi.shopping.area").catch(() => null);
+      const savedAreaId = wanted
+        ? wanted.id
+        : await SecureStore.getItemAsync("jpi.shopping.area").catch(() => null);
       const first = await marketApi.loadHome(wanted?.id);
-      const active = first.areas.find((x) => x.active && x.id === savedAreaId) ?? first.areas.find((x) => x.active) ?? null;
+      const active =
+        first.areas.find((x) => x.active && x.id === savedAreaId) ??
+        first.areas.find((x) => x.active) ??
+        null;
       const data =
         active?.id === wanted?.id
           ? first
@@ -89,7 +102,10 @@ export default function App() {
       setCategories(data.categories);
       setShops(data.shops);
       setProducts(data.products);
-      if (active) await SecureStore.setItemAsync("jpi.shopping.area", active.id).catch(() => undefined);
+      if (active)
+        await SecureStore.setItemAsync("jpi.shopping.area", active.id).catch(
+          () => undefined,
+        );
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Could not load the marketplace",
@@ -105,31 +121,47 @@ export default function App() {
         const saved = await SecureStore.getItemAsync("jpi.buyer.session");
         if (!saved) return;
         const candidate = JSON.parse(saved) as Session;
-        if (!candidate || typeof candidate.token !== "string" || typeof candidate.userId !== "string" || candidate.role !== "buyer") { await SecureStore.deleteItemAsync("jpi.buyer.session"); return; }
+        if (
+          !candidate ||
+          typeof candidate.token !== "string" ||
+          typeof candidate.userId !== "string" ||
+          candidate.role !== "buyer"
+        ) {
+          await SecureStore.deleteItemAsync("jpi.buyer.session");
+          return;
+        }
         try {
           const verified = await buyerApi.me(candidate.token);
-          if (verified.role === "buyer" && verified.userId === candidate.userId) setSession({ ...verified, token: candidate.token });
+          if (verified.role === "buyer" && verified.userId === candidate.userId)
+            setSession({ ...verified, token: candidate.token });
           else await SecureStore.deleteItemAsync("jpi.buyer.session");
         } catch (reason) {
-          if (reason instanceof ApiError && reason.status === 401) await SecureStore.deleteItemAsync("jpi.buyer.session");
+          if (reason instanceof ApiError && reason.status === 401)
+            await SecureStore.deleteItemAsync("jpi.buyer.session");
           else setSession(candidate);
         }
-      } catch { /* An unreadable session requires a new sign-in. */ }
-      finally { setSessionReady(true); }
+      } catch {
+        /* An unreadable session requires a new sign-in. */
+      } finally {
+        setSessionReady(true);
+      }
     })();
     return () => clearTimeout(id);
   }, []);
-  useEffect(() => onSessionExpired((token) => {
-    if (session?.token !== token) return;
-    setSession(null); setScreen("account");
-    void SecureStore.deleteItemAsync("jpi.buyer.session").catch(() => undefined);
-  }), [session]);
-  const displayed = useMemo(
+  useEffect(
     () =>
-      products.filter(
-        (x) =>
-          (!picked || x.categorySlug === picked),
-      ),
+      onSessionExpired((token) => {
+        if (session?.token !== token) return;
+        setSession(null);
+        setScreen("account");
+        void SecureStore.deleteItemAsync("jpi.buyer.session").catch(
+          () => undefined,
+        );
+      }),
+    [session],
+  );
+  const displayed = useMemo(
+    () => products.filter((x) => !picked || x.categorySlug === picked),
     [products, picked],
   );
   const count = bag.reduce((sum, x) => sum + x.quantity, 0);
@@ -164,7 +196,13 @@ export default function App() {
       await SecureStore.setItemAsync("jpi.buyer.session", JSON.stringify(next));
     else await SecureStore.deleteItemAsync("jpi.buyer.session");
   };
-  const body = !sessionReady ? <State title="Opening your account" copy="Restoring your session" loading /> : bagError ? <State title="Bag unavailable" copy={bagError} /> : !bagReady ? <State title="Loading your bag" copy="Restoring your saved items" loading /> : loading ? (
+  const body = !sessionReady ? (
+    <State title="Opening your account" copy="Restoring your session" loading />
+  ) : bagError ? (
+    <State title="Bag unavailable" copy={bagError} />
+  ) : !bagReady ? (
+    <State title="Loading your bag" copy="Restoring your saved items" loading />
+  ) : loading ? (
     <State
       title="Loading Raiyam"
       copy="Finding nearby shops and fresh stock"
@@ -181,6 +219,10 @@ export default function App() {
     <Home
       session={session}
       onAccount={() => setScreen("account")}
+      onQuickSearch={(value) => {
+        setQuery(value);
+        setScreen("browse");
+      }}
       area={area}
       categories={categories}
       shops={shops}
@@ -227,7 +269,17 @@ export default function App() {
   ) : screen === "orders" ? (
     <BuyerOrders session={session} back={() => setScreen("account")} />
   ) : screen === "checkout" ? (
-    <BuyerCheckout session={session} areaId={area?.id} bag={bag} back={() => setScreen("bag")} account={() => setScreen("account")} onConfirmed={() => { setBag([]); setScreen("orders"); }} />
+    <BuyerCheckout
+      session={session}
+      areaId={area?.id}
+      bag={bag}
+      back={() => setScreen("bag")}
+      account={() => setScreen("account")}
+      onConfirmed={() => {
+        setBag([]);
+        setScreen("orders");
+      }}
+    />
   ) : (
     <Bag
       bag={bag}
@@ -250,7 +302,8 @@ export default function App() {
           onBag={() => setScreen("bag")}
         />
         {body}
-        {(screen === "home" || screen === "browse" || screen === "shop") && count > 0 ? (
+        {(screen === "home" || screen === "browse" || screen === "shop") &&
+        count > 0 ? (
           <Pressable style={s.bagBar} onPress={() => setScreen("bag")}>
             <View>
               <Text style={s.bagBarTitle}>
@@ -313,8 +366,12 @@ function Header({
             style={s.logo}
           />
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text numberOfLines={1} adjustsFontSizeToFit style={s.brand}>JustPackIt</Text>
-            <Text numberOfLines={1} style={s.tagline}>Your Neighbourhood, Delivered.</Text>
+            <Text numberOfLines={1} adjustsFontSizeToFit style={s.brand}>
+              JustPackIt
+            </Text>
+            <Text numberOfLines={1} style={s.tagline}>
+              Your Neighbourhood, Delivered.
+            </Text>
           </View>
         </View>
         <HomeNotifications session={session} />
@@ -343,6 +400,7 @@ function Header({
   );
 }
 function Home({
+  onQuickSearch,
   session,
   onAccount,
   area,
@@ -357,6 +415,7 @@ function Home({
   onAdd,
   onClear,
 }: {
+  onQuickSearch: (query: string) => void;
   session: Session | null;
   onAccount: () => void;
   area: ServiceArea | null;
@@ -371,31 +430,79 @@ function Home({
   onAdd: (x: Product) => void;
   onClear: () => void;
 }) {
-  const shortcuts = ["fruits-vegetables", "grocery-kirana", "fashion", "dairy-eggs"].flatMap((slug) => { const category = categories.find((item) => item.slug === slug); return category ? [category] : []; });
-  const quickCategories = [...shortcuts, ...categories.filter((item) => !shortcuts.some((chosen) => chosen.id === item.id))].slice(0, 5);
-  const [categoryResult, setCategoryResult] = useState<{ key: string; items: Product[]; cursor: string | null } | null>(null);
+  const [categoryResult, setCategoryResult] = useState<{
+    key: string;
+    items: Product[];
+    cursor: string | null;
+  } | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [moreError, setMoreError] = useState<string | null>(null);
-  const [categoryFailure, setCategoryFailure] = useState<{ key: string; message: string } | null>(null);
+  const [categoryFailure, setCategoryFailure] = useState<{
+    key: string;
+    message: string;
+  } | null>(null);
   const [categoryAttempt, setCategoryAttempt] = useState(0);
   const categoryKey = `${area?.id ?? ""}:${picked ?? ""}`;
   useEffect(() => {
     if (!area || !picked) return;
     let active = true;
-    void marketApi.categoryPage(area.id, picked).then((page) => { if (active) { setCategoryResult({ key: categoryKey, ...page }); setCategoryFailure(null); } }).catch((reason: unknown) => { if (active) setCategoryFailure({ key: categoryKey, message: reason instanceof Error ? reason.message : "Category could not load" }); });
-    return () => { active = false; };
+    void marketApi
+      .categoryPage(area.id, picked)
+      .then((page) => {
+        if (active) {
+          setCategoryResult({ key: categoryKey, ...page });
+          setCategoryFailure(null);
+        }
+      })
+      .catch((reason: unknown) => {
+        if (active)
+          setCategoryFailure({
+            key: categoryKey,
+            message:
+              reason instanceof Error
+                ? reason.message
+                : "Category could not load",
+          });
+      });
+    return () => {
+      active = false;
+    };
   }, [area, picked, categoryKey, categoryAttempt]);
-  const categoryProducts = picked ? categoryResult?.key === categoryKey ? categoryResult.items : [] : products;
+  const categoryProducts = picked
+    ? categoryResult?.key === categoryKey
+      ? categoryResult.items
+      : []
+    : products;
   const loadMore = async () => {
     if (!area || !picked || !categoryResult?.cursor || loadingMore) return;
     const snapshot = categoryResult;
     setLoadingMore(true);
     setMoreError(null);
     try {
-      const page = await marketApi.categoryPage(area.id, picked, snapshot.cursor ?? undefined);
-      setCategoryResult((current) => current?.key === snapshot.key && current.cursor === snapshot.cursor ? { key: snapshot.key, cursor: page.cursor, items: [...current.items, ...page.items.filter((item) => !current.items.some((old) => old.id === item.id))] } : current);
-    } catch { setMoreError(snapshot.key); }
-    finally { setLoadingMore(false); }
+      const page = await marketApi.categoryPage(
+        area.id,
+        picked,
+        snapshot.cursor ?? undefined,
+      );
+      setCategoryResult((current) =>
+        current?.key === snapshot.key && current.cursor === snapshot.cursor
+          ? {
+              key: snapshot.key,
+              cursor: page.cursor,
+              items: [
+                ...current.items,
+                ...page.items.filter(
+                  (item) => !current.items.some((old) => old.id === item.id),
+                ),
+              ],
+            }
+          : current,
+      );
+    } catch {
+      setMoreError(snapshot.key);
+    } finally {
+      setLoadingMore(false);
+    }
   };
   const [showCategories, setShowCategories] = useState(false);
   const [showShops, setShowShops] = useState(false);
@@ -403,47 +510,74 @@ function Home({
   const [shopsBusy, setShopsBusy] = useState(false);
   const [shopsError, setShopsError] = useState<string | null>(null);
   const openShops = async () => {
-    setShowShops(true); setShopsBusy(true); setShopsError(null);
-    try { setAllShops(area ? await marketApi.shops(area.id) : []); }
-    catch (error) { setShopsError(error instanceof Error ? error.message : "Shops could not load"); }
-    finally { setShopsBusy(false); }
+    setShowShops(true);
+    setShopsBusy(true);
+    setShopsError(null);
+    try {
+      setAllShops(area ? await marketApi.shops(area.id) : []);
+    } catch (error) {
+      setShopsError(
+        error instanceof Error ? error.message : "Shops could not load",
+      );
+    } finally {
+      setShopsBusy(false);
+    }
   };
   return (
     <ScrollView
       contentContainerStyle={s.content}
       showsVerticalScrollIndicator={false}
     >
-      <Pressable accessibilityRole="button" accessibilityLabel="Browse fruits and vegetables" onPress={() => { const category = categories.find((item) => item.slug === "fruits-vegetables"); if (category) onChoose(category.slug); else onBrowse(); }} style={{ margin: 16, borderRadius: 24, minHeight: 204, flexDirection: "row", overflow: "hidden", backgroundColor: c.green }}>
-        <View style={{ width: "56%", padding: 20, zIndex: 1 }}><Text style={{ color: "#fff", fontSize: 25, lineHeight: 29, fontWeight: "600" }}>Fresh<Text style={{ color: c.lime }}>{"\n"}vegetables</Text>{"\n"}from local shops</Text><View style={{ width: 64, height: 3, backgroundColor: c.lime, marginTop: 12 }} /><Text style={{ color: "#EAF0D9", fontSize: 12, lineHeight: 17, marginTop: 12 }}>Discover fresh picks from your neighbourhood</Text><Text style={{ color: c.lime, fontSize: 12, marginTop: 12, fontWeight: "600" }}>Explore produce →</Text></View>
-        <Image accessibilityLabel="Fresh vegetables in baskets" source={require("./assets/home-vegetables.jpg")} style={{ width: "44%", height: "100%", position: "absolute", right: 0, resizeMode: "cover" }} />
-      </Pressable>
-      <Section title="Shop by category" action="More" onPress={() => setShowCategories(true)} />
-      <Modal visible={showCategories} animationType="slide" onRequestClose={() => setShowCategories(false)}>
+      <View style={{ margin: 20, marginTop: 16, borderRadius: 16, overflow: "hidden", minHeight: 220, backgroundColor: c.green, flexDirection: "row" }}><View style={{ width: "62%", padding: 18 }}><Text style={{ color: "#fff", fontSize: 8 }}>DISCOVER LOCAL. LOVE LOCAL.</Text><Text style={{ color: "#fff", fontSize: 25, lineHeight: 29, fontWeight: "600", marginTop: 16 }}>Your Local{"\n"}Market,{"\n"}Just a Tap Away</Text><Text style={{ color: "#EAF0D9", fontSize: 10, marginTop: 12 }}>From the shops you know &amp; love.</Text><Pressable onPress={() => void openShops()} style={{ alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 10, marginTop: 16, backgroundColor: c.lime, borderRadius: 10 }}><Text style={{ color: c.green, fontSize: 11, fontWeight: "600" }}>Explore shops      →</Text></Pressable></View><Image source={require("./assets/home-market-reference.webp")} style={{ position: "absolute", right: 0, width: "38%", height: "100%", resizeMode: "cover" }} /></View><Section title="A little of everything" action="View all" onPress={() => setShowCategories(true)} />
+      <Modal
+        visible={showCategories}
+        animationType="slide"
+        onRequestClose={() => setShowCategories(false)}
+      >
         <SafeAreaView style={s.safe}>
-          <View style={{ padding: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          <View
+            style={{
+              padding: 16,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <Text style={s.pageTitle}>All categories</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel="Close categories" onPress={() => setShowCategories(false)} style={{ padding: 12 }}><Text style={s.clear}>Close</Text></Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Close categories"
+              onPress={() => setShowCategories(false)}
+              style={{ padding: 12 }}
+            >
+              <Text style={s.clear}>Close</Text>
+            </Pressable>
           </View>
-          <ScrollView contentContainerStyle={{ padding: 16, gap: 12, flexDirection: "row", flexWrap: "wrap" }}>
-            {categories.map((item) => <CategoryCard key={item.slug} item={item} active={picked === item.slug} onPress={() => { setShowCategories(false); onChoose(item.slug); }} />)}
+          <ScrollView
+            contentContainerStyle={{
+              padding: 16,
+              gap: 12,
+              flexDirection: "row",
+              flexWrap: "wrap",
+            }}
+          >
+            {categories.map((item) => (
+              <CategoryCard
+                key={item.slug}
+                item={item}
+                active={picked === item.slug}
+                onPress={() => {
+                  setShowCategories(false);
+                  onChoose(item.slug);
+                }}
+              />
+            ))}
           </ScrollView>
         </SafeAreaView>
       </Modal>
-      <FlatList
-        horizontal
-        data={quickCategories}
-        ListFooterComponent={<Pressable style={s.category} onPress={() => setShowCategories(true)} accessibilityLabel="All categories"><View style={[s.categoryImage, { alignItems: "center", justifyContent: "center" }]}><MarketIcon name="browse" /></View><Text style={s.categoryName}>All categories</Text></Pressable>}
-        keyExtractor={(x) => x.slug}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={s.rail}
-        renderItem={({ item }) => (
-          <CategoryCard
-            item={item}
-            active={picked === item.slug}
-            onPress={() => onChoose(item.slug)}
-          />
-        )}
-      />
+      <View style={{ flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 20, justifyContent: "space-between", rowGap: 20 }}>
+{[{slug:"fruits-vegetables",label:"Vegetables & Fruits"},{slug:"grocery-kirana",label:"Grocery"},{slug:"fashion",label:"Fashion"},{slug:"dairy-eggs",label:"Dairy & Eggs"},{slug:"electronics",label:"Electronics"},{slug:"stationery-books",label:"Stationery"},{slug:"personal-care-household",label:"Beauty & Personal Care"},{slug:"more",label:"More"}].map((entry) => { const item=categories.find((category)=>category.slug===entry.slug); return <Pressable key={entry.slug} onPress={()=> entry.slug==="more" ? setShowCategories(true) : item ? onChoose(item.slug) : onQuickSearch(entry.label)} style={{width:"23%"}}><View style={{height:64,borderRadius:12,overflow:"hidden",backgroundColor:c.pale,alignItems:"center",justifyContent:"center"}}>{item ? <CategoryPicture item={item} style={{width:"100%",height:"100%"}}/> : <MarketIcon name="browse"/>}</View><Text numberOfLines={2} style={{textAlign:"center",fontSize:10,lineHeight:14,marginTop:8,color:c.ink}}>{entry.label}</Text></Pressable>;})}
+</View>
       {picked ? (
         <View style={s.filter}>
           <Text style={s.filterText}>Showing one category</Text>
@@ -453,34 +587,85 @@ function Home({
         </View>
       ) : null}
       <Section
-        title={area ? `Near you in ${area.name}` : "Near you"}
+        title="Good shops. Close by."
         action="See all"
         onPress={() => void openShops()}
       />
-      <Modal visible={showShops} animationType="slide" onRequestClose={() => setShowShops(false)}>
+      <Modal
+        visible={showShops}
+        animationType="slide"
+        onRequestClose={() => setShowShops(false)}
+      >
         <SafeAreaView style={s.safe}>
-          <Title title={area ? `Shops in ${area.name}` : "Nearby shops"} copy="Choose a shop to browse its products" onBack={() => setShowShops(false)} />
-          {shopsBusy ? <State title="Loading shops" copy="Checking your selected area" loading /> : shopsError ? <State title="Shops could not load" copy={shopsError} action="Try again" onAction={() => void openShops()} /> : <FlatList data={allShops} keyExtractor={(item) => item.id} contentContainerStyle={{ padding: 16, gap: 12 }} ListEmptyComponent={<Empty copy="No shops are available in this area yet" />} renderItem={({ item }) => <ShopRow item={item} onPress={() => { setShowShops(false); onShop(item); }} />} />}
+          <Title
+            title={area ? `Shops in ${area.name}` : "Nearby shops"}
+            copy="Choose a shop to browse its products"
+            onBack={() => setShowShops(false)}
+          />
+          {shopsBusy ? (
+            <State
+              title="Loading shops"
+              copy="Checking your selected area"
+              loading
+            />
+          ) : shopsError ? (
+            <State
+              title="Shops could not load"
+              copy={shopsError}
+              action="Try again"
+              onAction={() => void openShops()}
+            />
+          ) : (
+            <FlatList
+              data={allShops}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={{ padding: 16, gap: 12 }}
+              ListEmptyComponent={
+                <Empty copy="No shops are available in this area yet" />
+              }
+              renderItem={({ item }) => (
+                <ShopRow
+                  item={item}
+                  onPress={() => {
+                    setShowShops(false);
+                    onShop(item);
+                  }}
+                />
+              )}
+            />
+          )}
         </SafeAreaView>
       </Modal>
       {shops.length ? (
-        <FlatList horizontal data={shops} keyExtractor={(item) => item.id} showsHorizontalScrollIndicator={false} contentContainerStyle={s.rail} renderItem={({ item }) => <ShopPreview key={`${session?.userId ?? "guest"}:${item.id}`} scope={session?.userId ?? "guest"} item={item} onPress={() => onShop(item)} />} />
+        <View style={{flexDirection:"row",paddingHorizontal:20,gap:12}}>{shops.slice(0,2).map((item)=><View key={item.id} style={{flex:1,minWidth:0}}><ShopPreview scope={session?.userId ?? "guest"} item={item} onPress={()=>onShop(item)}/></View>)}</View>
       ) : (
         <Empty copy="No shops are available in this area yet" />
       )}
-      <BuyAgain key={session?.userId ?? "guest"} session={session} onAccount={onAccount} renderProduct={(item) => <ProductCard fullWidth item={item} bag={bag} quantity={bag.find((line) => line.id === item.id)?.quantity ?? 0} onAdd={onAdd} />} />
+
       <Section
-        title={picked ? "Available products" : "Products from nearby shops"}
+        title={picked ? "Available products" : "Popular in Your Neighbourhood"}
         action="Search"
         onPress={onBrowse}
       />
-      {picked && categoryFailure?.key === categoryKey ? <State title="Category could not load" copy={categoryFailure.message} action="Try again" onAction={() => { setCategoryFailure(null); setCategoryAttempt((value) => value + 1); }} /> : picked && categoryResult?.key !== categoryKey ? <ActivityIndicator color={c.green} /> : categoryProducts.length ? (
+      {picked && categoryFailure?.key === categoryKey ? (
+        <State
+          title="Category could not load"
+          copy={categoryFailure.message}
+          action="Try again"
+          onAction={() => {
+            setCategoryFailure(null);
+            setCategoryAttempt((value) => value + 1);
+          }}
+        />
+      ) : picked && categoryResult?.key !== categoryKey ? (
+        <ActivityIndicator color={c.green} />
+      ) : categoryProducts.length ? (
         <View style={s.grid}>
           {categoryProducts.slice(0, picked ? undefined : 12).map((x) => (
             <ProductCard
               key={x.id}
               item={x}
-            bag={bag}
+              bag={bag}
               quantity={bag.find((line) => line.id === x.id)?.quantity ?? 0}
               onAdd={onAdd}
             />
@@ -489,7 +674,40 @@ function Home({
       ) : (
         <Empty copy="No active products are available in this category" />
       )}
-      {picked && categoryResult?.key === categoryKey && categoryResult.cursor ? <View style={{ padding: 16 }}>{moreError === categoryKey ? <Text style={{ color: "#B3432B", marginBottom: 8 }}>More products could not load. Try again.</Text> : null}<Pressable disabled={loadingMore} onPress={() => void loadMore()} style={s.secondary}><Text style={s.secondaryText}>{loadingMore ? "Loading…" : "Load more products"}</Text></Pressable></View> : null}
+      {picked &&
+      categoryResult?.key === categoryKey &&
+      categoryResult.cursor ? (
+        <View style={{ padding: 16 }}>
+          {moreError === categoryKey ? (
+            <Text style={{ color: "#B3432B", marginBottom: 8 }}>
+              More products could not load. Try again.
+            </Text>
+          ) : null}
+          <Pressable
+            disabled={loadingMore}
+            onPress={() => void loadMore()}
+            style={s.secondary}
+          >
+            <Text style={s.secondaryText}>
+              {loadingMore ? "Loading…" : "Load more products"}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
+      <BuyAgain
+        key={session?.userId ?? "guest"}
+        session={session}
+        onAccount={onAccount}
+        renderProduct={(item) => (
+          <ProductCard
+            fullWidth
+            item={item}
+            bag={bag}
+            quantity={bag.find((line) => line.id === item.id)?.quantity ?? 0}
+            onAdd={onAdd}
+          />
+        )}
+      />
     </ScrollView>
   );
 }
@@ -550,21 +768,56 @@ function Browse({
   }, [areaId, query, retry]);
   const pending = result?.query !== query;
   const moreSearch = async (kind: "products" | "shops") => {
-    if (!areaId || !result || moreLock.current || result.query !== query) return;
-    const cursor = kind === "products" ? result.productCursor : result.shopCursor;
+    if (!areaId || !result || moreLock.current || result.query !== query)
+      return;
+    const cursor =
+      kind === "products" ? result.productCursor : result.shopCursor;
     if (!cursor) return;
     const snapshot = result;
-    moreLock.current = true; setMoreBusy(true); setMoreFailed(false);
+    moreLock.current = true;
+    setMoreBusy(true);
+    setMoreFailed(false);
     try {
       if (kind === "products") {
         const page = await marketApi.searchProducts(areaId, query, cursor);
-        setResult((current) => current?.query === snapshot.query && current.productCursor === cursor ? { ...current, productCursor: page.cursor, products: [...current.products, ...page.items.filter((item) => !current.products.some((old) => old.id === item.id))] } : current);
+        setResult((current) =>
+          current?.query === snapshot.query && current.productCursor === cursor
+            ? {
+                ...current,
+                productCursor: page.cursor,
+                products: [
+                  ...current.products,
+                  ...page.items.filter(
+                    (item) =>
+                      !current.products.some((old) => old.id === item.id),
+                  ),
+                ],
+              }
+            : current,
+        );
       } else {
         const page = await marketApi.searchShops(areaId, query, cursor);
-        setResult((current) => current?.query === snapshot.query && current.shopCursor === cursor ? { ...current, shopCursor: page.cursor, shops: [...current.shops, ...page.items.filter((item) => !current.shops.some((old) => old.id === item.id))] } : current);
+        setResult((current) =>
+          current?.query === snapshot.query && current.shopCursor === cursor
+            ? {
+                ...current,
+                shopCursor: page.cursor,
+                shops: [
+                  ...current.shops,
+                  ...page.items.filter(
+                    (item) => !current.shops.some((old) => old.id === item.id),
+                  ),
+                ],
+              }
+            : current,
+        );
       }
-    } catch { setMoreFailed(true); }
-    finally { moreLock.current = false; setMoreBusy(false); }
+    } catch {
+      setMoreFailed(true);
+    } finally {
+      moreLock.current = false;
+      setMoreBusy(false);
+    }
   };
   return (
     <View style={s.fill}>
@@ -587,7 +840,41 @@ function Browse({
       </View>
       <FlatList
         data={pending || failure ? [] : (result?.products ?? products)}
-        ListFooterComponent={!pending && !failure && (result?.productCursor || result?.shopCursor) ? <View>{moreFailed ? <Text style={s.pageCopy}>More results could not load. Try again.</Text> : null}{result.productCursor ? <Pressable disabled={moreBusy} style={s.secondary} onPress={() => void moreSearch("products")}><Text style={s.secondaryText}>{moreBusy ? "Loading…" : "More products"}</Text></Pressable> : null}{result.shopCursor ? <Pressable disabled={moreBusy} style={s.secondary} onPress={() => void moreSearch("shops")}><Text style={s.secondaryText}>{moreBusy ? "Loading…" : "More shops"}</Text></Pressable> : null}</View> : undefined}
+        ListFooterComponent={
+          !pending &&
+          !failure &&
+          (result?.productCursor || result?.shopCursor) ? (
+            <View>
+              {moreFailed ? (
+                <Text style={s.pageCopy}>
+                  More results could not load. Try again.
+                </Text>
+              ) : null}
+              {result.productCursor ? (
+                <Pressable
+                  disabled={moreBusy}
+                  style={s.secondary}
+                  onPress={() => void moreSearch("products")}
+                >
+                  <Text style={s.secondaryText}>
+                    {moreBusy ? "Loading…" : "More products"}
+                  </Text>
+                </Pressable>
+              ) : null}
+              {result.shopCursor ? (
+                <Pressable
+                  disabled={moreBusy}
+                  style={s.secondary}
+                  onPress={() => void moreSearch("shops")}
+                >
+                  <Text style={s.secondaryText}>
+                    {moreBusy ? "Loading…" : "More shops"}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : undefined
+        }
         keyExtractor={(x) => x.id}
         numColumns={2}
         columnWrapperStyle={s.gridRow}
@@ -656,15 +943,44 @@ function ShopPage({
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
-    void marketApi.shopPage(shop.id).then((page) => { if (active) { setCatalogue(page.items); setNextCursor(page.cursor); } }).catch((error: unknown) => { if (active) setCatalogueError(error instanceof Error ? error.message : "Products could not load"); });
-    return () => { active = false; };
+    void marketApi
+      .shopPage(shop.id)
+      .then((page) => {
+        if (active) {
+          setCatalogue(page.items);
+          setNextCursor(page.cursor);
+        }
+      })
+      .catch((error: unknown) => {
+        if (active)
+          setCatalogueError(
+            error instanceof Error ? error.message : "Products could not load",
+          );
+      });
+    return () => {
+      active = false;
+    };
   }, [shop.id, attempt]);
   const more = async () => {
     if (!nextCursor || pageLock.current) return;
-    pageLock.current = true; setMoreBusy(true); setMoreError(false);
-    try { const page = await marketApi.shopPage(shop.id, nextCursor); setCatalogue((old) => [...(old ?? []), ...page.items.filter((item) => !old?.some((existing) => existing.id === item.id))]); setNextCursor(page.cursor); }
-    catch { setMoreError(true); }
-    finally { pageLock.current = false; setMoreBusy(false); }
+    pageLock.current = true;
+    setMoreBusy(true);
+    setMoreError(false);
+    try {
+      const page = await marketApi.shopPage(shop.id, nextCursor);
+      setCatalogue((old) => [
+        ...(old ?? []),
+        ...page.items.filter(
+          (item) => !old?.some((existing) => existing.id === item.id),
+        ),
+      ]);
+      setNextCursor(page.cursor);
+    } catch {
+      setMoreError(true);
+    } finally {
+      pageLock.current = false;
+      setMoreBusy(false);
+    }
   };
   return (
     <View style={s.fill}>
@@ -675,7 +991,26 @@ function ShopPage({
       />
       <FlatList
         data={catalogue ?? []}
-        ListFooterComponent={nextCursor ? <View>{moreError ? <Text style={s.pageCopy}>More products could not load. Please retry.</Text> : null}<Pressable disabled={moreBusy} style={s.secondary} onPress={() => void more()}><Text style={s.secondaryText}>{moreBusy ? "Loading…" : "Load more products"}</Text></Pressable></View> : undefined}
+        ListFooterComponent={
+          nextCursor ? (
+            <View>
+              {moreError ? (
+                <Text style={s.pageCopy}>
+                  More products could not load. Please retry.
+                </Text>
+              ) : null}
+              <Pressable
+                disabled={moreBusy}
+                style={s.secondary}
+                onPress={() => void more()}
+              >
+                <Text style={s.secondaryText}>
+                  {moreBusy ? "Loading…" : "Load more products"}
+                </Text>
+              </Pressable>
+            </View>
+          ) : undefined
+        }
         keyExtractor={(x) => x.id}
         numColumns={2}
         columnWrapperStyle={s.gridRow}
@@ -697,7 +1032,21 @@ function ShopPage({
           </View>
         }
         ListEmptyComponent={
-          catalogueError ? <State title="Products could not load" copy={catalogueError} action="Try again" onAction={() => { setCatalogueError(null); setAttempt((value) => value + 1); }} /> : catalogue === null ? <ActivityIndicator color={c.green} /> : <Empty copy="This shop has no active products right now" />
+          catalogueError ? (
+            <State
+              title="Products could not load"
+              copy={catalogueError}
+              action="Try again"
+              onAction={() => {
+                setCatalogueError(null);
+                setAttempt((value) => value + 1);
+              }}
+            />
+          ) : catalogue === null ? (
+            <ActivityIndicator color={c.green} />
+          ) : (
+            <Empty copy="This shop has no active products right now" />
+          )
         }
         renderItem={({ item }) => (
           <ProductCard
@@ -757,11 +1106,20 @@ function Bag({
                 <Text style={s.price}>{money(item.price)}</Text>
               </View>
               <View style={s.stepper}>
-                <Pressable accessibilityLabel={`Remove one ${item.name}`} hitSlop={8} onPress={() => onChange(item.id, -1)}>
+                <Pressable
+                  accessibilityLabel={`Remove one ${item.name}`}
+                  hitSlop={8}
+                  onPress={() => onChange(item.id, -1)}
+                >
                   <Text style={s.step}>−</Text>
                 </Pressable>
                 <Text style={s.stepCount}>{item.quantity}</Text>
-                <Pressable accessibilityLabel={`Add one ${item.name}`} disabled={item.quantity >= item.stock} hitSlop={8} onPress={() => onChange(item.id, 1)}>
+                <Pressable
+                  accessibilityLabel={`Add one ${item.name}`}
+                  disabled={item.quantity >= item.stock}
+                  hitSlop={8}
+                  onPress={() => onChange(item.id, 1)}
+                >
                   <Text style={s.step}>+</Text>
                 </Pressable>
               </View>
@@ -776,10 +1134,7 @@ function Bag({
               <Text style={s.note}>
                 Delivery fee and final stock are confirmed at checkout
               </Text>
-              <Pressable
-                style={s.checkoutButton}
-                onPress={onCheckout}
-              >
+              <Pressable style={s.checkoutButton} onPress={onCheckout}>
                 <Text style={s.checkoutText}>Continue to checkout</Text>
               </Pressable>
             </View>
@@ -819,11 +1174,7 @@ function Nav({
         active={screen === "bag"}
         onPress={bag}
       />
-      <NavButton
-        label="Orders"
-        active={screen === "orders"}
-        onPress={orders}
-      />
+      <NavButton label="Orders" active={screen === "orders"} onPress={orders} />
       <NavButton
         label="Account"
         active={screen === "account"}
@@ -843,7 +1194,14 @@ function NavButton({
 }) {
   return (
     <Pressable onPress={onPress} style={[s.navButton, active && s.navActive]}>
-      <MarketIcon name={(label.startsWith("Bag") ? "bag" : label.toLowerCase()) as MarketIconName} color={active ? "#fff" : c.green} />
+      <MarketIcon
+        name={
+          (label.startsWith("Bag")
+            ? "bag"
+            : label.toLowerCase()) as MarketIconName
+        }
+        color={active ? c.green : "#7B8275"}
+      />
       <Text style={[s.navText, active && s.navTextActive]}>{label}</Text>
     </Pressable>
   );
@@ -928,7 +1286,10 @@ function CategoryPicture({ item, style }: { item: Category; style: object }) {
     <Image
       source={{ uri: useBundled ? artwork : categoryImage(item) }}
       style={style}
-      onError={() => { if (!useBundled && categoryImage(item) !== artwork) setUseBundled(true); else setFailed(true); }}
+      onError={() => {
+        if (!useBundled && categoryImage(item) !== artwork) setUseBundled(true);
+        else setFailed(true);
+      }}
     />
   );
 }
@@ -964,17 +1325,135 @@ function ShopRow({ item, onPress }: { item: Shop; onPress: () => void }) {
     </Pressable>
   );
 }
-function ShopPreview({ item, onPress, scope }: { item: Shop; onPress: () => void; scope: string }) {
+function ShopPreview({
+  item,
+  onPress,
+  scope,
+}: {
+  item: Shop;
+  onPress: () => void;
+  scope: string;
+}) {
   const [failed, setFailed] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const saveKey = `jpi.shop.saved.${scope}.${item.id}`;
-  useEffect(() => { let active = true; void SecureStore.getItemAsync(saveKey).then((value) => { if (active) setSaved(value === "true"); }).catch(() => undefined); return () => { active = false; }; }, [saveKey]);
-  return <Pressable accessibilityRole="button" accessibilityLabel={`View ${item.name}`} onPress={onPress} style={{ width: 216, borderRadius: 20, padding: 6, backgroundColor: c.card, borderWidth: 1, borderColor: c.line }}>
-    <Pressable disabled={saving} accessibilityLabel={saved ? `Unsave ${item.name}` : `Save ${item.name}`} onPress={(event) => { event.stopPropagation(); setSaving(true); void SecureStore.setItemAsync(saveKey, String(!saved)).then(() => setSaved(!saved)).catch(() => undefined).finally(() => setSaving(false)); }} style={{ position: "absolute", zIndex: 2, top: 12, right: 12, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: c.card }}><Text style={{ color: c.green, fontSize: 12, fontWeight: "600" }}>{saved ? "Saved" : "Save"}</Text></Pressable>
-    {resolveImage(item.coverImage) && !failed ? <Image source={{ uri: resolveImage(item.coverImage)! }} onError={() => setFailed(true)} style={{ width: "100%", height: 120, borderRadius: 14 }} /> : <View style={{ height: 120, backgroundColor: c.pale, borderRadius: 14, alignItems: "center", justifyContent: "center" }}><Text style={s.fallbackText}>{item.initials || item.name.slice(0, 1)}</Text></View>}
-    <View style={{ padding: 10, gap: 8 }}><Text numberOfLines={2} style={{ color: c.ink, fontSize: 17, lineHeight: 22, fontWeight: "600", minHeight: 44 }}>{item.name}</Text><View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}><Text numberOfLines={1} style={{ color: c.secondary, flex: 1, fontSize: 12 }}>{item.locality}</Text><Text style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: item.isOpen ? c.pale : "#FBE8DF", color: item.isOpen ? c.green : "#A63826", fontSize: 12, fontWeight: "600" }}>{item.isOpen ? "Open" : "Closed"}</Text></View></View>
-  </Pressable>;
+  useEffect(() => {
+    let active = true;
+    void SecureStore.getItemAsync(saveKey)
+      .then((value) => {
+        if (active) setSaved(value === "true");
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [saveKey]);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`View ${item.name}`}
+      onPress={onPress}
+      style={{
+        width: "100%",
+        borderRadius: 20,
+        padding: 6,
+        backgroundColor: c.card,
+        borderWidth: 1,
+        borderColor: c.line,
+      }}
+    >
+      <Pressable
+        disabled={saving}
+        accessibilityLabel={saved ? `Unsave ${item.name}` : `Save ${item.name}`}
+        onPress={(event) => {
+          event.stopPropagation();
+          setSaving(true);
+          void SecureStore.setItemAsync(saveKey, String(!saved))
+            .then(() => setSaved(!saved))
+            .catch(() => undefined)
+            .finally(() => setSaving(false));
+        }}
+        style={{
+          position: "absolute",
+          zIndex: 2,
+          top: 12,
+          right: 12,
+          borderRadius: 16,
+          paddingHorizontal: 10,
+          paddingVertical: 8,
+          backgroundColor: c.card,
+        }}
+      >
+        <Text style={{ color: c.green, fontSize: 12, fontWeight: "600" }}>
+          {saved ? "Saved" : "Save"}
+        </Text>
+      </Pressable>
+      {resolveImage(item.coverImage) && !failed ? (
+        <Image
+          source={{ uri: resolveImage(item.coverImage)! }}
+          onError={() => setFailed(true)}
+          style={{ width: "100%", height: 96, borderRadius: 14 }}
+        />
+      ) : (
+        <View
+          style={{
+            height: 120,
+            backgroundColor: c.pale,
+            borderRadius: 14,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Text style={s.fallbackText}>
+            {item.initials || item.name.slice(0, 1)}
+          </Text>
+        </View>
+      )}
+      <View style={{ padding: 10, gap: 8 }}>
+        <Text
+          numberOfLines={2}
+          style={{
+            color: c.ink,
+            fontSize: 17,
+            lineHeight: 22,
+            fontWeight: "600",
+            minHeight: 44,
+          }}
+        >
+          {item.name}
+        </Text>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+          }}
+        >
+          <Text
+            numberOfLines={1}
+            style={{ color: c.secondary, flex: 1, fontSize: 12 }}
+          >
+            {item.locality}
+          </Text>
+          <Text
+            style={{
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 8,
+              backgroundColor: item.isOpen ? c.pale : "#FBE8DF",
+              color: item.isOpen ? c.green : "#A63826",
+              fontSize: 12,
+              fontWeight: "600",
+            }}
+          >
+            {item.isOpen ? "Open" : "Closed"}
+          </Text>
+        </View>
+      </View>
+    </Pressable>
+  );
 }
 function ProductCard({
   fullWidth = false,
@@ -990,15 +1469,41 @@ function ProductCard({
   onAdd: (x: Product) => void;
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [variantId, setVariantId] = useState(item.variants?.find((variant) => variant.stock > 0)?.id ?? item.variants?.[0]?.id);
+  const [variantId, setVariantId] = useState(
+    item.variants?.find((variant) => variant.stock > 0)?.id ??
+      item.variants?.[0]?.id,
+  );
   const variant = item.variants?.find((option) => option.id === variantId);
-  const selected: Product = variant ? { ...item, id: `${item.id}:${variant.id}`, productId: item.id, variantId: variant.id, unit: variant.label, price: variant.price, stock: variant.stock, variants: undefined } : item;
-  const selectedQuantity = variant ? bag.find((line) => line.id === selected.id)?.quantity ?? 0 : quantity;
+  const selected: Product = variant
+    ? {
+        ...item,
+        id: `${item.id}:${variant.id}`,
+        productId: item.id,
+        variantId: variant.id,
+        unit: variant.label,
+        price: variant.price,
+        stock: variant.stock,
+        variants: undefined,
+      }
+    : item;
+  const selectedQuantity = variant
+    ? (bag.find((line) => line.id === selected.id)?.quantity ?? 0)
+    : quantity;
   const unavailable = selected.stock <= 0 || selectedQuantity >= selected.stock;
   return (
     <View style={[s.product, fullWidth && { width: "100%" }]}>
-      <Pressable accessibilityRole="button" accessibilityLabel={`View ${item.name}`} onPress={() => setDetailsOpen(true)}><Thumb item={item} /></Pressable>
-      <Text onPress={() => setDetailsOpen(true)} numberOfLines={2} style={s.productName}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`View ${item.name}`}
+        onPress={() => setDetailsOpen(true)}
+      >
+        <Thumb item={item} />
+      </Pressable>
+      <Text
+        onPress={() => setDetailsOpen(true)}
+        numberOfLines={2}
+        style={s.productName}
+      >
         {item.name}
       </Text>
       <Text style={s.unit}>{item.unit}</Text>
@@ -1007,41 +1512,121 @@ function ProductCard({
         <Pressable
           disabled={variant ? item.stock <= 0 : unavailable}
           style={[s.add, unavailable && s.addDisabled]}
-          onPress={() => variant ? setDetailsOpen(true) : onAdd(item)}
+          onPress={() => (variant ? setDetailsOpen(true) : onAdd(item))}
         >
           <Text style={[s.addText, unavailable && s.addTextDisabled]}>
-            {variant ? "Options" : item.stock <= 0 ? "Out" : unavailable ? "Limit" : quantity ? `Add · ${quantity}` : "Add"}
+            {variant
+              ? "Options"
+              : item.stock <= 0
+                ? "Out"
+                : unavailable
+                  ? "Limit"
+                  : quantity
+                    ? `Add · ${quantity}`
+                    : "Add"}
           </Text>
         </Pressable>
       </View>
-      <Modal visible={detailsOpen} animationType="slide" onRequestClose={() => setDetailsOpen(false)}>
+      <Modal
+        visible={detailsOpen}
+        animationType="slide"
+        onRequestClose={() => setDetailsOpen(false)}
+      >
         <SafeAreaView style={s.safe}>
-          <Title title="Product details" copy={item.name} onBack={() => setDetailsOpen(false)} />
+          <Title
+            title="Product details"
+            copy={item.name}
+            onBack={() => setDetailsOpen(false)}
+          />
           <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
             <Thumb item={item} />
             <Text style={s.pageTitle}>{item.name}</Text>
             <Text style={s.pageCopy}>{item.unit}</Text>
             <Text style={s.totalValue}>{money(selected.price)}</Text>
-            {item.variants?.length ? <View style={{ gap: 8 }}><Text style={s.pageTitle}>Choose size or pack</Text>{item.variants.map((option) => <Pressable key={option.id} disabled={option.stock <= 0} onPress={() => setVariantId(option.id)} style={{ padding: 16, borderRadius: 8, borderWidth: 1, borderColor: option.id === variantId ? c.green : c.line, backgroundColor: option.id === variantId ? c.pale : c.card }}><Text style={s.price}>{option.label} · {money(option.price)}</Text><Text style={s.pageCopy}>{option.stock > 0 ? `${option.stock} available` : "Out of stock"}</Text></Pressable>)}</View> : null}
-            {item.description ? <Text style={{ color: c.secondary, fontSize: 15, lineHeight: 22 }}>{item.description}</Text> : null}
-            <Text style={s.pageCopy}>{selected.stock > 0 ? `${selected.stock} available · ${selectedQuantity} in your bag` : "Currently out of stock"}</Text>
-            <Pressable disabled={unavailable} style={[s.checkoutButton, unavailable && s.addDisabled]} onPress={() => onAdd(selected)}><Text style={[s.checkoutText, unavailable && s.addTextDisabled]}>{selected.stock <= 0 ? "Out of stock" : unavailable ? "Stock limit reached" : "Add to bag"}</Text></Pressable>
+            {item.variants?.length ? (
+              <View style={{ gap: 8 }}>
+                <Text style={s.pageTitle}>Choose size or pack</Text>
+                {item.variants.map((option) => (
+                  <Pressable
+                    key={option.id}
+                    disabled={option.stock <= 0}
+                    onPress={() => setVariantId(option.id)}
+                    style={{
+                      padding: 16,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: option.id === variantId ? c.green : c.line,
+                      backgroundColor:
+                        option.id === variantId ? c.pale : c.card,
+                    }}
+                  >
+                    <Text style={s.price}>
+                      {option.label} · {money(option.price)}
+                    </Text>
+                    <Text style={s.pageCopy}>
+                      {option.stock > 0
+                        ? `${option.stock} available`
+                        : "Out of stock"}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+            {item.description ? (
+              <Text
+                style={{ color: c.secondary, fontSize: 15, lineHeight: 22 }}
+              >
+                {item.description}
+              </Text>
+            ) : null}
+            <Text style={s.pageCopy}>
+              {selected.stock > 0
+                ? `${selected.stock} available · ${selectedQuantity} in your bag`
+                : "Currently out of stock"}
+            </Text>
+            <Pressable
+              disabled={unavailable}
+              style={[s.checkoutButton, unavailable && s.addDisabled]}
+              onPress={() => onAdd(selected)}
+            >
+              <Text style={[s.checkoutText, unavailable && s.addTextDisabled]}>
+                {selected.stock <= 0
+                  ? "Out of stock"
+                  : unavailable
+                    ? "Stock limit reached"
+                    : "Add to bag"}
+              </Text>
+            </Pressable>
           </ScrollView>
         </SafeAreaView>
       </Modal>
     </View>
   );
 }
-function Thumb({ item, compact = false }: { item: Product; compact?: boolean }) {
+function Thumb({
+  item,
+  compact = false,
+}: {
+  item: Product;
+  compact?: boolean;
+}) {
   const [failed, setFailed] = useState(false);
   return resolveImage(item.image) && !failed ? (
     <Image
       source={{ uri: resolveImage(item.image)! }}
-      style={[s.productImage, compact && { width: 64, height: 64, flexShrink: 0 }]}
+      style={[
+        s.productImage,
+        compact && { width: 64, height: 64, flexShrink: 0 },
+      ]}
       onError={() => setFailed(true)}
     />
   ) : (
-    <View style={[s.productFallback, compact && { width: 64, height: 64, flexShrink: 0 }]}>
+    <View
+      style={[
+        s.productFallback,
+        compact && { width: 64, height: 64, flexShrink: 0 },
+      ]}
+    >
       <Text style={s.fallbackText}>{item.name.slice(0, 1)}</Text>
     </View>
   );
@@ -1213,7 +1798,12 @@ const s = StyleSheet.create({
   },
   searchIcon: { color: c.secondary, marginRight: 10, fontSize: 22 },
   searchText: { color: c.muted, fontSize: 15 },
-  content: { paddingBottom: 156, width: "100%", maxWidth: 1120, alignSelf: "center" },
+  content: {
+    paddingBottom: 156,
+    width: "100%",
+    maxWidth: 1120,
+    alignSelf: "center",
+  },
   market: {
     minHeight: 152,
     padding: 20,
@@ -1511,9 +2101,9 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  navActive: { backgroundColor: c.green },
+  navActive: { backgroundColor: c.pale },
   navText: { color: c.secondary, fontSize: 13, fontWeight: "500" },
-  navTextActive: { color: "#fff", fontWeight: "600" },
+  navTextActive: { color: c.green, fontWeight: "600" },
   state: {
     flex: 1,
     padding: 32,

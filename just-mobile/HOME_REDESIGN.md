@@ -4,7 +4,9 @@ Direction: familiar Indian neighbourhood shopping, warm ivory, forest green, veg
 
 Implemented: JustPackIt wordmark/tagline, real notification inbox, dynamic bag count, delivery selector, search, bundled vegetarian produce photograph, category shortcuts/all categories, horizontal API shop cards, per-device/account shop Save preference, purchase-derived Buy Again, five functional navigation tabs, existing products/variant/cart/checkout/account integrations retained.
 
-Photo: Lucas Mendes, [Baskets of vegetables on Unsplash](https://unsplash.com/photos/baskets-of-vegetables--qYeZ6p7i1U). Saved locally as assets/home-vegetables.jpg; no AI generation used.
+Original photo: Lucas Mendes, [Baskets of vegetables on Unsplash](https://unsplash.com/photos/baskets-of-vegetables--qYeZ6p7i1U).
+
+Reference matching pass: built-in imagegen generated `assets/home-vegetables-reference.png` from the user reference: bright wicker basket of tomatoes, carrots, yellow pepper, broccoli, cauliflower, purple cabbage and lettuce, blurred Indian produce shop, no text or meat. It also generated transparent `assets/buy-again-reference.png`: grouped rice sack, bananas and milk bottle, no text. Both assets are bundled locally. Banner typography, six shortcut layout and Buy Again composition were adjusted against the reference. Grains shortcut opens actual "atta" search rather than inventing a backend category.
 
 Data constraints: no invented distance or same-day promise; public shop DTO has no distance. Existing category taxonomy is retained, rather than inventing an Atta category. Voice search requires an additional supported speech integration and is not rendered as an inactive microphone. Shop favourites are device preferences, not server-synced favourites. Buy Again checks currently available listings from recent non-cancelled orders and asks for variant choice where necessary.
 

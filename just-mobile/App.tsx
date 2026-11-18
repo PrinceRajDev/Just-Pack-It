@@ -74,8 +74,9 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
+      const savedAreaId = wanted ? wanted.id : await SecureStore.getItemAsync("jpi.shopping.area").catch(() => null);
       const first = await marketApi.loadHome(wanted?.id);
-      const active = wanted ?? first.areas.find((x) => x.active) ?? null;
+      const active = first.areas.find((x) => x.active && x.id === savedAreaId) ?? first.areas.find((x) => x.active) ?? null;
       const data =
         active?.id === wanted?.id
           ? first
@@ -85,6 +86,7 @@ export default function App() {
       setCategories(data.categories);
       setShops(data.shops);
       setProducts(data.products);
+      if (active) await SecureStore.setItemAsync("jpi.shopping.area", active.id).catch(() => undefined);
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Could not load the marketplace",
@@ -268,6 +270,10 @@ export default function App() {
           close={() => setPicker(false)}
           choose={(x) => {
             setPicker(false);
+            setPicked(null);
+            setQuery("");
+            setShop(null);
+            setScreen("home");
             void load(x);
           }}
         />

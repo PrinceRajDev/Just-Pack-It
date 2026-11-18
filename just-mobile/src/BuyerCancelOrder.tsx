@@ -1,0 +1,12 @@
+import { useRef, useState } from "react";
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import { buyerApi } from "./api";
+export function BuyerCancelOrder({ token, orderId, subId, version, shopName, onCancelled }: { token: string; orderId: string; subId: string; version: number; shopName: string; onCancelled: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const lock = useRef(false);
+  const cancel = async () => { if (lock.current) return; if (reason.trim().length < 3) { setError("Enter a cancellation reason with at least 3 characters"); return; } lock.current = true; setBusy(true); setError(null); try { await buyerApi.cancelSuborder(token, orderId, subId, version, reason.trim()); setOpen(false); onCancelled(); } catch (failure) { setError(failure instanceof Error ? failure.message : "Cancellation could not be confirmed. Refresh the order before retrying."); } finally { lock.current = false; setBusy(false); } };
+  return <View style={{ gap: 12 }}>{open ? <><Text style={{ color: "#5E554A", lineHeight: 20 }}>This cancels only the items from {shopName}.</Text><TextInput accessibilityLabel="Cancellation reason" editable={!busy} value={reason} onChangeText={setReason} maxLength={500} placeholder="Reason for cancellation" multiline style={{ minHeight: 80, padding: 12, borderWidth: 1, borderColor: "#DDD6C9", borderRadius: 8, color: "#1F2A22" }} /><Pressable disabled={busy} onPress={() => { if (reason.trim().length < 3) { setError("Please enter a cancellation reason"); return; } Alert.alert("Cancel shop order?", `Cancel the items from ${shopName}? Other shops in this order are unaffected.`, [{ text: "Keep order", style: "cancel" }, { text: "Cancel items", style: "destructive", onPress: () => void cancel() }]); }}><Text style={{ color: "#B3432B", paddingVertical: 12 }}>{busy ? "Cancelling…" : "Confirm cancellation"}</Text></Pressable><Pressable disabled={busy} onPress={() => setOpen(false)}><Text style={{ color: "#174B34", paddingVertical: 8 }}>Keep order</Text></Pressable></> : <Pressable onPress={() => setOpen(true)}><Text style={{ color: "#B3432B", paddingVertical: 12 }}>Cancel this shop order</Text></Pressable>}{error ? <Text accessibilityRole="alert" style={{ color: "#B3432B" }}>{error}</Text> : null}</View>;
+}

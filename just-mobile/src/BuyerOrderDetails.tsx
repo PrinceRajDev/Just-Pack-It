@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BuyerReceipt } from "./BuyerReceipt";
+import { BuyerCancelOrder } from "./BuyerCancelOrder";
 import {
   ActivityIndicator,
   Pressable,
@@ -130,6 +131,7 @@ export function BuyerOrderDetails({
               ))}
               <Text>Delivery fee: {money(shop.deliveryFee)}</Text>
               <Text>Remaining due: {money(shop.amountDue)}</Text>
+              {(shop.status === "placed" || shop.status === "accepted") && (order.paymentMethod === "cod" || order.paymentStatus === "paid") ? <BuyerCancelOrder key={`${shop.id}:${(shop as typeof shop & { version?: number }).version ?? 0}`} token={token} orderId={order.id} subId={shop.id} version={(shop as typeof shop & { version?: number }).version ?? 0} shopName={shop.shopName} onCancelled={() => setAttempt((value) => value + 1)} /> : null}
               {shop.status === "out_for_delivery" && shop.deliveryState === "out_for_delivery" ? <BuyerReceipt token={token} orderId={order.id} subId={shop.id} version={(shop as typeof shop & { version?: number }).version ?? 0} cod={order.paymentMethod === "cod"} amount={shop.amountDue} /> : null}
             </View>
           ))}

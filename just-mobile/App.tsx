@@ -665,6 +665,7 @@ function Home({
             <ProductCard
               key={x.id}
               item={x}
+              shopName={shops.find((shop) => shop.id === x.shopId)?.name}
               bag={bag}
               quantity={bag.find((line) => line.id === x.id)?.quantity ?? 0}
               onAdd={onAdd}
@@ -1334,6 +1335,7 @@ return <Pressable onPress={onPress} accessibilityRole="button" style={{width:"10
 <View style={{padding:12,gap:6}}><Text numberOfLines={1} style={{fontSize:14,fontWeight:"600",color:c.ink}}>{item.name}</Text><Text numberOfLines={1} style={{fontSize:11,color:c.secondary}}>{item.tagline||item.locality}</Text><Text style={{fontSize:11,color:c.green,marginTop:4}}>{item.isOpen?"Open now":"Currently closed"}</Text><View style={{height:30,borderRadius:10,backgroundColor:c.pale,alignItems:"center",justifyContent:"center",marginTop:2}}><Text style={{fontSize:12,fontWeight:"600",color:c.green}}>View Shop</Text></View></View></Pressable>;
 }
 function ProductCard({
+  shopName,
   fullWidth = false,
   item,
   quantity,
@@ -1341,6 +1343,7 @@ function ProductCard({
   onAdd,
 }: {
   item: Product;
+  shopName?: string;
   fullWidth?: boolean;
   quantity: number;
   bag?: BagLine[];
@@ -1384,7 +1387,8 @@ function ProductCard({
       >
         {item.name}
       </Text>
-      <Text style={s.unit}>{item.unit}</Text>
+      <Text numberOfLines={1} style={[s.unit, { minHeight: 16, lineHeight: 16 }]}>{item.unit}</Text>
+      <Text numberOfLines={1} style={{ color: c.secondary, fontSize: 10, lineHeight: 16, minHeight: 16, marginTop: 2 }}>{shopName ?? ""}</Text>
       <View style={s.productBottom}>
         <Text style={s.price}>{money(item.price)}</Text>
         <Pressable

@@ -29,6 +29,7 @@ import { BuyerAccount, BuyerOrders } from "./src/BuyerAccount";
 import { BuyerCheckout } from "./src/BuyerCheckout";
 import { useBuyerBag } from "./src/useBuyerBag";
 import { useAndroidBack } from "./src/useAndroidBack";
+import { resolveImage } from "./src/images";
 
 type Screen = "home" | "browse" | "bag" | "shop" | "account" | "orders" | "checkout";
 type BagLine = Product & { quantity: number };
@@ -46,7 +47,7 @@ const c = {
 };
 const money = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 const categoryImage = (x: Category) =>
-  x.image?.trim() ||
+  resolveImage(x.image) ||
   `https://justpackit.vercel.app/categories/${x.slug}-v1.webp`;
 
 export default function App() {
@@ -880,15 +881,17 @@ function CategoryCard({
 }
 function CategoryPicture({ item, style }: { item: Category; style: object }) {
   const [failed, setFailed] = useState(false);
+  const [useBundled, setUseBundled] = useState(false);
+  const artwork = `https://justpackit.vercel.app/categories/${item.slug}-v1.webp`;
   return failed ? (
     <View style={[style, s.fallback]}>
       <Text style={s.fallbackText}>{item.name.slice(0, 1)}</Text>
     </View>
   ) : (
     <Image
-      source={{ uri: categoryImage(item) }}
+      source={{ uri: useBundled ? artwork : categoryImage(item) }}
       style={style}
-      onError={() => setFailed(true)}
+      onError={() => { if (!useBundled && categoryImage(item) !== artwork) setUseBundled(true); else setFailed(true); }}
     />
   );
 }
@@ -896,9 +899,9 @@ function ShopRow({ item, onPress }: { item: Shop; onPress: () => void }) {
   const [failed, setFailed] = useState(false);
   return (
     <Pressable onPress={onPress} style={s.shopRow}>
-      {item.coverImage && !failed ? (
+      {resolveImage(item.coverImage) && !failed ? (
         <Image
-          source={{ uri: item.coverImage }}
+          source={{ uri: resolveImage(item.coverImage)! }}
           style={s.shopThumb}
           onError={() => setFailed(true)}
         />
@@ -980,9 +983,9 @@ function ProductCard({
 }
 function Thumb({ item, compact = false }: { item: Product; compact?: boolean }) {
   const [failed, setFailed] = useState(false);
-  return item.image && !failed ? (
+  return resolveImage(item.image) && !failed ? (
     <Image
-      source={{ uri: item.image }}
+      source={{ uri: resolveImage(item.image)! }}
       style={[s.productImage, compact && { width: 64, height: 64, flexShrink: 0 }]}
       onError={() => setFailed(true)}
     />

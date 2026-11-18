@@ -74,6 +74,7 @@ export const buyerApi = {
   updateProfile: (token: string, name: string, version: number) => request<BuyerProfile>("/auth/profile", token, { method: "PATCH", body: JSON.stringify({ name, version }) }),
   addresses: (token: string) => request<Address[]>("/addresses", token),
   createAddress: (token: string, input: Omit<Address, "id" | "version">) => request<Address>("/addresses", token, { method: "POST", body: JSON.stringify(input) }),
+  updateAddress: (token: string, id: string, input: Omit<Address, "id">) => request<Address>(`/addresses/${id}`, token, { method: "PATCH", body: JSON.stringify(input) }),
   deleteAddress: (token: string, id: string, version: number) => request<void>(`/addresses/${id}`, token, { method: "DELETE", body: JSON.stringify({ version }) }),
   orders: (token: string) => request<BuyerOrder[]>("/orders?limit=30", token),
 };

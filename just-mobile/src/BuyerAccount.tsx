@@ -1,13 +1,304 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { buyerApi, type BuyerOrder, type Session } from "./api";
+import { BuyerAddresses } from "./BuyerAddresses";
 
-const c = { paper: "#F7F4EE", card: "#FDFBF7", ink: "#1F2A22", secondary: "#5E554A", muted: "#7B7266", line: "#DDD6C9", green: "#174B34" };
-export function BuyerAccount({ session, save, openOrders }: { session: Session | null; save: (next: Session | null) => Promise<void>; openOrders: () => void }) {
-  const [name, setName] = useState(""); const [phone, setPhone] = useState(""); const [password, setPassword] = useState(""); const [register, setRegister] = useState(false); const [busy, setBusy] = useState(false);
-  const submit = async () => { setBusy(true); try { const next = register ? await buyerApi.register(name.trim(), phone.trim(), password) : await buyerApi.login(phone.trim(), password); if (next.role !== "buyer") throw new Error("Use the matching workspace for this account."); await save(next); } catch (error) { Alert.alert("Could not continue", error instanceof Error ? error.message : "Please try again"); } finally { setBusy(false); } };
-  if (session) return <ScrollView contentContainerStyle={s.page}><Text style={s.kicker}>Buyer account</Text><Text style={s.title}>{session.name}</Text><Text style={s.copy}>Signed in securely on this device</Text><Pressable style={s.row} onPress={openOrders}><Text style={s.rowTitle}>Your orders</Text><Text style={s.rowCopy}>Track placed orders and cash status</Text></Pressable><Pressable style={s.signout} onPress={() => { void buyerApi.logout(session.token).catch(() => undefined).finally(() => void save(null)); }}><Text style={s.signoutText}>Sign out</Text></Pressable></ScrollView>;
-  return <ScrollView contentContainerStyle={s.page}><Text style={s.kicker}>Buyer account</Text><Text style={s.title}>{register ? "Create your account" : "Sign in to shop"}</Text><Text style={s.copy}>{register ? "Use your mobile number and a secure password" : "View orders and save delivery addresses"}</Text>{register ? <TextInput value={name} onChangeText={setName} placeholder="Your name" placeholderTextColor={c.muted} style={s.input} /> : null}<TextInput value={phone} onChangeText={setPhone} placeholder="Mobile number with +91" placeholderTextColor={c.muted} keyboardType="phone-pad" style={s.input} /><TextInput value={password} onChangeText={setPassword} placeholder="Password" placeholderTextColor={c.muted} secureTextEntry style={s.input} /><Pressable disabled={busy} style={s.primary} onPress={() => void submit()}><Text style={s.primaryText}>{busy ? "Please wait" : register ? "Create account" : "Sign in"}</Text></Pressable><Pressable onPress={() => setRegister((old) => !old)}><Text style={s.switch}>{register ? "Already have an account? Sign in" : "New here? Create an account"}</Text></Pressable></ScrollView>;
+const c = {
+  paper: "#F7F4EE",
+  card: "#FDFBF7",
+  ink: "#1F2A22",
+  secondary: "#5E554A",
+  muted: "#7B7266",
+  line: "#DDD6C9",
+  green: "#174B34",
+};
+export function BuyerAccount({
+  session,
+  save,
+  openOrders,
+}: {
+  session: Session | null;
+  save: (next: Session | null) => Promise<void>;
+  openOrders: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [register, setRegister] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [addressesOpen, setAddressesOpen] = useState(false);
+  const submit = async () => {
+    setBusy(true);
+    try {
+      const next = register
+        ? await buyerApi.register(name.trim(), phone.trim(), password)
+        : await buyerApi.login(phone.trim(), password);
+      if (next.role !== "buyer")
+        throw new Error("Use the matching workspace for this account.");
+      await save(next);
+    } catch (error) {
+      Alert.alert(
+        "Could not continue",
+        error instanceof Error ? error.message : "Please try again",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+  if (session && addressesOpen) return <BuyerAddresses key={session.userId} token={session.token} back={() => setAddressesOpen(false)} />;
+  if (session)
+    return (
+      <ScrollView contentContainerStyle={s.page}>
+        <Text style={s.kicker}>Buyer account</Text>
+        <Text style={s.title}>{session.name}</Text>
+        <Text style={s.copy}>Signed in securely on this device</Text>
+        <Pressable style={s.row} onPress={() => setAddressesOpen(true)}><Text style={s.rowTitle}>Saved addresses</Text><Text style={s.rowCopy}>Add or update your delivery places</Text></Pressable>
+        <Pressable style={s.row} onPress={openOrders}>
+          <Text style={s.rowTitle}>Your orders</Text>
+          <Text style={s.rowCopy}>Track placed orders and cash status</Text>
+        </Pressable>
+        <Pressable
+          style={s.signout}
+          onPress={() => {
+            void buyerApi
+              .logout(session.token)
+              .catch(() => undefined)
+              .finally(() => void save(null));
+          }}
+        >
+          <Text style={s.signoutText}>Sign out</Text>
+        </Pressable>
+      </ScrollView>
+    );
+  return (
+    <ScrollView contentContainerStyle={s.page}>
+      <Text style={s.kicker}>Buyer account</Text>
+      <Text style={s.title}>
+        {register ? "Create your account" : "Sign in to shop"}
+      </Text>
+      <Text style={s.copy}>
+        {register
+          ? "Use your mobile number and a secure password"
+          : "View orders and save delivery addresses"}
+      </Text>
+      {register ? (
+        <TextInput
+          value={name}
+          onChangeText={setName}
+          placeholder="Your name"
+          placeholderTextColor={c.muted}
+          style={s.input}
+        />
+      ) : null}
+      <TextInput
+        value={phone}
+        onChangeText={setPhone}
+        placeholder="Mobile number with +91"
+        placeholderTextColor={c.muted}
+        keyboardType="phone-pad"
+        style={s.input}
+      />
+      <TextInput
+        value={password}
+        onChangeText={setPassword}
+        placeholder="Password"
+        placeholderTextColor={c.muted}
+        secureTextEntry
+        style={s.input}
+      />
+      <Pressable
+        disabled={busy}
+        style={s.primary}
+        onPress={() => void submit()}
+      >
+        <Text style={s.primaryText}>
+          {busy ? "Please wait" : register ? "Create account" : "Sign in"}
+        </Text>
+      </Pressable>
+      <Pressable onPress={() => setRegister((old) => !old)}>
+        <Text style={s.switch}>
+          {register
+            ? "Already have an account? Sign in"
+            : "New here? Create an account"}
+        </Text>
+      </Pressable>
+    </ScrollView>
+  );
 }
-export function BuyerOrders({ session, back }: { session: Session | null; back: () => void }) { const [orders, setOrders] = useState<BuyerOrder[]>([]); const [state, setState] = useState<"loading" | "ready" | "error">(session ? "loading" : "ready"); useEffect(() => { if (!session) return; void buyerApi.orders(session.token).then((data) => { setOrders(data); setState("ready"); }).catch(() => setState("error")); }, [session]); if (!session) return <View style={s.center}><Text style={s.title}>Sign in to view orders</Text><Pressable style={s.primary} onPress={back}><Text style={s.primaryText}>Open account</Text></Pressable></View>; if (state === "loading") return <View style={s.center}><ActivityIndicator color={c.green} /><Text style={s.copy}>Loading your orders</Text></View>; if (state === "error") return <View style={s.center}><Text style={s.title}>Orders could not load</Text><Pressable style={s.primary} onPress={back}><Text style={s.primaryText}>Back to account</Text></Pressable></View>; return <FlatList data={orders} keyExtractor={(item) => item.id} contentContainerStyle={s.list} ListHeaderComponent={<View><Pressable onPress={back}><Text style={s.back}>← Account</Text></Pressable><Text style={s.title}>Your orders</Text><Text style={s.copy}>Newest orders appear first</Text></View>} ListEmptyComponent={<View style={s.empty}><Text style={s.copy}>No orders yet. Confirmed orders will appear here.</Text></View>} renderItem={({ item }) => <View style={s.order}><Text style={s.rowTitle}>Order {item.id.slice(0, 8)}</Text><Text style={s.rowCopy}>{new Date(item.createdAt).toLocaleDateString("en-IN")} · {item.paymentStatus.replaceAll("_", " ")}</Text><Text style={s.total}>₹{(item.amountDue ?? item.total).toLocaleString("en-IN")}</Text></View>} />; }
-const s = StyleSheet.create({ page:{flexGrow:1,padding:24,paddingBottom:96,backgroundColor:c.paper},kicker:{color:c.green,fontSize:13,fontWeight:"600"},title:{color:c.ink,marginTop:8,fontSize:28,fontWeight:"500"},copy:{color:c.secondary,marginTop:8,fontSize:14,lineHeight:20},input:{height:48,paddingHorizontal:14,marginTop:16,borderWidth:1,borderColor:c.line,borderRadius:10,backgroundColor:c.card,color:c.ink,fontSize:15},primary:{height:48,paddingHorizontal:16,marginTop:16,borderRadius:8,alignItems:"center",justifyContent:"center",backgroundColor:c.green},primaryText:{color:"#fff",fontSize:14,fontWeight:"600"},switch:{color:c.green,marginTop:20,textAlign:"center",fontSize:13,fontWeight:"600"},row:{padding:16,marginTop:24,borderWidth:1,borderColor:c.line,borderRadius:12,backgroundColor:c.card},rowTitle:{color:c.ink,fontSize:16,fontWeight:"600"},rowCopy:{color:c.secondary,marginTop:5,fontSize:13},signout:{height:44,marginTop:20,borderWidth:1,borderColor:c.line,borderRadius:8,alignItems:"center",justifyContent:"center"},signoutText:{color:c.secondary,fontSize:14,fontWeight:"600"},center:{flex:1,padding:32,alignItems:"center",justifyContent:"center",backgroundColor:c.paper},list:{padding:16,paddingBottom:96,backgroundColor:c.paper},back:{color:c.green,fontSize:14,fontWeight:"600"},empty:{padding:20,marginTop:20,borderWidth:1,borderColor:c.line,borderRadius:12,backgroundColor:c.card},order:{padding:16,marginTop:12,borderWidth:1,borderColor:c.line,borderRadius:12,backgroundColor:c.card},total:{color:c.green,marginTop:12,fontSize:18,fontWeight:"600"} });
+export function BuyerOrders({
+  session,
+  back,
+}: {
+  session: Session | null;
+  back: () => void;
+}) {
+  const [orders, setOrders] = useState<BuyerOrder[]>([]);
+  const [state, setState] = useState<"loading" | "ready" | "error">(
+    session ? "loading" : "ready",
+  );
+  useEffect(() => {
+    if (!session) return;
+    void buyerApi
+      .orders(session.token)
+      .then((data) => {
+        setOrders(data);
+        setState("ready");
+      })
+      .catch(() => setState("error"));
+  }, [session]);
+  if (!session)
+    return (
+      <View style={s.center}>
+        <Text style={s.title}>Sign in to view orders</Text>
+        <Pressable style={s.primary} onPress={back}>
+          <Text style={s.primaryText}>Open account</Text>
+        </Pressable>
+      </View>
+    );
+  if (state === "loading")
+    return (
+      <View style={s.center}>
+        <ActivityIndicator color={c.green} />
+        <Text style={s.copy}>Loading your orders</Text>
+      </View>
+    );
+  if (state === "error")
+    return (
+      <View style={s.center}>
+        <Text style={s.title}>Orders could not load</Text>
+        <Pressable style={s.primary} onPress={back}>
+          <Text style={s.primaryText}>Back to account</Text>
+        </Pressable>
+      </View>
+    );
+  return (
+    <FlatList
+      data={orders}
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={s.list}
+      ListHeaderComponent={
+        <View>
+          <Pressable onPress={back}>
+            <Text style={s.back}>← Account</Text>
+          </Pressable>
+          <Text style={s.title}>Your orders</Text>
+          <Text style={s.copy}>Newest orders appear first</Text>
+        </View>
+      }
+      ListEmptyComponent={
+        <View style={s.empty}>
+          <Text style={s.copy}>
+            No orders yet. Confirmed orders will appear here.
+          </Text>
+        </View>
+      }
+      renderItem={({ item }) => (
+        <View style={s.order}>
+          <Text style={s.rowTitle}>Order {item.id.slice(0, 8)}</Text>
+          <Text style={s.rowCopy}>
+            {new Date(item.createdAt).toLocaleDateString("en-IN")} ·{" "}
+            {item.paymentStatus.replaceAll("_", " ")}
+          </Text>
+          <Text style={s.total}>
+            ₹{(item.amountDue ?? item.total).toLocaleString("en-IN")}
+          </Text>
+        </View>
+      )}
+    />
+  );
+}
+const s = StyleSheet.create({
+  page: {
+    flexGrow: 1,
+    padding: 24,
+    paddingBottom: 96,
+    backgroundColor: c.paper,
+  },
+  kicker: { color: c.green, fontSize: 13, fontWeight: "600" },
+  title: { color: c.ink, marginTop: 8, fontSize: 28, fontWeight: "500" },
+  copy: { color: c.secondary, marginTop: 8, fontSize: 14, lineHeight: 20 },
+  input: {
+    height: 48,
+    paddingHorizontal: 14,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: c.line,
+    borderRadius: 10,
+    backgroundColor: c.card,
+    color: c.ink,
+    fontSize: 15,
+  },
+  primary: {
+    height: 48,
+    paddingHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: c.green,
+  },
+  primaryText: { color: "#fff", fontSize: 14, fontWeight: "600" },
+  switch: {
+    color: c.green,
+    marginTop: 20,
+    textAlign: "center",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  row: {
+    padding: 16,
+    marginTop: 24,
+    borderWidth: 1,
+    borderColor: c.line,
+    borderRadius: 12,
+    backgroundColor: c.card,
+  },
+  rowTitle: { color: c.ink, fontSize: 16, fontWeight: "600" },
+  rowCopy: { color: c.secondary, marginTop: 5, fontSize: 13 },
+  signout: {
+    height: 44,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: c.line,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  signoutText: { color: c.secondary, fontSize: 14, fontWeight: "600" },
+  center: {
+    flex: 1,
+    padding: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: c.paper,
+  },
+  list: { padding: 16, paddingBottom: 96, backgroundColor: c.paper },
+  back: { color: c.green, fontSize: 14, fontWeight: "600" },
+  empty: {
+    padding: 20,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: c.line,
+    borderRadius: 12,
+    backgroundColor: c.card,
+  },
+  order: {
+    padding: 16,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: c.line,
+    borderRadius: 12,
+    backgroundColor: c.card,
+  },
+  total: { color: c.green, marginTop: 12, fontSize: 18, fontWeight: "600" },
+});

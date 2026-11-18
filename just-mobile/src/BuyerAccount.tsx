@@ -14,6 +14,7 @@ import { buyerApi, type BuyerOrder, type Session } from "./api";
 import { BuyerAddresses } from "./BuyerAddresses";
 import { BuyerOrderDetails } from "./BuyerOrderDetails";
 import { BuyerProfile } from "./BuyerProfile";
+import { useAndroidBack } from "./useAndroidBack";
 import { BuyerRecovery } from "./BuyerRecovery";
 
 const c = {
@@ -42,6 +43,12 @@ export function BuyerAccount({
   const [addressesOpen, setAddressesOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [recoveryOpen, setRecoveryOpen] = useState(false);
+  useAndroidBack(() => {
+    if (addressesOpen) { setAddressesOpen(false); return true; }
+    if (profileOpen) { setProfileOpen(false); return true; }
+    if (recoveryOpen) { setRecoveryOpen(false); setPassword(""); return true; }
+    return false;
+  }, 10);
   const [options, setOptions] = useState<{ emailOtpRequired: boolean; emailOtpAvailable: boolean } | null>(null);
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -177,6 +184,7 @@ export function BuyerOrders({
 }) {
   const [orders, setOrders] = useState<BuyerOrder[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+  useAndroidBack(() => { if (!selectedOrder) return false; setSelectedOrder(null); return true; }, 10);
   const [cursor, setCursor] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [moreBusy, setMoreBusy] = useState(false);

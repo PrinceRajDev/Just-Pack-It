@@ -28,6 +28,7 @@ import {
 import { BuyerAccount, BuyerOrders } from "./src/BuyerAccount";
 import { BuyerCheckout } from "./src/BuyerCheckout";
 import { useBuyerBag } from "./src/useBuyerBag";
+import { useAndroidBack } from "./src/useAndroidBack";
 
 type Screen = "home" | "browse" | "bag" | "shop" | "account" | "orders" | "checkout";
 type BagLine = Product & { quantity: number };
@@ -63,6 +64,11 @@ export default function App() {
   const [picker, setPicker] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
+  useAndroidBack(() => {
+    if (screen === "home") return false;
+    setScreen(screen === "checkout" ? "bag" : screen === "orders" ? "account" : "home");
+    return true;
+  });
   const { bag, setBag, ready: bagReady, error: bagError } = useBuyerBag(session?.userId);
   const load = async (wanted?: ServiceArea | null) => {
     setLoading(true);

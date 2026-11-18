@@ -5,6 +5,8 @@ export type ProductVariant = { id: string; label: string; price: number; stock: 
 export type Product = { id: string; productId?: string; variantId?: string; variants?: ProductVariant[]; name: string; unit: string; price: number; stock: number; description?: string; image?: string; shopId: string; categorySlug?: string; tags?: string[] };
 export type Session = { userId: string; name: string; role: "buyer" | "seller" | "delivery" | "admin"; token: string; isDemo: false };
 export type Address = { id: string; label: string; line1: string; locality: string; city: string; pincode: string; version: number };
+export type CheckoutLine = { productId: string; variantId?: string; qty: number };
+export type CheckoutReview = { checkoutAvailable: boolean; itemsSubtotal: number; deliveryTotal: number | null; grandTotal: number | null; paymentMethods: string[]; issues: { message: string }[]; lines: { issues: { message: string }[] }[]; shops: { shop: Shop; issues: { message: string }[] }[]; fulfilments: { shopId: string; listedFee: number | null; issues: { message: string }[] }[] };
 export type BuyerProfile = { name: string; phone: string; email?: string; emailVerified: boolean; version: number };
 export type BuyerOrder = { id: string; total: number; amountDue?: number; paymentStatus: string; createdAt: string; suborders?: { id: string; shopName?: string; status: string; total?: number }[] };
 
@@ -66,6 +68,7 @@ export const marketApi = {
 };
 
 export const buyerApi = {
+  reviewCheckout: (token: string, areaId: string, address: Address, items: CheckoutLine[], shopIds: string[]) => request<CheckoutReview>("/checkout/review", token, { method: "POST", body: JSON.stringify({ areaId, addressId: address.id, addressVersion: address.version, items, fulfilments: shopIds.map((shopId) => ({ shopId, method: "platform_delivery" })) }) }),
   login: (phone: string, password: string) => request<Session>("/auth/login", undefined, { method: "POST", body: JSON.stringify({ phone, password }) }),
   register: (name: string, phone: string, password: string) => request<Session>("/auth/register", undefined, { method: "POST", body: JSON.stringify({ name, phone, password }) }),
   me: (token: string) => request<Omit<Session, "token">>("/auth/me", token),

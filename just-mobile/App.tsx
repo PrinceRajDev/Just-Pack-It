@@ -3,7 +3,6 @@ import * as SecureStore from "expo-secure-store";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Image,
   Modal,
@@ -24,9 +23,10 @@ import {
   type Shop,
 } from "./src/api";
 import { BuyerAccount, BuyerOrders } from "./src/BuyerAccount";
+import { BuyerCheckout } from "./src/BuyerCheckout";
 import { useBuyerBag } from "./src/useBuyerBag";
 
-type Screen = "home" | "browse" | "bag" | "shop" | "account" | "orders";
+type Screen = "home" | "browse" | "bag" | "shop" | "account" | "orders" | "checkout";
 type BagLine = Product & { quantity: number };
 const c = {
   paper: "#F7F4EE",
@@ -199,11 +199,14 @@ export default function App() {
     />
   ) : screen === "orders" ? (
     <BuyerOrders session={session} back={() => setScreen("account")} />
+  ) : screen === "checkout" ? (
+    <BuyerCheckout session={session} areaId={area?.id} bag={bag} back={() => setScreen("bag")} account={() => setScreen("account")} />
   ) : (
     <Bag
       bag={bag}
       total={total}
       onChange={quantity}
+      onCheckout={() => setScreen("checkout")}
       onBrowse={() => setScreen("home")}
     />
   );
@@ -628,12 +631,14 @@ function ShopPage({
   );
 }
 function Bag({
+  onCheckout,
   bag,
   total,
   onChange,
   onBrowse,
 }: {
   bag: BagLine[];
+  onCheckout: () => void;
   total: number;
   onChange: (id: string, d: number) => void;
   onBrowse: () => void;
@@ -692,12 +697,7 @@ function Bag({
               </Text>
               <Pressable
                 style={s.checkoutButton}
-                onPress={() =>
-                  Alert.alert(
-                    "Checkout is being connected",
-                    "Your bag is ready. Address, COD/payment and order confirmation are the next buyer flow to be added.",
-                  )
-                }
+                onPress={onCheckout}
               >
                 <Text style={s.checkoutText}>Continue to checkout</Text>
               </Pressable>

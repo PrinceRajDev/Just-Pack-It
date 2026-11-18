@@ -117,12 +117,9 @@ export default function App() {
     () =>
       products.filter(
         (x) =>
-          (!picked || x.categorySlug === picked) &&
-          `${x.name} ${x.unit} ${x.description ?? ""}`
-            .toLowerCase()
-            .includes(query.trim().toLowerCase()),
+          (!picked || x.categorySlug === picked),
       ),
-    [products, picked, query],
+    [products, picked],
   );
   const count = bag.reduce((sum, x) => sum + x.quantity, 0);
   const total = bag.reduce((sum, x) => sum + x.price * x.quantity, 0);
@@ -239,7 +236,7 @@ export default function App() {
           onBag={() => setScreen("bag")}
         />
         {body}
-        {screen !== "bag" && count > 0 ? (
+        {(screen === "home" || screen === "browse" || screen === "shop") && count > 0 ? (
           <Pressable style={s.bagBar} onPress={() => setScreen("bag")}>
             <View>
               <Text style={s.bagBarTitle}>
@@ -394,12 +391,12 @@ function Home({
           <Text style={s.marketLabel}>Your local market</Text>
           <Text style={s.marketTitle}>
             {area
-              ? `${area.name} is open for shopping`
+              ? `Shop your neighbourhood in ${area.name}`
               : "Choose an area to begin"}
           </Text>
           <Text style={s.marketCopy}>
             {shops.length
-              ? `${shops.length} nearby shop${shops.length === 1 ? "" : "s"} available today`
+              ? `${shops.filter((shop) => shop.isOpen).length} open now among ${shops.length} shops shown`
               : "Select an area to find nearby shops"}
           </Text>
         </View>
@@ -466,7 +463,7 @@ function Home({
         <Empty copy="No shops are available in this area yet" />
       )}
       <Section
-        title={picked ? "Available products" : "Buy again or try something new"}
+        title={picked ? "Available products" : "Products from nearby shops"}
         action="Search"
         onPress={onBrowse}
       />
@@ -1439,8 +1436,9 @@ const s = StyleSheet.create({
   },
   navButton: {
     height: 40,
-    minWidth: 76,
-    paddingHorizontal: 12,
+    flex: 1,
+    minWidth: 0,
+    paddingHorizontal: 4,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",

@@ -24,6 +24,7 @@ import {
   type Shop,
 } from "./src/api";
 import { BuyerAccount, BuyerOrders } from "./src/BuyerAccount";
+import { useBuyerBag } from "./src/useBuyerBag";
 
 type Screen = "home" | "browse" | "bag" | "shop" | "account" | "orders";
 type BagLine = Product & { quantity: number };
@@ -51,7 +52,6 @@ export default function App() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [bag, setBag] = useState<BagLine[]>([]);
   const [query, setQuery] = useState("");
   const [picked, setPicked] = useState<string | null>(null);
   const [shop, setShop] = useState<Shop | null>(null);
@@ -59,6 +59,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [picker, setPicker] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
+  const { bag, setBag, ready: bagReady, error: bagError } = useBuyerBag(session?.userId);
   const load = async (wanted?: ServiceArea | null) => {
     setLoading(true);
     setError(null);
@@ -138,7 +139,7 @@ export default function App() {
       await SecureStore.setItemAsync("jpi.buyer.session", JSON.stringify(next));
     else await SecureStore.deleteItemAsync("jpi.buyer.session");
   };
-  const body = loading ? (
+  const body = bagError ? <State title="Bag unavailable" copy={bagError} /> : !bagReady ? <State title="Loading your bag" copy="Restoring your saved items" loading /> : loading ? (
     <State
       title="Loading Raiyam"
       copy="Finding nearby shops and fresh stock"

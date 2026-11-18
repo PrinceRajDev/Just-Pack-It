@@ -1,7 +1,8 @@
 export type ServiceArea = { id: string; name: string; city: string; pincodes: string[]; active: boolean };
 export type Category = { id: string; slug: string; name: string; blurb?: string; image?: string };
 export type Shop = { id: string; slug: string; name: string; locality: string; tagline?: string; description?: string; isOpen: boolean; initials?: string; coverImage?: string; deliveryFee?: number; minimumOrderAmount?: number };
-export type Product = { id: string; name: string; unit: string; price: number; stock: number; description?: string; image?: string; shopId: string; categorySlug?: string; tags?: string[] };
+export type ProductVariant = { id: string; label: string; price: number; stock: number };
+export type Product = { id: string; productId?: string; variantId?: string; variants?: ProductVariant[]; name: string; unit: string; price: number; stock: number; description?: string; image?: string; shopId: string; categorySlug?: string; tags?: string[] };
 export type Session = { userId: string; name: string; role: "buyer" | "seller" | "delivery" | "admin"; token: string; isDemo: false };
 export type Address = { id: string; label: string; line1: string; locality: string; city: string; pincode: string; version: number };
 export type BuyerProfile = { name: string; phone: string; email?: string; emailVerified: boolean; version: number };

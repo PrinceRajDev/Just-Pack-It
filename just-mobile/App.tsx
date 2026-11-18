@@ -431,6 +431,7 @@ function Home({
             <ProductCard
               key={x.id}
               item={x}
+            bag={bag}
               quantity={bag.find((line) => line.id === x.id)?.quantity ?? 0}
               onAdd={onAdd}
             />
@@ -551,6 +552,7 @@ function Browse({
         renderItem={({ item }) => (
           <ProductCard
             item={item}
+            bag={bag}
             quantity={bag.find((x) => x.id === item.id)?.quantity ?? 0}
             onAdd={onAdd}
           />
@@ -615,6 +617,7 @@ function ShopPage({
         renderItem={({ item }) => (
           <ProductCard
             item={item}
+            bag={bag}
             quantity={bag.find((x) => x.id === item.id)?.quantity ?? 0}
             onAdd={onAdd}
           />
@@ -872,14 +875,20 @@ function ShopRow({ item, onPress }: { item: Shop; onPress: () => void }) {
 function ProductCard({
   item,
   quantity,
+  bag = [],
   onAdd,
 }: {
   item: Product;
   quantity: number;
+  bag?: BagLine[];
   onAdd: (x: Product) => void;
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const unavailable = item.stock <= 0 || quantity >= item.stock;
+  const [variantId, setVariantId] = useState(item.variants?.find((variant) => variant.stock > 0)?.id ?? item.variants?.[0]?.id);
+  const variant = item.variants?.find((option) => option.id === variantId);
+  const selected: Product = variant ? { ...item, id: `${item.id}:${variant.id}`, productId: item.id, variantId: variant.id, unit: variant.label, price: variant.price, stock: variant.stock, variants: undefined } : item;
+  const selectedQuantity = variant ? bag.find((line) => line.id === selected.id)?.quantity ?? 0 : quantity;
+  const unavailable = selected.stock <= 0 || selectedQuantity >= selected.stock;
   return (
     <View style={s.product}>
       <Pressable accessibilityRole="button" accessibilityLabel={`View ${item.name}`} onPress={() => setDetailsOpen(true)}><Thumb item={item} /></Pressable>
@@ -890,12 +899,12 @@ function ProductCard({
       <View style={s.productBottom}>
         <Text style={s.price}>{money(item.price)}</Text>
         <Pressable
-          disabled={unavailable}
+          disabled={variant ? item.stock <= 0 : unavailable}
           style={[s.add, unavailable && s.addDisabled]}
-          onPress={() => onAdd(item)}
+          onPress={() => variant ? setDetailsOpen(true) : onAdd(item)}
         >
           <Text style={[s.addText, unavailable && s.addTextDisabled]}>
-            {item.stock <= 0 ? "Out" : unavailable ? "Limit" : quantity ? `Add · ${quantity}` : "Add"}
+            {variant ? "Options" : item.stock <= 0 ? "Out" : unavailable ? "Limit" : quantity ? `Add · ${quantity}` : "Add"}
           </Text>
         </Pressable>
       </View>
@@ -906,10 +915,11 @@ function ProductCard({
             <Thumb item={item} />
             <Text style={s.pageTitle}>{item.name}</Text>
             <Text style={s.pageCopy}>{item.unit}</Text>
-            <Text style={s.totalValue}>{money(item.price)}</Text>
+            <Text style={s.totalValue}>{money(selected.price)}</Text>
+            {item.variants?.length ? <View style={{ gap: 8 }}><Text style={s.pageTitle}>Choose size or pack</Text>{item.variants.map((option) => <Pressable key={option.id} disabled={option.stock <= 0} onPress={() => setVariantId(option.id)} style={{ padding: 16, borderRadius: 8, borderWidth: 1, borderColor: option.id === variantId ? c.green : c.line, backgroundColor: option.id === variantId ? c.pale : c.card }}><Text style={s.price}>{option.label} · {money(option.price)}</Text><Text style={s.pageCopy}>{option.stock > 0 ? `${option.stock} available` : "Out of stock"}</Text></Pressable>)}</View> : null}
             {item.description ? <Text style={{ color: c.secondary, fontSize: 15, lineHeight: 22 }}>{item.description}</Text> : null}
-            <Text style={s.pageCopy}>{item.stock > 0 ? `${item.stock} available · ${quantity} in your bag` : "Currently out of stock"}</Text>
-            <Pressable disabled={unavailable} style={[s.checkoutButton, unavailable && s.addDisabled]} onPress={() => onAdd(item)}><Text style={[s.checkoutText, unavailable && s.addTextDisabled]}>{item.stock <= 0 ? "Out of stock" : unavailable ? "Stock limit reached" : "Add to bag"}</Text></Pressable>
+            <Text style={s.pageCopy}>{selected.stock > 0 ? `${selected.stock} available · ${selectedQuantity} in your bag` : "Currently out of stock"}</Text>
+            <Pressable disabled={unavailable} style={[s.checkoutButton, unavailable && s.addDisabled]} onPress={() => onAdd(selected)}><Text style={[s.checkoutText, unavailable && s.addTextDisabled]}>{selected.stock <= 0 ? "Out of stock" : unavailable ? "Stock limit reached" : "Add to bag"}</Text></Pressable>
           </ScrollView>
         </SafeAreaView>
       </Modal>

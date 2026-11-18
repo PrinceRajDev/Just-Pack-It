@@ -200,7 +200,7 @@ export default function App() {
   ) : screen === "orders" ? (
     <BuyerOrders session={session} back={() => setScreen("account")} />
   ) : screen === "checkout" ? (
-    <BuyerCheckout session={session} areaId={area?.id} bag={bag} back={() => setScreen("bag")} account={() => setScreen("account")} />
+    <BuyerCheckout session={session} areaId={area?.id} bag={bag} back={() => setScreen("bag")} account={() => setScreen("account")} onConfirmed={() => { setBag([]); setScreen("orders"); }} />
   ) : (
     <Bag
       bag={bag}

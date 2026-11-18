@@ -68,6 +68,7 @@ export const marketApi = {
 };
 
 export const buyerApi = {
+  placeCod: (token: string, key: string, input: { areaId: string; addressId: string; addressVersion: number; expectedTotal: number; paymentMethod: "cod"; items: CheckoutLine[]; fulfilments: { shopId: string; method: "platform_delivery" }[] }) => request<BuyerOrder>("/orders", token, { method: "POST", headers: { "Idempotency-Key": key }, body: JSON.stringify(input) }),
   reviewCheckout: (token: string, areaId: string, address: Address, items: CheckoutLine[], shopIds: string[]) => request<CheckoutReview>("/checkout/review", token, { method: "POST", body: JSON.stringify({ areaId, addressId: address.id, addressVersion: address.version, items, fulfilments: shopIds.map((shopId) => ({ shopId, method: "platform_delivery" })) }) }),
   login: (phone: string, password: string) => request<Session>("/auth/login", undefined, { method: "POST", body: JSON.stringify({ phone, password }) }),
   register: (name: string, phone: string, password: string) => request<Session>("/auth/register", undefined, { method: "POST", body: JSON.stringify({ name, phone, password }) }),

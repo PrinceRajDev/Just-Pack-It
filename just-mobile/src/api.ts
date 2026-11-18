@@ -42,6 +42,14 @@ async function getList<T>(path: string, resource: string): Promise<T[]> {
 }
 
 export const marketApi = {
+  async search(areaId: string, text: string) {
+    const query = `?area=${encodeURIComponent(areaId)}&q=${encodeURIComponent(text.trim())}&limit=100`;
+    const [products, shops] = await Promise.all([
+      getList<Product>(`/products${query}`, "products"),
+      getList<Shop>(`/shops${query}`, "shops"),
+    ]);
+    return { products, shops };
+  },
   async loadHome(areaId?: string) {
     const areas = await getList<ServiceArea>("/areas", "delivery areas");
     const query = areaId ? `?area=${encodeURIComponent(areaId)}&limit=24` : "?limit=24";

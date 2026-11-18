@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { PlaceCodOrder } from "./PlaceCodOrder";
+import { BuyerAddresses } from "./BuyerAddresses";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ActivityIndicator,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -35,6 +38,10 @@ export function BuyerCheckout({
   const [review, setReview] = useState<CheckoutReview | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [addressesOpen, setAddressesOpen] = useState(false);
+  const [addressRevision, setAddressRevision] = useState(0);
+  const [addressesLoading, setAddressesLoading] = useState(true);
+  const closeAddresses = () => { setAddressesOpen(false); setSelected(null); setReview(null); setError(null); setAddressesLoading(true); setAddressRevision((value) => value + 1); };
   useEffect(() => {
     if (!session) return;
     let active = true;
@@ -45,12 +52,12 @@ export function BuyerCheckout({
       })
       .catch(() => {
         if (active)
-          setError("Saved addresses could not load. Reopen checkout to retry.");
-      });
+          setError("Saved addresses could not load. Tap Reload addresses to retry.");
+      }).finally(() => { if (active) setAddressesLoading(false); });
     return () => {
       active = false;
     };
-  }, [session]);
+  }, [session, addressRevision]);
   const check = async () => {
     if (!session || !selected || !areaId || busy) return;
     setBusy(true);
@@ -88,6 +95,11 @@ export function BuyerCheckout({
     : [];
   return (
     <ScrollView contentContainerStyle={s.page}>
+      <Modal visible={addressesOpen} animationType="slide" onRequestClose={closeAddresses}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#F7F4EE" }}>
+          {session ? <BuyerAddresses token={session.token} back={closeAddresses} /> : null}
+        </SafeAreaView>
+      </Modal>
       <Pressable onPress={back} disabled={busy}>
         <Text style={s.link}>← Bag</Text>
       </Pressable>
@@ -99,7 +111,10 @@ export function BuyerCheckout({
       ) : (
         <>
           <Text style={s.copy}>Choose a saved delivery address</Text>
-          {addresses.map((address) => (
+          <Pressable disabled={busy} onPress={() => { setSelected(null); setReview(null); setAddressesOpen(true); }}><Text style={s.link}>Add or edit addresses</Text></Pressable>
+          <Pressable disabled={busy || addressesLoading} onPress={() => { setSelected(null); setReview(null); setError(null); setAddressesLoading(true); setAddressRevision((value) => value + 1); }}><Text style={s.link}>Reload addresses</Text></Pressable>
+          {addressesLoading ? <ActivityIndicator color="#174B34" /> : null}
+          {!addressesLoading && addresses.map((address) => (
             <Pressable
               disabled={busy}
               key={address.id}
@@ -117,11 +132,7 @@ export function BuyerCheckout({
               </Text>
             </Pressable>
           ))}
-          {!addresses.length ? (
-            <Pressable onPress={account}>
-              <Text style={s.link}>Manage addresses in Account</Text>
-            </Pressable>
-          ) : null}
+          {!addressesLoading && !addresses.length ? <Text style={s.copy}>No saved addresses yet. Add your delivery address above.</Text> : null}
           <Text style={s.copy}>
             Rider collects from each shop and delivers to this address
           </Text>

@@ -8,6 +8,10 @@ on:
       - ".github/workflows/publish-mobile-update.yml"
   workflow_dispatch:
 
+concurrency:
+  group: mobile-preview-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   publish-preview-update:
     name: Publish preview OTA update
@@ -43,6 +47,12 @@ jobs:
 
       - name: Install mobile dependencies
         run: npm ci
+
+      - name: Typecheck mobile app
+        run: npx tsc --noEmit --pretty false
+
+      - name: Lint mobile app
+        run: npx eslint App.tsx src
 
       - name: Publish preview update
         run: eas update --channel preview --environment preview --auto --non-interactive

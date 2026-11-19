@@ -90,7 +90,7 @@ const assert = require('node:assert/strict');
     await shopSearch.fill('');
     await page.getByText('2 shops',{exact:true}).waitFor();
     await page.getByText('OM CYBER CAFE RAIYAM',{exact:true}).click();
-    await page.getByText('Fresh picks for today',{exact:true}).waitFor();
+    await page.getByText('All products',{exact:true}).waitFor();
     await page.getByRole('button',{name:'Back from shop',exact:true}).click();
     await page.getByRole('tab',{name:'Brands',exact:true}).click();
     await page.getByText('No brands have been added in this area yet.',{exact:true}).waitFor();

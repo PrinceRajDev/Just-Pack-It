@@ -337,6 +337,7 @@ export default function App() {
           key={item.id}
           item={item}
           compact
+          categoryLayout
           cardWidth={cardWidth}
           bag={bag}
           quantity={bag.find((line) => line.id === item.id)?.quantity ?? 0}
@@ -1731,8 +1732,8 @@ function ProductCard({
         fullWidth && { width: "100%" },
         compact && {
           width: cardWidth ?? "48.3%",
-          minHeight: 153,
-          padding: 0,
+          minHeight: categoryLayout ? 240 : 153,
+          padding: categoryLayout ? 10 : 0,
           overflow: "hidden",
         },
       ]}
@@ -1750,13 +1751,14 @@ function ProductCard({
         style={[
           s.productName,
           categoryLayout && { fontSize: 13, marginTop: 8 },
-          compact && {
-            fontSize: 11,
-            lineHeight: 14,
-            minHeight: 14,
-            marginHorizontal: 10,
-            marginTop: 8,
-          },
+          compact &&
+            !categoryLayout && {
+              fontSize: 11,
+              lineHeight: 14,
+              minHeight: 14,
+              marginHorizontal: 10,
+              marginTop: 8,
+            },
         ]}
       >
         {item.name}
@@ -1766,12 +1768,13 @@ function ProductCard({
         style={[
           s.unit,
           { minHeight: 16, lineHeight: 16 },
-          compact && {
-            marginHorizontal: 10,
-            fontSize: 10,
-            minHeight: 12,
-            lineHeight: 12,
-          },
+          compact &&
+            !categoryLayout && {
+              marginHorizontal: 10,
+              fontSize: 10,
+              minHeight: 12,
+              lineHeight: 12,
+            },
         ]}
       >
         {categoryLayout ? selected.unit : item.unit}
@@ -1798,7 +1801,12 @@ function ProductCard({
             alignItems: "stretch",
             gap: 8,
           },
-          compact && { marginHorizontal: 10, marginBottom: 10, paddingTop: 2 },
+          compact &&
+            !categoryLayout && {
+              marginHorizontal: 10,
+              marginBottom: 10,
+              paddingTop: 2,
+            },
         ]}
       >
         <Text
@@ -1810,7 +1818,7 @@ function ProductCard({
         >
           {money(categoryLayout ? selected.price : item.price)}
         </Text>
-        {compact && quantity > 0 && !item.variants?.length && onQuantity ? (
+        {compact && selectedQuantity > 0 && onQuantity ? (
           <View
             style={{
               height: 28,
@@ -1826,7 +1834,7 @@ function ProductCard({
               accessibilityRole="button"
               accessibilityLabel={`Decrease ${item.name}`}
               hitSlop={6}
-              onPress={() => onQuantity(item.id, -1)}
+              onPress={() => onQuantity(selected.id, -1)}
               style={{
                 width: 28,
                 height: 28,
@@ -1837,17 +1845,17 @@ function ProductCard({
               <Text style={{ color: c.green, fontWeight: "600" }}>−</Text>
             </Pressable>
             <Text
-              accessibilityLabel={`${quantity} in bag`}
+              accessibilityLabel={`${selectedQuantity} in bag`}
               style={{ fontSize: 11, color: c.green, fontWeight: "600" }}
             >
-              {quantity}
+              {selectedQuantity}
             </Text>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Increase ${item.name}`}
               hitSlop={6}
               disabled={unavailable}
-              onPress={() => onQuantity(item.id, 1)}
+              onPress={() => onQuantity(selected.id, 1)}
               style={{
                 width: 28,
                 height: 28,
@@ -1874,7 +1882,12 @@ function ProductCard({
               s.add,
               categoryLayout && { height: 40, borderRadius: 13 },
               unavailable && s.addDisabled,
-              compact && { height: 28, minWidth: 76, borderRadius: 8 },
+              compact &&
+                !categoryLayout && {
+                  height: 28,
+                  minWidth: 76,
+                  borderRadius: 8,
+                },
             ]}
             onPress={() =>
               categoryLayout
@@ -1889,7 +1902,7 @@ function ProductCard({
                 s.addText,
                 categoryLayout && { fontSize: 14 },
                 unavailable && s.addTextDisabled,
-                compact && { fontSize: 10 },
+                compact && !categoryLayout && { fontSize: 10 },
               ]}
             >
               {categoryLayout
@@ -1949,7 +1962,8 @@ function Thumb({
         s.productImage,
         categoryImage && { height: 112, borderRadius: 12 },
         compact && { width: 64, height: 64, flexShrink: 0 },
-        shopImage && { width: "100%", height: 76, borderRadius: 0 },
+        shopImage &&
+          !categoryImage && { width: "100%", height: 76, borderRadius: 0 },
       ]}
       onError={() => setFailed(true)}
     />
@@ -1959,7 +1973,8 @@ function Thumb({
         s.productFallback,
         categoryImage && { height: 112, borderRadius: 12 },
         compact && { width: 64, height: 64, flexShrink: 0 },
-        shopImage && { width: "100%", height: 76, borderRadius: 0 },
+        shopImage &&
+          !categoryImage && { width: "100%", height: 76, borderRadius: 0 },
       ]}
     >
       <Text style={s.fallbackText}>{item.name.slice(0, 1)}</Text>

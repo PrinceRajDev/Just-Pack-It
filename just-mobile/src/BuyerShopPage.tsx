@@ -21,7 +21,11 @@ import * as storage from "./deviceStorage";
 type Line = Product & { quantity: number };
 type Sort =
   "Recommended" | "Price: low to high" | "Price: high to low" | "Name";
-type ShopInfo = Shop & { scheduleLabel?: string; ratingCount?: number };
+type ShopInfo = Shop & {
+  scheduleLabel?: string;
+  ratingCount?: number;
+  address?: string;
+};
 export function BuyerShopPage({
   shop,
   categories,
@@ -126,11 +130,26 @@ export function BuyerShopPage({
     ];
     return [
       { id: "All", name: "All" },
-      ...slugs.map((slug) => ({
-        id: slug!,
-        name:
-          categories.find((category) => category.slug === slug)?.name ?? slug!,
-      })),
+      ...slugs
+        .sort((a, b) => {
+          const rank = (slug?: string) =>
+            slug === "grocery-kirana"
+              ? 0
+              : slug === "fruits-vegetables"
+                ? 1
+                : 2;
+          return rank(a) - rank(b);
+        })
+        .map((slug) => ({
+          id: slug!,
+          name:
+            slug === "grocery-kirana"
+              ? "Groceries"
+              : slug === "fruits-vegetables"
+                ? "Produce"
+                : (categories.find((category) => category.slug === slug)
+                    ?.name ?? slug!),
+        })),
     ];
   }, [catalogue, categories]);
   const products = useMemo(() => {
@@ -151,16 +170,50 @@ export function BuyerShopPage({
   }, [catalogue, query, filter, stockOnly, sort]);
   const count = bag.reduce((sum, line) => sum + line.quantity, 0);
   const total = bag.reduce((sum, line) => sum + line.quantity * line.price, 0);
-  const shopCount = new Set(bag.map((line) => line.shopId)).size;
+
   const info = shop as ShopInfo;
   const shopCategory = categories.find((category) =>
     shop.categories?.includes(category.slug),
   )?.name;
-  const availability =
-    info.scheduleLabel || (shop.isOpen ? "Open now" : "Currently closed");
+  const availability = [
+    shop.isOpen ? "Open" : "Closed",
+    info.scheduleLabel?.split(" · ")[0],
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <View style={s.page}>
+      <View style={s.header}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Back from shop"
+          onPress={onBack}
+          style={s.headerButton}
+        >
+          <Text style={s.back}>‹</Text>
+        </Pressable>
+        <Text numberOfLines={1} style={s.headerTitle}>
+          {shop.name}
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={
+            saved ? "Remove shop from favourites" : "Save shop to favourites"
+          }
+          accessibilityState={{
+            selected: !!saved,
+            disabled: saved === null || saveBusy,
+          }}
+          disabled={saved === null || saveBusy}
+          onPress={() => void toggleFavourite()}
+          style={s.headerButton}
+        >
+          <Text style={s.heart}>{saved ? "♥" : "♡"}</Text>
+        </Pressable>
+      </View>
+
       <FlatList
+        testID="shop-catalogue"
         data={products}
         keyExtractor={(item) => item.id}
         numColumns={2}
@@ -178,41 +231,11 @@ export function BuyerShopPage({
                 />
               ) : (
                 <View style={s.coverFallback}>
-                  <MarketIcon name="home" />
+                  <Text style={s.emptyText}>Shop photo unavailable</Text>
                 </View>
               )}
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Back from shop"
-                onPress={onBack}
-                style={[s.circle, { left: 20 }]}
-              >
-                <Text style={s.back}>‹</Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={
-                  saved
-                    ? "Remove shop from favourites"
-                    : "Save shop to favourites"
-                }
-                accessibilityState={{
-                  selected: !!saved,
-                  disabled: saved === null || saveBusy,
-                }}
-                disabled={saved === null || saveBusy}
-                onPress={() => void toggleFavourite()}
-                style={[s.circle, { right: 20 }]}
-              >
-                <Text style={s.heart}>{saved ? "♥" : "♡"}</Text>
-              </Pressable>
             </View>
             <View testID="shop-info" style={s.info}>
-              <Text numberOfLines={1} style={s.eyebrow}>
-                {shopCategory
-                  ? `YOUR NEIGHBOURHOOD ${shopCategory.toUpperCase()}`
-                  : "YOUR NEIGHBOURHOOD SHOP"}
-              </Text>
               <Text numberOfLines={2} style={s.name}>
                 {shop.name}
               </Text>
@@ -222,15 +245,22 @@ export function BuyerShopPage({
                   shopCategory ||
                   shop.locality}
               </Text>
-              <Text numberOfLines={1} style={s.metadata}>
-                {typeof shop.rating === "number"
-                  ? `☆  ${shop.rating.toFixed(1)}${typeof info.ratingCount === "number" ? ` (${info.ratingCount})` : ""}  ·  `
-                  : ""}
-                {typeof shop.distanceKm === "number"
-                  ? `${shop.distanceKm.toFixed(1)} km  ·  `
-                  : ""}
-                {availability}
+              <Text style={s.metadata}>
+                {[
+                  availability,
+                  typeof shop.distanceKm === "number"
+                    ? `${shop.distanceKm.toFixed(1)} km`
+                    : null,
+                  typeof shop.rating === "number"
+                    ? `★ ${shop.rating.toFixed(1)}${typeof info.ratingCount === "number" ? ` (${info.ratingCount})` : ""}`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join("  |  ")}
               </Text>
+              {info.address || shop.locality ? (
+                <Text style={s.address}>{info.address || shop.locality}</Text>
+              ) : null}
               {saveError ? (
                 <Text style={s.error}>
                   Favourite could not be saved. Tap the heart to retry.
@@ -239,7 +269,7 @@ export function BuyerShopPage({
             </View>
             <View style={s.search}>
               <View style={{ transform: [{ scale: 0.75 }] }}>
-                <MarketIcon name="search" />
+                <MarketIcon name="search" color="#777D72" />
               </View>
               <TextInput
                 accessibilityLabel="Search this shop"
@@ -249,8 +279,18 @@ export function BuyerShopPage({
                 placeholderTextColor="#737B6D"
                 style={s.input}
                 returnKeyType="search"
-                clearButtonMode="while-editing"
+                clearButtonMode="never"
               />
+              {query ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear shop search"
+                  hitSlop={8}
+                  onPress={() => setQuery("")}
+                >
+                  <Text style={s.clearSearch}>×</Text>
+                </Pressable>
+              ) : null}
             </View>
             <ScrollView
               horizontal
@@ -264,12 +304,16 @@ export function BuyerShopPage({
                   aria-selected={filter === item.id}
                   accessibilityState={{ selected: filter === item.id }}
                   onPress={() => setFilter(item.id)}
-                  style={[s.pill, filter === item.id && s.activePill]}
+                  style={[
+                    s.pill,
+                    { width: (Math.min(width, 600) - 56) / 3 },
+                    filter === item.id && s.activePill,
+                  ]}
                 >
                   <Text
                     style={[
                       s.pillText,
-                      filter === item.id && { color: "#fff" },
+                      filter === item.id && { fontWeight: "700" },
                     ]}
                   >
                     {item.name}
@@ -278,46 +322,14 @@ export function BuyerShopPage({
               ))}
             </ScrollView>
             <View style={s.section}>
-              <Text style={s.heading}>Fresh picks for today</Text>
+              <Text style={s.heading}>All products</Text>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Sort and filter products"
                 onPress={() => setSortOpen(true)}
                 style={{ padding: 4 }}
               >
-                <View
-                  style={{
-                    width: 18,
-                    height: 18,
-                    justifyContent: "space-between",
-                    paddingVertical: 2,
-                  }}
-                >
-                  {[3, 11, 6].map((left, index) => (
-                    <View
-                      key={index}
-                      style={{
-                        height: 2,
-                        width: 18,
-                        backgroundColor: "#07552F",
-                      }}
-                    >
-                      <View
-                        style={{
-                          position: "absolute",
-                          left,
-                          top: -2,
-                          width: 5,
-                          height: 6,
-                          borderRadius: 2,
-                          borderWidth: 1.5,
-                          borderColor: "#07552F",
-                          backgroundColor: "#FAF8F1",
-                        }}
-                      />
-                    </View>
-                  ))}
-                </View>
+                <Text style={s.sortIcon}>Sort ⌄</Text>
               </Pressable>
             </View>
           </>
@@ -351,25 +363,23 @@ export function BuyerShopPage({
         }
       />
       {count > 0 ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="View shop bag"
-          onPress={onBag}
-          testID="shop-cart"
-          style={s.cart}
-        >
-          <View>
-            <Text style={s.cartTotal}>
-              {count} {count === 1 ? "item" : "items"} · ₹
-              {total.toLocaleString("en-IN")}
-            </Text>
-            <Text style={s.cartCopy}>
-              From {shopCount} neighbourhood{" "}
-              {shopCount === 1 ? "shop" : "shops"}
-            </Text>
-          </View>
-          <Text style={s.cartAction}>View bag →</Text>
-        </Pressable>
+        <View style={s.cartShell}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="View shop bag"
+            onPress={onBag}
+            testID="shop-cart"
+            style={s.cart}
+          >
+            <View>
+              <Text style={s.cartTotal}>
+                {count} {count === 1 ? "item" : "items"} · ₹
+                {total.toLocaleString("en-IN")}
+              </Text>
+            </View>
+            <Text style={s.cartAction}>View Bag →</Text>
+          </Pressable>
+        </View>
       ) : null}
       <Modal
         visible={sortOpen}
@@ -396,10 +406,19 @@ export function BuyerShopPage({
                   onPress={() => setSort(value)}
                   style={s.option}
                 >
-                  <Text style={s.optionText}>{value}</Text>
+                  <Text style={s.optionText}>
+                    {value === "Recommended"
+                      ? "Popular"
+                      : value === "Name"
+                        ? "Name: A to Z"
+                        : value}
+                  </Text>
                   <Text style={s.retry}>{sort === value ? "✓" : ""}</Text>
                 </Pressable>
               ))}
+              <Text style={s.emptyText}>
+                Newest is unavailable for this catalogue.
+              </Text>
               <Pressable
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: stockOnly }}
@@ -424,6 +443,27 @@ export function BuyerShopPage({
   );
 }
 const s = StyleSheet.create({
+  clearSearch: { fontSize: 18, color: "#777D72" },
+  header: {
+    height: 60,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    gap: 6,
+  },
+  headerTitle: { flex: 1, fontSize: 21, fontWeight: "600", color: "#07552F" },
+  headerButton: {
+    minWidth: 28,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  address: { fontSize: 12, lineHeight: 17, color: "#777D72", marginTop: 6 },
+  cartShell: {
+    backgroundColor: "#fff",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
   page: { flex: 1, backgroundColor: "#FAF8F1" },
   content: {
     paddingBottom: 12,
@@ -432,9 +472,8 @@ const s = StyleSheet.create({
     alignSelf: "center",
   },
   cover: {
-    height: 156,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    height: 176,
+
     overflow: "hidden",
     backgroundColor: "#EAF0D9",
   },
@@ -454,30 +493,38 @@ const s = StyleSheet.create({
   heart: { fontSize: 26, lineHeight: 30, color: "#07552F" },
   info: {
     marginHorizontal: 20,
-    marginTop: -24,
-    minHeight: 120,
+    marginTop: -32,
+    minHeight: 144,
+    borderWidth: 1,
+    borderColor: "#E2E4D9",
     padding: 16,
-    paddingTop: 12,
+    paddingTop: 16,
     borderRadius: 16,
     backgroundColor: "#fff",
   },
   eyebrow: { color: "#07552F", fontSize: 7, lineHeight: 10, fontWeight: "600" },
   name: {
-    color: "#07552F",
+    color: "#202820",
     fontSize: 24,
     lineHeight: 29,
     fontWeight: "700",
     marginTop: 3,
   },
-  description: { fontSize: 11, lineHeight: 16, color: "#737B6D", marginTop: 4 },
-  metadata: { fontSize: 10, lineHeight: 16, color: "#07552F", marginTop: 5 },
+  description: { fontSize: 13, lineHeight: 18, color: "#777D72", marginTop: 8 },
+  metadata: {
+    fontSize: 12,
+    lineHeight: 17,
+    color: "#07552F",
+    marginTop: 8,
+    fontWeight: "600",
+  },
   error: { fontSize: 10, color: "#A33B28", marginTop: 4 },
   search: {
-    height: 42,
+    height: 48,
     marginHorizontal: 20,
-    marginTop: 12,
-    borderRadius: 13,
-    backgroundColor: "#EAF0D9",
+    marginTop: 58,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -491,32 +538,38 @@ const s = StyleSheet.create({
     fontSize: 12,
     color: "#202820",
   },
-  filters: { paddingHorizontal: 20, gap: 8, marginTop: 12 },
+  filters: { paddingHorizontal: 20, gap: 8, marginTop: 16 },
   pill: {
-    height: 30,
-    paddingHorizontal: 18,
-    borderRadius: 16,
-    backgroundColor: "#fff",
+    height: 36,
+    paddingHorizontal: 6,
+    borderRadius: 18,
+    backgroundColor: "#EAF0D9",
+    alignItems: "center",
     justifyContent: "center",
   },
-  activePill: { backgroundColor: "#07552F" },
-  pillText: { fontSize: 10, color: "#737B6D" },
+  activePill: { backgroundColor: "#E3EDD1" },
+  pillText: {
+    fontSize: 12,
+    color: "#07552F",
+    fontWeight: "600",
+    textAlign: "center",
+  },
   section: {
     marginHorizontal: 20,
-    marginTop: 12,
-    marginBottom: 12,
+    marginTop: 16,
+    marginBottom: 17,
     minHeight: 24,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   heading: {
-    fontSize: 20,
+    fontSize: 18,
     lineHeight: 24,
     fontWeight: "600",
     color: "#202820",
   },
-  sortIcon: { color: "#07552F", fontSize: 23, lineHeight: 24 },
+  sortIcon: { color: "#07552F", fontSize: 12, fontWeight: "600" },
   row: {
     marginHorizontal: 20,
     justifyContent: "space-between",
@@ -536,22 +589,19 @@ const s = StyleSheet.create({
     paddingVertical: 6,
   },
   cart: {
-    marginHorizontal: 20,
-    marginTop: 0,
-    marginBottom: 2,
-    minHeight: 56,
-    paddingHorizontal: 14,
+    minHeight: 50,
+    paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 14,
     backgroundColor: "#07552F",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "space-around",
     gap: 12,
   },
   cartTotal: { fontSize: 14, lineHeight: 18, color: "#fff", fontWeight: "600" },
   cartCopy: { fontSize: 10, lineHeight: 14, color: "#EAF0D9", marginTop: 2 },
-  cartAction: { fontSize: 12, color: "#fff", fontWeight: "600" },
+  cartAction: { fontSize: 14, color: "#fff", fontWeight: "600" },
   backdrop: { flex: 1, backgroundColor: "#0005", justifyContent: "flex-end" },
   sheet: {
     padding: 20,

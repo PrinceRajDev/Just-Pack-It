@@ -106,6 +106,18 @@ async function run() {
         };
         if (route.request().method() === "OPTIONS")
           return route.fulfill({ status: 204, headers });
+        if (resource === "auth/email-otp/send") {
+          assert.deepEqual(route.request().postDataJSON(), {email:"buyer@example.test"});
+          return route.fulfill({headers,json:{challengeId:"qa-signup-email",expiresAt:new Date(Date.now() + 120000).toISOString(),resendAfterSeconds:30}});
+        }
+        if (resource === "auth/password-recovery/request") {
+          assert.deepEqual(route.request().postDataJSON(), {email:"buyer@example.test"});
+          return route.fulfill({headers,json:{challengeId:"qa-email-recovery",expiresAt:new Date(Date.now() + 120000).toISOString(),resendAfterSeconds:30}});
+        }
+        if (resource === "auth/password-recovery/reset") {
+          assert.deepEqual(route.request().postDataJSON(), {email:"buyer@example.test",emailChallengeId:"qa-email-recovery",emailOtp:"482196",newPassword:"fixture-new-password"});
+          return route.fulfill({headers,status:204});
+        }
         if (resource === "auth/login") {
           const credentials = route.request().postDataJSON();
           assert.equal(credentials.phone, "+919876543210");
@@ -119,7 +131,7 @@ async function run() {
           resource === "auth/login" || resource === "auth/me"
             ? buyer
             : resource === "auth/registration-options"
-              ? { emailOtpRequired: false, emailOtpAvailable: false }
+              ? { emailOtpRequired: true, emailOtpAvailable: true }
               : resource === "addresses"
                 ? []
                 : resource === "products"
@@ -147,7 +159,7 @@ async function run() {
       address:{label:"Home",line1:"Market Road",locality:"Raiyam",city:"Madhubani",pincode:"847238"},
       subOrders:[{id:"shop-order",shopName:"Sharma Kirana Store",status:"preparing",amountDue:189,deliveryFee:30,lines:[]}],
     };
-    await page.goto(process.env.PREVIEW_URL || "http://localhost:8109");
+    await page.goto(process.env.PREVIEW_URL || "http://localhost:8109", {timeout:90000});
     await page
       .getByText("Shops around you", { exact: true })
       .waitFor({ timeout: 60000 });
@@ -267,10 +279,25 @@ async function run() {
     await submit.click();
     await login.getByText("Invalid mobile number or password", { exact: true }).waitFor();
     await login.getByRole("button", { name: "Forgot password?" }).click();
-    await page.getByText("Reset password", { exact: true }).waitFor();
-    await page.getByText("← Sign in", { exact: true }).click();
+    await page.getByText("Forgot your password?", { exact: true }).waitFor();
+    await page.getByLabel("Recovery email").fill("buyer@example.test");
+    await page.getByRole("button",{name:"Send verification code"}).click();
+    await page.getByText("Check your email.",{exact:true}).waitFor();
+    assert.equal(await page.getByRole("button",{name:/Resend in/}).isDisabled(),true);
+    await page.screenshot({path:path.join(output,"recovery-email-code-390.png")});
+    await page.getByLabel("Recovery code").fill("482196");
+    await page.getByRole("button",{name:"Continue",exact:true}).click();
+    await page.getByLabel("New password",{exact:true}).fill("fixture-new-password");
+    await page.getByLabel("Confirm password",{exact:true}).fill("fixture-new-password");
+    await page.getByRole("button",{name:"Save password"}).click();
+    await page.getByText("Password updated.",{exact:true}).waitFor();
+    await page.getByRole("button",{name:"Back to sign in",exact:true}).click();
     await login.getByRole("button", { name: "Create account", exact: true }).click();
-    await page.getByText("Create your account", { exact: true }).waitFor();
+    await page.getByText("Join your neighbourhood.", { exact: true }).waitFor();
+    await page.getByLabel("Email", {exact:true}).fill("buyer@example.test");
+    await page.getByText("Send email code", {exact:true}).click();
+    await page.getByLabel("Email verification code", {exact:true}).waitFor();
+    await page.getByText(/Resend in \d+s/).waitFor();
     await page.getByText("Already have an account? Sign in", { exact: true }).click();
     await login.getByRole("button", { name: "Continue browsing as guest" }).click();
     await search.waitFor();

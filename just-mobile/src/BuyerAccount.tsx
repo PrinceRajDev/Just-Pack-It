@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Modal,
   Pressable,
@@ -11,7 +10,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { buyerApi, type BuyerOrder, type Session } from "./api";
+import { ApiError, buyerApi, type BuyerOrder, type Session } from "./api";
+import { BuyerAuthNotice } from "./BuyerAuthNotice";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { MarketIcon } from "./MarketIcon";
 import { BuyerAddresses } from "./BuyerAddresses";
@@ -51,6 +51,8 @@ export function BuyerAccount({
   const [register, setRegister] = useState(false);
   const [busy, setBusy] = useState(false);
   const [signInError, setSignInError] = useState("");
+  const [signInServerError, setSignInServerError] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [addressesOpen, setAddressesOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [recoveryOpen, setRecoveryOpen] = useState(false);
@@ -66,15 +68,25 @@ export function BuyerAccount({
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [challenge, setChallenge] = useState<{ id: string; email: string; expiresAt: string; resendAt: number } | null>(null);
+  const [emailClock, setEmailClock] = useState(0);
+  const signupExpired = !!challenge && emailClock >= Date.parse(challenge.expiresAt);
+  const signupCooldown = challenge ? Math.max(0, Math.ceil((challenge.resendAt - emailClock) / 1000)) : 0;
   const [optionsError, setOptionsError] = useState(false);
   const authLock = useRef(false);
   useEffect(() => { let active = true; void buyerApi.registrationOptions().then((value) => { if (active) setOptions(value); }).catch(() => { if (active) setOptionsError(true); }); return () => { active = false; }; }, []);
+  useEffect(() => {
+    if (!challenge || !register) return;
+    const timer = setInterval(() => setEmailClock(Date.now()), 500);
+    return () => clearInterval(timer);
+  }, [challenge, register]);
   const sendCode = async () => {
     if (authLock.current) return;
-    if (challenge && Date.now() < challenge.resendAt) { Alert.alert("Please wait", "Wait before requesting another email code."); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setSignInError("Enter a valid email address."); return; }
+    if (challenge && Date.now() < challenge.resendAt) { setSignInError("Wait before requesting another email code."); return; }
+    setSignInError("");
     authLock.current = true; setBusy(true);
-    try { const address = email.trim().toLowerCase(); const result = await buyerApi.sendEmailOtp(address); setChallenge({ id: result.challengeId, email: address, expiresAt: result.expiresAt, resendAt: Date.now() + result.resendAfterSeconds * 1000 }); setOtp(""); Alert.alert("Check your email", "Enter the verification code sent to your inbox."); }
-    catch (reason) { Alert.alert("Could not send code", reason instanceof Error ? reason.message : "Please retry"); }
+    try { const address = email.trim().toLowerCase(); const result = await buyerApi.sendEmailOtp(address); const issued = Date.now(); setEmailClock(issued); setChallenge({ id: result.challengeId, email: address, expiresAt: result.expiresAt, resendAt: issued + result.resendAfterSeconds * 1000 }); setOtp(""); }
+    catch (reason) { setSignInError(reason instanceof Error ? reason.message : "Could not send the email code. Please retry."); }
     finally { authLock.current = false; setBusy(false); }
   };
   const submit = async () => {
@@ -95,6 +107,7 @@ export function BuyerAccount({
       }
       if (register && (!options || (options.emailOtpRequired && !options.emailOtpAvailable))) throw new Error("Registration is unavailable. Please try again later.");
       if (register && (name.trim().length < 2 || password.length < 12)) throw new Error("Enter your name and a password with at least 12 characters.");
+      if (register && password !== confirmPassword) throw new Error("The passwords must match.");
       if (register && options?.emailOtpRequired && (!challenge || challenge.email !== email.trim().toLowerCase() || Date.now() >= Date.parse(challenge.expiresAt) || !/^\d{6}$/.test(otp))) throw new Error("Request an email code and enter the valid 6-digit code before creating your account.");
       const next = register
         ? await buyerApi.register(name.trim(), normalizedPhone, password, options?.emailOtpRequired && challenge ? { email: challenge.email, emailChallengeId: challenge.id, emailOtp: otp } : undefined)
@@ -104,8 +117,8 @@ export function BuyerAccount({
       await save(next);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Please try again.";
-      if (register) Alert.alert("Could not continue", message);
-      else setSignInError(message);
+      setSignInServerError(error instanceof ApiError);
+      setSignInError(message);
     } finally {
       authLock.current = false;
       setBusy(false);
@@ -148,6 +161,7 @@ export function BuyerAccount({
         <Text accessibilityRole="header" style={login.headerText}>Sign in</Text>
       </View>
       <ScrollView style={login.scroll} contentContainerStyle={login.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        {signInError ? <BuyerAuthNotice title={signInServerError ? "Couldn’t sign you in" : "Check your details"} copy={signInError} warning /> : busy ? <BuyerAuthNotice title="Signing you in…" copy="Your bag is saved. Please wait." /> : passwordVisible ? <BuyerAuthNotice title="Password is visible" copy="Use Hide to keep your password private." warning /> : null}
         <Text accessibilityRole="header" style={login.welcome}>Welcome to{"\n"}JustPackIt</Text>
         <Text style={login.tagline}>Your Neighbourhood, Delivered.</Text>
         <View style={login.card}>
@@ -187,7 +201,6 @@ export function BuyerAccount({
               <Text style={login.visibilityText}>{passwordVisible ? "Hide" : "Show"}</Text>
             </Pressable>
           </View>
-          {signInError ? <Text accessibilityRole="alert" style={login.error}>{signInError}</Text> : null}
           <Pressable accessibilityRole="button" disabled={busy} onPress={() => void submit()} style={[login.button, login.primary]}>
             {busy && <ActivityIndicator size="small" color="#fff" />}
             <Text style={[login.buttonText, login.primaryText]}>{busy ? "Signing in…" : "Sign in"}</Text>
@@ -207,16 +220,11 @@ export function BuyerAccount({
     </View>
   );
   return (
-    <ScrollView contentContainerStyle={s.page} keyboardShouldPersistTaps="handled">
-      <Text style={s.kicker}>Buyer account</Text>
-      <Text style={s.title}>
-        {register ? "Create your account" : "Sign in to shop"}
-      </Text>
-      <Text style={s.copy}>
-        {register
-          ? "Use your mobile number and a secure password"
-          : "View orders and save delivery addresses"}
-      </Text>
+    <ScrollView contentContainerStyle={login.content} keyboardShouldPersistTaps="handled">
+      <Pressable accessibilityRole="button" accessibilityLabel="Back to sign in" disabled={busy} onPress={() => { setSignInError(""); setPasswordVisible(false); setRegister(false); }} style={login.backButton}><Text style={login.headerText}>‹  Sign in</Text></Pressable>
+      <BuyerAuthNotice title="Join your neighbourhood." copy="Create an account to order from independent shops." />
+      {signInError ? <BuyerAuthNotice title="Check your details" copy={signInError} warning /> : null}
+      <View style={login.card}>
       {register ? (
         <View><Text style={s.copy}>Your name</Text>
         <TextInput
@@ -257,25 +265,24 @@ export function BuyerAccount({
         secureTextEntry={!passwordVisible}
         style={s.input}
       />
-      {register ? <Text style={s.copy}>Use 12–128 characters for your password</Text> : null}
-      <Pressable
-        disabled={busy || (register && (!options || (options.emailOtpRequired && !options.emailOtpAvailable)))}
-        style={s.primary}
-        onPress={() => void submit()}
-      >
-        <Text style={s.primaryText}>
-          {busy ? "Please wait" : register ? "Create account" : "Sign in"}
-        </Text>
-      </Pressable>
+      <Text style={s.copy}>Confirm password</Text>
+      <TextInput accessibilityLabel="Confirm password" editable={!busy} maxLength={128} value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!passwordVisible} autoCapitalize="none" style={s.input} />
+      {challenge ? <BuyerAuthNotice title={signupExpired ? "This code has expired." : "Check your email."} copy={signupExpired ? "Request a new code to continue." : "Enter the six-digit code sent to your inbox."} /> : null}
       {register && optionsError ? <Text style={s.copy}>Registration settings could not load. Reopen Account to retry.</Text> : null}
-      {register && options?.emailOtpRequired ? <View><Text style={s.copy}>Verify your email to create an account</Text><TextInput editable={!busy} accessibilityLabel="Email" value={email} onChangeText={(value) => { setEmail(value); setChallenge(null); setOtp(""); }} autoCapitalize="none" keyboardType="email-address" placeholder="Email address" style={s.input} /><Pressable disabled={busy || !options.emailOtpAvailable} onPress={() => void sendCode()} style={s.signout}><Text style={s.signoutText}>{challenge ? "Resend email code" : "Send email code"}</Text></Pressable>{challenge ? <TextInput editable={!busy} accessibilityLabel="Email verification code" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} placeholder="6-digit email code" style={s.input} /> : null}{!options.emailOtpAvailable ? <Text style={s.copy}>Email verification is temporarily unavailable</Text> : null}</View> : null}
-      <Pressable disabled={busy} onPress={() => setRegister((old) => !old)}>
+      {register && options?.emailOtpRequired ? <View><Text style={s.copy}>Verify your email to create an account</Text><TextInput editable={!busy} accessibilityLabel="Email" value={email} onChangeText={(value) => { setEmail(value); setChallenge(null); setOtp(""); }} autoCapitalize="none" keyboardType="email-address" placeholder="Email address" style={s.input} /><Pressable disabled={busy || !options.emailOtpAvailable || signupCooldown > 0} onPress={() => void sendCode()} style={s.signout}><Text style={s.signoutText}>{signupCooldown > 0 ? `Resend in ${signupCooldown}s` : challenge ? "Resend email code" : "Send email code"}</Text></Pressable>{challenge && !signupExpired ? <TextInput editable={!busy} accessibilityLabel="Email verification code" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} placeholder="6-digit email code" style={s.input} /> : null}{!options.emailOtpAvailable ? <Text style={s.copy}>Email verification is temporarily unavailable</Text> : null}</View> : null}
+      <Pressable accessibilityRole="button"
+        disabled={busy || !options || (options.emailOtpRequired && (!options.emailOtpAvailable || !challenge || signupExpired || !/^\d{6}$/.test(otp)))}
+        style={s.primary} onPress={() => void submit()}>
+        <Text style={s.primaryText}>{busy ? "Please wait…" : "Create account"}</Text>
+      </Pressable>
+      <Pressable disabled={busy} onPress={() => { setSignInError(""); setPasswordVisible(false); setRegister(false); }}>
         <Text style={s.switch}>
           {register
             ? "Already have an account? Sign in"
             : "New here? Create an account"}
         </Text>
       </Pressable>
+      </View>
     </ScrollView>
   );
 }

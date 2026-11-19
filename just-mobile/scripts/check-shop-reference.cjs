@@ -73,7 +73,7 @@ const assert = require('node:assert/strict');
     await page.getByRole('checkbox',{name:'In stock only',exact:true}).click();
     await page.getByRole('button',{name:'Show products',exact:true}).click();
     await page.getByRole('button',{name:'View dog food',exact:true}).click();
-    await page.getByText('A fresher kind of local',{exact:true}).waitFor();
+    await page.getByText('Product details',{exact:true}).waitFor();
     await page.getByRole('button',{name:'Back from product',exact:true}).click();
     await page.getByRole('tab',{name:'All',exact:true}).click();
     await page.waitForTimeout(350);

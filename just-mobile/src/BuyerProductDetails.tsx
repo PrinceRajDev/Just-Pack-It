@@ -1,13 +1,5 @@
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import {
-  ActivityIndicator,
   FlatList,
   Image,
   Pressable,
@@ -18,13 +10,8 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { marketApi, type Product, type Shop } from "./api";
-import {
-  equivalentProduct,
-  offerForPack,
-  packKey,
-  type DetailProduct,
-} from "./productOffers";
+import { marketApi, type Category, type Product, type Shop } from "./api";
+import { offerForPack, packKey, type DetailProduct } from "./productOffers";
 import { resolveImage } from "./images";
 import * as storage from "./deviceStorage";
 
@@ -32,79 +19,9 @@ export const BuyerProductContext = createContext<{
   areaId?: string;
   shops: Shop[];
   userId?: string;
+  categories?: Category[];
+  openShop?: (shop: Shop) => void;
 }>({ shops: [] });
-async function collect<T extends { id: string }>(
-  read: (cursor?: string) => Promise<{ items: T[]; cursor: string | null }>,
-) {
-  const items: T[] = [];
-  const seen = new Set<string>();
-  let cursor: string | undefined;
-  do {
-    const page = await read(cursor);
-    items.push(
-      ...page.items.filter((item) => !items.some((old) => old.id === item.id)),
-    );
-    if (!page.cursor) break;
-    if (seen.has(page.cursor))
-      throw new Error("Comparison could not finish loading.");
-    seen.add(page.cursor);
-    cursor = page.cursor;
-  } while (cursor);
-  return items;
-}
-function StoreIcon() {
-  return (
-    <View
-      style={{
-        width: 20,
-        height: 22,
-        alignItems: "center",
-        justifyContent: "flex-end",
-      }}
-    >
-      <View
-        style={{
-          width: 16,
-          height: 13,
-          borderWidth: 1.5,
-          borderColor: "#07552F",
-        }}
-      >
-        <View
-          style={{
-            width: 5,
-            height: 8,
-            borderWidth: 1.5,
-            borderColor: "#07552F",
-            position: "absolute",
-            bottom: -1,
-            left: 4,
-          }}
-        />
-      </View>
-      <View
-        style={{
-          position: "absolute",
-          top: 1,
-          width: 18,
-          height: 7,
-          borderWidth: 1.5,
-          borderColor: "#07552F",
-          flexDirection: "row",
-          justifyContent: "space-evenly",
-          backgroundColor: "#fff",
-        }}
-      >
-        {[0, 1].map((index) => (
-          <View
-            key={index}
-            style={{ width: 1, height: 5, backgroundColor: "#07552F" }}
-          />
-        ))}
-      </View>
-    </View>
-  );
-}
 export function BuyerProductDetails({
   item,
   bag,
@@ -118,23 +35,23 @@ export function BuyerProductDetails({
 }) {
   const context = useContext(BuyerProductContext);
   const { width } = useWindowDimensions();
-  const galleryWidth = Math.min(width, 600) - 48;
-  const galleryHeight = (galleryWidth * 254) / 392;
+  const galleryWidth = Math.min(width, 600) - 40;
+  const galleryHeight = (galleryWidth * 238) / 350;
   const baseId = item.productId ?? item.id;
   const [fresh, setFresh] = useState<DetailProduct>(item);
   const [verified, setVerified] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [compareError, setCompareError] = useState(false);
-  const [comparing, setComparing] = useState(true);
   const [attempt, setAttempt] = useState(0);
-  const [pool, setPool] = useState<DetailProduct[]>([]);
-  const [shops, setShops] = useState<Shop[]>(context.shops);
-  const [sellerId, setSellerId] = useState(baseId);
-  const defaultPack =
-    item.variants?.find((option) => option.stock > 0)?.label ??
-    item.variants?.[0]?.label ??
-    item.unit;
-  const [pack, setPack] = useState(packKey(defaultPack));
+  const [shops, setShops] = useState<Shop[]>([]);
+  const knownSellerId = context.shops.find((shop) => shop.id === fresh.shopId)?.id;
+  const defaultVariant =
+    item.variants?.find((option) => option.stock > 0) ??
+    item.variants?.[0];
+  const [pack, setPack] = useState(
+    item.variantId ??
+      defaultVariant?.id ??
+      packKey(item.unit),
+  );
   const [index, setIndex] = useState(0);
   const gallery = useRef<FlatList<string>>(null);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
@@ -166,78 +83,65 @@ export function BuyerProductDetails({
       const product = (await marketApi.product(baseId)) as DetailProduct;
       if (!active) return;
       setFresh(product);
+      setPack((previous) =>
+        offerForPack(product, previous)
+          ? previous
+          : (product.variants?.find((variant) => variant.stock > 0)?.id ??
+            product.variants?.[0]?.id ??
+            packKey(product.unit)),
+      );
       setVerified(true);
       setLoadError(null);
-      try {
-        if (context.areaId) {
-          const [products, nearbyShops] = await Promise.all([
-            collect((cursor) =>
-              marketApi.searchProducts(context.areaId!, "", cursor),
-            ),
-            collect((cursor) =>
-              marketApi.searchShops(context.areaId!, "", cursor),
-            ),
-          ]);
-          if (!active) return;
-          setPool(
-            products.filter((candidate) =>
-              equivalentProduct(product, candidate),
-            ),
-          );
-          setShops(nearbyShops);
-          setCompareError(false);
-        }
-      } catch {
-        if (active) setCompareError(true);
-      } finally {
-        if (active) setComparing(false);
+      if (
+        context.areaId &&
+        knownSellerId !== product.shopId
+      ) {
+        let cursor: string | undefined;
+        const seen = new Set<string>();
+        do {
+          const page = await marketApi
+            .searchShops(context.areaId, "", cursor)
+            .catch(() => null);
+          if (!active || !page) break;
+          const seller = page.items.find((shop) => shop.id === product.shopId);
+          if (seller) {
+            setShops([seller]);
+            break;
+          }
+          if (!page.cursor || seen.has(page.cursor)) break;
+          seen.add(page.cursor);
+          cursor = page.cursor;
+        } while (active);
       }
     })().catch((reason) => {
       if (active) {
         setLoadError(
           reason instanceof Error ? reason.message : "Product is unavailable.",
         );
-        setComparing(false);
       }
     });
     return () => {
       active = false;
     };
-  }, [baseId, context.areaId, attempt]);
+  }, [baseId, context.areaId, knownSellerId, attempt]);
   useEffect(() => {
     if (!feedback) return;
     const timer = setTimeout(() => setFeedback(false), 2000);
     return () => clearTimeout(timer);
   }, [feedback]);
-  const candidates = useMemo(
-    () => [fresh, ...pool.filter((product) => product.id !== fresh.id)],
-    [fresh, pool],
-  );
-  const current =
-    candidates.find((product) => product.id === sellerId) ?? fresh;
+  const current = fresh;
   const offer = offerForPack(current, pack);
   const packOptions = fresh.variants?.length
     ? fresh.variants.map((variant) => ({
         label: variant.label,
-        key: packKey(variant.label),
+        key: variant.id,
       }))
     : [{ label: fresh.unit, key: packKey(fresh.unit) }];
-  const offers = candidates.flatMap((product) => {
-    const row = offerForPack(product, pack);
-    return row ? [row] : [];
-  });
-  const seller = shops.find((shop) => shop.id === current.shopId);
+  const seller = [...context.shops, ...shops].find((shop) => shop.id === current.shopId);
   const quantity = offer
     ? (bag.find((line) => line.id === offer.line.id)?.quantity ?? 0)
     : 0;
   const canAdd = verified && !!offer && offer.stock > quantity;
-  const cheapest = offers
-    .filter(
-      (row) =>
-        row.stock > 0 &&
-        shops.find((shop) => shop.id === row.product.shopId)?.isOpen,
-    )
-    .reduce((price, row) => Math.min(price, row.price), Infinity);
   const images = [
     ...new Set(
       [current.image, ...((current as DetailProduct).images ?? [])]
@@ -245,21 +149,10 @@ export function BuyerProductDetails({
         .filter((value): value is string => !!value),
     ),
   ];
-  const mrp = offer?.mrp;
-  const discount =
-    offer && mrp && mrp > offer.price
-      ? Math.round((1 - offer.price / mrp) * 100)
-      : null;
-  const storageCopy = current.attributes?.find((attribute) =>
-    /^(storage|storage instructions|care instructions)$/i.test(attribute.label),
-  )?.value;
-  const footerCopy =
-    storageCopy ||
-    seller?.description ||
-    seller?.tagline ||
-    (seller
-      ? `Available from ${seller.name}.`
-      : "Availability is checked at checkout.");
+  const categoryName = context.categories?.find(
+    (category) => category.slug === current.categorySlug,
+  )?.name;
+  const taxesIncluded = current.taxInclusive === true;
   const toggleFavourite = async () => {
     if (saved === null || saveBusy) return;
     setSaveBusy(true);
@@ -276,7 +169,6 @@ export function BuyerProductDetails({
   const retry = () => {
     setLoadError(null);
     setVerified(false);
-    setComparing(true);
     setAttempt((value) => value + 1);
   };
   return (
@@ -298,7 +190,7 @@ export function BuyerProductDetails({
             minimumFontScale={0.75}
             style={s.headerTitle}
           >
-            A fresher kind of local
+            Product details
           </Text>
           <Pressable
             accessibilityRole="button"
@@ -371,15 +263,6 @@ export function BuyerProductDetails({
                 <Text style={s.secondary}>Image unavailable</Text>
               </View>
             )}
-            <View style={s.badge}>
-              <Text style={s.badgeText}>
-                {current.tags?.some((tag) => /^picked[- ]today$/i.test(tag))
-                  ? "PICKED TODAY"
-                  : offer && offer.stock > 0
-                    ? "IN STOCK"
-                    : "OUT OF STOCK"}
-              </Text>
-            </View>
           </View>
           <View style={s.dots}>
             {images.map((uri, number) => (
@@ -401,20 +284,35 @@ export function BuyerProductDetails({
             ))}
           </View>
           <Text style={s.title}>{current.name}</Text>
-          <Text style={s.description}>
-            {current.description || current.unit}
-          </Text>
-          <View style={s.prices}>
-            <Text style={s.price}>
-              {offer ? `₹${offer.price.toLocaleString("en-IN")}` : "—"}
-            </Text>
-            {discount !== null && mrp ? (
-              <>
-                <Text style={s.mrp}>₹{mrp.toLocaleString("en-IN")}</Text>
-                <Text style={s.discount}>{discount}% less than MRP</Text>
-              </>
+          <View style={s.summary}>
+            {categoryName ? (
+              <Text style={s.description}>
+                {categoryName}
+                {seller ? "  ·  " : ""}
+              </Text>
+            ) : null}
+            {seller ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Visit ${seller.name}`}
+                onPress={() => {
+                  back();
+                  context.openShop?.(seller);
+                }}
+              >
+                <Text style={s.description}>Sold by {seller.name}</Text>
+              </Pressable>
             ) : null}
           </View>
+          {current.description && !categoryName && !seller ? (
+            <Text style={s.description}>{current.description}</Text>
+          ) : null}
+          <Text style={s.price}>
+            {offer ? `₹${offer.price.toLocaleString("en-IN")}` : "—"}
+          </Text>
+          {taxesIncluded ? (
+            <Text style={s.tax}>Inclusive of all taxes</Text>
+          ) : null}
           <Text style={s.packLabel}>Choose a pack</Text>
           <View style={s.packs}>
             {packOptions.map((option) => {
@@ -452,106 +350,13 @@ export function BuyerProductDetails({
               );
             })}
           </View>
-          <Text style={s.compareTitle}>Compare nearby shops</Text>
-          <Text style={s.compareCopy}>
-            Same {offer?.label ?? defaultPack} pack. Your choice of neighbour.
-          </Text>
-          <View style={s.compareCard}>
-            {offers.map((row, number) => {
-              const shop = shops.find(
-                (candidate) => candidate.id === row.product.shopId,
-              );
-              const selected = current.id === row.product.id;
-              const details = shop as
-                | (Shop & { deliveryEstimate?: string; scheduleLabel?: string })
-                | undefined;
-              const info = [
-                typeof shop?.distanceKm === "number"
-                  ? `${shop.distanceKm.toFixed(1)} km`
-                  : null,
-                details?.deliveryEstimate ||
-                  details?.scheduleLabel ||
-                  (shop
-                    ? shop.isOpen
-                      ? "Open now"
-                      : "Currently closed"
-                    : null),
-              ]
-                .filter(Boolean)
-                .join(" · ");
-              return (
-                <View key={row.product.id}>
-                  <Pressable
-                    accessibilityRole="radio"
-                    accessibilityLabel={`Shop ${shop?.name ?? "Current seller"}`}
-                    accessibilityState={{
-                      checked: selected,
-                      disabled: row.stock <= 0,
-                    }}
-                    disabled={row.stock <= 0}
-                    onPress={() => {
-                      setSellerId(row.product.id);
-                      setFeedback(false);
-                      setIndex(0);
-                      gallery.current?.scrollToOffset({
-                        offset: 0,
-                        animated: false,
-                      });
-                    }}
-                    style={s.shopRow}
-                  >
-                    <StoreIcon />
-                    <View style={s.shopInfo}>
-                      <Text numberOfLines={1} style={s.shopName}>
-                        {shop?.name ?? "Current seller"}
-                      </Text>
-                      <Text numberOfLines={2} style={s.shopMeta}>
-                        {row.stock <= 0
-                          ? "Out of stock"
-                          : info || "Delivery checked at checkout"}
-                      </Text>
-                      {offers.length > 1 &&
-                      !comparing &&
-                      !compareError &&
-                      row.stock > 0 &&
-                      shop?.isOpen &&
-                      row.price === cheapest ? (
-                        <View style={s.best}>
-                          <Text style={s.bestText}>BEST NEARBY PRICE</Text>
-                        </View>
-                      ) : null}
-                    </View>
-                    <Text
-                      style={[s.shopPrice, selected && { color: "#07552F" }]}
-                    >
-                      ₹{row.price.toLocaleString("en-IN")}
-                    </Text>
-                    <View style={[s.check, selected && s.checked]}>
-                      {selected ? <Text style={s.checkText}>✓</Text> : null}
-                    </View>
-                  </Pressable>
-                  {number < offers.length - 1 ? (
-                    <View style={s.divider} />
-                  ) : null}
-                </View>
-              );
-            })}
-          </View>
-          {comparing ? (
-            <ActivityIndicator style={{ marginTop: 12 }} color="#07552F" />
-          ) : compareError ? (
-            <Pressable onPress={retry}>
-              <Text style={s.error}>
-                Nearby offers could not load. Tap to retry.
-              </Text>
-            </Pressable>
-          ) : offers.length <= 1 ? (
-            <Text style={s.comparisonNote}>
-              No other verified equivalent offers are available.
+          {verified && offer ? (
+            <Text accessibilityLiveRegion="polite" style={s.stock}>
+              {offer.stock > 0
+                ? `In stock · ${offer.stock} ${offer.stock === 1 ? "pack" : "packs"} available`
+                : "Out of stock"}
             </Text>
           ) : null}
-          <Text style={s.footerTitle}>From their shop to your kitchen.</Text>
-          <Text style={s.footerCopy}>{footerCopy}</Text>
           {loadError ? (
             <Pressable onPress={retry}>
               <Text style={s.error}>{loadError} Tap to retry.</Text>
@@ -585,10 +390,9 @@ export function BuyerProductDetails({
                       ? "Out of stock"
                       : quantity >= offer.stock
                         ? "Stock limit reached"
-                        : "Add to bag"}
+                        : "Add to Bag"}
               {offer ? ` · ₹${offer.price.toLocaleString("en-IN")}` : ""}
             </Text>
-            <Text style={s.ctaArrow}>→</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -596,210 +400,139 @@ export function BuyerProductDetails({
   );
 }
 const s = StyleSheet.create({
-  headerButton: {
-    width: 24,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   safe: { flex: 1, backgroundColor: "#FAF8F1" },
   header: {
-    height: 64,
-    paddingHorizontal: 24,
+    height: 60,
+    paddingHorizontal: 20,
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    gap: 10,
     width: "100%",
     maxWidth: 600,
     alignSelf: "center",
   },
-  back: { fontSize: 32, lineHeight: 34, color: "#07552F" },
+  headerButton: {
+    width: 24,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  back: { fontSize: 30, lineHeight: 34, color: "#07552F" },
   heart: { fontSize: 26, color: "#07552F" },
   headerTitle: {
     flex: 1,
     minWidth: 0,
-    fontSize: 24,
-    lineHeight: 30,
+    fontSize: 21,
+    lineHeight: 28,
     color: "#07552F",
     fontWeight: "600",
   },
   content: {
-    paddingHorizontal: 24,
-    paddingTop: 15,
-    paddingBottom: 24,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 20,
     width: "100%",
     maxWidth: 600,
     alignSelf: "center",
   },
   gallery: {
-    aspectRatio: 392 / 254,
-    borderRadius: 24,
+    aspectRatio: 350 / 238,
+    borderRadius: 12,
     overflow: "hidden",
     backgroundColor: "#EAF0D9",
   },
   image: { width: "100%", height: "100%", resizeMode: "cover" },
   imageFallback: { flex: 1, alignItems: "center", justifyContent: "center" },
-  badge: {
-    position: "absolute",
-    top: 15,
-    left: 15,
-    paddingHorizontal: 12,
-    height: 26,
-    minWidth: 104,
-    borderRadius: 14,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-  },
-  badgeText: { fontSize: 8, color: "#07552F", fontWeight: "600" },
   secondary: { fontSize: 13, color: "#777D72" },
   dots: {
-    height: 8,
-    marginTop: 12,
+    height: 10,
+    marginTop: 24,
     flexDirection: "row",
-    gap: 7,
+    gap: 8,
     justifyContent: "center",
     alignItems: "center",
   },
   dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
     borderWidth: 1,
     borderColor: "#07552F",
   },
   dotActive: { backgroundColor: "#07552F" },
   title: {
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 24,
+    lineHeight: 30,
     fontWeight: "700",
     color: "#202820",
-    marginTop: 20,
+    marginTop: 26,
   },
-  description: { fontSize: 13, lineHeight: 18, color: "#777D72", marginTop: 4 },
-  prices: {
-    marginTop: 18,
-    flexDirection: "row",
-    gap: 14,
-    alignItems: "center",
+  summary: { flexDirection: "row", flexWrap: "wrap", marginTop: 22 },
+  description: { fontSize: 12, lineHeight: 18, color: "#777D72" },
+  price: {
+    marginTop: 22,
+    fontSize: 30,
+    lineHeight: 37,
+    fontWeight: "700",
+    color: "#07552F",
   },
-  price: { fontSize: 32, lineHeight: 38, fontWeight: "700", color: "#07552F" },
-  mrp: { fontSize: 13, color: "#777D72", textDecorationLine: "line-through" },
-  discount: { fontSize: 11, color: "#07552F", flexShrink: 1 },
-  packLabel: { fontSize: 12, lineHeight: 16, color: "#777D72", marginTop: 12 },
-  packs: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 12 },
-  pack: {
-    minWidth: 102,
-    minHeight: 42,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-  },
-  packActive: { backgroundColor: "#EAF0D9" },
-  packText: { fontSize: 12, lineHeight: 18, color: "#202820" },
-  packTextActive: { fontWeight: "600", color: "#07552F" },
-  compareTitle: {
-    fontSize: 20,
-    lineHeight: 26,
-    color: "#202820",
-    fontWeight: "600",
-    marginTop: 30,
-  },
-  compareCopy: { fontSize: 12, lineHeight: 16, color: "#777D72", marginTop: 4 },
-  compareCard: {
-    marginTop: 15,
-    borderRadius: 18,
-    overflow: "hidden",
-    backgroundColor: "#fff",
-  },
-  shopRow: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 12,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 14,
-  },
-  shopInfo: { flex: 1, minWidth: 0 },
-  shopName: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: "600",
-    color: "#202820",
-  },
-  shopMeta: { fontSize: 11, lineHeight: 16, color: "#777D72", marginTop: 3 },
-  shopPrice: {
-    fontSize: 20,
+  tax: { marginTop: 22, fontSize: 11, lineHeight: 16, color: "#777D72" },
+  packLabel: {
+    fontSize: 18,
     lineHeight: 24,
     fontWeight: "600",
     color: "#202820",
-    marginLeft: 4,
+    marginTop: 20,
   },
-  check: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: "#E4E8DB",
-    marginLeft: 26,
-    marginTop: 8,
+  packs: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 20 },
+  pack: {
+    flexBasis: "48%",
+    flexGrow: 1,
+    minHeight: 51,
+    padding: 10,
+    borderRadius: 14,
+    backgroundColor: "#fff",
+    justifyContent: "center",
     alignItems: "center",
-    justifyContent: "center",
   },
-  checked: { borderColor: "#07552F", backgroundColor: "#07552F" },
-  checkText: { color: "#fff", fontSize: 12, lineHeight: 14, fontWeight: "700" },
-  divider: { height: 1, backgroundColor: "#E4E8DB", marginHorizontal: 17 },
-  best: {
-    alignSelf: "flex-start",
-    marginTop: 6,
-    height: 20,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    backgroundColor: "#EAF0D9",
-    justifyContent: "center",
-  },
-  bestText: { fontSize: 7, color: "#07552F", fontWeight: "600" },
-  comparisonNote: {
-    fontSize: 11,
-    lineHeight: 16,
-    color: "#777D72",
-    marginTop: 10,
-  },
-  footerTitle: {
+  packActive: { backgroundColor: "#EAF0D9" },
+  packText: {
     fontSize: 15,
     lineHeight: 20,
     fontWeight: "600",
     color: "#07552F",
-    marginTop: 24,
+    textAlign: "center",
   },
-  footerCopy: { fontSize: 11, lineHeight: 16, color: "#777D72", marginTop: 6 },
+  packTextActive: { fontWeight: "700" },
+  stock: {
+    marginTop: 18,
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: "600",
+    color: "#07552F",
+  },
   error: { fontSize: 11, lineHeight: 17, color: "#A33B28", marginTop: 10 },
   ctaArea: {
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     width: "100%",
     maxWidth: 600,
     alignSelf: "center",
+    backgroundColor: "#FFFFFF",
   },
   cta: {
-    minHeight: 56,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    borderRadius: 18,
+    minHeight: 50,
+    padding: 12,
+    borderRadius: 14,
     backgroundColor: "#07552F",
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
+    justifyContent: "center",
   },
   ctaText: {
-    fontSize: 14,
+    fontSize: 15,
     lineHeight: 20,
     color: "#fff",
     fontWeight: "600",
-    flexShrink: 1,
+    textAlign: "center",
   },
-  ctaArrow: { fontSize: 26, color: "#fff", lineHeight: 28 },
 });

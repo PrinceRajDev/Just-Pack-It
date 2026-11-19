@@ -2,6 +2,7 @@ import type { Product } from "./api";
 export type DetailProduct = Product & {
   mrp?: number;
   images?: string[];
+  taxInclusive?: boolean;
   brand?: string;
   attributes?: { label: string; value: string }[];
 };
@@ -58,9 +59,9 @@ export function equivalentProduct(
 }
 export function offerForPack(product: DetailProduct, key: string) {
   if (product.variants?.length) {
-    const variant = product.variants.find(
-      (item) => packKey(item.label) === key,
-    );
+    const variant =
+      product.variants.find((item) => item.id === key) ??
+      product.variants.find((item) => packKey(item.label) === key);
     if (!variant) return null;
     return {
       product,

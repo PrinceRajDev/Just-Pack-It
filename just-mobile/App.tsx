@@ -394,7 +394,20 @@ export default function App() {
           />
         )}
         <BuyerProductContext.Provider
-          value={{ areaId: area?.id, shops, userId: session?.userId }}
+          value={{
+            areaId: area?.id,
+            shops: shop
+              ? [shop, ...shops.filter((item) => item.id !== shop.id)]
+              : shops,
+            userId: session?.userId,
+            categories,
+            openShop: (item) => {
+              if (screen === "shop" && shop?.id === item.id) return;
+              setShopOrigin(screen === "home" ? "home" : "browse");
+              setShop(item);
+              setScreen("shop");
+            },
+          }}
         >
           {body}
         </BuyerProductContext.Provider>

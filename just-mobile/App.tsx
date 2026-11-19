@@ -79,13 +79,16 @@ export default function App() {
   const [sessionReady, setSessionReady] = useState(false);
   const [homeVisit, setHomeVisit] = useState(0);
   const [bagOrigin, setBagOrigin] = useState<Screen>("home");
+  const [accountOrigin, setAccountOrigin] = useState<Screen>("home");
   const [signInFromBag, setSignInFromBag] = useState(false);
   const openBag = () => {
     if (screen !== "bag" && screen !== "checkout") setBagOrigin(screen);
     setScreen("bag");
   };
-  const signInForBag = () => {
-    setSignInFromBag(true);
+  const openAccount = () => {
+    if (screen === "account") return;
+    setAccountOrigin(screen);
+    setSignInFromBag(screen === "bag" || screen === "checkout");
     setScreen("account");
   };
   const goHome = () => {
@@ -94,6 +97,17 @@ export default function App() {
     setShop(null);
     setHomeVisit((visit) => visit + 1);
     setScreen("home");
+  };
+  const leaveSignIn = () => {
+    setSignInFromBag(false);
+    if (accountOrigin === "home") goHome();
+    else setScreen(accountOrigin);
+  };
+  const browseAsGuest = () => {
+    const origin = signInFromBag ? bagOrigin : accountOrigin;
+    setSignInFromBag(false);
+    if (origin === "browse" || origin === "shop") setScreen(origin);
+    else goHome();
   };
   useAndroidBack(() => {
     if (screen === "home") {
@@ -104,10 +118,7 @@ export default function App() {
     if (screen === "shop" && shopOrigin === "browse") setScreen("browse");
     else if (screen === "checkout") setScreen("bag");
     else if (screen === "bag") setScreen(bagOrigin);
-    else if (screen === "account" && signInFromBag) {
-      setSignInFromBag(false);
-      setScreen("bag");
-    }
+    else if (screen === "account" && !session) leaveSignIn();
     else if (screen === "orders") setScreen("account");
     else goHome();
     return true;
@@ -286,7 +297,7 @@ export default function App() {
         setPicked(null);
         openBag();
       }}
-      onAccount={() => setScreen("account")}
+      onAccount={openAccount}
       onQuickSearch={(value) => {
         setQuery(value);
         setScreen("browse");
@@ -372,6 +383,9 @@ export default function App() {
       session={session}
       save={saveSession}
       openOrders={() => setScreen("orders")}
+      fromBag={signInFromBag}
+      back={leaveSignIn}
+      browseAsGuest={browseAsGuest}
     />
   ) : screen === "orders" ? (
     <BuyerOrders session={session} back={() => setScreen("account")} />
@@ -381,7 +395,7 @@ export default function App() {
       areaId={area?.id}
       bag={bag}
       back={() => setScreen("bag")}
-      account={() => setScreen("account")}
+      account={openAccount}
       onConfirmed={() => {
         setBag([]);
         setScreen("orders");
@@ -393,7 +407,7 @@ export default function App() {
       shops={shops}
       signedIn={!!session}
       onBack={() => setScreen(bagOrigin)}
-      onSignIn={signInForBag}
+      onSignIn={openAccount}
       onChange={quantity}
       onCheckout={() => setScreen("checkout")}
       onBrowse={goHome}
@@ -408,7 +422,8 @@ export default function App() {
       <StatusBar style="dark" />
       <View style={s.app}>
         {screen !== "home" && screen !== "browse" &&
-          screen !== "shop" && screen !== "bag" && (
+          screen !== "shop" && screen !== "bag" &&
+          !(screen === "account" && !session) && (
           <Header
             session={session}
             area={area}
@@ -447,7 +462,7 @@ export default function App() {
             <Text style={s.bagBarAction}>View bag</Text>
           </Pressable>
         ) : null}
-        {screen !== "shop" && (
+        {screen !== "shop" && !(screen === "account" && !session) && (
           <Nav
             guestHome={screen === "home" && !session}
             screen={screen}
@@ -455,10 +470,7 @@ export default function App() {
             home={goHome}
             browse={() => setScreen("browse")}
             bag={openBag}
-            account={() => {
-              setSignInFromBag(false);
-              setScreen("account");
-            }}
+            account={openAccount}
             orders={() => setScreen("orders")}
           />
         )}

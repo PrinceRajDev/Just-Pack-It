@@ -106,6 +106,13 @@ async function run() {
         };
         if (route.request().method() === "OPTIONS")
           return route.fulfill({ status: 204, headers });
+        if (resource === "auth/login") {
+          const credentials = route.request().postDataJSON();
+          assert.equal(credentials.phone, "+919876543210");
+          if (credentials.password !== "fixture-password") {
+            return route.fulfill({ status: 401, headers, json: { message: "Invalid mobile number or password" } });
+          }
+        }
         const body =
           resource === "auth/login" || resource === "auth/me"
             ? buyer
@@ -216,12 +223,49 @@ async function run() {
     await bag
       .getByRole("button", { name: "Sign in to continue", exact: true })
       .click();
-    await page.getByText("Sign in to shop", { exact: true }).waitFor();
-    await page
-      .getByPlaceholder("Password", { exact: true })
-      .fill("fixture-password");
-    await page.locator("input").first().fill("9876543210");
-    await page.getByText("Sign in", { exact: true }).click();
+    const login = page.getByTestId("buyer-sign-in");
+    const submit = login.getByRole("button", { name: "Sign in", exact: true });
+    const mobile = login.getByLabel("Mobile number", { exact: true });
+    const password = login.getByLabel("Password", { exact: true });
+    await login.getByText("Sign in to checkout", { exact: true }).waitFor();
+    for (const [width, height] of [[390,844],[360,800],[375,812],[430,932]]) {
+      await page.setViewportSize({ width, height });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+      await page.screenshot({ path: path.join(output, "sign-in-" + width + ".png") });
+    }
+    await submit.click();
+    await login.getByText("Enter your mobile number.", { exact: true }).waitFor();
+    await mobile.fill("123");
+    await submit.click();
+    await login.getByText("Enter a valid mobile number with its country code.", { exact: true }).waitFor();
+    await mobile.fill("+91 98765 43210");
+    await submit.click();
+    await login.getByText("Enter your password.", { exact: true }).waitFor();
+    await password.fill("wrong-password");
+    assert.equal(await password.getAttribute("type"), "password");
+    await login.getByRole("button", { name: "Show password" }).click();
+    assert.equal(await password.evaluate(input => input.type), "text");
+    assert.equal(await password.inputValue(), "wrong-password");
+    await login.getByRole("button", { name: "Hide password" }).click();
+    assert.equal(await password.getAttribute("type"), "password");
+    await submit.click();
+    await login.getByText("Invalid mobile number or password", { exact: true }).waitFor();
+    await login.getByRole("button", { name: "Forgot password?" }).click();
+    await page.getByText("Reset password", { exact: true }).waitFor();
+    await page.getByText("← Sign in", { exact: true }).click();
+    await login.getByRole("button", { name: "Create account", exact: true }).click();
+    await page.getByText("Create your account", { exact: true }).waitFor();
+    await page.getByText("Already have an account? Sign in", { exact: true }).click();
+    await login.getByRole("button", { name: "Continue browsing as guest" }).click();
+    await search.waitFor();
+    await page.getByText("View bag", { exact: true }).click();
+    await first.getByText("Farm fresh tomatoes", { exact: true }).waitFor();
+    await bag.getByRole("button", { name: "Sign in to checkout", exact: true }).click();
+    await login.getByRole("button", { name: "Back from sign in" }).click();
+    await bag.getByRole("button", { name: "Sign in to checkout", exact: true }).click();
+    await mobile.fill("+91 98765 43210");
+    await password.fill("fixture-password");
+    await submit.click();
     await bag
       .getByRole("button", { name: "Continue to checkout", exact: true })
       .waitFor();

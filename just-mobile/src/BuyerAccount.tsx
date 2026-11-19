@@ -30,10 +30,16 @@ export function BuyerAccount({
   session,
   save,
   openOrders,
+  fromBag,
+  back,
+  browseAsGuest,
 }: {
   session: Session | null;
   save: (next: Session | null) => Promise<void>;
   openOrders: () => void;
+  fromBag: boolean;
+  back: () => void;
+  browseAsGuest: () => void;
 }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -41,13 +47,16 @@ export function BuyerAccount({
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [register, setRegister] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [signInError, setSignInError] = useState("");
   const [addressesOpen, setAddressesOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   useAndroidBack(() => {
+    if (!session && busy) return true;
     if (addressesOpen) { setAddressesOpen(false); return true; }
     if (profileOpen) { setProfileOpen(false); return true; }
     if (recoveryOpen) { setRecoveryOpen(false); setPassword(""); return true; }
+    if (!session && register) { setRegister(false); return true; }
     return false;
   }, 10);
   const [options, setOptions] = useState<{ emailOtpRequired: boolean; emailOtpAvailable: boolean } | null>(null);
@@ -67,10 +76,20 @@ export function BuyerAccount({
   };
   const submit = async () => {
     if (authLock.current) return;
+    setSignInError("");
     authLock.current = true;
     setBusy(true);
     try {
-      const normalizedPhone = /^\d{10}$/.test(phone.trim()) ? `+91${phone.trim()}` : phone.trim();
+      const enteredPhone = register ? phone.trim() : phone.replace(/\s/g, "");
+      const normalizedPhone = /^\d{10}$/.test(enteredPhone) ? `+91${enteredPhone}` : enteredPhone;
+      if (!register) {
+        if (!enteredPhone) throw new Error("Enter your mobile number.");
+        if (!/^\+[1-9]\d{9,14}$/.test(normalizedPhone) ||
+          (normalizedPhone.startsWith("+91") && !/^\+91[6-9]\d{9}$/.test(normalizedPhone))) {
+          throw new Error("Enter a valid mobile number with its country code.");
+        }
+        if (!password.trim()) throw new Error("Enter your password.");
+      }
       if (register && (!options || (options.emailOtpRequired && !options.emailOtpAvailable))) throw new Error("Registration is unavailable. Please try again later.");
       if (register && (name.trim().length < 2 || password.length < 12)) throw new Error("Enter your name and a password with at least 12 characters.");
       if (register && options?.emailOtpRequired && (!challenge || challenge.email !== email.trim().toLowerCase() || Date.now() >= Date.parse(challenge.expiresAt) || !/^\d{6}$/.test(otp))) throw new Error("Request an email code and enter the valid 6-digit code before creating your account.");
@@ -81,10 +100,9 @@ export function BuyerAccount({
         throw new Error("Use the matching workspace for this account.");
       await save(next);
     } catch (error) {
-      Alert.alert(
-        "Could not continue",
-        error instanceof Error ? error.message : "Please try again",
-      );
+      const message = error instanceof Error ? error.message : "Please try again.";
+      if (register) Alert.alert("Could not continue", message);
+      else setSignInError(message);
     } finally {
       authLock.current = false;
       setBusy(false);
@@ -118,6 +136,73 @@ export function BuyerAccount({
         </Pressable>
       </ScrollView>
     );
+  if (!register) return (
+    <View style={login.screen} testID="buyer-sign-in">
+      <View style={login.header}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Back from sign in" hitSlop={10} disabled={busy} onPress={back} style={login.backButton}>
+          <Text style={login.chevron}>‹</Text>
+        </Pressable>
+        <Text accessibilityRole="header" style={login.headerText}>Sign in</Text>
+      </View>
+      <ScrollView style={login.scroll} contentContainerStyle={login.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <Text accessibilityRole="header" style={login.welcome}>Welcome to{"\n"}JustPackIt</Text>
+        <Text style={login.tagline}>Your Neighbourhood, Delivered.</Text>
+        <View style={login.card}>
+          <Text accessibilityRole="header" style={login.cardTitle}>{fromBag ? "Sign in to checkout" : "Sign in to shop"}</Text>
+          <Text style={login.description}>{fromBag ? "We'll bring you back to your bag." : "View orders and save delivery addresses."}</Text>
+          <Text style={login.label}>Mobile number</Text>
+          <TextInput
+            accessibilityLabel="Mobile number"
+            editable={!busy}
+            maxLength={20}
+            value={phone}
+            onChangeText={value => { setPhone(value); setSignInError(""); }}
+            placeholder="+91 98765 43210"
+            placeholderTextColor={login.label.color}
+            keyboardType="phone-pad"
+            autoComplete="tel"
+            style={[login.field, login.phone]}
+          />
+          <Text style={login.label}>Password</Text>
+          <View style={login.field}>
+            <TextInput
+              accessibilityLabel="Password"
+              editable={!busy}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="current-password"
+              maxLength={128}
+              value={password}
+              onChangeText={value => { setPassword(value); setSignInError(""); }}
+              placeholder="••••••••"
+              placeholderTextColor={login.label.color}
+              secureTextEntry={!passwordVisible}
+              onSubmitEditing={() => void submit()}
+              style={login.password}
+            />
+            <Pressable accessibilityRole="button" accessibilityLabel={passwordVisible ? "Hide password" : "Show password"} disabled={busy} onPress={() => setPasswordVisible(value => !value)} style={login.visibility}>
+              <Text style={login.visibilityText}>{passwordVisible ? "Hide" : "Show"}</Text>
+            </Pressable>
+          </View>
+          {signInError ? <Text accessibilityRole="alert" style={login.error}>{signInError}</Text> : null}
+          <Pressable accessibilityRole="button" disabled={busy} onPress={() => void submit()} style={[login.button, login.primary]}>
+            {busy && <ActivityIndicator size="small" color="#fff" />}
+            <Text style={[login.buttonText, login.primaryText]}>{busy ? "Signing in…" : "Sign in"}</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" disabled={busy} onPress={() => { setPasswordVisible(false); setSignInError(""); setRecoveryOpen(true); }} style={login.recovery}>
+            <Text style={login.buttonText}>Forgot password?</Text>
+          </Pressable>
+        </View>
+        <Text style={login.newAccount}>New to the neighbourhood?</Text>
+        <Pressable accessibilityRole="button" disabled={busy} onPress={() => { setRegister(true); setSignInError(""); }} style={[login.button, login.create]}>
+          <Text style={login.buttonText}>Create account</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" disabled={busy} onPress={browseAsGuest} style={[login.button, login.guest]}>
+          <Text style={login.buttonText}>Continue browsing as guest</Text>
+        </Pressable>
+      </ScrollView>
+    </View>
+  );
   return (
     <ScrollView contentContainerStyle={s.page} keyboardShouldPersistTaps="handled">
       <Text style={s.kicker}>Buyer account</Text>
@@ -181,7 +266,6 @@ export function BuyerAccount({
       </Pressable>
       {register && optionsError ? <Text style={s.copy}>Registration settings could not load. Reopen Account to retry.</Text> : null}
       {register && options?.emailOtpRequired ? <View><Text style={s.copy}>Verify your email to create an account</Text><TextInput editable={!busy} accessibilityLabel="Email" value={email} onChangeText={(value) => { setEmail(value); setChallenge(null); setOtp(""); }} autoCapitalize="none" keyboardType="email-address" placeholder="Email address" style={s.input} /><Pressable disabled={busy || !options.emailOtpAvailable} onPress={() => void sendCode()} style={s.signout}><Text style={s.signoutText}>{challenge ? "Resend email code" : "Send email code"}</Text></Pressable>{challenge ? <TextInput editable={!busy} accessibilityLabel="Email verification code" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} placeholder="6-digit email code" style={s.input} /> : null}{!options.emailOtpAvailable ? <Text style={s.copy}>Email verification is temporarily unavailable</Text> : null}</View> : null}
-      {!register ? <Pressable disabled={busy} onPress={() => setRecoveryOpen(true)}><Text style={s.switch}>Forgot password?</Text></Pressable> : null}
       <Pressable disabled={busy} onPress={() => setRegister((old) => !old)}>
         <Text style={s.switch}>
           {register
@@ -380,4 +464,34 @@ const s = StyleSheet.create({
     backgroundColor: c.card,
   },
   total: { color: c.green, marginTop: 12, fontSize: 18, fontWeight: "600" },
+});
+
+const login = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: "#FAF8F1" },
+  header: { height: 64, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", gap: 14 },
+  backButton: { minHeight: 44, justifyContent: "center" },
+  chevron: { color: "#07552F", fontSize: 27, lineHeight: 30 },
+  headerText: { color: "#07552F", fontSize: 21, fontWeight: "600" },
+  scroll: { flex: 1 },
+  content: { paddingTop: 16, paddingHorizontal: 20, paddingBottom: 12, width: "100%", maxWidth: 520, alignSelf: "center" },
+  welcome: { color: "#07552F", fontSize: 32, lineHeight: 45, fontWeight: "700" },
+  tagline: { color: "#73796E", fontSize: 14, lineHeight: 20, marginTop: 20 },
+  card: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#E0E3D8", borderRadius: 16, marginTop: 20, padding: 16 },
+  cardTitle: { color: "#252D25", fontSize: 20, lineHeight: 28, fontWeight: "600" },
+  description: { color: "#73796E", fontSize: 13, lineHeight: 18, marginTop: 10 },
+  label: { color: "#73796E", fontSize: 12, lineHeight: 16, fontWeight: "600", marginTop: 10 },
+  field: { flexDirection: "row", minHeight: 52, borderWidth: 1, borderColor: "#E0E3D8", borderRadius: 12, backgroundColor: "#fff", marginTop: 11 },
+  phone: { paddingHorizontal: 16, fontSize: 14, color: "#252D25" },
+  password: { flex: 1, minWidth: 0, paddingHorizontal: 16, fontSize: 14, color: "#252D25" },
+  visibility: { minWidth: "46%", justifyContent: "center", alignItems: "flex-start", paddingHorizontal: 8 },
+  visibilityText: { color: "#73796E", fontSize: 14 },
+  error: { color: "#A23425", marginTop: 10, fontSize: 13, lineHeight: 18 },
+  button: { minHeight: 50, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 12, gap: 8 },
+  buttonText: { color: "#07552F", fontSize: 15, fontWeight: "600", textAlign: "center" },
+  primary: { backgroundColor: "#07552F", marginTop: 10 },
+  primaryText: { color: "#fff" },
+  recovery: { minHeight: 50, marginTop: 10, alignItems: "center", justifyContent: "center" },
+  newAccount: { color: "#73796E", fontSize: 14, lineHeight: 20, marginTop: 20 },
+  create: { backgroundColor: "#EAF0D9", marginTop: 20 },
+  guest: { backgroundColor: "#fff", marginTop: 20 },
 });

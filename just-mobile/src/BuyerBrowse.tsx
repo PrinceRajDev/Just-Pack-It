@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ComponentRef,
+  type ReactNode,
+} from "react";
 import {
   ActivityIndicator,
   Image,
@@ -19,7 +25,7 @@ import {
 import { HomeNotifications } from "./HomeExtras";
 import { resolveImage } from "./images";
 import { MarketIcon } from "./MarketIcon";
-import { ReferenceArtwork } from "./ReferenceArtwork";
+
 import { useAndroidBack } from "./useAndroidBack";
 import { BrowseShopCard } from "./BrowseShopCard";
 
@@ -28,7 +34,21 @@ const cards = [
   { slug: "fruits-vegetables", name: "Fruits & vegetables" },
   { slug: "dairy-eggs", name: "Dairy & eggs" },
   { slug: "sweets-bakery", name: "Bakery" },
+  { slug: "fashion", name: "Fashion" },
+  { slug: "electronics", name: "Electronics" },
+  { slug: "stationery-books", name: "Stationery" },
+  { slug: "personal-care-household", name: "Personal Care" },
 ];
+const categoryPhotos: Record<string, number> = {
+  "grocery-kirana": require("../assets/browse-categories/grocery.webp"),
+  "fruits-vegetables": require("../assets/browse-categories/vegetables.webp"),
+  "dairy-eggs": require("../assets/browse-categories/dairy.webp"),
+  "sweets-bakery": require("../assets/browse-categories/bakery.webp"),
+  fashion: require("../assets/browse-categories/fashion.webp"),
+  electronics: require("../assets/browse-categories/electronics.webp"),
+  "stationery-books": require("../assets/browse-categories/stationery.webp"),
+  "personal-care-household": require("../assets/browse-categories/personal-care.webp"),
+};
 type Tab = "Categories" | "Shops" | "Brands";
 const searchTabs = ["Products", "Shops", "Brands"] as const;
 type Page = {
@@ -98,6 +118,8 @@ export function BuyerBrowse({
     items: Product[];
   } | null>(null);
   const [catalogueError, setCatalogueError] = useState<string | null>(null);
+  const searchInput = useRef<ComponentRef<typeof TextInput>>(null);
+  const [focused, setFocused] = useState(false);
   const search = query.trim();
   const globalSearch = tab === "Categories" && !category && !!search;
   const groceries = category?.slug === "grocery-kirana";
@@ -246,6 +268,11 @@ export function BuyerBrowse({
   const selectedBrandItems = brandProducts.filter(
     (item) => brandName(item) === brand,
   );
+  const brandCounts = new Map<string, number>();
+  for (const item of brandProducts) {
+    const name = brandName(item);
+    if (name) brandCounts.set(name, (brandCounts.get(name) ?? 0) + 1);
+  }
   const pending = !areaId
     ? false
     : tab === "Brands"
@@ -311,6 +338,34 @@ export function BuyerBrowse({
       <Text style={styles.emptyText}>{copy}</Text>
     </View>
   );
+  const missingResults = (copy: string) => (
+    <View style={styles.searchState}>
+      <Text style={styles.heading}>No matches, just yet.</Text>
+      <Text style={styles.emptyText}>{copy}</Text>
+      <Pressable
+        accessibilityRole="button"
+        style={[styles.tab, styles.selectedResult]}
+        onPress={() => searchInput.current?.focus()}
+      >
+        <Text style={styles.tabText}>Edit search</Text>
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        style={[styles.tab, styles.selectedResult]}
+        onPress={reset}
+      >
+        <Text style={styles.tabText}>Clear search</Text>
+      </Pressable>
+    </View>
+  );
+  const searching = (
+    <View style={styles.searchState} accessibilityLiveRegion="polite">
+      <Text style={styles.shopHeadingTitle}>Searching your neighbourhood…</Text>
+      {[0, 1, 2].map((row) => (
+        <View key={row} style={styles.placeholder} />
+      ))}
+    </View>
+  );
   return (
     <ScrollView
       keyboardShouldPersistTaps="handled"
@@ -325,21 +380,30 @@ export function BuyerBrowse({
             style={{ flexShrink: 1 }}
           >
             <Text numberOfLines={1} style={styles.heading}>
-              {category.name}
+              ‹ {category.name}
             </Text>
           </Pressable>
         ) : (
           <Text style={styles.heading}>
-            {globalSearch ? "Search" : "Browse"}
+            {brand ?? (globalSearch || focused ? "Search results" : "Browse")}
           </Text>
         )}
         <HomeNotifications session={session} />
       </View>
-      <View style={styles.search}>
+      {areaName && <Text style={styles.area}>{areaName}</Text>}
+      <View
+        style={[
+          styles.search,
+          (focused || globalSearch) && styles.focusedSearch,
+        ]}
+      >
         <View style={{ transform: [{ scale: 0.8 }] }}>
           <MarketIcon name="search" color="#777D72" />
         </View>
         <TextInput
+          ref={searchInput}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           accessibilityLabel={
             category
               ? `Search in ${categoryLabel}`
@@ -361,7 +425,7 @@ export function BuyerBrowse({
           returnKeyType="search"
           clearButtonMode="while-editing"
         />
-        {globalSearch && (
+        {!!search && (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Clear search"
@@ -400,7 +464,7 @@ export function BuyerBrowse({
             </Pressable>
             <Pressable
               accessibilityRole="button"
-              style={{ flex: 1, justifyContent: "center" }}
+              style={[styles.tab, styles.selectedResult]}
               onPress={() => setMenu(menu === "sort" ? null : "sort")}
             >
               <Text style={styles.categoryControlText}>
@@ -423,9 +487,6 @@ export function BuyerBrowse({
                   <Text style={styles.retry}>{option.name}</Text>
                 </Pressable>
               ))}
-              <Text style={styles.emptyText}>
-                Newest is unavailable for this catalogue.
-              </Text>
             </View>
           )}
           {menu === "filter" && (
@@ -461,10 +522,10 @@ export function BuyerBrowse({
                 setCategory(null);
                 setBrand(null);
               }}
-              style={styles.tab}
+              style={[styles.tab, tab === item && styles.selectedResult]}
             >
               <Text
-                style={[styles.tabText, tab === item && { fontWeight: "700" }]}
+                style={[styles.tabText, tab !== item && styles.inactiveTab]}
               >
                 {item}
               </Text>
@@ -484,22 +545,6 @@ export function BuyerBrowse({
           <Text style={styles.selectionTitle}>{category?.name ?? brand}</Text>
         </View>
       ) : null}
-      {discovery || tab === "Shops" || (tab === "Brands" && !brand) ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Explore nearby shops"
-          onPress={() => {
-            reset();
-            setTab("Shops");
-          }}
-          style={styles.promo}
-        >
-          <Text style={styles.promoTitle}>
-            Your neighbourhood is full of good finds.
-          </Text>
-          <Text style={styles.explore}>Explore nearby shops →</Text>
-        </Pressable>
-      ) : null}
       {tab === "Brands" && !brand ? (
         <View style={styles.brandIntro}>
           <Text accessibilityRole="header" style={styles.brandHeading}>
@@ -511,60 +556,57 @@ export function BuyerBrowse({
         </View>
       ) : null}
       {discovery ? (
-        <View style={styles.grid}>
-          {[
-            ...cards.filter((card) =>
-              categories.some((category) => category.slug === card.slug),
-            ),
-            ...categories.filter(
-              (category) => !cards.some((card) => card.slug === category.slug),
-            ),
-          ].map((item) => {
-            const index = cards.findIndex((card) => card.slug === item.slug);
-            const backendImage = categories.find(
-              (category) => category.slug === item.slug,
-            )?.image;
-            return (
-              <Pressable
-                key={item.slug}
-                accessibilityRole="button"
-                accessibilityLabel={item.name}
-                onPress={() => {
-                  setCategory(item);
-                  setBrand(null);
-                  setQuery("");
-                }}
-                style={styles.card}
-              >
-                {index >= 0 ? (
-                  <ReferenceArtwork
-                    source={require("../assets/browse-category-photos.png")}
-                    sourceSize={[270, 200]}
-                    crop={[
-                      (index % 2) * 135,
-                      Math.floor(index / 2) * 100,
-                      135,
-                      100,
-                    ]}
-                    style={styles.cardImage}
-                  />
-                ) : (
-                  <Image
-                    source={{
-                      uri:
-                        resolveImage(backendImage) ??
-                        resolveImage("/categories/" + item.slug + "-v1.webp"),
-                    }}
-                    style={styles.cardImage}
-                    resizeMode="cover"
-                  />
-                )}
-                <Text style={styles.cardName}>{item.name}</Text>
-                <Text style={styles.explore}>Explore →</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <>
+          <View style={styles.shopHeading}>
+            <Text style={styles.shopHeadingTitle}>Explore by category</Text>
+            <Text style={styles.area}>{categories.length} categories</Text>
+          </View>
+          <View style={styles.grid}>
+            {[
+              ...cards.filter((card) =>
+                categories.some((category) => category.slug === card.slug),
+              ),
+              ...categories.filter(
+                (category) =>
+                  !cards.some((card) => card.slug === category.slug),
+              ),
+            ].map((item) => {
+              const backendImage = categories.find(
+                (category) => category.slug === item.slug,
+              )?.image;
+              return (
+                <Pressable
+                  key={item.slug}
+                  accessibilityRole="button"
+                  accessibilityLabel={item.name}
+                  onPress={() => {
+                    setCategory(item);
+                    setBrand(null);
+                    setQuery("");
+                  }}
+                  style={styles.card}
+                >
+                  <View style={styles.cardImage}>
+                    <Image
+                      source={
+                        categoryPhotos[item.slug] ?? {
+                          uri:
+                            resolveImage(backendImage) ??
+                            resolveImage(
+                              "/categories/" + item.slug + "-v1.webp",
+                            ),
+                        }
+                      }
+                      style={styles.categoryPhoto}
+                      resizeMode="cover"
+                    />
+                  </View>
+                  <Text style={styles.cardName}>{item.name}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </>
       ) : !areaId ? (
         empty("Choose a delivery area from Home to browse nearby listings.")
       ) : category &&
@@ -572,6 +614,7 @@ export function BuyerBrowse({
         empty("This category is not available in your area yet.")
       ) : failure ? (
         <View style={styles.empty}>
+          <Text style={styles.heading}>Let’s try that again.</Text>
           <Text style={styles.emptyText}>{failure}</Text>
           <Pressable
             onPress={() => {
@@ -584,6 +627,11 @@ export function BuyerBrowse({
           >
             <Text style={styles.retry}>Try again</Text>
           </Pressable>
+          {globalSearch && (
+            <Pressable accessibilityRole="button" onPress={reset}>
+              <Text style={styles.retry}>Back to Browse</Text>
+            </Pressable>
+          )}
         </View>
       ) : globalSearch ? (
         <>
@@ -648,7 +696,7 @@ export function BuyerBrowse({
                 </Text>
               </Pressable>
             ) : catalogue?.area !== areaId ? (
-              <ActivityIndicator color="#07552F" />
+              searching
             ) : brand ? (
               <>
                 <Pressable
@@ -678,16 +726,16 @@ export function BuyerBrowse({
                   >
                     <Text style={styles.brandName}>{name}</Text>
                     <Text style={styles.brandLink}>
-                      View matching products →
+                      {brandCounts.get(name)} products　›
                     </Text>
                   </Pressable>
                 ))}
               </View>
             ) : (
-              empty("No brands found.")
+              missingResults("No brands found.")
             )
           ) : pending ? (
-            <ActivityIndicator color="#07552F" />
+            searching
           ) : resultTab === "Shops" ? (
             result?.shops.length ? (
               <View style={{ gap: 20 }}>
@@ -702,16 +750,16 @@ export function BuyerBrowse({
                 ))}
               </View>
             ) : (
-              empty("No shops found.")
+              missingResults("No shops found.")
             )
           ) : productItems.length ? (
             <View style={styles.searchProducts}>
               {productItems.map((item) => renderProduct(item, true))}
             </View>
           ) : catalogue?.area !== areaId && !catalogueError ? (
-            <ActivityIndicator color="#07552F" />
+            searching
           ) : (
-            empty("No products found.")
+            missingResults("No products found.")
           )}
           {result?.key === key &&
           (resultTab === "Products"
@@ -753,7 +801,7 @@ export function BuyerBrowse({
                   >
                     <Text style={styles.brandName}>{name}</Text>
                     <Text style={styles.brandLink}>
-                      View matching products →
+                      {brandCounts.get(name)} products　›
                     </Text>
                   </Pressable>
                 ))}
@@ -825,7 +873,7 @@ export function BuyerBrowse({
             (brand ? selectedBrandItems : productItems).length ? (
               <View style={styles.products}>
                 {(brand ? selectedBrandItems : productItems).map((item) =>
-                  renderProduct(item, !!category),
+                  renderProduct(item, !!category || !!brand),
                 )}
               </View>
             ) : (
@@ -881,6 +929,8 @@ export function BuyerBrowse({
   );
 }
 const styles = StyleSheet.create({
+  searchState: { gap: 14, marginTop: 6 },
+  placeholder: { height: 98, borderRadius: 14, backgroundColor: "#EAF0D9" },
   clearSearch: { fontSize: 18, color: "#777D72", paddingHorizontal: 4 },
   resultsHeading: {
     fontSize: 22,
@@ -895,7 +945,7 @@ const styles = StyleSheet.create({
     marginTop: 21,
     marginBottom: 20,
   },
-  selectedResult: { backgroundColor: "#E3EDD1" },
+  selectedResult: { backgroundColor: "#EAF0D9" },
   searchProducts: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -936,16 +986,21 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   header: {
-    height: 58,
+    height: 48,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginRight: -12,
   },
-  heading: { fontSize: 21, fontWeight: "700", color: "#07552F" },
+  area: { color: "#73796E", fontSize: 12, lineHeight: 17 },
+  focusedSearch: { borderColor: "#07552F" },
+  inactiveTab: { color: "#73796E" },
+  heading: { fontSize: 27, fontWeight: "700", color: "#07552F" },
   search: {
     height: 48,
-    marginTop: 22,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: "#E0E3D8",
     borderRadius: 12,
     backgroundColor: "#fff",
     flexDirection: "row",
@@ -967,19 +1022,19 @@ const styles = StyleSheet.create({
     minHeight: 36,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 18,
-    backgroundColor: "#EAF0D9",
+    borderRadius: 12,
   },
   tabText: { fontSize: 12, color: "#07552F", fontWeight: "600" },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    rowGap: 20,
+    rowGap: 14,
+    marginTop: 14,
   },
   card: {
     width: "48.3%",
-    padding: 16,
+    overflow: "hidden",
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#E2E4D9",
@@ -987,39 +1042,18 @@ const styles = StyleSheet.create({
   },
   cardImage: {
     width: "100%",
-    aspectRatio: 1.35,
-    borderRadius: 12,
+    height: 122,
+    overflow: "hidden",
     backgroundColor: "#FAF8F1",
   },
+  categoryPhoto: { width: "100%", height: "100%" },
   cardName: {
     fontSize: 14,
     lineHeight: 18,
-    marginTop: 9,
+    paddingHorizontal: 12,
+    paddingVertical: 16,
     fontWeight: "600",
     color: "#202820",
-  },
-  cardCopy: { fontSize: 10, lineHeight: 14, marginTop: 2, color: "#7A8373" },
-  promo: {
-    minHeight: 108,
-    padding: 16,
-    marginBottom: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#E2E4D9",
-    backgroundColor: "#EAF0D9",
-  },
-  promoTitle: {
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: "600",
-    color: "#07552F",
-  },
-  explore: {
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 8,
-    fontWeight: "600",
-    color: "#07552F",
   },
   selection: {
     flexDirection: "row",
@@ -1064,7 +1098,11 @@ const styles = StyleSheet.create({
   brandNote: { marginTop: 21, fontSize: 13, lineHeight: 18, color: "#777D72" },
   brandList: { gap: 20 },
   brand: {
-    minHeight: 88,
+    minHeight: 68,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
@@ -1072,8 +1110,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   brandName: {
-    fontSize: 20,
-    lineHeight: 26,
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 20,
     fontWeight: "600",
     color: "#07552F",
   },

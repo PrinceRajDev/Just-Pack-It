@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import type { Shop } from "./api";
+import { MarketIcon } from "./MarketIcon";
 import { resolveImage } from "./images";
 
 export function BrowseShopCard({
@@ -77,24 +78,27 @@ export function BrowseShopCard({
         />
       ) : (
         <View style={[styles.cover, styles.missing]}>
-          <Text style={styles.description}>Shop photo unavailable</Text>
+          <MarketIcon name="home" color="#07552F" />
+          <Text style={styles.description}>Neighbourhood shop</Text>
         </View>
       )}
-      <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.metadata}>{metadata}</Text>
-      {description ? (
-        <Text style={styles.description} numberOfLines={2}>
-          {description}
-        </Text>
-      ) : null}
-      {actionLabel ? <Text style={styles.metadata}>{actionLabel}</Text> : null}
+      <View style={styles.body}>
+        <Text style={styles.name}>{item.name}</Text>
+        {description ? (
+          <Text style={styles.description}>{description}</Text>
+        ) : null}
+        <View style={styles.bottom}>
+          <Text style={styles.metadata}>{metadata}</Text>
+          <Text style={styles.metadata}>{actionLabel ?? "View shop ›"}</Text>
+        </View>
+      </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    padding: 16,
+    overflow: "hidden",
     borderWidth: 1,
     borderColor: "#E2E4D9",
     borderRadius: 16,
@@ -102,13 +106,23 @@ const styles = StyleSheet.create({
   },
   cover: {
     width: "100%",
-    height: 100,
-    borderRadius: 12,
+    height: 130,
+
     backgroundColor: "#FAF8F1",
   },
-  missing: { alignItems: "center", justifyContent: "center" },
+  missing: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#EAF0D9",
+  },
+  body: { padding: 16 },
+  bottom: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    columnGap: 10,
+  },
   name: {
-    marginTop: 9,
     color: "#202820",
     fontSize: 16,
     lineHeight: 20,

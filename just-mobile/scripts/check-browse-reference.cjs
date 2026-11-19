@@ -38,7 +38,7 @@ const assert = require('node:assert/strict');
           ...items[0], id: 'grocery-test-' + index, name, description: 'Tomato search fixture', attributes: [], categorySlug:'grocery-kirana',
           image: fs.existsSync(path.join(output,`grocery-photo-${index}.png`)) ? `https://test-assets.invalid/grocery-photo-${index}.png` : photo,
           unit:['500 g','6 pieces','1 kg','500 ml'][index], price:[24,45,120,30][index],
-          variants:[], stock:5,
+          variants:index === 2 ? [{id:"rice-1kg",label:"1 kg",price:120,stock:3},{id:"rice-500g",label:"500 g",price:60,stock:2}] : [], stock:5,
         }));
         const sort = url.searchParams.get('sort');
         if (sort === 'price_asc') items.sort((a,b)=>a.price-b.price);
@@ -69,7 +69,7 @@ const assert = require('node:assert/strict');
     await page.getByRole('button',{name:'Groceries & staples',exact:true}).click();
     await page.getByText('No products are available in this category yet.',{exact:true}).waitFor();
     await page.getByRole('button',{name:'Back to Browse categories',exact:true}).click();
-    await page.getByRole('button',{name:'Explore nearby shops',exact:true}).click();
+    await page.getByRole('tab',{name:'Shops',exact:true}).click();
     await page.getByText('Shops near Raiyam',{exact:true}).waitFor();
     await page.getByText('2 shops',{exact:true}).waitFor();
     await page.getByText('OM CYBER CAFE RAIYAM',{exact:true}).waitFor();
@@ -110,11 +110,12 @@ const assert = require('node:assert/strict');
     await page.getByText('Home',{exact:true}).click();
     await page.getByText('Shops around you',{exact:true}).waitFor();
     await page.getByText('Bag',{exact:true}).click();
-    await page.getByText('Your bag is empty',{exact:true}).waitFor();
+    await page.getByText('Your bag is looking empty.',{exact:true}).waitFor();
     await page.getByText('Orders',{exact:true}).click();
     await page.getByText('Sign in to view orders',{exact:true}).waitFor();
     await page.getByText('Account',{exact:true}).click();
     await page.getByText('Sign in to shop',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'Back from sign in'}).click();
     await page.getByText('Browse',{exact:true}).click();
     await page.getByPlaceholder('Search products, shops & brands').waitFor();
     assert.deepEqual(errors,[]);
@@ -168,6 +169,11 @@ const assert = require('node:assert/strict');
       await gridCards.first().waitFor();
       assert.equal(await gridCards.first().getAttribute('aria-label'),'View '+first);
     }
+    await page.getByRole('button',{name:'Choose pack',exact:true}).click();
+    await page.getByRole('radio',{name:/500 g/}).click();
+    await page.screenshot({path:path.join(output,'browse-pack-390.png')});
+    await page.getByRole('button',{name:'Add 500 g · ₹60',exact:true}).click();
+    await page.getByRole('button',{name:'Decrease Premium basmati rice'}).click();
     await page.getByRole('textbox',{name:'Search in groceries'}).fill('banana');
     await page.getByRole('button',{name:'View Yelakki bananas',exact:true}).waitFor();
     assert.equal(await gridCards.count(),1);

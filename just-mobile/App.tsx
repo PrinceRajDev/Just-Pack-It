@@ -359,6 +359,8 @@ export default function App() {
           bag={bag}
           quantity={bag.find((line) => line.id === item.id)?.quantity ?? 0}
           onAdd={add}
+          onQuantity={quantity}
+          browseLayout
         />
       )}
       renderShop={(item) => (
@@ -1607,6 +1609,7 @@ function ShopPreview({
 }
 function ProductCard({
   categoryLayout = false,
+  browseLayout = false,
   compact = false,
   cardWidth,
   onQuantity,
@@ -1619,6 +1622,7 @@ function ProductCard({
 }: {
   item: Product;
   categoryLayout?: boolean;
+  browseLayout?: boolean;
   compact?: boolean;
   cardWidth?: number;
   onQuantity?: (id: string, delta: number) => void;
@@ -1629,7 +1633,8 @@ function ProductCard({
   onAdd: (x: Product) => void;
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [variantId] = useState(
+  const [packOpen, setPackOpen] = useState(false);
+  const [variantId, setVariantId] = useState(
     item.variants?.find((variant) => variant.stock > 0)?.id ??
       item.variants?.[0]?.id,
   );
@@ -1674,7 +1679,7 @@ function ProductCard({
         accessibilityLabel={`View ${item.name}`}
         onPress={() => setDetailsOpen(true)}
       >
-        <Thumb item={item} shopImage={compact} categoryImage={categoryLayout} />
+        <Thumb item={item} shopImage={compact} categoryImage={categoryLayout} neutralFallback={browseLayout} />
       </Pressable>
       <Text
         onPress={() => setDetailsOpen(true)}
@@ -1710,7 +1715,7 @@ function ProductCard({
       >
         {categoryLayout ? selected.unit : item.unit}
       </Text>
-      {!compact && !categoryLayout && (
+      {(!compact && !categoryLayout || browseLayout && !!shopName) && (
         <Text
           numberOfLines={1}
           style={{
@@ -1749,11 +1754,11 @@ function ProductCard({
         >
           {money(categoryLayout ? selected.price : item.price)}
         </Text>
-        {compact && selectedQuantity > 0 && onQuantity ? (
+        {(compact || browseLayout) && selectedQuantity > 0 && onQuantity ? (
           <View
             style={{
-              height: 28,
-              width: 76,
+              height: browseLayout ? 44 : 28,
+              width: browseLayout ? "100%" : 76,
               borderRadius: 8,
               backgroundColor: c.pale,
               flexDirection: "row",
@@ -1803,6 +1808,7 @@ function ProductCard({
             accessibilityRole="button"
             accessibilityLabel={compact ? `Add ${item.name}` : undefined}
             disabled={
+              browseLayout && variant ? !item.variants?.some(pack => pack.stock > 0) :
               categoryLayout
                 ? unavailable
                 : variant
@@ -1821,6 +1827,7 @@ function ProductCard({
                 },
             ]}
             onPress={() =>
+              browseLayout && variant ? setPackOpen(true) :
               categoryLayout
                 ? onAdd(selected)
                 : variant
@@ -1836,9 +1843,11 @@ function ProductCard({
                 compact && !categoryLayout && { fontSize: 10 },
               ]}
             >
-              {categoryLayout
+              {browseLayout && variant
+                ? item.variants?.some(pack => pack.stock > 0) ? "Choose pack" : "Unavailable"
+                : categoryLayout
                 ? selected.stock <= 0
-                  ? "Out of stock"
+                  ? browseLayout ? "Unavailable" : "Out of stock"
                   : unavailable
                     ? "Stock limit"
                     : selectedQuantity
@@ -1857,6 +1866,29 @@ function ProductCard({
           </Pressable>
         )}
       </View>
+      {browseLayout && variant && (
+        <Modal transparent visible={packOpen} animationType="slide" onRequestClose={() => setPackOpen(false)}>
+          <View style={s.packBackdrop}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Close pack picker" style={StyleSheet.absoluteFill} onPress={() => setPackOpen(false)} />
+            <SafeAreaView edges={["bottom"]} style={s.packSheet}>
+              <Text style={s.packTitle}>Choose your pack</Text>
+              <Text style={s.packTitle}>{item.name}</Text>
+              {shopName && <Text style={s.unit}>Sold by {shopName}</Text>}
+              <ScrollView style={{ maxHeight: 310 }}>
+                {item.variants?.map(pack => (
+                  <Pressable key={pack.id} accessibilityRole="radio" accessibilityState={{checked: variantId === pack.id}} aria-checked={variantId === pack.id}
+                    disabled={pack.stock <= 0} onPress={() => setVariantId(pack.id)} style={[s.packOption, pack.stock <= 0 && s.addDisabled]}>
+                    <Text style={s.addText}>{variantId === pack.id ? "◉" : "○"} {pack.label} · {money(pack.price)}{pack.stock <= 0 ? " · Unavailable" : ""}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+              <Pressable accessibilityRole="button" disabled={unavailable} style={[s.packOption, unavailable && s.addDisabled]} onPress={() => { onAdd(selected); setPackOpen(false); }}>
+                <Text style={s.addText}>{unavailable ? "Unavailable" : `Add ${selected.unit} · ${money(selected.price)}`}</Text>
+              </Pressable>
+            </SafeAreaView>
+          </View>
+        </Modal>
+      )}
       <Modal
         visible={detailsOpen}
         animationType="slide"
@@ -1879,11 +1911,13 @@ function Thumb({
   item,
   compact = false,
   shopImage = false,
+  neutralFallback = false,
 }: {
   item: Product;
   categoryImage?: boolean;
   compact?: boolean;
   shopImage?: boolean;
+  neutralFallback?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   return resolveImage(item.image) && !failed ? (
@@ -1908,7 +1942,12 @@ function Thumb({
           !categoryImage && { width: "100%", height: 76, borderRadius: 0 },
       ]}
     >
-      <Text style={s.fallbackText}>{item.name.slice(0, 1)}</Text>
+      {neutralFallback ? (
+        <>
+          <MarketIcon name="bag" color="#73796E" />
+          <Text style={s.unit}>Photo unavailable</Text>
+        </>
+      ) : <Text style={s.fallbackText}>{item.name.slice(0, 1)}</Text>}
     </View>
   );
 }
@@ -2393,6 +2432,10 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  packBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(22,34,25,0.76)" },
+  packSheet: { backgroundColor: "#fff", padding: 20, borderTopLeftRadius: 24, borderTopRightRadius: 24, gap: 12 },
+  packTitle: { color: c.green, fontSize: 16, fontWeight: "600" },
+  packOption: { minHeight: 44, borderRadius: 12, padding: 10, marginTop: 8, backgroundColor: c.pale, alignItems: "center", justifyContent: "center" },
   navIcon: { width: 24, height: 24, flexShrink: 0, tintColor: "#687465" },
   navIconActive: { tintColor: c.green },
   navActive: { backgroundColor: c.pale },

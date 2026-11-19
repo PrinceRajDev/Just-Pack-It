@@ -6,10 +6,11 @@ import {
   Text,
   View,
 } from "react-native";
+import { CheckoutHeading, DeliveryAddressContents } from "./CheckoutPresentation";
 import type { Address, BuyerProfile } from "./api";
 
 export function ChooseDeliveryAddress({
-  rows,
+  title, rechecking, rows,
   selected,
   preferred,
   profile,
@@ -24,6 +25,8 @@ export function ChooseDeliveryAddress({
   confirm,
   reload,
 }: {
+  title: string;
+  rechecking: boolean;
   rows: Address[];
   selected?: string;
   preferred?: string;
@@ -53,7 +56,7 @@ export function ChooseDeliveryAddress({
           <Text style={s.arrow}>‹</Text>
         </Pressable>
         <Text accessibilityRole="header" style={s.headerText}>
-          Choose address
+          {title}
         </Text>
       </View>
       <ScrollView
@@ -61,9 +64,7 @@ export function ChooseDeliveryAddress({
         contentContainerStyle={s.content}
         testID="address-scroll"
       >
-        <Text accessibilityRole="header" style={s.title}>
-          Where should we deliver?
-        </Text>
+        <CheckoutHeading title="Where should we deliver?" icon="home" />
         <Text style={s.description}>
           Delivery eligibility and fees are checked for this address, shop by
           shop.
@@ -110,7 +111,7 @@ export function ChooseDeliveryAddress({
                         .filter(Boolean)
                         .join(" · ")
                     : "";
-                const details = [address.locality, address.city].join(", ");
+
                 return (
                   <View key={address.id} style={s.addresses}>
                     <Pressable
@@ -120,22 +121,9 @@ export function ChooseDeliveryAddress({
                       accessibilityLabel={`${address.label} address`}
                       disabled={busy}
                       onPress={() => select(address)}
-                      style={s.card}
+                      style={[s.card, checked && s.selected]}
                     >
-                      <View style={s.labelRow}>
-                        <View style={s.radio}>
-                          {checked && <View style={s.dot} />}
-                        </View>
-                        <Text style={s.label}>{address.label}</Text>
-                      </View>
-                      <Text style={s.detailPrimary}>
-                        {contact || address.line1}
-                      </Text>
-                      <Text style={s.detail}>
-                        {contact
-                          ? `${address.line1}\n${details} · ${address.pincode}`
-                          : `${details}, ${address.pincode}`}
-                      </Text>
+                      <DeliveryAddressContents address={address} contact={contact} selected={checked} />
                     </Pressable>
                     {checked && (
                       <Pressable
@@ -173,7 +161,7 @@ export function ChooseDeliveryAddress({
         >
           {busy && <ActivityIndicator color="#fff" />}
           <Text style={[s.buttonText, s.confirmText]}>
-            {busy ? "Checking delivery…" : "Deliver to this address"}
+            {busy ? "Checking delivery…" : rechecking ? "Recheck delivery" : "Deliver to this address"}
           </Text>
         </Pressable>
       </View>
@@ -183,7 +171,7 @@ export function ChooseDeliveryAddress({
 
 const green = "#07552F";
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#FAF8F1" },
+  screen: { flex: 1, backgroundColor: "#F8F6EE" },
   header: {
     height: 64,
     paddingHorizontal: 20,
@@ -193,24 +181,25 @@ const s = StyleSheet.create({
   },
   backButton: { minHeight: 44, justifyContent: "center" },
   arrow: { color: green, fontSize: 27, lineHeight: 30 },
-  headerText: { color: green, fontSize: 21, fontWeight: "600" },
+  headerText: { color: green, fontSize: 18, fontWeight: "500" },
   scroll: { flex: 1 },
   content: {
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 20,
-    gap: 20,
+    gap: 16,
   },
   title: { color: "#252D25", fontSize: 25, lineHeight: 34, fontWeight: "600" },
   description: { color: "#73796E", fontSize: 14, lineHeight: 18 },
-  addresses: { gap: 20 },
+  addresses: { gap: 16 },
   card: {
     padding: 16,
     borderWidth: 1,
     borderColor: "#E0E3D8",
-    borderRadius: 16,
+    borderRadius: 24,
     backgroundColor: "#fff",
   },
+  selected: { borderColor: green },
   labelRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   radio: {
     width: 13,
@@ -256,8 +245,10 @@ const s = StyleSheet.create({
   },
   add: { backgroundColor: "#EAF0D9" },
   footer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 16,
+    borderTopWidth: 1,
+    borderColor: "#DADFD0",
     backgroundColor: "#fff",
   },
   confirm: { backgroundColor: green },

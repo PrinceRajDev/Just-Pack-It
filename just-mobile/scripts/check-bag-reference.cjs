@@ -310,7 +310,7 @@ async function run() {
     await password.fill("fixture-password");
     await submit.click();
     await bag
-      .getByRole("button", { name: "Continue to checkout", exact: true })
+      .getByRole("button", { name: "Choose address", exact: true })
       .waitFor();
     const saved = await page.evaluate(
       (userId) => ({
@@ -326,7 +326,7 @@ async function run() {
     assert.equal(saved.account.length, 2);
     assert.equal(saved.guest, null);
     await bag
-      .getByRole("button", { name: "Continue to checkout", exact: true })
+      .getByRole("button", { name: "Choose address", exact: true })
       .click();
     await page
       .getByText("No saved addresses yet. Add your delivery address above.", {

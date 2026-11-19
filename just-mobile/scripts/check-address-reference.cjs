@@ -211,7 +211,7 @@ const assert = require("node:assert/strict");
     const picker = page.getByTestId("choose-address");
     const enter = async () => {
       await page.getByText("Bag · 3", { exact: true }).last().click();
-      await page.getByRole("button", { name: "Continue to checkout" }).click();
+      await page.getByRole("button", { name: "Change delivery address" }).click();
       await picker.waitFor();
     };
     await page.goto(process.env.PREVIEW_URL || "http://localhost:8113");
@@ -223,7 +223,7 @@ const assert = require("node:assert/strict");
     const home = picker.getByRole("radio", { name: "Home address" });
     const work = picker.getByRole("radio", { name: "Work address" });
     const deliver = picker.getByRole("button", {
-      name: "Deliver to this address",
+      name: /Deliver to this address|Recheck delivery/,
     });
     await picker
       .getByText("Aditi Sharma · 98765 43210", { exact: true })
@@ -259,22 +259,13 @@ const assert = require("node:assert/strict");
     assert.equal(await home.getAttribute("aria-checked"), "false");
     assert.equal(await work.getAttribute("aria-checked"), "true");
     await deliver.click();
-    await page
-      .getByText("No approved partner for this address.", { exact: true })
-      .waitFor();
-    assert.equal(
-      await page
-        .getByRole("button", { name: "Place Order", exact: true })
-        .isDisabled(),
-      true,
-    );
-    const change = page.getByRole("button", {
-      name: "Change address",
-      exact: true,
-    });
+    await page.getByText("No rider for Patil Fresh Mart", { exact: true }).waitFor();
+    assert.equal(await page.getByRole("button", {name:"Resolve delivery to continue",exact:true}).isDisabled(),true);
+    const change = page.getByRole("button", { name: "Change address", exact: true });
     await change.click();
     await home.click();
     await deliver.click();
+    await page.getByRole("button", {name:"Checkout · ₹189", exact:true}).click();
     const checkout = page.getByTestId("checkout-screen");
     await checkout
       .getByText("Cash on Delivery · ₹189 due at delivery", { exact: true })
@@ -363,22 +354,14 @@ const assert = require("node:assert/strict");
     assert.equal(await other.getAttribute("aria-checked"), "true");
     stockUnavailable = true;
     await deliver.click();
-    await page
-      .getByText("Farm fresh tomatoes are out of stock.", { exact: true })
-      .waitFor();
-    assert.equal(
-      await page
-        .getByRole("button", { name: "Place Order", exact: true })
-        .isDisabled(),
-      true,
-    );
+    await page.getByText("Farm fresh tomatoes are out of stock.", { exact: true }).waitFor();
+    assert.equal(await page.getByRole("button", {name:"Resolve delivery to continue",exact:true}).isDisabled(),true);
     stockUnavailable = false;
-    Object.assign(addresses[0], {
-      line1: "Flat 302, Suyog Apartment, Paud Road",
-    });
-    await change.click();
+    Object.assign(addresses[0], {line1:"Flat 302, Suyog Apartment, Paud Road"});
+    await page.getByRole("button",{name:"Change delivery address",exact:true}).click();
     await home.click();
     await deliver.click();
+    await page.getByRole("button",{name:"Checkout · ₹189",exact:true}).click();
     const order = page.getByRole("button", {
       name: "Place Order · ₹189",
       exact: true,
@@ -435,12 +418,12 @@ const assert = require("node:assert/strict");
     await confirmation.getByRole("button", { name: "Track Order" }).click();
     await page.getByText("Sharma Kirana Store", { exact: true }).waitFor();
     const tracking = page.getByTestId("buyer-order-details");
-    await tracking.getByText("Picked up", {exact:true}).waitFor();
+    await tracking.getByText("Picked up", {exact:true}).first().waitFor();
     await tracking.getByText("Patil Fresh Mart",{exact:true}).waitFor();
-    await tracking.getByRole("button",{name:"Confirm receipt and get code"}).click();
+    await tracking.getByRole("button",{name:"View receipt code"}).click();
     assert.equal(receiptRequests,0);
     await tracking.getByRole("button",{name:"Received and paid"}).click();
-    await tracking.getByText("628415",{exact:true}).waitFor();
+    await tracking.getByLabel("6 2 8 4 1 5",{exact:true}).waitFor();
     assert.equal(receiptRequests,1);
     for (const [width,height] of [[390,844],[360,800],[375,812],[430,932]]) {
       await page.setViewportSize({width,height});
@@ -449,9 +432,9 @@ const assert = require("node:assert/strict");
     }
     trackingDelivered = true;
     await tracking.getByRole("button",{name:"Refresh status"}).click();
-    await tracking.getByRole("heading",{name:"Delivered"}).waitFor();
-    assert.equal(await tracking.getByText("628415",{exact:true}).count(),0);
-    await tracking.getByRole("button",{name:"View delivered order"}).click();
+    await tracking.getByRole("heading",{name:"Partially cancelled",exact:true}).waitFor();
+    assert.equal(await tracking.getByLabel("6 2 8 4 1 5",{exact:true}).count(),0);
+
     await tracking.getByText("Sharma Kirana Store · Delivered",{exact:true}).waitFor();
     await page.getByRole("button", { name: "Back from order details" }).click();
     await confirmation

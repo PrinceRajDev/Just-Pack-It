@@ -1,4 +1,5 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { DeliveryAddressContents } from "./CheckoutPresentation";
 import type { BuyerOrder } from "./api";
 
 const green = "#07552F";
@@ -52,7 +53,7 @@ export function BuyerOrderConfirmation({
             We’ll update you as each shop prepares your items.
           </Text>
         </View>
-        <Text style={s.payment}>
+        <View style={s.paymentCard}><Text style={s.payment}>
           {cod ? "Cash on Delivery" : "Online payment"}
         </Text>
         <Text style={s.amount}>
@@ -64,15 +65,15 @@ export function BuyerOrderConfirmation({
               ? `${money(order.onlinePaidAmount)} paid`
               : order.paymentStatus.replaceAll("_", " ")}
         </Text>
-        <View style={s.card}>
-          <Text style={s.addressTitle}>◉ {address.label}</Text>
-          {contact ? <Text style={s.contact}>{contact}</Text> : null}
-          <Text style={s.address}>
-            {address.line1}
-            {"\n"}
-            {address.locality}, {address.city} · {address.pincode}
-          </Text>
         </View>
+        <View style={[s.card, s.selected]}>
+          <DeliveryAddressContents address={address} contact={contact} selected />
+        </View>
+        <Text style={s.note}>
+          We’ll show an estimated arrival when one is available.
+        </Text>
+      </ScrollView>
+      <View style={s.footer}>
         <Pressable
           accessibilityRole="button"
           onPress={track}
@@ -87,16 +88,13 @@ export function BuyerOrderConfirmation({
         >
           <Text style={s.buttonText}>Continue Shopping</Text>
         </Pressable>
-        <Text style={s.note}>
-          We’ll show an estimated arrival when one is available.
-        </Text>
-      </ScrollView>
+      </View>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#FAF8F1" },
+  screen: { flex: 1, backgroundColor: "#F8F6EE" },
   header: {
     height: 64,
     paddingHorizontal: 20,
@@ -106,51 +104,51 @@ const s = StyleSheet.create({
   },
   back: { minHeight: 44, justifyContent: "center" },
   arrow: { color: green, fontSize: 27, lineHeight: 30 },
-  headerTitle: { fontSize: 21, color: green, fontWeight: "600" },
-  content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, gap: 20 },
+  headerTitle: { fontSize: 18, color: green, fontWeight: "500" },
+  content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24, gap: 16 },
   card: {
     backgroundColor: "#fff",
     borderColor: "#E0E3D8",
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: 24,
     padding: 16,
   },
-  success: { backgroundColor: "#EAF0D9" },
+  success: { backgroundColor: green, borderColor: green, padding: 19 },
+  selected: { borderColor: green },
+  paymentCard: { borderRadius: 20, padding: 16, gap: 8, backgroundColor: "#EAF0D9" },
+  footer: { borderTopWidth: 1, borderColor: "#DADFD0", backgroundColor: "#fff", paddingHorizontal: 20, paddingVertical: 16, gap: 8 },
   checkArea: {
-    height: 86,
-    justifyContent: "center",
-    alignItems: "flex-start",
-    paddingLeft: 7,
+    width: 48, height: 48, borderRadius: 16, backgroundColor: "#EAF0D9",
+    justifyContent: "center", alignItems: "center", marginBottom: 14,
   },
   check: {
-    width: 35,
-    height: 19,
+    width: 23,
+    height: 13,
     borderColor: green,
-    borderLeftWidth: 7,
-    borderBottomWidth: 7,
-    transform: [{ translateY: -7 }, { rotate: "-45deg" }],
+    borderLeftWidth: 3,
+    borderBottomWidth: 3,
+    transform: [{ translateY: -2 }, { rotate: "-45deg" }],
   },
-  title: { color: green, fontSize: 30, lineHeight: 42, fontWeight: "600" },
+  title: { color: "#fff", fontSize: 24, lineHeight: 34, fontWeight: "500" },
   reference: {
-    color: "#252D25",
+    color: "#EAF0D9",
     fontSize: 14,
     lineHeight: 20,
     fontWeight: "600",
     marginTop: 10,
   },
   description: {
-    color: "#252D25",
+    color: "#EAF0D9",
     fontSize: 14,
     lineHeight: 20,
     marginTop: 10,
   },
   payment: {
-    color: "#252D25",
-    fontSize: 18,
-    lineHeight: 26,
-    fontWeight: "600",
+    color: green,
+    fontSize: 12,
+    lineHeight: 18,
   },
-  amount: { color: green, fontSize: 24, lineHeight: 33, fontWeight: "600" },
+  amount: { color: green, fontSize: 24, lineHeight: 33, fontWeight: "500" },
   addressTitle: {
     color: green,
     fontSize: 16,

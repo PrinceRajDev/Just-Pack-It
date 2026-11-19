@@ -11,6 +11,10 @@ import { marketApi, type Product, type Shop } from "./api";
 import { resolveImage } from "./images";
 import { MarketIcon } from "./MarketIcon";
 
+import { CheckoutHeading, DeliveryAddressContents } from "./CheckoutPresentation";
+import { OrderSymbol } from "./BuyerOrderDetails";
+import type { BagDelivery } from "./BuyerCheckout";
+
 type Line = Product & { quantity: number };
 const green = "#07552F";
 const sage = "#EAF0D9";
@@ -18,25 +22,28 @@ const money = (amount: number) => `₹${amount.toLocaleString("en-IN")}`;
 const subtotal = (lines: Line[]) =>
   lines.reduce((sum, line) => sum + line.price * line.quantity, 0);
 
+export type BuyerBagProps = {
+  bag: Line[];
+  shops: Shop[];
+  signedIn: boolean;
+  onBack: () => void;
+  onSignIn: () => void;
+  delivery: BagDelivery;
+  onBrowse: () => void;
+  onChange: (id: string, delta: number) => void;
+};
+
 export function BuyerBag({
   bag,
   shops,
   signedIn,
   onBack,
   onSignIn,
-  onCheckout,
+  delivery,
   onBrowse,
   onChange,
-}: {
-  bag: Line[];
-  shops: Shop[];
-  signedIn: boolean;
-  onBack: () => void;
-  onSignIn: () => void;
-  onCheckout: () => void;
-  onBrowse: () => void;
-  onChange: (id: string, delta: number) => void;
-}) {
+}: BuyerBagProps) {
+  const [shopRemoved, setShopRemoved] = useState(false);
   const [extraShops, setExtraShops] = useState<Shop[]>([]);
   const groups = new Map<string, Line[]>();
   for (const line of bag) {
@@ -94,13 +101,11 @@ export function BuyerBag({
             testID="bag-scroll"
             showsVerticalScrollIndicator={false}
           >
-            <Text accessibilityRole="header" style={s.title}>
-              Fresh finds, ready to go.
-            </Text>
+            <CheckoutHeading title={shopRemoved ? "Shop removed from your bag" : "Fresh finds, ready to go."} icon="bag" plain />
             {!signedIn && (
-              <View style={s.card}>
-                <Text style={s.cardTitle}>Sign in to place your order</Text>
-                <Text style={s.copy}>
+              <View style={[s.card, s.signInCard]}>
+                <Text style={[s.cardTitle, s.white]}>Sign in to place your order</Text>
+                <Text style={[s.copy, s.signInCopy]}>
                   Your bag will be waiting after sign-in.
                 </Text>
                 <Pressable
@@ -114,21 +119,51 @@ export function BuyerBag({
                 </Pressable>
               </View>
             )}
+            {signedIn && delivery.checking && <View style={s.checking}>
+              <OrderSymbol name="out_for_delivery" />
+              <Text accessibilityLiveRegion="polite" style={s.delivery}>Checking rider availability…</Text>
+            </View>}
+            {signedIn && !delivery.checking && delivery.unavailable.map(shop => (
+              <View key={shop.id} style={[s.card, s.problem]}>
+                <Text style={[s.cardTitle, s.remove]}>No rider for {shop.name}</Text>
+                <Text style={s.copy}>{shop.reason ? `${shop.reason} ` : ""}Your items are saved. Try a different delivery address or remove this shop to continue.</Text>
+                <Pressable accessibilityRole="button" style={[s.button, s.spaced]} onPress={delivery.change}><Text style={s.buttonText}>Change address</Text></Pressable>
+                <Pressable accessibilityRole="button" style={[s.button, s.sageButton]} onPress={delivery.retry}><Text style={[s.buttonText, s.sageText]}>Retry delivery check</Text></Pressable>
+                <Pressable accessibilityRole="button" style={[s.button, s.removeShop]} onPress={() => {
+                  groups.get(shop.id)?.forEach(item => onChange(item.id, -item.quantity));
+                  setShopRemoved(true);
+                }}><Text style={[s.buttonText, s.remove]}>Remove {shop.name}</Text></Pressable>
+              </View>
+            ))}
+            {signedIn && !delivery.checking && delivery.error && <View style={[s.card, s.problem]}>
+              <Text accessibilityRole="alert" style={s.remove}>{delivery.error}</Text>
+              <Pressable accessibilityRole="button" style={[s.button, s.sageButton]} onPress={delivery.retry}><Text style={[s.buttonText, s.sageText]}>Retry delivery check</Text></Pressable>
+            </View>}
+            {signedIn && delivery.address && <View style={[s.card, s.selected]}>
+              <DeliveryAddressContents address={delivery.address} contact={delivery.contact} selected />
+            </View>}
+            {signedIn && <View style={s.addressActions}>
+              <Pressable accessibilityRole="button" style={[s.button, s.addressButton]} onPress={delivery.change}><Text style={s.addressActionText}>{delivery.address ? "Change delivery address" : "Choose delivery address"}</Text></Pressable>
+              <Pressable accessibilityRole="button" style={[s.button, s.addressButton, s.addressSage]} onPress={delivery.saved}><Text style={s.addressActionText}>Saved addresses</Text></Pressable>
+            </View>}
             {[...groups].map(([id, lines]) => {
               const shop = known.get(id);
-              const delivery = shop?.fulfilment?.includes("platform_delivery");
+              const riderAvailable = signedIn && delivery.unavailable.some(row => row.id === id)
+                ? false : shop?.fulfilment?.includes("platform_delivery");
               return (
                 <View key={id} style={s.card} testID={`bag-shop-${id}`}>
-                  <Text accessibilityRole="header" style={s.cardTitle}>
-                    {shop?.name ?? "Local shop"}
-                  </Text>
-                  <Text style={[s.delivery, delivery === false && s.muted]}>
-                    {delivery
+                  <View style={s.shopHeader}>
+                    <View style={s.shopIcon}><OrderSymbol name="shop" /></View>
+                    <View style={s.item}><Text accessibilityRole="header" style={s.cardTitle}>{shop?.name ?? "Local shop"}</Text>
+                  <Text style={[s.delivery, riderAvailable === false && s.muted]}>
+                    {signedIn && delivery.checking ? "Checking rider availability…" : riderAvailable
                       ? "Rider delivery available"
-                      : delivery === false
+                      : riderAvailable === false
                         ? "Rider delivery unavailable"
                         : "Rider delivery checked at checkout"}
                   </Text>
+                    </View>
+                  </View>
                   {lines.map((item) => {
                     const image = resolveImage(item.image);
                     return (
@@ -207,11 +242,12 @@ export function BuyerBag({
           <View style={s.footer} testID="bag-footer">
             <Pressable
               accessibilityRole="button"
-              style={s.button}
-              onPress={signedIn ? onCheckout : onSignIn}
+              style={[s.button, signedIn && (delivery.checking || delivery.blocked) && s.footerDisabled]}
+              disabled={signedIn && (delivery.checking || delivery.blocked)}
+              onPress={signedIn ? delivery.checkout : onSignIn}
             >
-              <Text style={s.buttonText}>
-                {signedIn ? "Continue to checkout" : "Sign in to checkout"}
+              <Text style={[s.buttonText, signedIn && (delivery.checking || delivery.blocked) && s.muted]}>
+                {!signedIn ? "Sign in to checkout" : delivery.checking ? "Checking delivery…" : delivery.blocked ? "Resolve delivery to continue" : delivery.total === null ? "Choose address" : `Checkout · ${money(delivery.total)}`}
               </Text>
             </Pressable>
           </View>
@@ -237,7 +273,7 @@ export function BuyerBag({
 }
 
 const s = StyleSheet.create({
-  page: { flex: 1, backgroundColor: "#FAF8F1" },
+  page: { flex: 1, backgroundColor: "#F8F6EE" },
   header: {
     minHeight: 64,
     paddingHorizontal: 20,
@@ -247,22 +283,37 @@ const s = StyleSheet.create({
   },
   backButton: { minHeight: 44, justifyContent: "center" },
   back: { color: green, fontSize: 27, lineHeight: 30 },
-  heading: { color: green, fontSize: 21, fontWeight: "600" },
+  heading: { color: green, fontSize: 18, fontWeight: "500" },
   scroll: { flex: 1 },
   content: {
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 20,
-    gap: 20,
+    gap: 16,
   },
   title: { color: "#252D25", fontSize: 24, lineHeight: 32, fontWeight: "600" },
   card: {
     borderWidth: 1,
     borderColor: "#E0E3D8",
-    borderRadius: 16,
+    borderRadius: 24,
     backgroundColor: "#fff",
     padding: 16,
   },
+  signInCard: { backgroundColor: green, borderColor: green, padding: 19 },
+  white: { color: "#fff", fontSize: 18 },
+  signInCopy: { color: "#EAF0D9", marginBottom: 4 },
+  problem: { borderColor: "#AF3927" },
+  selected: { borderColor: green },
+  spaced: { marginTop: 12 },
+  checking: { flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: sage, borderRadius: 16, minHeight: 64, padding: 16 },
+  addressActions: { flexDirection: "row", gap: 12 },
+  addressButton: { flex: 1, minHeight: 44, backgroundColor: "#fff", borderWidth: 1, borderColor: "#E0E3D8", paddingHorizontal: 4 },
+  addressSage: { backgroundColor: sage, borderColor: sage },
+  addressActionText: { color: green, fontSize: 13, textAlign: "center", fontWeight: "500" },
+  removeShop: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#AF3927", marginTop: 10 },
+  footerDisabled: { backgroundColor: "#DDE2D5" },
+  shopHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
+  shopIcon: { width: 36, height: 36, backgroundColor: sage, borderRadius: 11, alignItems: "center", justifyContent: "center" },
   cardTitle: {
     color: "#252D25",
     fontSize: 16,
@@ -286,13 +337,13 @@ const s = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: "600",
-    marginTop: 10,
+    marginTop: 2,
   },
   muted: { color: "#73796E" },
-  row: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 11 },
+  row: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderColor: "#DADFD0" },
   thumbnail: {
-    width: 62,
-    height: 66,
+    width: 72,
+    height: 80,
     borderRadius: 10,
     overflow: "hidden",
     backgroundColor: sage,
@@ -307,7 +358,11 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    marginLeft: -6,
+    alignSelf: "flex-start",
+    backgroundColor: sage,
+    borderRadius: 10,
+    minHeight: 36,
+    marginTop: 3,
   },
   stepButton: {
     minWidth: 23,
@@ -318,20 +373,21 @@ const s = StyleSheet.create({
   step: { color: green, fontSize: 14, fontWeight: "700" },
   disabled: { opacity: 0.4 },
   removeButton: { alignSelf: "flex-start", paddingBottom: 2 },
-  remove: { color: "#73796E", fontSize: 11, lineHeight: 15, fontWeight: "600" },
-  amount: { fontSize: 14, fontWeight: "700", color: "#252D25", marginTop: 20 },
+  remove: { color: "#AF3927", fontSize: 12, lineHeight: 18, fontWeight: "400" },
+  amount: { fontSize: 14, fontWeight: "700", color: "#252D25", alignSelf: "center" },
   shopSubtotal: {
-    position: "absolute",
-    right: 16,
-    bottom: 9,
+    alignSelf: "flex-end",
+    marginTop: 10,
     fontSize: 11,
     color: "#73796E",
   },
   total: { flexDirection: "row", justifyContent: "space-between", gap: 12 },
   footer: {
     backgroundColor: "#fff",
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 16,
+    borderTopWidth: 1,
+    borderColor: "#DADFD0",
   },
   empty: {
     padding: 20,

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { buyerApi, type Address } from "./api";
+import { CheckoutHeading } from "./CheckoutPresentation";
+import { buyerApi, type Address, type BuyerProfile } from "./api";
 
 import { MarketIcon } from "./MarketIcon";
 import * as storage from "./deviceStorage";
@@ -11,6 +12,7 @@ const fields: { key: keyof Draft; label: string }[] = [{ key: "label", label: "L
 type CheckoutEditor = {
   address?: Address;
   isDefault: boolean;
+  profile?: BuyerProfile | null;
   onSaved: (address: Address, makeDefault: boolean) => void;
 };
 export function BuyerAddresses({ token, back, checkout, userId, area }: { token: string; userId?: string; area?: string; back: () => void; checkout?: CheckoutEditor }) {
@@ -42,6 +44,40 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
     finally { lock.current = false; setBusy(false); }
   };
   const remove = (row: Address) => Alert.alert("Delete address?", `${row.label}: ${row.line1}`, [{ text: "Keep", style: "cancel" }, { text: "Delete", style: "destructive", onPress: () => { if (lock.current) return; lock.current = true; setBusy(true); void buyerApi.deleteAddress(token, row.id, row.version).then(() => setRows((old) => old.filter((item) => item.id !== row.id))).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Address could not delete")).finally(() => { lock.current = false; setBusy(false); }); } }]);
+  if (checkout && draft) {
+    const field = (key: keyof Draft) => {
+      const label = fields.find(row => row.key === key)!.label;
+      return <View key={key} style={s.editorField}>
+        <Text style={s.editorLabel}>{key === "line1" ? "Flat, building and street" : key === "label" ? "Label" : label}</Text>
+        <TextInput editable={!busy} accessibilityLabel={label} value={draft[key]}
+          onChangeText={value => setDraft(old => old ? {...old, [key]: value} : old)}
+          placeholder={key === "line1" ? "Flat / house, building, street" : undefined}
+          keyboardType={key === "pincode" ? "number-pad" : "default"} maxLength={key === "pincode" ? 6 : key === "line1" ? 300 : key === "label" ? 60 : 120}
+          style={s.editorInput} />
+      </View>;
+    };
+    return <View style={s.screen} testID="checkout-address-editor">
+      <View style={s.header}><Pressable disabled={busy} accessibilityRole="button" accessibilityLabel="Back to address list" onPress={back} hitSlop={10}><Text style={s.headerText}>‹</Text></Pressable><Text style={s.headerText}>{editing ? "Edit address" : "Add address"}</Text></View>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.editorContent}>
+        <CheckoutHeading title="Make it easy to find you." icon="home" />
+        {error && <Text accessibilityRole="alert" style={s.error}>{error}</Text>}
+        <View style={s.editorCard}>
+          {field("label")}
+          {checkout.profile && <>
+            <Text style={s.editorLabel}>Recipient name</Text><Text style={s.readonly}>{checkout.profile.name}</Text>
+            <Text style={s.editorLabel}>Mobile number</Text><Text style={s.readonly}>{checkout.profile.phone}</Text>
+          </>}
+          {field("line1")}
+          {field("locality")}
+          <View style={s.editorRow}>{field("city")}{field("pincode")}</View>
+          <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: makeDefault }} aria-checked={makeDefault} disabled={busy} onPress={() => setMakeDefault(value => !value)} style={s.link}>
+            <Text style={s.editorLabel}>{makeDefault ? "✓ " : ""}Set as default on this device</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+      <View style={s.editorFooter}><Pressable accessibilityRole="button" disabled={busy} onPress={() => void save()} style={s.primary}><Text style={s.buttonText}>{busy ? "Saving…" : "Save address"}</Text></Pressable></View>
+    </View>;
+  }
   if (!checkout && !draft) return <View style={s.screen}>
     <View style={s.header}><Pressable accessibilityLabel="Back to Account" onPress={back} hitSlop={10}><Text style={s.headerText}>‹</Text></Pressable><Text style={s.headerText}>Saved addresses</Text></View>
     <ScrollView contentContainerStyle={s.content}>
@@ -78,5 +114,13 @@ const s = StyleSheet.create({
   addressHeading: { flexDirection: "row", alignItems: "center", gap: 12 },
   savedActions: { flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, borderColor: "#DADFD0" },
   footer: { padding: 16, backgroundColor: "#FFF" },
+  editorContent: { padding: 20, paddingTop: 16, gap: 16 },
+  editorCard: { borderWidth: 1, borderColor: "#DADFD0", backgroundColor: "#fff", borderRadius: 24, padding: 20, gap: 12 },
+  editorField: { flex: 1, minWidth: 0, gap: 10 },
+  editorLabel: { color: "#07552F", fontSize: 12, lineHeight: 18 },
+  editorInput: { minHeight: 52, borderWidth: 1, borderColor: "#DADFD0", borderRadius: 12, paddingHorizontal: 16, backgroundColor: "#F8F6EE", color: "#252D25" },
+  readonly: { borderWidth: 1, borderColor: "#DADFD0", borderRadius: 12, padding: 16, backgroundColor: "#F8F6EE", color: "#252D25" },
+  editorRow: { flexDirection: "row", gap: 12 },
+  editorFooter: { backgroundColor: "#fff", borderTopWidth: 1, borderColor: "#DADFD0", paddingHorizontal: 20, paddingVertical: 16 },
   primary: { minHeight: 50, borderRadius: 12, backgroundColor: "#07552F", justifyContent: "center", alignItems: "center" },
   page:{padding:24,paddingBottom:120,gap:16},title:{fontSize:26,color:"#1F2A22",fontWeight:"500"},copy:{fontSize:14,lineHeight:21,color:"#5E554A"},link:{color:"#174B34",fontSize:14,fontWeight:"600",paddingVertical:8},error:{color:"#B3432B",fontSize:14,paddingVertical:8},label:{fontSize:15,color:"#1F2A22",marginTop:12,fontWeight:"600"},input:{height:48,borderWidth:1,borderColor:"#DDD6C9",borderRadius:8,paddingHorizontal:12,marginTop:8,color:"#1F2A22",backgroundColor:"#FDFBF7"},button:{backgroundColor:"#174B34",minHeight:48,borderRadius:8,padding:12,alignItems:"center",justifyContent:"center",marginVertical:16},buttonText:{color:"#fff",fontWeight:"600",fontSize:14},card:{borderWidth:1,borderColor:"#DDD6C9",borderRadius:12,padding:16,marginBottom:12,backgroundColor:"#FDFBF7"},actions:{flexDirection:"row",gap:24,marginTop:8} });

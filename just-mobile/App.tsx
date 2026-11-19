@@ -36,7 +36,7 @@ import { MarketIcon } from "./src/MarketIcon";
 import { HomeNotifications, BuyAgain } from "./src/HomeExtras";
 import { ReferenceArtwork } from "./src/ReferenceArtwork";
 import { BuyerBrowse } from "./src/BuyerBrowse";
-import { BuyerBag } from "./src/BuyerBag";
+
 import { BuyerShopPage } from "./src/BuyerShopPage";
 import {
   BuyerProductContext,
@@ -451,12 +451,20 @@ export default function App() {
     ) : (
       <State title="Order confirmation unavailable" copy="Open Your orders to check your order status." action="Your orders" onAction={() => setScreen("orders")} />
     )
-  ) : screen === "checkout" ? (
+  ) : (
     <BuyerCheckout
       session={session}
       areaId={area?.id}
       bag={bag}
       shops={shops}
+      inBag={screen === "bag"}
+      openCheckout={() => setScreen("checkout")}
+      bagActions={{
+        onBack: () => setScreen(bagOrigin),
+        onSignIn: openAccount,
+        onChange: quantity,
+        onBrowse: goHome,
+      }}
       back={() => setScreen("bag")}
       account={openAccount}
       onConfirmed={(order, contact) => {
@@ -465,17 +473,6 @@ export default function App() {
         setBag([]);
         setScreen("confirmation");
       }}
-    />
-  ) : (
-    <BuyerBag
-      bag={bag}
-      shops={shops}
-      signedIn={!!session}
-      onBack={() => setScreen(bagOrigin)}
-      onSignIn={openAccount}
-      onChange={quantity}
-      onCheckout={() => setScreen("checkout")}
-      onBrowse={goHome}
     />
   );
   return (

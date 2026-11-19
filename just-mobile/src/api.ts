@@ -1,6 +1,6 @@
 export type ServiceArea = { id: string; name: string; city: string; pincodes: string[]; active: boolean };
 export type Category = { id: string; slug: string; name: string; blurb?: string; image?: string; subcategories?: { slug: string; name: string }[] };
-export type Shop = { id: string; slug: string; name: string; locality: string; categories?: string[]; rating?: number; distanceKm?: number; tagline?: string; description?: string; isOpen: boolean; initials?: string; coverImage?: string; deliveryFee?: number; minimumOrderAmount?: number };
+export type Shop = { id: string; slug: string; name: string; locality: string; categories?: string[]; rating?: number; distanceKm?: number; tagline?: string; description?: string; isOpen: boolean; initials?: string; coverImage?: string; fulfilment?: string[]; deliveryFee?: number; minimumOrderAmount?: number };
 export type ProductVariant = { id: string; label: string; price: number; stock: number };
 export type Product = { id: string; productId?: string; variantId?: string; variants?: ProductVariant[]; name: string; unit: string; price: number; stock: number; description?: string; image?: string; shopId: string; categorySlug?: string; tags?: string[] };
 export type Session = { userId: string; name: string; role: "buyer" | "seller" | "delivery" | "admin"; token: string; isDemo: false };
@@ -68,6 +68,7 @@ async function searchPage<T>(kind: "products" | "shops", areaId: string, text: s
   return { items: asList<T>(await response.json() as ListPayload<T>, kind), cursor: response.headers.get("X-Has-More") === "true" ? response.headers.get("X-Next-Cursor") : null };
 }
 export const marketApi = {
+  shopsByIds: (ids: string[]) => getList<Shop>(`/catalogue/shops/by-ids?ids=${encodeURIComponent(ids.join(","))}`, "shops"),
   product: (id: string) => get<Product>(`/products/${encodeURIComponent(id)}`),
   searchProducts: (areaId: string, text: string, cursor?: string) => searchPage<Product>("products", areaId, text, cursor),
   searchShops: (areaId: string, text: string, cursor?: string) => searchPage<Shop>("shops", areaId, text, cursor),

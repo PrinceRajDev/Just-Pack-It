@@ -27,13 +27,14 @@ import {
 } from "./src/api";
 import { BuyerAccount, BuyerOrders } from "./src/BuyerAccount";
 import { BuyerCheckout } from "./src/BuyerCheckout";
-import { useBuyerBag } from "./src/useBuyerBag";
+import { mergeGuestBag, useBuyerBag } from "./src/useBuyerBag";
 import { useAndroidBack } from "./src/useAndroidBack";
 import { resolveImage } from "./src/images";
 import { MarketIcon, type MarketIconName } from "./src/MarketIcon";
 import { HomeNotifications, BuyAgain } from "./src/HomeExtras";
 import { ReferenceArtwork } from "./src/ReferenceArtwork";
 import { BuyerBrowse } from "./src/BuyerBrowse";
+import { BuyerBag } from "./src/BuyerBag";
 import { BuyerShopPage } from "./src/BuyerShopPage";
 import {
   BuyerProductContext,
@@ -77,6 +78,16 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
   const [homeVisit, setHomeVisit] = useState(0);
+  const [bagOrigin, setBagOrigin] = useState<Screen>("home");
+  const [signInFromBag, setSignInFromBag] = useState(false);
+  const openBag = () => {
+    if (screen !== "bag" && screen !== "checkout") setBagOrigin(screen);
+    setScreen("bag");
+  };
+  const signInForBag = () => {
+    setSignInFromBag(true);
+    setScreen("account");
+  };
   const goHome = () => {
     setPicked(null);
     setQuery("");
@@ -92,6 +103,11 @@ export default function App() {
     }
     if (screen === "shop" && shopOrigin === "browse") setScreen("browse");
     else if (screen === "checkout") setScreen("bag");
+    else if (screen === "bag") setScreen(bagOrigin);
+    else if (screen === "account" && signInFromBag) {
+      setSignInFromBag(false);
+      setScreen("bag");
+    }
     else if (screen === "orders") setScreen("account");
     else goHome();
     return true;
@@ -212,7 +228,12 @@ export default function App() {
     setScreen("home");
   };
   const saveSession = async (next: Session | null) => {
+    if (next && !session) await mergeGuestBag(next.userId);
     setSession(next);
+    if (next && signInFromBag) {
+      setSignInFromBag(false);
+      setScreen("bag");
+    }
     if (next)
       await SecureStore.setItemAsync("jpi.buyer.session", JSON.stringify(next));
     else await SecureStore.deleteItemAsync("jpi.buyer.session");
@@ -256,14 +277,14 @@ export default function App() {
             count={count}
             onArea={() => setPicker(true)}
             onBrowse={() => setScreen("browse")}
-            onBag={() => setScreen("bag")}
+            onBag={openBag}
           />
         )
       }
       session={session}
       onBag={() => {
         setPicked(null);
-        setScreen("bag");
+        openBag();
       }}
       onAccount={() => setScreen("account")}
       onQuickSearch={(value) => {
@@ -331,7 +352,7 @@ export default function App() {
       userId={session?.userId}
       bag={bag}
       onBack={() => (shopOrigin === "home" ? goHome() : setScreen("browse"))}
-      onBag={() => setScreen("bag")}
+      onBag={openBag}
       renderProduct={(item, cardWidth) => (
         <ProductCard
           key={item.id}
@@ -367,9 +388,12 @@ export default function App() {
       }}
     />
   ) : (
-    <Bag
+    <BuyerBag
       bag={bag}
-      total={total}
+      shops={shops}
+      signedIn={!!session}
+      onBack={() => setScreen(bagOrigin)}
+      onSignIn={signInForBag}
       onChange={quantity}
       onCheckout={() => setScreen("checkout")}
       onBrowse={goHome}
@@ -383,14 +407,15 @@ export default function App() {
     >
       <StatusBar style="dark" />
       <View style={s.app}>
-        {screen !== "home" && screen !== "browse" && screen !== "shop" && (
+        {screen !== "home" && screen !== "browse" &&
+          screen !== "shop" && screen !== "bag" && (
           <Header
             session={session}
             area={area}
             count={count}
             onArea={() => setPicker(true)}
             onBrowse={() => setScreen("browse")}
-            onBag={() => setScreen("bag")}
+            onBag={openBag}
           />
         )}
         <BuyerProductContext.Provider
@@ -412,7 +437,7 @@ export default function App() {
           {body}
         </BuyerProductContext.Provider>
         {(screen === "home" || screen === "browse") && count > 0 ? (
-          <Pressable style={s.bagBar} onPress={() => setScreen("bag")}>
+          <Pressable style={s.bagBar} onPress={openBag}>
             <View>
               <Text style={s.bagBarTitle}>
                 {count} item{count === 1 ? "" : "s"} in bag
@@ -429,8 +454,11 @@ export default function App() {
             count={count}
             home={goHome}
             browse={() => setScreen("browse")}
-            bag={() => setScreen("bag")}
-            account={() => setScreen("account")}
+            bag={openBag}
+            account={() => {
+              setSignInFromBag(false);
+              setScreen("account");
+            }}
             orders={() => setScreen("orders")}
           />
         )}
@@ -1293,90 +1321,6 @@ function Home({
     </ScrollView>
   );
 }
-function Bag({
-  onCheckout,
-  bag,
-  total,
-  onChange,
-  onBrowse,
-}: {
-  bag: BagLine[];
-  onCheckout: () => void;
-  total: number;
-  onChange: (id: string, d: number) => void;
-  onBrowse: () => void;
-}) {
-  return (
-    <View style={s.fill}>
-      <Title
-        title="Your bag"
-        copy={
-          bag.length
-            ? `${bag.length} different item${bag.length === 1 ? "" : "s"}`
-            : "Everything selected from local shops"
-        }
-      />
-      {!bag.length ? (
-        <State
-          title="Your bag is empty"
-          copy="Add something useful from a nearby shop"
-          action="Browse products"
-          onAction={onBrowse}
-        />
-      ) : (
-        <FlatList
-          data={bag}
-          keyExtractor={(x) => x.id}
-          contentContainerStyle={s.bagList}
-          renderItem={({ item }) => (
-            <View style={s.bagLine}>
-              <Thumb item={item} compact />
-              <View style={s.bagInfo}>
-                <Text numberOfLines={2} style={s.bagName}>
-                  {item.name}
-                </Text>
-                <Text style={s.unit}>{item.unit}</Text>
-                <Text style={s.price}>{money(item.price)}</Text>
-              </View>
-              <View style={s.stepper}>
-                <Pressable
-                  accessibilityLabel={`Remove one ${item.name}`}
-                  hitSlop={8}
-                  onPress={() => onChange(item.id, -1)}
-                >
-                  <Text style={s.step}>−</Text>
-                </Pressable>
-                <Text style={s.stepCount}>{item.quantity}</Text>
-                <Pressable
-                  accessibilityLabel={`Add one ${item.name}`}
-                  disabled={item.quantity >= item.stock}
-                  hitSlop={8}
-                  onPress={() => onChange(item.id, 1)}
-                >
-                  <Text style={s.step}>+</Text>
-                </Pressable>
-              </View>
-            </View>
-          )}
-          ListFooterComponent={
-            <View style={s.checkout}>
-              <View style={s.totalRow}>
-                <Text style={s.totalText}>Item total</Text>
-                <Text style={s.totalValue}>{money(total)}</Text>
-              </View>
-              <Text style={s.note}>
-                Delivery fee and final stock are confirmed at checkout
-              </Text>
-              <Pressable style={s.checkoutButton} onPress={onCheckout}>
-                <Text style={s.checkoutText}>Continue to checkout</Text>
-              </Pressable>
-            </View>
-          }
-        />
-      )}
-    </View>
-  );
-}
 function Nav({
   guestHome = false,
   screen,
@@ -1400,7 +1344,7 @@ function Nav({
     <View
       style={[
         s.nav,
-        (guestHome || screen === "browse") && {
+        (guestHome || screen === "browse" || screen === "bag") && {
           height: 70,
           paddingHorizontal: 8,
         },
@@ -1419,7 +1363,8 @@ function Nav({
         onPress={browse}
       />
       <NavButton
-        label={count ? `Bag · ${count}` : "Bag"}
+        label={count && screen !== "bag" ? `Bag · ${count}` : "Bag"}
+        guestHighlight={screen === "bag"}
         active={screen === "bag"}
         onPress={bag}
       />
@@ -2082,7 +2027,6 @@ function AreaSheet({
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.paper },
   app: { flex: 1, backgroundColor: c.paper },
-  fill: { flex: 1 },
   header: {
     backgroundColor: c.paper,
     paddingTop: 8,
@@ -2450,63 +2394,6 @@ const s = StyleSheet.create({
   introTitle: { color: c.ink, fontSize: 16, fontWeight: "600" },
   introCopy: { color: c.secondary, marginTop: 6, fontSize: 13, lineHeight: 19 },
   minimum: { color: c.green, marginTop: 10, fontSize: 12, fontWeight: "600" },
-  bagList: { padding: 16, paddingBottom: 112, gap: 12 },
-  bagLine: {
-    minHeight: 100,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: c.line,
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: c.card,
-  },
-  bagInfo: { flex: 1, marginLeft: 12 },
-  bagName: { color: c.ink, fontSize: 14, lineHeight: 18, fontWeight: "500" },
-  stepper: {
-    height: 36,
-    overflow: "hidden",
-    paddingHorizontal: 4,
-    borderWidth: 1,
-    borderColor: c.line,
-    borderRadius: 8,
-    gap: 10,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  step: { color: c.green, fontSize: 18, lineHeight: 28 },
-  stepCount: {
-    minWidth: 20,
-    color: c.ink,
-    textAlign: "center",
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  checkout: {
-    marginTop: 4,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: c.line,
-    borderRadius: 12,
-    backgroundColor: c.card,
-  },
-  totalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  totalText: { color: c.ink, fontSize: 16, fontWeight: "500" },
-  totalValue: { color: c.ink, fontSize: 20, fontWeight: "600" },
-  note: { color: c.secondary, marginTop: 10, fontSize: 12, lineHeight: 18 },
-  checkoutButton: {
-    height: 48,
-    marginTop: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: c.green,
-  },
-  checkoutText: { color: "#FFFDF7", fontSize: 14, fontWeight: "600" },
   bagBar: {
     position: "absolute",
     right: 16,

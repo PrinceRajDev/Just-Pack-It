@@ -10,9 +10,12 @@ const assert = require("node:assert/strict");
         path.join(__dirname, "../qa/home-reference", name + ".json"),
       ),
     );
-  const shops = read("shops").slice(0, 2).map((shop, index) => ({
-    ...shop, name: ["Sharma Kirana Store", "Patil Fresh Mart"][index],
-  }));
+  const shops = read("shops")
+    .slice(0, 2)
+    .map((shop, index) => ({
+      ...shop,
+      name: ["Sharma Kirana Store", "Patil Fresh Mart"][index],
+    }));
   const products = shops.map((shop, index) => ({
     ...read("products")[0],
     id: "address-product-" + index,
@@ -62,6 +65,24 @@ const assert = require("node:assert/strict");
     });
     const errors = [];
     let orderRequests = 0;
+    let firstOrderKey;
+    const confirmed = {
+      id: "JPI-240618-084",
+      total: 189,
+      amountDue: 189,
+      paymentMethod: "cod",
+      paymentStatus: "unpaid",
+      createdAt: "2026-11-19T08:00:00Z",
+      address: addresses[0],
+      subOrders: shops.map((shop) => ({
+        id: shop.id,
+        shopName: shop.name,
+        status: "placed",
+        amountDue: 90,
+        deliveryFee: 30,
+        lines: [],
+      })),
+    };
     let stockUnavailable = false;
     page.on("pageerror", (error) => errors.push(error.message));
     await page.addInitScript(
@@ -103,11 +124,24 @@ const assert = require("node:assert/strict");
           const input = route.request().postDataJSON();
           assert.equal(input.paymentMethod, "cod");
           assert.equal(input.expectedTotal, 189);
-          assert.equal(input.addressId, "other");
-          assert.deepEqual(input.items.map(line => line.qty), [2, 1]);
-          assert.ok(route.request().headers()["idempotency-key"]);
-          await new Promise(resolve => setTimeout(resolve, 350));
-          return route.fulfill({ status: 201, headers, json: { id: "fixture-order", paymentStatus: "unpaid" } });
+          assert.equal(input.addressId, "home");
+          assert.deepEqual(
+            input.items.map((line) => line.qty),
+            [2, 1],
+          );
+          const key = route.request().headers()["idempotency-key"];
+          assert.ok(key);
+          if (orderRequests === 1) {
+            firstOrderKey = key;
+            return route.fulfill({
+              status: 503,
+              headers,
+              json: { message: "Order service unavailable. Please retry." },
+            });
+          }
+          assert.equal(key, firstOrderKey);
+          await new Promise((resolve) => setTimeout(resolve, 350));
+          return route.fulfill({ status: 201, headers, json: confirmed });
         } else if (resource === "checkout/review") {
           const input = route.request().postDataJSON();
           assert.deepEqual(
@@ -126,18 +160,32 @@ const assert = require("node:assert/strict");
             grandTotal: eligible ? 189 : null,
             paymentMethods: eligible && !stockUnavailable ? ["cod"] : [],
             issues: [],
-            lines: stockUnavailable ? [{ issues: [{ message: "Farm fresh tomatoes are out of stock." }] }] : [],
+            lines: stockUnavailable
+              ? [
+                  {
+                    issues: [
+                      { message: "Farm fresh tomatoes are out of stock." },
+                    ],
+                  },
+                ]
+              : [],
             shops: shops.map((shop) => ({ shop, issues: [] })),
             fulfilments: shops.map((shop, index) => ({
               shopId: shop.id,
-              listedFee: !eligible && index === 1 ? null : input.addressId === "other" ? [25, 35][index] : 30,
+              listedFee:
+                !eligible && index === 1
+                  ? null
+                  : input.addressId === "other"
+                    ? [25, 35][index]
+                    : 30,
               issues:
                 !eligible && index === 1
                   ? [{ message: "No approved partner for this address." }]
                   : [],
             })),
           };
-        } else if (resource === "addresses") data = addresses;
+        } else if (resource === "orders/" + confirmed.id) data = confirmed;
+        else if (resource === "addresses") data = addresses;
         else if (resource === "auth/me" || resource === "auth/profile")
           data = buyer;
         else if (resource === "products") data = products;
@@ -201,23 +249,62 @@ const assert = require("node:assert/strict");
     await page
       .getByText("No approved partner for this address.", { exact: true })
       .waitFor();
-    assert.equal(await page.getByRole("button", {name:"Place Order",exact:true}).isDisabled(), true);
-    const change = page.getByRole("button", { name: "Change address", exact: true });
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Place Order", exact: true })
+        .isDisabled(),
+      true,
+    );
+    const change = page.getByRole("button", {
+      name: "Change address",
+      exact: true,
+    });
     await change.click();
     await home.click();
     await deliver.click();
     const checkout = page.getByTestId("checkout-screen");
-    await checkout.getByText("Cash on Delivery · ₹189 due at delivery", {exact:true}).waitFor();
-    await picker.waitFor({state:"hidden"});
-    await page.addStyleTag({content:'[data-testid="buyer-shell"]{padding-top:28px!important;padding-bottom:20px!important}'});
-    for (const [width,height] of [[390,844],[360,800],[375,812],[430,932]]) {
-      await page.setViewportSize({width,height});
-      await page.waitForFunction(() => Math.abs(document.querySelector('[data-testid="checkout-footer"]').getBoundingClientRect().bottom - (innerHeight - 20)) < 2);
-      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-      await page.screenshot({path:path.join(output,"checkout-" + width + ".png")});
+    await checkout
+      .getByText("Cash on Delivery · ₹189 due at delivery", { exact: true })
+      .waitFor();
+    await picker.waitFor({ state: "hidden" });
+    await page.addStyleTag({
+      content:
+        '[data-testid="buyer-shell"]{padding-top:28px!important;padding-bottom:20px!important}',
+    });
+    for (const [width, height] of [
+      [390, 844],
+      [360, 800],
+      [375, 812],
+      [430, 932],
+    ]) {
+      await page.setViewportSize({ width, height });
+      await page.waitForFunction(
+        () =>
+          Math.abs(
+            document
+              .querySelector('[data-testid="checkout-footer"]')
+              .getBoundingClientRect().bottom -
+              (innerHeight - 20),
+          ) < 2,
+      );
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+      );
+      await page.screenshot({
+        path: path.join(output, "checkout-" + width + ".png"),
+      });
     }
-    await checkout.getByText("2 items · Rider delivery available · Fee ₹30",{exact:true}).waitFor();
-    await checkout.getByText("1 item · Rider delivery available · Fee ₹30",{exact:true}).waitFor();
+    await checkout
+      .getByText("2 items · Rider delivery available · Fee ₹30", {
+        exact: true,
+      })
+      .waitFor();
+    await checkout
+      .getByText("1 item · Rider delivery available · Fee ₹30", { exact: true })
+      .waitFor();
     await change.click();
     await home.click();
     await picker.getByRole("button", { name: "Edit Home address" }).click();
@@ -249,24 +336,103 @@ const assert = require("node:assert/strict");
     assert.equal(await other.getAttribute("aria-checked"), "true");
     await deliver.click();
     await page.getByText("Total: ₹189", { exact: true }).waitFor();
-    await checkout.getByText("2 items · Rider delivery available · Fee ₹25",{exact:true}).waitFor();
-    await checkout.getByText("1 item · Rider delivery available · Fee ₹35",{exact:true}).waitFor();
+    await checkout
+      .getByText("2 items · Rider delivery available · Fee ₹25", {
+        exact: true,
+      })
+      .waitFor();
+    await checkout
+      .getByText("1 item · Rider delivery available · Fee ₹35", { exact: true })
+      .waitFor();
     await page.reload();
     await enter();
     await other.waitFor();
     assert.equal(await other.getAttribute("aria-checked"), "true");
     stockUnavailable = true;
     await deliver.click();
-    await page.getByText("Farm fresh tomatoes are out of stock.", {exact:true}).waitFor();
-    assert.equal(await page.getByRole("button", {name:"Place Order",exact:true}).isDisabled(), true);
+    await page
+      .getByText("Farm fresh tomatoes are out of stock.", { exact: true })
+      .waitFor();
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Place Order", exact: true })
+        .isDisabled(),
+      true,
+    );
     stockUnavailable = false;
+    Object.assign(addresses[0], {
+      line1: "Flat 302, Suyog Apartment, Paud Road",
+    });
     await change.click();
+    await home.click();
     await deliver.click();
-    const order = page.getByRole("button", {name:"Place Order · ₹189",exact:true});
+    const order = page.getByRole("button", {
+      name: "Place Order · ₹189",
+      exact: true,
+    });
     await order.waitFor();
-    await order.evaluate(button => { button.click(); button.click(); });
-    await page.getByText("Your orders", {exact:true}).waitFor();
-    assert.equal(orderRequests, 1);
+    await order.click();
+    await page
+      .getByText("Order service unavailable. Please retry.", { exact: true })
+      .waitFor();
+    const confirmation = page.getByTestId("order-confirmation");
+    assert.equal(await confirmation.count(), 0);
+    assert.equal(
+      await page.evaluate(
+        (userId) =>
+          JSON.parse(sessionStorage.getItem("jpi.bag." + userId)).length,
+        buyer.userId,
+      ),
+      2,
+    );
+    await order.evaluate((button) => {
+      button.click();
+      button.click();
+    });
+    await confirmation
+      .getByText("Order #JPI-240618-084", { exact: true })
+      .waitFor();
+    await page.addStyleTag({
+      content:
+        '[data-testid="buyer-shell"]{padding-top:28px!important;padding-bottom:20px!important}',
+    });
+    await confirmation
+      .getByText("₹189 due at delivery", { exact: true })
+      .waitFor();
+    await confirmation.getByText(/order is placed with 2 shops/).waitFor();
+    await confirmation.getByText(/Flat 302, Suyog Apartment/).waitFor();
+    assert.equal(orderRequests, 2);
+    for (const [width, height] of [
+      [390, 844],
+      [360, 800],
+      [375, 812],
+      [430, 932],
+    ]) {
+      await page.setViewportSize({ width, height });
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+      );
+      await page.screenshot({
+        path: path.join(output, "order-confirmation-" + width + ".png"),
+      });
+    }
+    await confirmation.getByRole("button", { name: "Track Order" }).click();
+    await page.getByText("Sharma Kirana Store", { exact: true }).waitFor();
+    await page.getByText("← Your orders", { exact: true }).click();
+    await confirmation
+      .getByRole("button", { name: "Continue Shopping" })
+      .click();
+    await page.getByText("Good shops. Close by.", { exact: true }).waitFor();
+    assert.deepEqual(
+      await page.evaluate(
+        (userId) => JSON.parse(sessionStorage.getItem("jpi.bag." + userId)),
+        buyer.userId,
+      ),
+      [],
+    );
     assert.deepEqual(errors, []);
     console.log(
       "PASS: address management, four viewports, shop fees, delivery and stock blockers, COD payload, duplicate prevention and confirmed navigation",

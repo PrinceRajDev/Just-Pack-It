@@ -16,6 +16,7 @@ import {
 import {
   buyerApi,
   type Address,
+  type BuyerOrder,
   type BuyerProfile,
   type CheckoutReview,
   type Product,
@@ -37,7 +38,7 @@ export function BuyerCheckout({
   shops: Shop[];
   back: () => void;
   account: () => void;
-  onConfirmed: () => void;
+  onConfirmed: (order: BuyerOrder, contact: string) => void;
 }) {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedId, setSelectedId] = useState<string>();
@@ -434,7 +435,7 @@ export function BuyerCheckout({
                   qty: line.quantity,
                 }))}
                 shopIds={shopIds}
-                onConfirmed={onConfirmed}
+                onConfirmed={(order) => onConfirmed(order, contact)}
               />
             </>
           ) : (

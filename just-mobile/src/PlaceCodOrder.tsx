@@ -1,14 +1,13 @@
 import { useRef, useState } from "react";
 import * as SecureStore from "./deviceStorage";
+import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
 import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  Pressable,
-  Text,
-  View,
-} from "react-native";
-import { buyerApi, type Address, type CheckoutLine, type Session } from "./api";
+  buyerApi,
+  type Address,
+  type BuyerOrder,
+  type CheckoutLine,
+  type Session,
+} from "./api";
 
 export function PlaceCodOrder({
   session,
@@ -25,7 +24,7 @@ export function PlaceCodOrder({
   total: number;
   items: CheckoutLine[];
   shopIds: string[];
-  onConfirmed: () => void;
+  onConfirmed: (order: BuyerOrder) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -67,16 +66,21 @@ export function PlaceCodOrder({
         JSON.stringify({ key, fingerprint }),
       );
       const order = await buyerApi.placeCod(session.token, key, input);
+      if (
+        !order?.id ||
+        !order.address ||
+        !order.subOrders?.length ||
+        !Number.isFinite(order.total) ||
+        !order.paymentMethod ||
+        !order.paymentStatus
+      ) {
+        throw new Error(
+          "Order details could not be confirmed. Retry with the same bag and address.",
+        );
+      }
       setOrderId(order.id);
-      setMessage(
-        "Order confirmed. Pay cash when your delivery arrives. View its status in Account → Your orders.",
-      );
       await SecureStore.deleteItemAsync(storageKey).catch(() => undefined);
-      Alert.alert(
-        "Order confirmed",
-        `Order ${order.id.slice(0, 8)} is confirmed. Pay cash on delivery.`,
-      );
-      onConfirmed();
+      onConfirmed(order);
     } catch (reason) {
       setMessage(
         reason instanceof Error

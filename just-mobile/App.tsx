@@ -20,6 +20,7 @@ import {
   ApiError,
   onSessionExpired,
   type Category,
+  type BuyerOrder,
   type Product,
   type ServiceArea,
   type Session,
@@ -27,6 +28,8 @@ import {
 } from "./src/api";
 import { BuyerAccount, BuyerOrders } from "./src/BuyerAccount";
 import { BuyerCheckout } from "./src/BuyerCheckout";
+import { BuyerOrderConfirmation } from "./src/BuyerOrderConfirmation";
+import { BuyerOrderDetails } from "./src/BuyerOrderDetails";
 import { mergeGuestBag, useBuyerBag } from "./src/useBuyerBag";
 import { useAndroidBack } from "./src/useAndroidBack";
 import { resolveImage } from "./src/images";
@@ -42,7 +45,7 @@ import {
 } from "./src/BuyerProductDetails";
 
 type Screen =
-  "home" | "browse" | "bag" | "shop" | "account" | "orders" | "checkout";
+  "home" | "browse" | "bag" | "shop" | "account" | "orders" | "checkout" | "confirmation" | "tracking";
 type BagLine = Product & { quantity: number };
 const c = {
   paper: "#FAF8F1",
@@ -78,6 +81,8 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
   const [homeVisit, setHomeVisit] = useState(0);
+  const [confirmation, setConfirmation] = useState<{ order: BuyerOrder; contact: string; userId: string } | null>(null);
+  const currentConfirmation = session && confirmation?.userId === session.userId ? confirmation : null;
   const [bagOrigin, setBagOrigin] = useState<Screen>("home");
   const [accountOrigin, setAccountOrigin] = useState<Screen>("home");
   const [signInFromBag, setSignInFromBag] = useState(false);
@@ -92,6 +97,7 @@ export default function App() {
     setScreen("account");
   };
   const goHome = () => {
+    setConfirmation(null);
     setPicked(null);
     setQuery("");
     setShop(null);
@@ -117,6 +123,8 @@ export default function App() {
     }
     if (screen === "shop" && shopOrigin === "browse") setScreen("browse");
     else if (screen === "checkout") setScreen("bag");
+    else if (screen === "tracking" && currentConfirmation) setScreen("confirmation");
+    else if (screen === "confirmation") { setConfirmation(null); setScreen("orders"); }
     else if (screen === "bag") setScreen(bagOrigin);
     else if (screen === "account" && !session) leaveSignIn();
     else if (screen === "orders") setScreen("account");
@@ -389,6 +397,22 @@ export default function App() {
     />
   ) : screen === "orders" ? (
     <BuyerOrders session={session} back={() => setScreen("account")} />
+  ) : screen === "confirmation" || screen === "tracking" ? (
+    currentConfirmation && session ? (
+      screen === "tracking" ? (
+        <BuyerOrderDetails token={session.token} id={currentConfirmation.order.id} back={() => setScreen("confirmation")} />
+      ) : (
+        <BuyerOrderConfirmation
+          order={currentConfirmation.order}
+          contact={currentConfirmation.contact}
+          back={() => { setConfirmation(null); setScreen("orders"); }}
+          track={() => setScreen("tracking")}
+          shop={goHome}
+        />
+      )
+    ) : (
+      <State title="Order confirmation unavailable" copy="Open Your orders to check your order status." action="Your orders" onAction={() => setScreen("orders")} />
+    )
   ) : screen === "checkout" ? (
     <BuyerCheckout
       session={session}
@@ -397,9 +421,11 @@ export default function App() {
       shops={shops}
       back={() => setScreen("bag")}
       account={openAccount}
-      onConfirmed={() => {
+      onConfirmed={(order, contact) => {
+        if (!session) return;
+        setConfirmation({ order, contact, userId: session.userId });
         setBag([]);
-        setScreen("orders");
+        setScreen("confirmation");
       }}
     />
   ) : (
@@ -423,7 +449,7 @@ export default function App() {
       <StatusBar style="dark" />
       <View style={s.app}>
         {screen !== "home" && screen !== "browse" &&
-          screen !== "shop" && screen !== "bag" && screen !== "checkout" &&
+          screen !== "shop" && screen !== "bag" && screen !== "checkout" && screen !== "confirmation" &&
           !(screen === "account" && !session) && (
           <Header
             session={session}
@@ -463,7 +489,7 @@ export default function App() {
             <Text style={s.bagBarAction}>View bag</Text>
           </Pressable>
         ) : null}
-        {screen !== "shop" && screen !== "checkout" && !(screen === "account" && !session) && (
+        {screen !== "shop" && screen !== "checkout" && screen !== "confirmation" && !(screen === "account" && !session) && (
           <Nav
             guestHome={screen === "home" && !session}
             screen={screen}

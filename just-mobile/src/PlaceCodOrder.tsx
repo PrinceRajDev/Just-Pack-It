@@ -89,7 +89,7 @@ export function PlaceCodOrder({
     }
   };
   return (
-    <View style={{ marginTop: 16, gap: 12 }}>
+    <View style={{ gap: 8 }}>
       <Modal
         visible={busy}
         transparent
@@ -136,36 +136,34 @@ export function PlaceCodOrder({
         </View>
       </Modal>
       {orderId ? (
-        <Text style={{ color: "#174B34", fontSize: 16, fontWeight: "600" }}>
+        <Text
+          style={{
+            color: "#174B34",
+            fontSize: 16,
+            fontWeight: "600",
+          }}
+        >
           Order confirmed · {orderId.slice(0, 8)}
         </Text>
       ) : (
         <Pressable
+          accessibilityRole="button"
           disabled={busy}
-          onPress={() =>
-            Alert.alert(
-              "Confirm cash on delivery",
-              `Place this order for ₹${total.toLocaleString("en-IN")}? Pay the rider on delivery.`,
-              [
-                { text: "Review again", style: "cancel" },
-                { text: "Place COD order", onPress: () => void place() },
-              ],
-            )
-          }
+          onPress={() => void place()}
           style={{
-            minHeight: 48,
+            minHeight: 50,
             padding: 12,
-            borderRadius: 8,
+            borderRadius: 14,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: "#174B34",
+            backgroundColor: "#07552F",
             opacity: busy ? 0.5 : 1,
           }}
         >
-          <Text style={{ color: "#fff", fontWeight: "600" }}>
+          <Text style={{ color: "#fff", fontWeight: "600", fontSize: 15 }}>
             {busy
               ? "Confirming order…"
-              : `Place COD order · ₹${total.toLocaleString("en-IN")}`}
+              : `Place Order · ₹${total.toLocaleString("en-IN")}`}
           </Text>
         </Pressable>
       )}

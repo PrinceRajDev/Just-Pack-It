@@ -394,6 +394,7 @@ export default function App() {
       session={session}
       areaId={area?.id}
       bag={bag}
+      shops={shops}
       back={() => setScreen("bag")}
       account={openAccount}
       onConfirmed={() => {
@@ -422,7 +423,7 @@ export default function App() {
       <StatusBar style="dark" />
       <View style={s.app}>
         {screen !== "home" && screen !== "browse" &&
-          screen !== "shop" && screen !== "bag" &&
+          screen !== "shop" && screen !== "bag" && screen !== "checkout" &&
           !(screen === "account" && !session) && (
           <Header
             session={session}
@@ -462,7 +463,7 @@ export default function App() {
             <Text style={s.bagBarAction}>View bag</Text>
           </Pressable>
         ) : null}
-        {screen !== "shop" && !(screen === "account" && !session) && (
+        {screen !== "shop" && screen !== "checkout" && !(screen === "account" && !session) && (
           <Nav
             guestHome={screen === "home" && !session}
             screen={screen}

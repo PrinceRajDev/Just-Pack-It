@@ -10,6 +10,7 @@ const assert = require('node:assert/strict');
   try {
     const page = await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
     const errors = [];
+    let brandedFixture = false;
     page.on('pageerror',error=>errors.push(error.message));
     await page.route('https://just-pack-it-bq64.onrender.com/**',async route=>{
       const url = new URL(route.request().url());
@@ -20,6 +21,12 @@ const assert = require('node:assert/strict');
         return route.fulfill({body:JSON.stringify(products.filter(item=>item.shopId===resource.split('/')[1])),contentType:'application/json',headers:{'access-control-allow-origin':'*'}});
       }
       let items = JSON.parse(fs.readFileSync(path.join(data,resource+'.json'),'utf8'));
+      if (brandedFixture && resource === 'products') {
+        items = ['Amul','Tata Sampann','Aashirvaad'].map((brand,index) => ({
+          ...items[0], id: 'brand-test-' + index, name: 'Test product ' + index,
+          attributes: [{label:'Brand',value:brand}],
+        }));
+      }
       if (url.searchParams.has('category')) items = items.filter(item=>item.categorySlug===url.searchParams.get('category'));
       const q = url.searchParams.get('q')?.trim().toLowerCase();
       if(q) items=items.filter(item=>[item.name,item.description,item.tagline,item.locality].filter(Boolean).some(text=>text.toLowerCase().includes(q)));
@@ -98,6 +105,28 @@ const assert = require('node:assert/strict');
     await page.getByText('Bag · 1',{exact:true}).click();
     await page.getByText('Your bag',{exact:true}).waitFor();
     await page.getByText('dog food',{exact:true}).waitFor();
-    console.log('PASS: featured and backend category cards, category API/empty state, shops/promo, brands empty state, real product search, no-result search, 360/390/430px, Home navigation; no runtime errors.');
+    brandedFixture = true;
+    await page.evaluate(() => sessionStorage.removeItem('jpi.bag.guest'));
+    await page.reload();
+    await page.getByText('Shops around you',{exact:true}).waitFor();
+    await page.getByText('Browse',{exact:true}).click();
+    await page.addStyleTag({content:'[data-testid="buyer-shell"]{padding-top:28px!important;padding-bottom:20px!important}'});
+    await page.getByRole('tab',{name:'Brands',exact:true}).click();
+    const card = page.getByRole('button',{name:/^Amul/});
+    await card.waitFor();
+    for (const [width,height] of [[390,844],[360,800],[375,812],[430,932]]) {
+      await page.setViewportSize({width,height});
+      const box = await card.boundingBox();
+      assert.ok(box && Math.abs(box.width - (width - 40)) < 2);
+      await page.screenshot({path:path.join(output,`brands-${width}.png`)});
+    }
+    await page.getByRole('textbox',{name:'Search products, shops and brands'}).fill('amul');
+    await page.getByRole('button',{name:/^Amul/}).waitFor();
+    assert.equal(await page.getByRole('button',{name:/^Tata Sampann/}).count(),0);
+    await card.click();
+    await page.getByRole('button',{name:'View Test product 0',exact:true}).waitFor();
+    assert.equal(await page.getByRole('button',{name:'View Test product 1',exact:true}).count(),0);
+    assert.deepEqual(errors,[]);
+    console.log('PASS: Browse regression, brand cards at four widths, brand search and matching products.');
   } finally { await browser.close(); }
 })().catch(error=>{console.error(error);process.exitCode=1;});

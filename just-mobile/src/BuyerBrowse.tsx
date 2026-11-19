@@ -327,7 +327,7 @@ export function BuyerBrowse({
           <Text style={styles.selectionTitle}>{category?.name ?? brand}</Text>
         </View>
       ) : null}
-      {discovery || tab === "Shops" ? (
+      {discovery || tab === "Shops" || (tab === "Brands" && !brand) ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Explore nearby shops"
@@ -342,6 +342,16 @@ export function BuyerBrowse({
           </Text>
           <Text style={styles.explore}>Explore nearby shops →</Text>
         </Pressable>
+      ) : null}
+      {tab === "Brands" && !brand ? (
+        <View style={styles.brandIntro}>
+          <Text accessibilityRole="header" style={styles.brandHeading}>
+            Shop brands you know
+          </Text>
+          <Text style={styles.brandNote}>
+            Brand names shown as supplied by sellers.
+          </Text>
+        </View>
       ) : null}
       {discovery ? (
         <View style={styles.grid}>
@@ -424,7 +434,7 @@ export function BuyerBrowse({
         <>
           {tab === "Brands" && !brand ? (
             brands.length ? (
-              <View style={styles.grid}>
+              <View style={styles.brandList}>
                 {brands.map((name) => (
                   <Pressable
                     key={name}
@@ -433,7 +443,9 @@ export function BuyerBrowse({
                     style={styles.brand}
                   >
                     <Text style={styles.brandName}>{name}</Text>
-                    <Text style={styles.cardCopy}>View products →</Text>
+                    <Text style={styles.brandLink}>
+                      View matching products →
+                    </Text>
                   </Pressable>
                 ))}
               </View>
@@ -700,12 +712,29 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   more: { alignItems: "center", marginTop: 16 },
+  brandIntro: { paddingTop: 2, marginBottom: 20 },
+  brandHeading: {
+    fontSize: 22,
+    lineHeight: 28,
+    color: "#202820",
+    fontWeight: "700",
+  },
+  brandNote: { marginTop: 21, fontSize: 13, lineHeight: 18, color: "#777D72" },
+  brandList: { gap: 20 },
   brand: {
-    width: "48%",
+    minHeight: 88,
     padding: 16,
-    borderRadius: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E2E4D9",
     backgroundColor: "#fff",
   },
-  brandName: { fontSize: 18, fontWeight: "600", color: "#07552F" },
+  brandName: {
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: "600",
+    color: "#07552F",
+  },
+  brandLink: { marginTop: 10, fontSize: 13, lineHeight: 18, color: "#777D72" },
   brandSearch: { marginBottom: 12 },
 });

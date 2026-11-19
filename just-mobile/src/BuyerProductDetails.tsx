@@ -44,14 +44,7 @@ export function BuyerProductDetails({
   const [attempt, setAttempt] = useState(0);
   const [shops, setShops] = useState<Shop[]>([]);
   const knownSellerId = context.shops.find((shop) => shop.id === fresh.shopId)?.id;
-  const defaultVariant =
-    item.variants?.find((option) => option.stock > 0) ??
-    item.variants?.[0];
-  const [pack, setPack] = useState(
-    item.variantId ??
-      defaultVariant?.id ??
-      packKey(item.unit),
-  );
+  const [requestedPack, setRequestedPack] = useState(item.variantId);
   const [index, setIndex] = useState(0);
   const gallery = useRef<FlatList<string>>(null);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
@@ -83,13 +76,6 @@ export function BuyerProductDetails({
       const product = (await marketApi.product(baseId)) as DetailProduct;
       if (!active) return;
       setFresh(product);
-      setPack((previous) =>
-        offerForPack(product, previous)
-          ? previous
-          : (product.variants?.find((variant) => variant.stock > 0)?.id ??
-            product.variants?.[0]?.id ??
-            packKey(product.unit)),
-      );
       setVerified(true);
       setLoadError(null);
       if (
@@ -130,6 +116,18 @@ export function BuyerProductDetails({
     return () => clearTimeout(timer);
   }, [feedback]);
   const current = fresh;
+  const requestedOffer = requestedPack
+    ? offerForPack(current, requestedPack)
+    : null;
+  const defaultVariant =
+    current.variants?.find(
+      (variant) => variant.stock > 0 && packKey(variant.label) === packKey("1 kg"),
+    ) ??
+    current.variants?.find((variant) => variant.stock > 0) ??
+    current.variants?.[0];
+  const pack = requestedOffer
+    ? (requestedOffer.variant?.id ?? packKey(current.unit))
+    : (defaultVariant?.id ?? packKey(current.unit));
   const offer = offerForPack(current, pack);
   const packOptions = fresh.variants?.length
     ? fresh.variants.map((variant) => ({
@@ -322,13 +320,14 @@ export function BuyerProductDetails({
                   key={option.key}
                   accessibilityRole="radio"
                   accessibilityLabel={`Pack ${option.label}`}
+                  aria-checked={pack === option.key}
                   accessibilityState={{
                     checked: pack === option.key,
                     disabled: !row,
                   }}
                   disabled={!row}
                   onPress={() => {
-                    setPack(option.key);
+                    setRequestedPack(option.key);
                     setFeedback(false);
                   }}
                   style={[
@@ -337,12 +336,7 @@ export function BuyerProductDetails({
                     !row && { opacity: 0.45 },
                   ]}
                 >
-                  <Text
-                    style={[
-                      s.packText,
-                      pack === option.key && s.packTextActive,
-                    ]}
-                  >
+                  <Text style={s.packText}>
                     {option.label} · ₹
                     {(row?.price ?? 0).toLocaleString("en-IN")}
                   </Text>
@@ -499,11 +493,10 @@ const s = StyleSheet.create({
   packText: {
     fontSize: 15,
     lineHeight: 20,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#07552F",
     textAlign: "center",
   },
-  packTextActive: { fontWeight: "700" },
   stock: {
     marginTop: 18,
     fontSize: 12,

@@ -15,7 +15,7 @@ async function run() {
     taxInclusive: true, image: "https://fixture.test/tomatoes.png",
     variants: [
       { id: "qa-500", label: "500 g", price: 24, stock: 12 },
-      { id: "qa-1kg", label: "1 kg", price: 44, stock: 1 },
+      { id: "qa-1kg", label: "1 kg", price: 44, stock: 8 },
     ],
   };
   const categories = read(data, "categories").map(category =>
@@ -48,7 +48,18 @@ async function run() {
     await open.click();
     await page.addStyleTag({ content: '[data-testid="product-safe"]{padding-top:28px!important;padding-bottom:20px!important}' });
     const add = page.getByTestId("product-add");
-    await page.getByText("In stock · 12 packs available", { exact: true }).waitFor();
+    const smallPack = page.getByRole("radio", { name: "Pack 500 g", exact: true });
+    const largePack = page.getByRole("radio", { name: "Pack 1 kg", exact: true });
+    async function assertPack(selected, unselected, price, stock) {
+      await page.getByText(`In stock · ${stock} packs available`, { exact: true }).waitFor();
+      assert.equal(await selected.getAttribute("aria-checked"), "true");
+      assert.equal(await unselected.getAttribute("aria-checked"), "false");
+      assert.equal(await selected.evaluate(node => getComputedStyle(node).backgroundColor), "rgb(234, 240, 217)");
+      assert.equal(await unselected.evaluate(node => getComputedStyle(node).backgroundColor), "rgb(255, 255, 255)");
+      await page.getByTestId("product-scroll").getByText(`₹${price}`, { exact: true }).waitFor();
+      assert.equal(await add.innerText(), `Add to Bag · ₹${price}`);
+    }
+    await assertPack(largePack, smallPack, 44, 8);
     await page.getByRole("button", { name: "Visit Sharma Kirana Store" }).waitFor();
     await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="product-gallery"] img')]
       .some(image => image.complete && image.naturalWidth > 0));
@@ -62,8 +73,14 @@ async function run() {
       const bar = await add.boundingBox();
       assert.ok(bar.y >= 0 && Math.abs(bar.y + bar.height - (height - 34)) < 2);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-      await page.screenshot({ path: path.join(output, "product-detail-" + width + ".png") });
+      await page.screenshot({ path: path.join(output, "product-1kg-" + width + ".png") });
     }
+    await page.setViewportSize({ width: 390, height: 844 });
+    await smallPack.click();
+    await assertPack(smallPack, largePack, 24, 12);
+    await page.screenshot({ path: path.join(output, "product-500g-390.png") });
+    await largePack.click();
+    await assertPack(largePack, smallPack, 44, 8);
     await page.getByRole("button", { name: "Save product to favourites" }).click();
     await page.getByRole("button", { name: "Remove product from favourites" }).waitFor();
     await page.getByRole("button", { name: "Back from product" }).click();
@@ -71,18 +88,19 @@ async function run() {
     await page.getByRole("button", { name: "Remove product from favourites" }).waitFor();
     await page.getByRole("radio", { name: "Pack 1 kg" }).click();
     await page.getByText("Add to Bag · ₹44", { exact: true }).waitFor();
-    await page.getByText("In stock · 1 pack available", { exact: true }).waitFor();
+    await page.getByText("In stock · 8 packs available", { exact: true }).waitFor();
     await add.click();
     const [line] = await page.evaluate(() => JSON.parse(sessionStorage.getItem("jpi.bag.guest") || "[]"));
     assert.equal(line.productId, live.id);
     assert.equal(line.variantId, "qa-1kg");
     assert.equal(line.price, 44);
     assert.equal(line.quantity, 1);
-    assert.equal(await add.isDisabled(), true);
+    assert.equal(line.unit, "1 kg");
     await page.getByRole("button", { name: "Back from product" }).click();
     own.variants[1].stock = 0;
     await open.click();
-    await page.getByRole("radio", { name: "Pack 1 kg" }).click();
+    await assertPack(smallPack, largePack, 24, 12);
+    await largePack.click();
     await page.getByText("Out of stock", { exact: true }).first().waitFor();
     assert.equal(await add.isDisabled(), true);
     await page.getByRole("button", { name: "Visit Sharma Kirana Store" }).click();

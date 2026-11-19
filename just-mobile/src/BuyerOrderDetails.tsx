@@ -13,7 +13,7 @@ import { BuyerCancelOrder } from "./BuyerCancelOrder";
 import { ApiError, buyerApi, type BuyerOrder } from "./api";
 
 const green = "#07552F";
-const money = (value: number) => `₹${value.toLocaleString("en-IN")}`;
+export const money = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 const dateTime = (value: string) =>
   new Date(value).toLocaleString("en-IN", {
     day: "numeric",
@@ -41,16 +41,70 @@ function shopStage(shop: ShopOrder) {
   return shop.deliveryState === "picked_up" ? "picked_up" : shop.status;
 }
 
-function statusLabel(status: string) {
+export function statusLabel(status: string) {
   return (
     stages.find(([key]) => key === status)?.[1] ??
     {
       cancelled: "Cancelled",
       returning: "Returning to shop",
+      delayed: "Delayed",
+      partially_cancelled: "Partially cancelled",
+      mixed: "Shop orders at different stages",
       returned: "Returned to shop",
     }[status] ??
     "Status unavailable"
   );
+}
+
+export function isPastOrder(order: BuyerOrder) {
+  return order.subOrders.length > 0 && order.subOrders.every(shop =>
+    shop.status === "delivered" || shop.status === "cancelled" || shopStage(shop) === "returned");
+}
+
+function isDelayed(shop: ShopOrder, createdAt: string) {
+  return shop.status === "preparing" && Date.now() - Date.parse(shop.updatedAt ?? createdAt) >= 60 * 60 * 1000;
+}
+
+export function orderStage(order: BuyerOrder) {
+  const active = order.subOrders.filter(shop => shop.status !== "cancelled");
+  if (!active.length) return order.subOrders.length ? "cancelled" : "";
+  if (active.length < order.subOrders.length) return "partially_cancelled";
+  if (active.some(shop => isDelayed(shop, order.createdAt))) return "delayed";
+  const pending = active.filter(shop => shop.status !== "delivered");
+  const statuses = new Set((pending.length ? pending : active).map(shopStage));
+  return statuses.size === 1 ? [...statuses][0] : "mixed";
+}
+
+export function orderDue(order: BuyerOrder) {
+  if (order.amountDue != null) return order.amountDue;
+  if (order.subOrders.length) return order.subOrders.reduce((sum, shop) => sum + (shop.status === "cancelled" ? 0 : shop.amountDue), 0);
+  return order.paymentStatus === "paid" ? 0 : order.total;
+}
+
+export function OrderSymbol({ name, color = green }: { name: string; color?: string }) {
+  const line = { borderColor: color, borderWidth: 1.5 };
+  const stroke = { backgroundColor: color, height: 1.5 };
+  return <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={s.symbol}>
+    {name === "out_for_delivery" ? <>
+      <View style={[line, { position: "absolute", top: 4, left: 1, width: 12, height: 12, borderRadius: 1 }]} />
+      <View style={[line, { position: "absolute", top: 8, left: 12, width: 9, height: 8, borderTopRightRadius: 4 }]} />
+      {[3,15].map(left => <View key={left} style={[line, { position: "absolute", left, bottom: 2, width: 5, height: 5, borderRadius: 3, backgroundColor: "#EAF0D9" }]} />)}
+    </> : name === "wallet" ? <>
+      <View style={[line, { width: 17, height: 15, borderRadius: 1 }]} />
+      <View style={[stroke, { position: "absolute", width: 14, top: 7 }]} />
+      <View style={[line, { position: "absolute", right: 0, top: 10, width: 8, height: 6, borderRadius: 1 }]} />
+    </> : name === "shop" ? <>
+      <View style={[line, { width: 16, height: 14, marginTop: 4, borderRadius: 1 }]} />
+      <View style={[line, { position: "absolute", width: 20, height: 7, top: 3, borderRadius: 2, backgroundColor: "#EAF0D9" }]} />
+      <View style={[line, { position: "absolute", width: 5, height: 8, bottom: 3, borderBottomWidth: 0 }]} />
+    </> : name === "delayed" || name === "cancelled" || name === "partially_cancelled" ?
+      <View style={[line, { width: 19, height: 19, borderRadius: 10, alignItems: "center", justifyContent: "center" }]}>
+        <Text style={{ color, fontSize: name === "delayed" ? 12 : 17, lineHeight: 18 }}>{name === "delayed" ? "└" : "×"}</Text>
+      </View> : name === "delivered" ? <Text style={{ color, fontSize: 21 }}>✓</Text> : <>
+      <View style={[line, { width: 13, height: 18, borderRadius: 1 }]} />
+      {[7,11,15].map(top => <View key={top} style={[stroke, { position: "absolute", top, width: 7 }]} />)}
+    </>}
+  </View>;
 }
 
 export function BuyerOrderDetails({
@@ -107,19 +161,13 @@ export function BuyerOrderDetails({
   const activeShops =
     order?.subOrders.filter((shop) => shop.status !== "cancelled") ?? [];
   const pending = activeShops.filter((shop) => shop.status !== "delivered");
-  const statuses = [
-    ...new Set((pending.length ? pending : activeShops).map(shopStage)),
-  ];
-  const status =
-    statuses.length === 1
-      ? statusLabel(statuses[0])
-      : statuses.length > 1
-        ? "Shop orders at different stages"
-        : order?.subOrders.length
-          ? "Cancelled"
-          : "Status unavailable";
+  const statusKey = order ? orderStage(order) : "";
+  const status = statusLabel(statusKey);
   const cod = order?.paymentMethod === "cod";
-  const due = order?.amountDue ?? order?.total ?? 0;
+  const due = order ? orderDue(order) : 0;
+  const cashPaid = order?.cashRecordedAmount ?? 0;
+  const delayedShop = order?.subOrders.find(shop => isDelayed(shop, order.createdAt));
+  const [receiptInfo, setReceiptInfo] = useState(false);
   const receiptShops = error
     ? []
     : activeShops.filter(
@@ -158,35 +206,36 @@ export function BuyerOrderDetails({
         {!order && !error ? <ActivityIndicator color={green} /> : null}
         {order && (
           <>
-            <Text
-              accessibilityRole="header"
-              accessibilityLiveRegion="polite"
-              style={s.title}
-            >
-              {status}
-            </Text>
-            <Text style={s.muted}>
-              #{order.id} · {dateTime(order.createdAt)}
-            </Text>
-            <View style={[s.card, s.sage, s.payment]}>
-              <Text style={s.label}>
-                {cod ? "Cash on Delivery" : "Online payment"}
-              </Text>
-              <Text style={s.amount}>
-                {cod
-                  ? due > 0
-                    ? `${money(due)} due at delivery`
-                    : "No cash due"
-                  : order.paymentStatus === "paid"
-                    ? `${money(order.onlinePaidAmount ?? order.total)} paid`
-                    : `${money(order.total)} · ${order.paymentStatus.replaceAll("_", " ")}`}
-              </Text>
-              {cod && due > 0 ? (
-                <Text style={s.smallGreen}>
-                  Pay the exact amount to your delivery partner.
-                </Text>
-              ) : null}
+            <View style={s.statusHeading}>
+              <View style={s.statusIcon}><OrderSymbol name={statusKey} color={statusKey === "cancelled" ? "#A23425" : green} /></View>
+              <View style={s.headingCopy}>
+                <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[s.title, statusKey === "cancelled" && s.error]}>{status}</Text>
+                <Text style={s.muted}>#{order.id} · {dateTime(order.createdAt)}</Text>
+              </View>
             </View>
+            {statusKey === "delayed" && delayedShop && <View style={s.delay}>
+              <Text style={s.shopName}>Taking a little longer</Text>
+              <Text style={s.delayCopy}>{delayedShop.shopName} is still preparing your items. We’ll update you when the status changes.</Text>
+            </View>}
+            <View style={s.payment}>
+              <View style={s.paymentLabel}><OrderSymbol name="wallet" color="#EAF0D9" /><Text style={s.paymentCopy}>{cod ? "Cash on Delivery" : "Online payment"}</Text></View>
+              <Text style={s.amount}>
+                {cod ? due > 0 ? `${money(due)} due at delivery` : cashPaid > 0 ? `${money(cashPaid)} paid` : "₹0 due"
+                  : order.paymentStatus === "paid" ? `${money(order.onlinePaidAmount ?? order.total)} paid` : `${money(order.total)} · ${order.paymentStatus.replaceAll("_", " ")}`}
+              </Text>
+              {cod && <Text style={s.paymentCopy}>{statusKey === "cancelled" && !cashPaid
+                ? "Nothing to pay. This COD order was cancelled."
+                : statusKey === "partially_cancelled" && due > 0
+                  ? `${order.subOrders.filter(shop => shop.status === "cancelled").map(shop => shop.shopName).join(", ")} items and delivery fees removed.`
+                  : due > 0 ? "Pay the exact amount to your delivery partner."
+                    : cashPaid > 0 ? "Payment collected at delivery." : "No cash payment is outstanding."}</Text>}
+            </View>
+            {!error && receiptShops.length === 0 && pending.length > 0 && <>
+              <Pressable accessibilityRole="button" accessibilityState={{ expanded: receiptInfo }} style={[s.refresh, s.sage]} onPress={() => setReceiptInfo(value => !value)}>
+                <Text style={s.label}>View receipt code</Text>
+              </Pressable>
+              {receiptInfo && <Text accessibilityLiveRegion="polite" style={s.muted}>A receipt code is available for eligible deliveries after you confirm you received your items.</Text>}
+            </>}
             {receiptShops.map((shop) => (
               <BuyerReceipt
                 key={`${shop.id}:${shop.version ?? 0}`}
@@ -199,7 +248,7 @@ export function BuyerOrderDetails({
                 shopName={activeShops.length > 1 ? shop.shopName : undefined}
               />
             ))}
-            {delivered.length > 0 && (
+            {delivered.length > 0 && pending.length > 0 && (
               <Pressable
                 accessibilityRole="button"
                 style={s.refresh}
@@ -278,47 +327,36 @@ function ShopCard({
       !!shop.deliveryState,
   );
   const current = timeline.findIndex(([key]) => key === status);
+  const subtotal = shop.lines.reduce((sum, line) => sum + line.qty * line.price, 0);
   return (
     <View style={s.card}>
-      <Text style={s.shopName}>{shop.shopName}</Text>
-      <Text style={s.label}>{statusLabel(status)}</Text>
-      {shop.updatedAt ? (
-        <Text style={s.muted}>Updated {dateTime(shop.updatedAt)}</Text>
-      ) : null}
-      {current >= 0 ? (
-        <View style={s.timeline}>
-          {timeline.map(([key, name], index) => (
-            <View key={key} style={s.stage}>
-              <View style={[s.dot, index <= current && s.dotDone]} />
-              <Text
-                style={[
-                  s.muted,
-                  index <= current && s.smallGreen,
-                  index === current && s.bold,
-                ]}
-              >
-                {name}
-              </Text>
+      <View style={s.statusHeading}>
+        <View style={s.shopIcon}><OrderSymbol name={status === "cancelled" ? "cancelled" : "shop"} color={status === "cancelled" ? "#A23425" : green} /></View>
+        <View style={s.headingCopy}>
+          <Text style={s.shopName}>{shop.shopName}</Text>
+          <Text style={[s.label, status === "cancelled" && s.error]}>{statusLabel(status)}</Text>
+        </View>
+      </View>
+      {current >= 0 && <View style={s.timeline}>
+        {timeline.map(([key, name], index) => (
+          <View key={key} style={s.stage}>
+            <View style={s.rail}>
+              {index < timeline.length - 1 && <View style={[s.connector, index < current && s.connectorDone]} />}
+              <View style={[s.dot, index < current && s.dotDone, index === current && s.dotCurrent]}>
+                {index < current ? <Text style={s.check}>✓</Text> : index === current ? <View style={s.dotCenter} /> : null}
+              </View>
             </View>
-          ))}
-        </View>
-      ) : null}
-      {shop.cancelReason ? (
-        <Text style={s.muted}>Cancellation: {shop.cancelReason}</Text>
-      ) : null}
-      {shop.lines.map((line, index) => (
-        <View key={`${line.productId}:${line.variantId ?? index}`}>
-          <Text style={s.bold}>{line.name}</Text>
-          <Text style={s.muted}>
-            {line.variantLabel || line.unit} · {line.qty} × {money(line.price)}{" "}
-            = {money(line.qty * line.price)}
-          </Text>
-        </View>
-      ))}
-      <Text style={s.muted}>
-        Delivery fee: {money(shop.deliveryFee)} · Remaining due:{" "}
-        {money(shop.amountDue)}
-      </Text>
+            <Text style={[s.stageText, index > current && s.muted, index === current && s.label]}>{name}</Text>
+          </View>
+        ))}
+      </View>}
+      <View style={s.summary}>
+        {shop.cancelReason && <Text style={s.muted}>{shop.cancelReason}</Text>}
+        {shop.lines.length > 0 && <Text style={s.muted}>{shop.lines.map(line => `${line.name} ${line.variantLabel || line.unit} × ${line.qty}`).join(" · ")}</Text>}
+        {status === "cancelled"
+          ? <Text style={s.smallGreen}>Amount due {money(shop.amountDue)}</Text>
+          : <Text style={s.smallGreen}>Items {money(subtotal)} + delivery {money(shop.deliveryFee)} = {money(subtotal + shop.deliveryFee)}</Text>}
+      </View>
       {(shop.status === "placed" || shop.status === "accepted") &&
       (order.paymentMethod === "cod" || order.paymentStatus === "paid") ? (
         <BuyerCancelOrder
@@ -336,7 +374,7 @@ function ShopCard({
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#FAF8F1" },
+  screen: { flex: 1, backgroundColor: "#F8F6EE" },
   header: {
     minHeight: 64,
     paddingHorizontal: 20,
@@ -346,7 +384,7 @@ const s = StyleSheet.create({
   },
   back: { minHeight: 44, justifyContent: "center" },
   arrow: { color: green, fontSize: 27, lineHeight: 30 },
-  headerText: { color: green, fontSize: 21, fontWeight: "600" },
+  headerText: { color: green, fontSize: 18, fontWeight: "500" },
   scroll: { flex: 1 },
   content: {
     paddingHorizontal: 20,
@@ -354,20 +392,30 @@ const s = StyleSheet.create({
     paddingBottom: 20,
     gap: 20,
   },
-  title: { color: green, fontSize: 28, lineHeight: 38, fontWeight: "600" },
+  title: { color: green, fontSize: 28, lineHeight: 38, fontWeight: "500" },
   muted: { color: "#73796E", fontSize: 12, lineHeight: 18 },
   card: {
     padding: 16,
     backgroundColor: "#fff",
     borderColor: "#E0E3D8",
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: 24,
     gap: 10,
   },
   sage: { backgroundColor: "#EAF0D9" },
-  payment: { gap: 10 },
+  payment: { minHeight: 142, justifyContent: "center", gap: 12, borderRadius: 24, padding: 20, backgroundColor: green },
+  paymentCopy: { fontSize: 12, lineHeight: 18, color: "#EAF0D9" },
+  statusHeading: { flexDirection: "row", gap: 12, alignItems: "flex-start" },
+  headingCopy: { flex: 1, gap: 3 },
+  statusIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: "#EAF0D9", alignItems: "center", justifyContent: "center" },
+  shopIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: "#EAF0D9", alignItems: "center", justifyContent: "center" },
+  symbol: { width: 22, height: 22, alignItems: "center", justifyContent: "center" },
+  paymentLabel: { flexDirection: "row", alignItems: "center", gap: 10 },
+  delay: { borderLeftWidth: 3, borderColor: "#ECC642", borderRadius: 24, padding: 20, gap: 10 },
+  delayCopy: { fontSize: 14, lineHeight: 20, color: "#73796E" },
+  summary: { backgroundColor: "#F8F6EE", padding: 12, borderRadius: 12, gap: 5 },
   label: { color: green, fontSize: 13, fontWeight: "600" },
-  amount: { color: green, fontSize: 25, lineHeight: 34, fontWeight: "600" },
+  amount: { color: "#fff", fontSize: 28, lineHeight: 34, fontWeight: "500" },
   smallGreen: { color: green, fontSize: 13, lineHeight: 18 },
   shopName: {
     color: "#252D25",
@@ -375,17 +423,17 @@ const s = StyleSheet.create({
     lineHeight: 24,
     fontWeight: "600",
   },
-  timeline: { gap: 10 },
-  stage: { flexDirection: "row", alignItems: "center", gap: 8 },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: "#818579",
-  },
+  timeline: { paddingVertical: 6 },
+  stage: { minHeight: 28, flexDirection: "row", alignItems: "center", gap: 14 },
+  stageText: { color: "#252D25", fontSize: 14, lineHeight: 19 },
+  rail: { width: 22, alignSelf: "stretch", alignItems: "center", justifyContent: "center" },
+  connector: { position: "absolute", top: "50%", height: "100%", width: 1, backgroundColor: "#DADFD0" },
+  connectorDone: { backgroundColor: green },
+  dot: { width: 16, height: 16, borderRadius: 8, borderWidth: 1, borderColor: "#DADFD0", backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
   dotDone: { backgroundColor: green, borderColor: green },
-  bold: { fontWeight: "600" },
+  dotCurrent: { borderColor: green, borderWidth: 2, width: 20, height: 20, borderRadius: 10, backgroundColor: "#EAF0D9" },
+  dotCenter: { width: 8, height: 8, borderRadius: 4, backgroundColor: green },
+  check: { color: "#fff", fontWeight: "700", fontSize: 11 },
   error: { color: "#A23425" },
-  refresh: { minHeight: 44, alignItems: "center", justifyContent: "center" },
+  refresh: { minHeight: 50, borderRadius: 12, alignItems: "center", justifyContent: "center" },
 });

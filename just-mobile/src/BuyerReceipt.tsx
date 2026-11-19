@@ -61,9 +61,9 @@ export function BuyerReceipt({
       </Text>
       {proof ? (
         <>
-          <Text selectable style={s.code}>
-            {proof.code}
-          </Text>
+          <View accessible accessibilityLabel={proof.code.split("").join(" ")} style={s.digits}>
+            {proof.code.split("").map((digit, index) => <View key={index} style={s.digit}><Text style={s.code}>{digit}</Text></View>)}
+          </View>
           <Text style={s.copy}>
             Share this code when you receive your order.
           </Text>
@@ -105,7 +105,7 @@ export function BuyerReceipt({
           onPress={() => setConfirming(true)}
           style={s.action}
         >
-          <Text style={s.link}>Confirm receipt and get code</Text>
+          <Text style={s.link}>View receipt code</Text>
         </Pressable>
       ) : null}
       {error ? (
@@ -124,23 +124,25 @@ export function BuyerReceipt({
 
 const s = StyleSheet.create({
   card: {
-    borderRadius: 16,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#E0E3D8",
-    backgroundColor: "#EAF0D9",
-    padding: 16,
+    borderColor: "#07552F",
+    backgroundColor: "#fff",
+    padding: 20,
     gap: 12,
   },
-  heading: { color: "#07552F", fontSize: 14, fontWeight: "600" },
+  heading: { color: "#07552F", fontSize: 18, fontWeight: "600" },
+  digits: { flexDirection: "row", gap: 10 },
+  digit: { flex: 1, minHeight: 66, borderRadius: 12, backgroundColor: "#EAF0D9", alignItems: "center", justifyContent: "center" },
   code: {
     color: "#07552F",
-    fontSize: 39,
+    fontSize: 28,
     lineHeight: 50,
-    letterSpacing: 11,
+
     fontWeight: "600",
   },
   copy: { color: "#252D25", fontSize: 14, lineHeight: 20, fontWeight: "600" },
-  action: { minHeight: 48, justifyContent: "center", alignItems: "center" },
+  action: { minHeight: 50, backgroundColor: "#EAF0D9", borderRadius: 12, justifyContent: "center", alignItems: "center" },
   link: { color: "#07552F", fontSize: 15, fontWeight: "600" },
   error: { color: "#A23425" },
   delivered: { alignItems: "center", opacity: 0.6 },

@@ -18,7 +18,7 @@ import { BuyerAuthNotice } from "./BuyerAuthNotice";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { MarketIcon } from "./MarketIcon";
 import { BuyerAddresses } from "./BuyerAddresses";
-import { BuyerOrderDetails } from "./BuyerOrderDetails";
+import { BuyerOrderDetails, isPastOrder, money, orderDue, OrderSymbol, orderStage, statusLabel } from "./BuyerOrderDetails";
 import { BuyerProfile } from "./BuyerProfile";
 import { useAndroidBack } from "./useAndroidBack";
 import { BuyerRecovery } from "./BuyerRecovery";
@@ -298,6 +298,7 @@ export function BuyerOrders({
   signIn: () => void;
   browse: () => void;
 }) {
+  const [tab, setTab] = useState<"Active" | "Past">("Active");
   const [orders, setOrders] = useState<BuyerOrder[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   useAndroidBack(() => { if (!selectedOrder) return false; setSelectedOrder(null); return true; }, 10);
@@ -363,14 +364,26 @@ export function BuyerOrders({
         </View>
       ) : (
         <FlatList
-          data={orders}
+          data={orders.filter(item => isPastOrder(item) === (tab === "Past"))}
+          ListHeaderComponent={<View style={ordersUI.listHeader}>
+            <View style={ordersUI.hero}>
+              <Text style={ordersUI.heroLabel}>YOUR LOCAL ORDERS</Text>
+              <Text style={ordersUI.heroTitle}>From your neighbourhood.</Text>
+            </View>
+            <View style={ordersUI.tabs}>
+              {(["Active", "Past"] as const).map(option => <Pressable key={option} accessibilityRole="tab" accessibilityState={{ selected: tab === option }} onPress={() => setTab(option)} style={[ordersUI.tab, tab === option && ordersUI.tabSelected]}>
+                <Text style={[ordersUI.tabText, tab === option && ordersUI.tabTextSelected]}>{option}</Text>
+              </Pressable>)}
+            </View>
+            {tab === "Past" && <Text style={ordersUI.action}>Past orders</Text>}
+          </View>}
           keyExtractor={item => item.id}
           contentContainerStyle={ordersUI.list}
           ListEmptyComponent={
             <View style={ordersUI.card}>
               <MarketIcon name="orders" color="#07552F" />
-              <Text style={ordersUI.title}>No orders yet</Text>
-              <Text style={ordersUI.copy}>Confirmed orders will appear here.</Text>
+              <Text style={ordersUI.title}>{!orders.length && !cursor ? "No orders yet" : tab === "Past" ? "No past orders here yet" : "No active orders here yet"}</Text>
+              <Text style={ordersUI.copy}>{cursor ? "Load more orders to check earlier activity." : "Confirmed orders will appear here."}</Text>
               <Pressable accessibilityRole="button" style={ordersUI.button} onPress={browse}>
                 <Text style={ordersUI.buttonText}>Start shopping</Text>
               </Pressable>
@@ -379,22 +392,29 @@ export function BuyerOrders({
           ListFooterComponent={cursor ? <View style={ordersUI.footer}>
             {moreError && <Text accessibilityRole="alert" style={ordersUI.copy}>Older orders could not load. Please retry.</Text>}
             <Pressable accessibilityRole="button" disabled={moreBusy} style={[ordersUI.button, ordersUI.sage]} onPress={() => void more()}>
-              <Text style={ordersUI.action}>{moreBusy ? "Loading…" : "Load older orders"}</Text>
+              <Text style={ordersUI.action}>{moreBusy ? "Loading…" : "Load more orders"}</Text>
             </Pressable>
           </View> : undefined}
-          renderItem={({ item }) => {
+          renderItem={({ item, index }) => {
             const names = item.subOrders.map(shop => shop.shopName);
-            const statuses = [...new Set(item.subOrders.map(shop => shop.status))];
-            const status = statuses.length === 1 ? statuses[0].replaceAll("_", " ") : statuses.length ? "Mixed shop statuses" : "Status unavailable";
-            const due = item.amountDue ?? (item.paymentStatus === "paid" ? 0 : item.total);
+            const stage = orderStage(item);
+            const due = orderDue(item);
+            const cod = item.paymentMethod === "cod";
+            const hasActiveCash = cod && due > 0;
+            const displayedTotal = cod
+              ? due || item.cashRecordedAmount || Math.max(0, item.total - (item.cancelledAmount ?? 0))
+              : item.onlinePaidAmount || item.total;
             return (
-              <Pressable accessibilityRole="button" style={ordersUI.card} onPress={() => setSelectedOrder(item.id)}>
-                <Text style={ordersUI.action}>{status.charAt(0).toUpperCase() + status.slice(1)}</Text>
-                <Text style={ordersUI.orderTitle}>{names.join(" · ") || "Local order"}</Text>
+              <Pressable accessibilityRole="button" style={[ordersUI.card, ordersUI.orderCard, tab === "Active" && index === 0 && ordersUI.lead]} onPress={() => setSelectedOrder(item.id)}>
+                <View style={ordersUI.cardTop}>
+                  <Text style={ordersUI.badge}>{statusLabel(stage)}{hasActiveCash && stage !== "out_for_delivery" ? " · Active COD" : ""}</Text>
+                  <OrderSymbol name={stage} />
+                </View>
+                <Text style={ordersUI.orderTitle}>{names[0] || "Local order"}{names.length > 1 ? ` + ${names.length - 1} ${names.length === 2 ? "shop" : "shops"}` : ""}</Text>
                 <Text style={ordersUI.copy}>#{item.id} · {new Date(item.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" })}</Text>
                 <View style={ordersUI.orderFooter}>
-                  <Text style={ordersUI.orderTitle}>{due > 0 && item.paymentMethod === "cod" ? `₹${due.toLocaleString("en-IN")} due` : `₹${item.total.toLocaleString("en-IN")}`}</Text>
-                  <Text style={ordersUI.action}>View details →</Text>
+                  <Text style={ordersUI.total}>{money(displayedTotal)}</Text>
+                  <Text style={ordersUI.detailsLink}>View details →</Text>
                 </View>
               </Pressable>
             );
@@ -415,12 +435,27 @@ export function BuyerOrders({
 }
 
 const ordersUI = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#FAF8F1" },
+  screen: { flex: 1, backgroundColor: "#F8F6EE" },
   header: { height: 64, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", gap: 14 },
   back: { minHeight: 44, justifyContent: "center" },
   chevron: { color: "#07552F", fontSize: 27, lineHeight: 30 },
-  headerTitle: { color: "#07552F", fontSize: 21, fontWeight: "600" },
-  list: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20, gap: 16 },
+  headerTitle: { color: "#07552F", fontSize: 18, fontWeight: "500" },
+  list: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24, gap: 20 },
+  listHeader: { gap: 20 },
+  hero: { minHeight: 99, justifyContent: "center", padding: 20, gap: 10, backgroundColor: "#07552F", borderRadius: 24 },
+  heroLabel: { color: "#EDF2DD", fontSize: 12 },
+  heroTitle: { color: "#fff", fontSize: 24, fontWeight: "500" },
+  tabs: { padding: 4, borderWidth: 1, borderColor: "#DADFD0", borderRadius: 16, flexDirection: "row", backgroundColor: "#fff", gap: 4 },
+  tab: { flex: 1, minHeight: 50, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  tabSelected: { backgroundColor: "#07552F" },
+  orderCard: { borderRadius: 24, padding: 20, gap: 10 },
+  lead: { borderColor: "#07552F" },
+  cardTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
+  badge: { color: "#07552F", backgroundColor: "#EAF0D9", fontSize: 12, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 6, flexShrink: 1 },
+  tabText: { color: "#73796E", fontSize: 15, fontWeight: "500" },
+  tabTextSelected: { color: "#fff" },
+  total: { fontSize: 24, fontWeight: "600", color: "#252D25" },
+  detailsLink: { color: "#07552F", backgroundColor: "#EAF0D9", fontSize: 12, borderRadius: 12, padding: 10 },
   card: { padding: 16, borderRadius: 16, borderWidth: 1, borderColor: "#E0E3D8", backgroundColor: "#fff", gap: 8 },
   sage: { backgroundColor: "#EAF0D9" },
   title: { fontSize: 23, lineHeight: 30, color: "#252D25", fontWeight: "600" },
@@ -428,8 +463,8 @@ const ordersUI = StyleSheet.create({
   button: { backgroundColor: "#07552F", borderRadius: 14, minHeight: 50, padding: 12, alignItems: "center", justifyContent: "center", marginTop: 6 },
   buttonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
   action: { color: "#07552F", fontSize: 14, fontWeight: "600" },
-  orderTitle: { color: "#252D25", fontSize: 16, fontWeight: "600" },
-  orderFooter: { borderTopWidth: 1, borderColor: "#E0E3D8", paddingTop: 12, marginTop: 4, flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", gap: 8 },
+  orderTitle: { color: "#252D25", fontSize: 18, fontWeight: "500" },
+  orderFooter: { borderTopWidth: 1, borderColor: "#E0E3D8", paddingTop: 12, marginTop: 2, flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 8 },
   feedback: { padding: 20, gap: 10 },
   footer: { gap: 8 },
 });
@@ -494,7 +529,7 @@ const s = StyleSheet.create({
 });
 
 const login = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#FAF8F1" },
+  screen: { flex: 1, backgroundColor: "#F8F6EE" },
   header: { height: 64, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", gap: 14 },
   backButton: { minHeight: 44, justifyContent: "center" },
   chevron: { color: "#07552F", fontSize: 27, lineHeight: 30 },

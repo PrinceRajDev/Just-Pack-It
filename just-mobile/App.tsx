@@ -85,6 +85,7 @@ export default function App() {
   const currentConfirmation = session && confirmation?.userId === session.userId ? confirmation : null;
   const [bagOrigin, setBagOrigin] = useState<Screen>("home");
   const [accountOrigin, setAccountOrigin] = useState<Screen>("home");
+  const [ordersOrigin, setOrdersOrigin] = useState<Screen>("home");
   const [signInFromBag, setSignInFromBag] = useState(false);
   const openBag = () => {
     if (screen !== "bag" && screen !== "checkout") setBagOrigin(screen);
@@ -103,6 +104,15 @@ export default function App() {
     setShop(null);
     setHomeVisit((visit) => visit + 1);
     setScreen("home");
+  };
+  const openOrders = () => {
+    if (screen === "orders") return;
+    setOrdersOrigin(screen);
+    setScreen("orders");
+  };
+  const leaveOrders = () => {
+    if (ordersOrigin === "home") goHome();
+    else setScreen(ordersOrigin);
   };
   const leaveSignIn = () => {
     setSignInFromBag(false);
@@ -127,7 +137,7 @@ export default function App() {
     else if (screen === "confirmation") { setConfirmation(null); setScreen("orders"); }
     else if (screen === "bag") setScreen(bagOrigin);
     else if (screen === "account" && !session) leaveSignIn();
-    else if (screen === "orders") setScreen("account");
+    else if (screen === "orders") leaveOrders();
     else goHome();
     return true;
   });
@@ -253,6 +263,7 @@ export default function App() {
       setSignInFromBag(false);
       setScreen("bag");
     }
+    if (next && !session && accountOrigin === "orders") setScreen("orders");
     if (next)
       await SecureStore.setItemAsync("jpi.buyer.session", JSON.stringify(next));
     else await SecureStore.deleteItemAsync("jpi.buyer.session");
@@ -390,13 +401,13 @@ export default function App() {
     <BuyerAccount
       session={session}
       save={saveSession}
-      openOrders={() => setScreen("orders")}
+      openOrders={openOrders}
       fromBag={signInFromBag}
       back={leaveSignIn}
       browseAsGuest={browseAsGuest}
     />
   ) : screen === "orders" ? (
-    <BuyerOrders session={session} back={() => setScreen("account")} />
+    <BuyerOrders session={session} back={leaveOrders} signIn={openAccount} browse={goHome} />
   ) : screen === "confirmation" || screen === "tracking" ? (
     currentConfirmation && session ? (
       screen === "tracking" ? (
@@ -449,7 +460,7 @@ export default function App() {
       <StatusBar style="dark" />
       <View style={s.app}>
         {screen !== "home" && screen !== "browse" &&
-          screen !== "shop" && screen !== "bag" && screen !== "checkout" && screen !== "confirmation" && screen !== "tracking" &&
+          screen !== "shop" && screen !== "bag" && screen !== "checkout" && screen !== "confirmation" && screen !== "tracking" && screen !== "orders" &&
           !(screen === "account" && !session) && (
           <Header
             session={session}
@@ -498,7 +509,7 @@ export default function App() {
             browse={() => setScreen("browse")}
             bag={openBag}
             account={openAccount}
-            orders={() => setScreen("orders")}
+            orders={openOrders}
           />
         )}
         <AreaSheet
@@ -1383,7 +1394,7 @@ function Nav({
     <View
       style={[
         s.nav,
-        (guestHome || screen === "browse" || screen === "bag") && {
+        (guestHome || screen === "browse" || screen === "bag" || screen === "orders") && {
           height: 70,
           paddingHorizontal: 8,
         },

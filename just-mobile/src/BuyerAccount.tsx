@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,6 +12,8 @@ import {
   View,
 } from "react-native";
 import { buyerApi, type BuyerOrder, type Session } from "./api";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { MarketIcon } from "./MarketIcon";
 import { BuyerAddresses } from "./BuyerAddresses";
 import { BuyerOrderDetails } from "./BuyerOrderDetails";
 import { BuyerProfile } from "./BuyerProfile";
@@ -279,9 +282,13 @@ export function BuyerAccount({
 export function BuyerOrders({
   session,
   back,
+  signIn,
+  browse,
 }: {
   session: Session | null;
   back: () => void;
+  signIn: () => void;
+  browse: () => void;
 }) {
   const [orders, setOrders] = useState<BuyerOrder[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
@@ -315,71 +322,109 @@ export function BuyerOrders({
     catch { setMoreError(true); }
     finally { pageLock.current = false; setMoreBusy(false); }
   };
-  if (session && selectedOrder) return <BuyerOrderDetails token={session.token} id={selectedOrder} back={() => setSelectedOrder(null)} />;
-  if (!session)
-    return (
-      <View style={s.center}>
-        <Text style={s.title}>Sign in to view orders</Text>
-        <Pressable style={s.primary} onPress={back}>
-          <Text style={s.primaryText}>Open account</Text>
-        </Pressable>
-      </View>
-    );
-  if (state === "loading")
-    return (
-      <View style={s.center}>
-        <ActivityIndicator color={c.green} />
-        <Text style={s.copy}>Loading your orders</Text>
-      </View>
-    );
-  if (state === "error")
-    return (
-      <View style={s.center}>
-        <Text style={s.title}>Orders could not load</Text>
-        <Pressable style={s.primary} onPress={() => { setState("loading"); setAttempt((value) => value + 1); }}><Text style={s.primaryText}>Try again</Text></Pressable>
-        <Pressable style={s.primary} onPress={back}>
-          <Text style={s.primaryText}>Back to account</Text>
-        </Pressable>
-      </View>
-    );
+  const closeOrder = () => { setSelectedOrder(null); setAttempt(value => value + 1); };
   return (
-    <FlatList
-      data={orders}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={s.list}
-      ListFooterComponent={cursor ? <View>{moreError ? <Text style={s.copy}>Older orders could not load. Please retry.</Text> : null}<Pressable disabled={moreBusy} style={s.primary} onPress={() => void more()}><Text style={s.primaryText}>{moreBusy ? "Loading…" : "Load older orders"}</Text></Pressable></View> : undefined}
-      ListHeaderComponent={
-        <View>
-          <Pressable onPress={back}>
-            <Text style={s.back}>← Account</Text>
-          </Pressable>
-          <Text style={s.title}>Your orders</Text>
-          <Text style={s.copy}>Newest orders appear first</Text>
-        </View>
-      }
-      ListEmptyComponent={
-        <View style={s.empty}>
-          <Text style={s.copy}>
-            No orders yet. Confirmed orders will appear here.
-          </Text>
-        </View>
-      }
-      renderItem={({ item }) => (
-        <Pressable style={s.order} onPress={() => setSelectedOrder(item.id)}>
-          <Text style={s.rowTitle}>Order {item.id.slice(0, 8)}</Text>
-          <Text style={s.rowCopy}>
-            {new Date(item.createdAt).toLocaleDateString("en-IN")} ·{" "}
-            {item.paymentStatus.replaceAll("_", " ")}
-          </Text>
-          <Text style={s.total}>
-            Remaining due: {" "}
-            ₹{(item.amountDue ?? item.total).toLocaleString("en-IN")}
-          </Text>
+    <View style={ordersUI.screen} testID="buyer-orders">
+      <View style={ordersUI.header}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Back from orders" onPress={back} hitSlop={8} style={ordersUI.back}>
+          <Text style={ordersUI.chevron}>‹</Text>
         </Pressable>
+        <Text accessibilityRole="header" style={ordersUI.headerTitle}>Your orders</Text>
+      </View>
+      {!session ? (
+        <ScrollView contentContainerStyle={ordersUI.list}>
+          <View style={[ordersUI.card, ordersUI.sage]}>
+            <MarketIcon name="orders" color="#07552F" />
+            <Text accessibilityRole="header" style={ordersUI.title}>Sign in to view orders</Text>
+            <Text style={ordersUI.copy}>Track deliveries and see orders from your neighbourhood shops.</Text>
+            <Pressable accessibilityRole="button" onPress={signIn} style={ordersUI.button}>
+              <Text style={ordersUI.buttonText}>Sign in</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      ) : state === "loading" ? (
+        <View style={ordersUI.feedback}><ActivityIndicator color="#07552F" /><Text style={ordersUI.copy}>Loading your orders</Text></View>
+      ) : state === "error" ? (
+        <View style={ordersUI.feedback}>
+          <View style={ordersUI.card}>
+            <Text accessibilityRole="alert" style={ordersUI.title}>Orders could not load</Text>
+            <Pressable accessibilityRole="button" style={ordersUI.button} onPress={() => { setState("loading"); setAttempt(value => value + 1); }}>
+              <Text style={ordersUI.buttonText}>Try again</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <FlatList
+          data={orders}
+          keyExtractor={item => item.id}
+          contentContainerStyle={ordersUI.list}
+          ListEmptyComponent={
+            <View style={ordersUI.card}>
+              <MarketIcon name="orders" color="#07552F" />
+              <Text style={ordersUI.title}>No orders yet</Text>
+              <Text style={ordersUI.copy}>Confirmed orders will appear here.</Text>
+              <Pressable accessibilityRole="button" style={ordersUI.button} onPress={browse}>
+                <Text style={ordersUI.buttonText}>Start shopping</Text>
+              </Pressable>
+            </View>
+          }
+          ListFooterComponent={cursor ? <View style={ordersUI.footer}>
+            {moreError && <Text accessibilityRole="alert" style={ordersUI.copy}>Older orders could not load. Please retry.</Text>}
+            <Pressable accessibilityRole="button" disabled={moreBusy} style={[ordersUI.button, ordersUI.sage]} onPress={() => void more()}>
+              <Text style={ordersUI.action}>{moreBusy ? "Loading…" : "Load older orders"}</Text>
+            </Pressable>
+          </View> : undefined}
+          renderItem={({ item }) => {
+            const names = item.subOrders.map(shop => shop.shopName);
+            const statuses = [...new Set(item.subOrders.map(shop => shop.status))];
+            const status = statuses.length === 1 ? statuses[0].replaceAll("_", " ") : statuses.length ? "Mixed shop statuses" : "Status unavailable";
+            const due = item.amountDue ?? (item.paymentStatus === "paid" ? 0 : item.total);
+            return (
+              <Pressable accessibilityRole="button" style={ordersUI.card} onPress={() => setSelectedOrder(item.id)}>
+                <Text style={ordersUI.action}>{status.charAt(0).toUpperCase() + status.slice(1)}</Text>
+                <Text style={ordersUI.orderTitle}>{names.join(" · ") || "Local order"}</Text>
+                <Text style={ordersUI.copy}>#{item.id} · {new Date(item.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" })}</Text>
+                <View style={ordersUI.orderFooter}>
+                  <Text style={ordersUI.orderTitle}>{due > 0 && item.paymentMethod === "cod" ? `₹${due.toLocaleString("en-IN")} due` : `₹${item.total.toLocaleString("en-IN")}`}</Text>
+                  <Text style={ordersUI.action}>View details →</Text>
+                </View>
+              </Pressable>
+            );
+          }}
+        />
       )}
-    />
+      {session && selectedOrder ? (
+        <Modal visible onRequestClose={closeOrder}>
+          <SafeAreaProvider>
+            <SafeAreaView style={ordersUI.screen}>
+              <BuyerOrderDetails token={session.token} id={selectedOrder} back={closeOrder} />
+            </SafeAreaView>
+          </SafeAreaProvider>
+        </Modal>
+      ) : null}
+    </View>
   );
 }
+
+const ordersUI = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: "#FAF8F1" },
+  header: { height: 64, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", gap: 14 },
+  back: { minHeight: 44, justifyContent: "center" },
+  chevron: { color: "#07552F", fontSize: 27, lineHeight: 30 },
+  headerTitle: { color: "#07552F", fontSize: 21, fontWeight: "600" },
+  list: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20, gap: 16 },
+  card: { padding: 16, borderRadius: 16, borderWidth: 1, borderColor: "#E0E3D8", backgroundColor: "#fff", gap: 8 },
+  sage: { backgroundColor: "#EAF0D9" },
+  title: { fontSize: 23, lineHeight: 30, color: "#252D25", fontWeight: "600" },
+  copy: { fontSize: 13, lineHeight: 19, color: "#73796E" },
+  button: { backgroundColor: "#07552F", borderRadius: 14, minHeight: 50, padding: 12, alignItems: "center", justifyContent: "center", marginTop: 6 },
+  buttonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+  action: { color: "#07552F", fontSize: 14, fontWeight: "600" },
+  orderTitle: { color: "#252D25", fontSize: 16, fontWeight: "600" },
+  orderFooter: { borderTopWidth: 1, borderColor: "#E0E3D8", paddingTop: 12, marginTop: 4, flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", gap: 8 },
+  feedback: { padding: 20, gap: 10 },
+  footer: { gap: 8 },
+});
 const s = StyleSheet.create({
   page: {
     flexGrow: 1,
@@ -438,32 +483,6 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   signoutText: { color: c.secondary, fontSize: 14, fontWeight: "600" },
-  center: {
-    flex: 1,
-    padding: 32,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: c.paper,
-  },
-  list: { padding: 16, paddingBottom: 96, backgroundColor: c.paper },
-  back: { color: c.green, fontSize: 14, fontWeight: "600" },
-  empty: {
-    padding: 20,
-    marginTop: 20,
-    borderWidth: 1,
-    borderColor: c.line,
-    borderRadius: 12,
-    backgroundColor: c.card,
-  },
-  order: {
-    padding: 16,
-    marginTop: 12,
-    borderWidth: 1,
-    borderColor: c.line,
-    borderRadius: 12,
-    backgroundColor: c.card,
-  },
-  total: { color: c.green, marginTop: 12, fontSize: 18, fontWeight: "600" },
 });
 
 const login = StyleSheet.create({

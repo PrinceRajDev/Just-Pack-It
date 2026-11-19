@@ -114,6 +114,8 @@ async function run() {
           }
         }
         const body =
+          resource === "orders" || resource === "orders/orders-fixture"
+            ? (resource === "orders" ? [fixtureOrder] : fixtureOrder) :
           resource === "auth/login" || resource === "auth/me"
             ? buyer
             : resource === "auth/registration-options"
@@ -139,10 +141,24 @@ async function run() {
         await route.fulfill({ json: body, headers });
       },
     );
+    const fixtureOrder = {
+      id:"orders-fixture", total:189, amountDue:189, paymentMethod:"cod", paymentStatus:"unpaid",
+      createdAt:"2026-11-19T08:00:00Z",
+      address:{label:"Home",line1:"Market Road",locality:"Raiyam",city:"Madhubani",pincode:"847238"},
+      subOrders:[{id:"shop-order",shopName:"Sharma Kirana Store",status:"preparing",amountDue:189,deliveryFee:30,lines:[]}],
+    };
     await page.goto(process.env.PREVIEW_URL || "http://localhost:8109");
     await page
       .getByText("Shops around you", { exact: true })
       .waitFor({ timeout: 60000 });
+    const orders = page.getByTestId("buyer-orders");
+    await page.getByText("Orders",{exact:true}).click();
+    await orders.getByText("Sign in to view orders",{exact:true}).waitFor();
+    await orders.getByRole("button",{name:"Sign in",exact:true}).click();
+    await page.getByRole("button",{name:"Back from sign in"}).click();
+    await orders.getByText("Your orders",{exact:true}).waitFor();
+    await page.setViewportSize({width:390,height:844});
+    await page.screenshot({path:path.join(output,"orders-guest-390.png")});
     await page.addStyleTag({
       content:
         '[data-testid="buyer-shell"]{padding-top:28px!important;padding-bottom:20px!important}',
@@ -299,6 +315,18 @@ async function run() {
     await bag
       .getByText("Your bag is looking empty.", { exact: true })
       .waitFor();
+    await page.getByText("Orders",{exact:true}).click();
+    const item = orders.getByRole("button",{name:/Sharma Kirana Store/});
+    await item.waitFor();
+    for (const width of [360,390,430]) {
+      await page.setViewportSize({width,height:844});
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),false);
+      if (width === 390) await page.screenshot({path:path.join(output,"orders-signed-in-390.png")});
+    }
+    await item.click();
+    await page.getByTestId("buyer-order-details").getByText("Order details",{exact:true}).waitFor();
+    await page.getByRole("button",{name:"Back from order details"}).click();
+    await item.waitFor();
     assert.deepEqual(errors, []);
     console.log(
       "PASS: multi-shop add, four viewports, images, subtotal, quantity, removal, back, guest sign-in, merge, checkout, empty bag",

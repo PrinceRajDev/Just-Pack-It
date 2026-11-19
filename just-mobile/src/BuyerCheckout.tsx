@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PlaceCodOrder } from "./PlaceCodOrder";
 import { BuyerAddresses } from "./BuyerAddresses";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ChooseDeliveryAddress } from "./ChooseDeliveryAddress";
+import * as storage from "./deviceStorage";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import {
-  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
@@ -14,6 +15,7 @@ import {
 import {
   buyerApi,
   type Address,
+  type BuyerProfile,
   type CheckoutReview,
   type Product,
   type Session,
@@ -34,71 +36,187 @@ export function BuyerCheckout({
   onConfirmed: () => void;
 }) {
   const [addresses, setAddresses] = useState<Address[]>([]);
-  const [selected, setSelected] = useState<Address | null>(null);
+  const [selectedId, setSelectedId] = useState<string>();
+  const [defaultId, setDefaultId] = useState<string>();
+  const [profile, setProfile] = useState<BuyerProfile | null>(null);
   const [review, setReview] = useState<CheckoutReview | null>(null);
+  const [reviewedAddress, setReviewedAddress] = useState<Address | null>(null);
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
-  const [addressesOpen, setAddressesOpen] = useState(false);
+  const [choosing, setChoosing] = useState(true);
+  const [editor, setEditor] = useState<{ address?: Address } | null>(null);
   const [addressRevision, setAddressRevision] = useState(0);
   const [addressesLoading, setAddressesLoading] = useState(true);
-  const closeAddresses = () => { setAddressesOpen(false); setSelected(null); setReview(null); setError(null); setAddressesLoading(true); setAddressRevision((value) => value + 1); };
+  const preferenceKey = session
+    ? `jpi.address.default.${session.userId}`
+    : undefined;
+  const preferred =
+    addresses.find((address) => address.id === defaultId) ??
+    addresses.find(
+      (address) => address.label.trim().toLowerCase() === "home",
+    ) ??
+    addresses[0];
+  const selected =
+    addresses.find((address) => address.id === selectedId) ?? preferred;
+
+  const reload = () => {
+    setError(null);
+    setAddressesLoading(true);
+    setAddressRevision((value) => value + 1);
+  };
+
+  useEffect(() => {
+    if (!session || !preferenceKey) return;
+    let active = true;
+    void Promise.all([
+      buyerApi.addresses(session.token),
+      storage.getItemAsync(preferenceKey).catch(() => null),
+    ])
+      .then(([items, savedDefault]) => {
+        if (!active) return;
+        setAddresses(items);
+        setDefaultId(savedDefault ?? undefined);
+      })
+      .catch(() => {
+        if (active)
+          setError(
+            "Saved addresses could not load. Tap Reload addresses to retry.",
+          );
+      })
+      .finally(() => {
+        if (active) setAddressesLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session, preferenceKey, addressRevision]);
+
   useEffect(() => {
     if (!session) return;
     let active = true;
     void buyerApi
-      .addresses(session.token)
-      .then((items) => {
-        if (active) setAddresses(items);
+      .profile(session.token)
+      .then((data) => {
+        if (active) setProfile(data);
       })
-      .catch(() => {
-        if (active)
-          setError("Saved addresses could not load. Tap Reload addresses to retry.");
-      }).finally(() => { if (active) setAddressesLoading(false); });
+      .catch(() => undefined);
     return () => {
       active = false;
     };
-  }, [session, addressRevision]);
-  const check = async () => {
-    if (!session || !selected || !areaId || busy) return;
-    setBusy(true);
+  }, [session]);
+
+  const saveEdited = (address: Address, makeDefault: boolean) => {
+    setAddresses((items) =>
+      items.some((item) => item.id === address.id)
+        ? items.map((item) => (item.id === address.id ? address : item))
+        : [...items, address],
+    );
+    setSelectedId(address.id);
+    setEditor(null);
+    if (reviewedAddress?.id === address.id) setReview(null);
     setError(null);
-    setReview(null);
-    try {
-      setReview(
-        await buyerApi.reviewCheckout(
-          session.token,
-          areaId,
-          selected,
-          bag.map((line) => ({
-            productId: line.productId ?? line.id,
-            variantId: line.variantId,
-            qty: line.quantity,
-          })),
-          [...new Set(bag.map((line) => line.shopId))],
+    if (!preferenceKey || (!makeDefault && defaultId !== address.id)) return;
+    const persist = makeDefault
+      ? storage.setItemAsync(preferenceKey, address.id)
+      : storage.deleteItemAsync(preferenceKey);
+    void persist
+      .then(() => setDefaultId(makeDefault ? address.id : undefined))
+      .catch(() =>
+        setError(
+          "Address saved. The default preference could not be saved on this device.",
         ),
       );
+  };
+
+  const closePicker = () => {
+    if (busyRef.current) return;
+    if (editor) setEditor(null);
+    else if (review && reviewedAddress) {
+      setSelectedId(reviewedAddress.id);
+      setChoosing(false);
+    } else back();
+  };
+
+  const check = async () => {
+    if (!session || !selected || !areaId || !bag.length || busyRef.current)
+      return;
+    busyRef.current = true;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await buyerApi.reviewCheckout(
+        session.token,
+        areaId,
+        selected,
+        bag.map((line) => ({
+          productId: line.productId ?? line.id,
+          variantId: line.variantId,
+          qty: line.quantity,
+        })),
+        [...new Set(bag.map((line) => line.shopId))],
+      );
+      setSelectedId(selected.id);
+      setReviewedAddress(selected);
+      setReview(result);
+      setChoosing(false);
     } catch (reason) {
       setError(
         reason instanceof Error ? reason.message : "Delivery check failed",
       );
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   };
   const issues = review
-    ? [
-        ...review.issues,
-        ...review.lines.flatMap((line) => line.issues),
-        ...review.shops.flatMap((shop) => shop.issues),
-        ...review.fulfilments.flatMap((choice) => choice.issues),
-      ]
+    ? [...review.issues, ...review.lines.flatMap((line) => line.issues)]
     : [];
   return (
     <ScrollView contentContainerStyle={s.page}>
-      <Modal visible={addressesOpen} animationType="slide" onRequestClose={closeAddresses}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#F7F4EE" }}>
-          {session ? <BuyerAddresses token={session.token} back={closeAddresses} /> : null}
-        </SafeAreaView>
+      <Modal
+        visible={!!session && choosing}
+        animationType="slide"
+        onRequestClose={closePicker}
+      >
+        <SafeAreaProvider>
+          <SafeAreaView testID="choose-address-safe" style={s.safe}>
+            {session && editor ? (
+              <BuyerAddresses
+                token={session.token}
+                back={() => setEditor(null)}
+                checkout={{
+                  address: editor.address,
+                  isDefault:
+                    !!editor.address && editor.address.id === defaultId,
+                  onSaved: saveEdited,
+                }}
+              />
+            ) : (
+              <ChooseDeliveryAddress
+                rows={addresses}
+                selected={selected?.id}
+                preferred={preferred?.id}
+                profile={profile}
+                busy={busy}
+                loading={addressesLoading}
+                error={
+                  error ?? (!areaId ? "Choose a shopping area first" : null)
+                }
+                canDeliver={!!selected && !!areaId && !!bag.length}
+                back={closePicker}
+                select={(address) => {
+                  setSelectedId(address.id);
+                  setError(null);
+                }}
+                edit={(address) => setEditor({ address })}
+                add={() => setEditor({})}
+                confirm={() => void check()}
+                reload={reload}
+              />
+            )}
+          </SafeAreaView>
+        </SafeAreaProvider>
       </Modal>
       <Pressable onPress={back} disabled={busy}>
         <Text style={s.link}>← Bag</Text>
@@ -110,46 +228,20 @@ export function BuyerCheckout({
         </Pressable>
       ) : (
         <>
-          <Text style={s.copy}>Choose a saved delivery address</Text>
-          <Pressable disabled={busy} onPress={() => { setSelected(null); setReview(null); setAddressesOpen(true); }}><Text style={s.link}>Add or edit addresses</Text></Pressable>
-          <Pressable disabled={busy || addressesLoading} onPress={() => { setSelected(null); setReview(null); setError(null); setAddressesLoading(true); setAddressRevision((value) => value + 1); }}><Text style={s.link}>Reload addresses</Text></Pressable>
-          {addressesLoading ? <ActivityIndicator color="#174B34" /> : null}
-          {!addressesLoading && addresses.map((address) => (
-            <Pressable
-              disabled={busy}
-              key={address.id}
-              style={[s.card, selected?.id === address.id && s.selected]}
-              onPress={() => {
-                setSelected(address);
-                setReview(null);
-                setError(null);
-              }}
-            >
-              <Text style={s.name}>{address.label}</Text>
-              <Text style={s.copy}>
-                {address.line1}, {address.locality}, {address.city}{" "}
-                {address.pincode}
-              </Text>
-            </Pressable>
-          ))}
-          {!addressesLoading && !addresses.length ? <Text style={s.copy}>No saved addresses yet. Add your delivery address above.</Text> : null}
-          <Text style={s.copy}>
-            Rider collects from each shop and delivers to this address
-          </Text>
-          {!areaId ? (
-            <Text style={s.error}>Choose a shopping area first</Text>
+          {selected && !choosing ? (
+            <Text style={s.copy}>
+              Delivery to {selected.label} · {selected.line1}
+            </Text>
           ) : null}
           <Pressable
-            disabled={!selected || !areaId || busy || !bag.length}
-            onPress={() => void check()}
-            style={[s.button, (!selected || busy) && { opacity: 0.5 }]}
+            accessibilityRole="button"
+            onPress={() => {
+              setError(null);
+              setChoosing(true);
+            }}
           >
-            <Text style={s.buttonText}>
-              {busy ? "Checking delivery…" : "Check delivery and bill"}
-            </Text>
+            <Text style={s.link}>Change delivery address</Text>
           </Pressable>
-          {busy ? <ActivityIndicator color="#174B34" /> : null}
-          {error ? <Text style={s.error}>{error}</Text> : null}
           {review ? (
             <View style={s.card}>
               <Text style={s.name}>Order summary</Text>
@@ -168,6 +260,33 @@ export function BuyerCheckout({
                   ? "Not available"
                   : `₹${review.grandTotal.toLocaleString("en-IN")}`}
               </Text>
+              {review.shops.map(({ shop, issues: shopIssues }) => {
+                const delivery = review.fulfilments.find(
+                  (choice) => choice.shopId === shop.id,
+                );
+                const messages = [
+                  ...new Set(
+                    [...shopIssues, ...(delivery?.issues ?? [])].map(
+                      (issue) => issue.message,
+                    ),
+                  ),
+                ];
+                return (
+                  <View key={shop.id}>
+                    <Text style={s.name}>{shop.name}</Text>
+                    {delivery?.listedFee != null && (
+                      <Text style={s.copy}>
+                        Delivery: ₹{delivery.listedFee.toLocaleString("en-IN")}
+                      </Text>
+                    )}
+                    {messages.map((message) => (
+                      <Text key={message} style={s.error}>
+                        {message}
+                      </Text>
+                    ))}
+                  </View>
+                );
+              })}
               {[...new Set(issues.map((issue) => issue.message))].map(
                 (message) => (
                   <Text key={message} style={s.error}>
@@ -180,7 +299,26 @@ export function BuyerCheckout({
                   Delivery is available. This check does not reserve stock.
                 </Text>
               ) : null}
-              {review.checkoutAvailable && review.paymentMethods.includes("cod") && selected && areaId && review.grandTotal !== null ? <PlaceCodOrder onConfirmed={onConfirmed} key={`${selected.id}:${selected.version}:${review.grandTotal}`} session={session} areaId={areaId} address={selected} total={review.grandTotal} items={bag.map((line) => ({ productId: line.productId ?? line.id, variantId: line.variantId, qty: line.quantity }))} shopIds={[...new Set(bag.map((line) => line.shopId))]} /> : null}
+              {review.checkoutAvailable &&
+              review.paymentMethods.includes("cod") &&
+              selected &&
+              areaId &&
+              review.grandTotal !== null ? (
+                <PlaceCodOrder
+                  onConfirmed={onConfirmed}
+                  key={`${selected.id}:${selected.version}:${review.grandTotal}`}
+                  session={session}
+                  areaId={areaId}
+                  address={selected}
+                  total={review.grandTotal}
+                  items={bag.map((line) => ({
+                    productId: line.productId ?? line.id,
+                    variantId: line.variantId,
+                    qty: line.quantity,
+                  }))}
+                  shopIds={[...new Set(bag.map((line) => line.shopId))]}
+                />
+              ) : null}
             </View>
           ) : null}
         </>
@@ -189,6 +327,7 @@ export function BuyerCheckout({
   );
 }
 const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: "#FAF8F1" },
   page: { padding: 24, paddingBottom: 120, gap: 16 },
   title: { fontSize: 26, color: "#1F2A22", fontWeight: "500" },
   link: {
@@ -206,7 +345,6 @@ const s = StyleSheet.create({
     borderColor: "#DDD6C9",
     backgroundColor: "#FDFBF7",
   },
-  selected: { borderColor: "#174B34", backgroundColor: "#EDF3DF" },
   button: {
     minHeight: 48,
     padding: 12,

@@ -290,7 +290,7 @@ async function run() {
         exact: true,
       })
       .waitFor();
-    await page.getByText("Bag · 3", { exact: true }).click();
+    await page.getByRole("button", { name: "Back from choose address" }).click();
     for (const product of products.slice(0, 2)) {
       await bag
         .getByRole("button", { name: "Remove " + product.name, exact: true })

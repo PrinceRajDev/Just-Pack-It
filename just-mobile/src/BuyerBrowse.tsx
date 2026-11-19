@@ -30,6 +30,7 @@ const cards = [
   { slug: "sweets-bakery", name: "Bakery" },
 ];
 type Tab = "Categories" | "Shops" | "Brands";
+const searchTabs = ["Products", "Shops", "Brands"] as const;
 type Page = {
   key: string;
   products: Product[];
@@ -77,6 +78,8 @@ export function BuyerBrowse({
   hasBag: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("Categories");
+  const [resultTab, setResultTab] =
+    useState<(typeof searchTabs)[number]>("Products");
   const [category, setCategory] = useState<(typeof cards)[number] | null>(null);
   const [sort, setSort] = useState<
     "price_asc" | "price_desc" | "name" | undefined
@@ -96,6 +99,7 @@ export function BuyerBrowse({
   } | null>(null);
   const [catalogueError, setCatalogueError] = useState<string | null>(null);
   const search = query.trim();
+  const globalSearch = tab === "Categories" && !category && !!search;
   const groceries = category?.slug === "grocery-kirana";
   const categoryLabel = groceries ? "groceries" : category?.name.toLowerCase();
   const subcategories =
@@ -223,10 +227,6 @@ export function BuyerBrowse({
       !search || name.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
   );
   const productItems = (() => {
-    if (brand)
-      return (
-        catalogue && catalogue.area === areaId ? catalogue.items : []
-      ).filter((item) => brandName(item) === brand);
     const matches = result?.key === key ? result.products : [];
     const brandMatches =
       !category && search && catalogue && catalogue.area === areaId
@@ -243,6 +243,9 @@ export function BuyerBrowse({
       ),
     ];
   })();
+  const selectedBrandItems = brandProducts.filter(
+    (item) => brandName(item) === brand,
+  );
   const pending = !areaId
     ? false
     : tab === "Brands"
@@ -326,7 +329,9 @@ export function BuyerBrowse({
             </Text>
           </Pressable>
         ) : (
-          <Text style={styles.heading}>Browse</Text>
+          <Text style={styles.heading}>
+            {globalSearch ? "Search" : "Browse"}
+          </Text>
         )}
         <HomeNotifications session={session} />
       </View>
@@ -341,19 +346,41 @@ export function BuyerBrowse({
               : "Search products, shops and brands"
           }
           value={query}
-          onChangeText={setQuery}
+          onChangeText={(value) => {
+            setQuery(value);
+            if (!value.trim() || !search) setResultTab("Products");
+            if (globalSearch) setBrand(null);
+          }}
           placeholder={
             category
               ? `Search in ${categoryLabel}`
               : "Search products, shops & brands"
           }
           placeholderTextColor="#737B6D"
-          style={styles.input}
+          style={[styles.input, globalSearch && { color: "#777D72" }]}
           returnKeyType="search"
           clearButtonMode="while-editing"
         />
+        {globalSearch && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Clear search"
+            hitSlop={8}
+            onPress={() => {
+              setQuery("");
+              setBrand(null);
+              setResultTab("Products");
+            }}
+          >
+            <Text style={styles.clearSearch}>×</Text>
+          </Pressable>
+        )}
       </View>
-      {category ? (
+      {globalSearch ? (
+        <Text accessibilityRole="header" style={styles.resultsHeading}>
+          Results for “{search}”
+        </Text>
+      ) : category ? (
         <>
           <View style={styles.categoryControls}>
             <Pressable
@@ -445,7 +472,7 @@ export function BuyerBrowse({
           ))}
         </View>
       )}
-      {brand ? (
+      {brand && !globalSearch ? (
         <View style={styles.selection}>
           <Pressable
             accessibilityRole="button"
@@ -558,6 +585,158 @@ export function BuyerBrowse({
             <Text style={styles.retry}>Try again</Text>
           </Pressable>
         </View>
+      ) : globalSearch ? (
+        <>
+          <View accessibilityRole="tablist" style={styles.resultTabs}>
+            {searchTabs.map((name) => {
+              const matched = result?.key === key ? result : null;
+              const brandCountReady = catalogue?.area === areaId;
+              const count =
+                name === "Brands"
+                  ? brandCountReady
+                    ? brands.length
+                    : null
+                  : matched
+                    ? name === "Products"
+                      ? productItems.length
+                      : matched.shops.length
+                    : null;
+              const hasMore =
+                name === "Products"
+                  ? matched?.productCursor
+                  : name === "Shops"
+                    ? matched?.shopCursor
+                    : false;
+              return (
+                <Pressable
+                  key={name}
+                  accessibilityRole="tab"
+                  aria-selected={resultTab === name}
+                  onPress={() => {
+                    setResultTab(name);
+                    setBrand(null);
+                  }}
+                  style={[
+                    styles.tab,
+                    resultTab === name && styles.selectedResult,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      resultTab === name && { fontWeight: "700" },
+                    ]}
+                  >
+                    {name}
+                    {count === null ? "" : ` ${count}${hasMore ? "+" : ""}`}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {resultTab === "Brands" ? (
+            catalogueError ? (
+              <Pressable
+                onPress={() => {
+                  setCatalogueError(null);
+                  setAttempt((value) => value + 1);
+                }}
+                style={styles.empty}
+              >
+                <Text style={styles.emptyText}>
+                  Brand search failed. Try again.
+                </Text>
+              </Pressable>
+            ) : catalogue?.area !== areaId ? (
+              <ActivityIndicator color="#07552F" />
+            ) : brand ? (
+              <>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setBrand(null)}
+                >
+                  <Text style={styles.retry}>← {brand}</Text>
+                </Pressable>
+                {selectedBrandItems.length ? (
+                  <View style={styles.searchProducts}>
+                    {selectedBrandItems.map((item) =>
+                      renderProduct(item, true),
+                    )}
+                  </View>
+                ) : (
+                  empty("No products found.")
+                )}
+              </>
+            ) : brands.length ? (
+              <View style={styles.brandList}>
+                {brands.map((name) => (
+                  <Pressable
+                    key={name}
+                    accessibilityRole="button"
+                    style={styles.brand}
+                    onPress={() => setBrand(name)}
+                  >
+                    <Text style={styles.brandName}>{name}</Text>
+                    <Text style={styles.brandLink}>
+                      View matching products →
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : (
+              empty("No brands found.")
+            )
+          ) : pending ? (
+            <ActivityIndicator color="#07552F" />
+          ) : resultTab === "Shops" ? (
+            result?.shops.length ? (
+              <View style={{ gap: 20 }}>
+                {result.shops.map((item) => (
+                  <BrowseShopCard
+                    key={item.id}
+                    item={item}
+                    categoryLabel={item.locality}
+                    actionLabel="View shop →"
+                    onPress={() => onShop(item)}
+                  />
+                ))}
+              </View>
+            ) : (
+              empty("No shops found.")
+            )
+          ) : productItems.length ? (
+            <View style={styles.searchProducts}>
+              {productItems.map((item) => renderProduct(item, true))}
+            </View>
+          ) : catalogue?.area !== areaId && !catalogueError ? (
+            <ActivityIndicator color="#07552F" />
+          ) : (
+            empty("No products found.")
+          )}
+          {result?.key === key &&
+          (resultTab === "Products"
+            ? result.productCursor
+            : resultTab === "Shops"
+              ? result.shopCursor
+              : null) ? (
+            <Pressable
+              accessibilityRole="button"
+              disabled={moreBusy}
+              style={styles.more}
+              onPress={() =>
+                void more(resultTab === "Shops" ? "shops" : "products")
+              }
+            >
+              <Text style={styles.retry}>
+                {moreBusy
+                  ? "Loading…"
+                  : moreError
+                    ? "Try loading more again"
+                    : `More ${resultTab.toLowerCase()}`}
+              </Text>
+            </Pressable>
+          ) : null}
+        </>
       ) : pending ? (
         <ActivityIndicator style={{ marginTop: 36 }} color="#07552F" />
       ) : (
@@ -643,9 +822,11 @@ export function BuyerBrowse({
             </View>
           ) : null}
           {tab === "Categories" || brand ? (
-            productItems.length ? (
+            (brand ? selectedBrandItems : productItems).length ? (
               <View style={styles.products}>
-                {productItems.map((item) => renderProduct(item, !!category))}
+                {(brand ? selectedBrandItems : productItems).map((item) =>
+                  renderProduct(item, !!category),
+                )}
               </View>
             ) : (
               empty(
@@ -700,6 +881,27 @@ export function BuyerBrowse({
   );
 }
 const styles = StyleSheet.create({
+  clearSearch: { fontSize: 18, color: "#777D72", paddingHorizontal: 4 },
+  resultsHeading: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: "700",
+    color: "#202820",
+    marginTop: 22,
+  },
+  resultTabs: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 21,
+    marginBottom: 20,
+  },
+  selectedResult: { backgroundColor: "#E3EDD1" },
+  searchProducts: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    rowGap: 20,
+  },
   categoryControls: { flexDirection: "row", gap: 12, marginTop: 20 },
   categoryControlText: { fontSize: 12, fontWeight: "600", color: "#202820" },
   categoryHeading: {

@@ -6,10 +6,12 @@ import { resolveImage } from "./images";
 export function BrowseShopCard({
   item,
   categoryLabel,
+  actionLabel,
   onPress,
 }: {
   item: Shop & { scheduleLabel?: string; hours?: string; timezone?: string };
   categoryLabel?: string;
+  actionLabel?: string;
   onPress: () => void;
 }) {
   const [failedImage, setFailedImage] = useState<string>();
@@ -85,6 +87,7 @@ export function BrowseShopCard({
           {description}
         </Text>
       ) : null}
+      {actionLabel ? <Text style={styles.metadata}>{actionLabel}</Text> : null}
     </Pressable>
   );
 }

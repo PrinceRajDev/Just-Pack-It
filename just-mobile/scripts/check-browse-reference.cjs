@@ -32,10 +32,10 @@ const assert = require('node:assert/strict');
           attributes: [{label:'Brand',value:brand}],
         }));
       }
-      if (brandedFixture && resource === 'products' && url.searchParams.get('category') === 'grocery-kirana') {
+      if (brandedFixture && resource === 'products' && (url.searchParams.get('category') === 'grocery-kirana' || url.searchParams.get('q') === 'tomato')) {
         const photo = items[0].image;
         items = ['Farm fresh tomatoes', 'Yelakki bananas', 'Premium basmati rice', 'Fresh milk'].map((name,index) => ({
-          ...items[0], id: 'grocery-test-' + index, name, categorySlug:'grocery-kirana',
+          ...items[0], id: 'grocery-test-' + index, name, description: 'Tomato search fixture', attributes: [], categorySlug:'grocery-kirana',
           image: fs.existsSync(path.join(output,`grocery-photo-${index}.png`)) ? `https://test-assets.invalid/grocery-photo-${index}.png` : photo,
           unit:['500 g','6 pieces','1 kg','500 ml'][index], price:[24,45,120,30][index],
           variants:[], stock:5,
@@ -47,6 +47,7 @@ const assert = require('node:assert/strict');
       }
       if (url.searchParams.has('category')) items = items.filter(item=>item.categorySlug===url.searchParams.get('category'));
       const q = url.searchParams.get('q')?.trim().toLowerCase();
+      if (brandedFixture && resource === 'shops' && q === 'tomato') items = [{...items[0], description: 'Tomato search fixture'}];
       if(q) items=items.filter(item=>[item.name,item.description,item.tagline,item.locality].filter(Boolean).some(text=>text.toLowerCase().includes(q)));
       await route.fulfill({body:JSON.stringify(items),contentType:'application/json',headers:{'access-control-allow-origin':'*'}});
     });
@@ -98,7 +99,7 @@ const assert = require('node:assert/strict');
     await page.getByRole('button',{name:'View dog food',exact:true}).waitFor();
     await page.screenshot({path:path.join(output,'search-390.png')});
     await page.getByRole('textbox',{name:'Search products, shops and brands'}).fill('zz-no-match');
-    await page.getByText('No matching products found.',{exact:true}).waitFor();
+    await page.getByText('No products found.',{exact:true}).waitFor();
     await page.getByRole('textbox',{name:'Search products, shops and brands'}).fill('');
     for(const width of [360,375,430]) {
       await page.setViewportSize({width,height:844});
@@ -174,7 +175,37 @@ const assert = require('node:assert/strict');
     await page.getByText('Bag · 1',{exact:true}).waitFor();
     await page.getByRole('button',{name:'View Yelakki bananas',exact:true}).click();
     await page.getByRole('button',{name:'Back from product',exact:true}).waitFor();
+    await page.getByRole('button',{name:'Back from product',exact:true}).click();
+    await page.getByRole('button',{name:'Back to Browse categories',exact:true}).click();
+    await page.evaluate(() => sessionStorage.removeItem('jpi.bag.guest'));
+    await page.reload();
+    await page.getByText('Shops around you',{exact:true}).waitFor();
+    await page.getByText('Browse',{exact:true}).click();
+    await page.addStyleTag({content:'[data-testid="buyer-shell"]{padding-top:28px!important;padding-bottom:20px!important}'});
+    const search = page.getByRole('textbox',{name:'Search products, shops and brands'});
+    await search.fill('tomato');
+    await page.getByRole('tab',{name:'Products 4',exact:true}).waitFor();
+    await page.getByRole('tab',{name:'Shops 1',exact:true}).waitFor();
+    await page.getByRole('tab',{name:'Brands 0',exact:true}).waitFor();
+    await search.blur();
+    for (const [width,height] of [[390,844],[360,800],[375,812],[430,932]]) {
+      await page.setViewportSize({width,height});
+      await page.waitForTimeout(250);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),false);
+      await page.screenshot({path:path.join(output,`search-tomato-${width}.png`)});
+    }
+    await page.getByRole('tab',{name:'Shops 1',exact:true}).click();
+    await page.getByRole('button',{name:'OM CYBER CAFE RAIYAM',exact:true}).click();
+    await page.getByRole('button',{name:'Back from shop',exact:true}).click();
+    await page.getByRole('tab',{name:'Brands 0',exact:true}).click();
+    await page.getByText('No brands found.',{exact:true}).waitFor();
+    await search.fill('AmUl');
+    await page.getByRole('button',{name:/^Amul/}).click();
+    await page.getByRole('button',{name:'View Test product 0',exact:true}).waitFor();
+    assert.equal(await page.getByRole('button',{name:'View Test product 1',exact:true}).count(),0);
+    await page.getByRole('button',{name:'Clear search',exact:true}).click();
+    await page.getByRole('tab',{name:'Categories',selected:true}).waitFor();
     assert.deepEqual(errors,[]);
-    console.log('PASS: Browse regression, brand cards at four widths, brand search and matching products.');
+    console.log('PASS: Browse regression, category shopping, and global search counts, result tabs and navigation at four widths.');
   } finally { await browser.close(); }
 })().catch(error=>{console.error(error);process.exitCode=1;});

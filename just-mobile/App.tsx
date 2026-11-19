@@ -660,14 +660,14 @@ function GuestHomeHeader({
   );
 }
 const guestCategories = [
-  { slug: "grocery-kirana", label: "Groceries" },
-  { slug: "fruits-vegetables", label: "Vegetables" },
-  { slug: "fruits-vegetables", label: "Fruits" },
-  { slug: "dairy-eggs", label: "Dairy" },
-  { slug: "sweets-bakery", label: "Bakery" },
-  { slug: "personal-care-household", label: "Personal care" },
-  { slug: "personal-care-household", label: "Home care" },
-  { slug: "fast-food-snacks", label: "Snacks" },
+  { slug: "grocery-kirana", label: "Groceries", photo: require("./assets/home-categories/grocery.webp") },
+  { slug: "fruits-vegetables", label: "Vegetables", photo: require("./assets/home-categories/vegetables.webp") },
+  { slug: "fruits-vegetables", label: "Fruits", photo: require("./assets/home-categories/fruits.webp") },
+  { slug: "dairy-eggs", label: "Dairy", photo: require("./assets/home-categories/dairy.webp") },
+  { slug: "sweets-bakery", label: "Bakery", photo: require("./assets/home-categories/bakery.webp") },
+  { slug: "personal-care-household", label: "Personal care", photo: require("./assets/home-categories/personal-care.webp") },
+  { slug: "personal-care-household", label: "Home care", photo: require("./assets/home-categories/home-care.webp") },
+  { slug: "fast-food-snacks", label: "Snacks", photo: require("./assets/home-categories/snacks.webp") },
 ];
 function GuestSection({
   title,
@@ -1055,7 +1055,7 @@ function Home({
             rowGap: 27,
           }}
         >
-          {guestCategories.map((entry, index) => (
+          {guestCategories.map((entry) => (
             <Pressable
               key={entry.label}
               accessibilityRole="button"
@@ -1067,12 +1067,14 @@ function Home({
               }
               style={{ width: "23%", alignItems: "center" }}
             >
-              <ReferenceArtwork
-                source={require("./assets/guest-categories.png")}
-                sourceSize={[296, 108]}
-                crop={[(index % 4) * 74, Math.floor(index / 4) * 54, 74, 54]}
-                style={{ width: "100%", maxWidth: 74, borderRadius: 12 }}
-              />
+              <View style={{ width: "100%", maxWidth: 74, height: 54, borderRadius: 12, overflow: "hidden" }}>
+                <Image
+                  accessible={false}
+                  source={entry.photo}
+                  resizeMode="cover"
+                  style={{ width: "100%", height: "100%" }}
+                />
+              </View>
               <Text
                 style={{
                   fontSize: 10,
@@ -1099,18 +1101,19 @@ function Home({
           }}
         >
           {[
-            { slug: "fruits-vegetables", label: "Vegetables\n& Fruits" },
-            { slug: "grocery-kirana", label: "Grocery" },
-            { slug: "fashion", label: "Fashion" },
-            { slug: "dairy-eggs", label: "Dairy & Eggs" },
-            { slug: "electronics", label: "Electronics" },
-            { slug: "stationery-books", label: "Stationery" },
+            { slug: "fruits-vegetables", label: "Vegetables\n& Fruits", photo: require("./assets/home-categories/vegetables.webp") },
+            { slug: "grocery-kirana", label: "Grocery", photo: require("./assets/home-categories/grocery.webp") },
+            { slug: "fashion", label: "Fashion", photo: require("./assets/home-categories/fashion.webp") },
+            { slug: "dairy-eggs", label: "Dairy & Eggs", photo: require("./assets/home-categories/dairy.webp") },
+            { slug: "electronics", label: "Electronics", photo: require("./assets/home-categories/electronics.webp") },
+            { slug: "stationery-books", label: "Stationery", photo: require("./assets/home-categories/stationery.webp") },
             {
               slug: "personal-care-household",
               label: "Beauty &\nPersonal Care",
+              photo: require("./assets/home-categories/personal-care.webp"),
             },
             { slug: "more", label: "More" },
-          ].map((entry, index) => {
+          ].map((entry) => {
             const item = categories.find(
               (category) => category.slug === entry.slug,
             );
@@ -1141,15 +1144,12 @@ function Home({
                     borderColor: c.green,
                   }}
                 >
-                  {index < 7 ? (
-                    <ReferenceArtwork
-                      crop={[
-                        20 + (index % 4) * 90,
-                        index < 4 ? 510 : 629,
-                        80,
-                        64,
-                      ]}
-                      style={{ width: "100%" }}
+                  {entry.photo ? (
+                    <Image
+                      accessible={false}
+                      source={entry.photo}
+                      resizeMode="cover"
+                      style={{ width: "100%", height: "100%" }}
                     />
                   ) : (
                     <MarketIcon name="browse" color="#747D6E" />

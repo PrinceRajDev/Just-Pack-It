@@ -60,7 +60,7 @@ const assert = require('node:assert/strict');
     await page.getByRole('button', { name: 'More', exact: true }).click();
     await page.getByText('All categories', { exact: true }).waitFor();
     await page.getByRole('button', { name: 'Close categories', exact: true }).click();
-    await page.getByText('Explore shops', { exact: true }).click();
+    await page.getByRole('button', { name: 'Explore shops', exact: true }).click();
     await page.getByText('Shops in Raiyam', { exact: true }).waitFor();
     await page.getByText('←', { exact: true }).first().click();
     await page.getByText('Good shops. Close by.', { exact: true }).waitFor();

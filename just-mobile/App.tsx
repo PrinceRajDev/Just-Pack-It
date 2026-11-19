@@ -35,6 +35,10 @@ import { HomeNotifications, BuyAgain } from "./src/HomeExtras";
 import { ReferenceArtwork } from "./src/ReferenceArtwork";
 import { BuyerBrowse } from "./src/BuyerBrowse";
 import { BuyerShopPage } from "./src/BuyerShopPage";
+import {
+  BuyerProductContext,
+  BuyerProductDetails,
+} from "./src/BuyerProductDetails";
 
 type Screen =
   "home" | "browse" | "bag" | "shop" | "account" | "orders" | "checkout";
@@ -369,7 +373,11 @@ export default function App() {
             onBag={() => setScreen("bag")}
           />
         )}
-        {body}
+        <BuyerProductContext.Provider
+          value={{ areaId: area?.id, shops, userId: session?.userId }}
+        >
+          {body}
+        </BuyerProductContext.Provider>
         {(screen === "home" || screen === "browse") && count > 0 ? (
           <Pressable style={s.bagBar} onPress={() => setScreen("bag")}>
             <View>
@@ -1390,7 +1398,7 @@ function ProductCard({
   onAdd: (x: Product) => void;
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [variantId, setVariantId] = useState(
+  const [variantId] = useState(
     item.variants?.find((variant) => variant.stock > 0)?.id ??
       item.variants?.[0]?.id,
   );
@@ -1571,73 +1579,14 @@ function ProductCard({
         animationType="slide"
         onRequestClose={() => setDetailsOpen(false)}
       >
-        <SafeAreaView style={s.safe}>
-          <Title
-            title="Product details"
-            copy={item.name}
-            onBack={() => setDetailsOpen(false)}
+        {detailsOpen && (
+          <BuyerProductDetails
+            item={item}
+            bag={bag}
+            onAdd={onAdd}
+            back={() => setDetailsOpen(false)}
           />
-          <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
-            <Thumb item={item} />
-            <Text style={s.pageTitle}>{item.name}</Text>
-            <Text style={s.pageCopy}>{item.unit}</Text>
-            <Text style={s.totalValue}>{money(selected.price)}</Text>
-            {item.variants?.length ? (
-              <View style={{ gap: 8 }}>
-                <Text style={s.pageTitle}>Choose size or pack</Text>
-                {item.variants.map((option) => (
-                  <Pressable
-                    key={option.id}
-                    disabled={option.stock <= 0}
-                    onPress={() => setVariantId(option.id)}
-                    style={{
-                      padding: 16,
-                      borderRadius: 8,
-                      borderWidth: 1,
-                      borderColor: option.id === variantId ? c.green : c.line,
-                      backgroundColor:
-                        option.id === variantId ? c.pale : c.card,
-                    }}
-                  >
-                    <Text style={s.price}>
-                      {option.label} · {money(option.price)}
-                    </Text>
-                    <Text style={s.pageCopy}>
-                      {option.stock > 0
-                        ? `${option.stock} available`
-                        : "Out of stock"}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            ) : null}
-            {item.description ? (
-              <Text
-                style={{ color: c.secondary, fontSize: 15, lineHeight: 22 }}
-              >
-                {item.description}
-              </Text>
-            ) : null}
-            <Text style={s.pageCopy}>
-              {selected.stock > 0
-                ? `${selected.stock} available · ${selectedQuantity} in your bag`
-                : "Currently out of stock"}
-            </Text>
-            <Pressable
-              disabled={unavailable}
-              style={[s.checkoutButton, unavailable && s.addDisabled]}
-              onPress={() => onAdd(selected)}
-            >
-              <Text style={[s.checkoutText, unavailable && s.addTextDisabled]}>
-                {selected.stock <= 0
-                  ? "Out of stock"
-                  : unavailable
-                    ? "Stock limit reached"
-                    : "Add to bag"}
-              </Text>
-            </Pressable>
-          </ScrollView>
-        </SafeAreaView>
+        )}
       </Modal>
     </View>
   );

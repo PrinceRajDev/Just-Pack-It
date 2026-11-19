@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -72,12 +72,17 @@ export function BuyerBrowse({
   categories: Category[];
   query: string;
   setQuery: (text: string) => void;
-  renderProduct: (item: Product) => ReactNode;
+  renderProduct: (item: Product, categoryLayout?: boolean) => ReactNode;
   renderShop: (item: Shop) => ReactNode;
   hasBag: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("Categories");
   const [category, setCategory] = useState<(typeof cards)[number] | null>(null);
+  const [sort, setSort] = useState<
+    "price_asc" | "price_desc" | "name" | undefined
+  >();
+  const [subcategory, setSubcategory] = useState<string>();
+  const [menu, setMenu] = useState<"sort" | "filter" | null>(null);
   const [brand, setBrand] = useState<string | null>(null);
   const [result, setResult] = useState<Page | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -91,11 +96,31 @@ export function BuyerBrowse({
   } | null>(null);
   const [catalogueError, setCatalogueError] = useState<string | null>(null);
   const search = query.trim();
-  const key = `${areaId ?? ""}:${category?.slug ?? ""}:${search}`;
+  const groceries = category?.slug === "grocery-kirana";
+  const categoryLabel = groceries ? "groceries" : category?.name.toLowerCase();
+  const subcategories =
+    categories.find((item) => item.slug === category?.slug)?.subcategories ??
+    [];
+  const key = JSON.stringify([
+    areaId,
+    category?.slug,
+    search,
+    sort,
+    subcategory,
+  ]);
+  const sortOptions = [
+    { name: "Popular", value: undefined },
+    { name: "Price: Low to High", value: "price_asc" },
+    { name: "Price: High to Low", value: "price_desc" },
+    { name: "Name: A to Z", value: "name" },
+  ] as const;
   const discovery = tab === "Categories" && !category && !search;
   const needsBrands = tab === "Brands" || !!search;
   const reset = () => {
     setCategory(null);
+    setSort(undefined);
+    setSubcategory(undefined);
+    setMenu(null);
     setBrand(null);
     setQuery("");
   };
@@ -113,7 +138,10 @@ export function BuyerBrowse({
         setError(null);
         const request = category
           ? marketApi
-              .categoryPage(areaId, category.slug, undefined, search)
+              .categoryPage(areaId, category.slug, undefined, search, {
+                sort,
+                subcategory,
+              })
               .then((page) => ({
                 products: page.items,
                 shops: [],
@@ -140,7 +168,17 @@ export function BuyerBrowse({
       active = false;
       clearTimeout(timer);
     };
-  }, [areaId, discovery, category, search, key, attempt, tab]);
+  }, [
+    areaId,
+    discovery,
+    category,
+    search,
+    key,
+    attempt,
+    tab,
+    sort,
+    subcategory,
+  ]);
   useEffect(() => {
     if (!areaId || !needsBrands) return;
     let active = true;
@@ -184,7 +222,7 @@ export function BuyerBrowse({
     (name) =>
       !search || name.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
   );
-  const productItems = useMemo(() => {
+  const productItems = (() => {
     if (brand)
       return (
         catalogue && catalogue.area === areaId ? catalogue.items : []
@@ -204,7 +242,7 @@ export function BuyerBrowse({
         (item) => !matches.some((old) => old.id === item.id),
       ),
     ];
-  }, [brand, catalogue, areaId, result, key, category, search]);
+  })();
   const pending = !areaId
     ? false
     : tab === "Brands"
@@ -229,6 +267,7 @@ export function BuyerBrowse({
                 category.slug,
                 cursor,
                 search,
+                { sort, subcategory },
               )
             : await marketApi.searchProducts(areaId, search, cursor);
       setResult((old) => {
@@ -275,7 +314,20 @@ export function BuyerBrowse({
       contentContainerStyle={[styles.content, hasBag && { paddingBottom: 96 }]}
     >
       <View style={styles.header}>
-        <Text style={styles.heading}>Browse</Text>
+        {category ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Back to Browse categories"
+            onPress={reset}
+            style={{ flexShrink: 1 }}
+          >
+            <Text numberOfLines={1} style={styles.heading}>
+              {category.name}
+            </Text>
+          </Pressable>
+        ) : (
+          <Text style={styles.heading}>Browse</Text>
+        )}
         <HomeNotifications session={session} />
       </View>
       <View style={styles.search}>
@@ -283,39 +335,117 @@ export function BuyerBrowse({
           <MarketIcon name="search" color="#777D72" />
         </View>
         <TextInput
-          accessibilityLabel="Search products, shops and brands"
+          accessibilityLabel={
+            category
+              ? `Search in ${categoryLabel}`
+              : "Search products, shops and brands"
+          }
           value={query}
           onChangeText={setQuery}
-          placeholder="Search products, shops & brands"
+          placeholder={
+            category
+              ? `Search in ${categoryLabel}`
+              : "Search products, shops & brands"
+          }
           placeholderTextColor="#737B6D"
           style={styles.input}
           returnKeyType="search"
           clearButtonMode="while-editing"
         />
       </View>
-      <View accessibilityRole="tablist" style={styles.tabs}>
-        {(["Categories", "Shops", "Brands"] as const).map((item) => (
-          <Pressable
-            key={item}
-            accessibilityRole="tab"
-            aria-selected={tab === item}
-            accessibilityState={{ selected: tab === item }}
-            onPress={() => {
-              setTab(item);
-              setCategory(null);
-              setBrand(null);
-            }}
-            style={styles.tab}
-          >
-            <Text
-              style={[styles.tabText, tab === item && { fontWeight: "700" }]}
+      {category ? (
+        <>
+          <View style={styles.categoryControls}>
+            <Pressable
+              accessibilityRole="button"
+              style={styles.tab}
+              onPress={() => {
+                setSubcategory(undefined);
+                setMenu(
+                  subcategories.length && menu !== "filter" ? "filter" : null,
+                );
+              }}
             >
-              {item}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-      {category || brand ? (
+              <Text style={styles.tabText}>
+                {subcategories.find((item) => item.slug === subcategory)
+                  ?.name ?? `All ${categoryLabel}`}
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              style={{ flex: 1, justifyContent: "center" }}
+              onPress={() => setMenu(menu === "sort" ? null : "sort")}
+            >
+              <Text style={styles.categoryControlText}>
+                Sort:{" "}
+                {sortOptions.find((option) => option.value === sort)?.name} ⌄
+              </Text>
+            </Pressable>
+          </View>
+          {menu === "sort" && (
+            <View style={styles.empty}>
+              {sortOptions.map((option) => (
+                <Pressable
+                  accessibilityRole="button"
+                  key={option.name}
+                  onPress={() => {
+                    setSort(option.value);
+                    setMenu(null);
+                  }}
+                >
+                  <Text style={styles.retry}>{option.name}</Text>
+                </Pressable>
+              ))}
+              <Text style={styles.emptyText}>
+                Newest is unavailable for this catalogue.
+              </Text>
+            </View>
+          )}
+          {menu === "filter" && (
+            <View style={styles.empty}>
+              {subcategories.map((option) => (
+                <Pressable
+                  accessibilityRole="button"
+                  key={option.slug}
+                  onPress={() => {
+                    setSubcategory(option.slug);
+                    setMenu(null);
+                  }}
+                >
+                  <Text style={styles.retry}>{option.name}</Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
+          <Text style={styles.categoryHeading}>
+            {groceries ? "Everyday essentials, nearby." : category.name}
+          </Text>
+        </>
+      ) : (
+        <View accessibilityRole="tablist" style={styles.tabs}>
+          {(["Categories", "Shops", "Brands"] as const).map((item) => (
+            <Pressable
+              key={item}
+              accessibilityRole="tab"
+              aria-selected={tab === item}
+              accessibilityState={{ selected: tab === item }}
+              onPress={() => {
+                setTab(item);
+                setCategory(null);
+                setBrand(null);
+              }}
+              style={styles.tab}
+            >
+              <Text
+                style={[styles.tabText, tab === item && { fontWeight: "700" }]}
+              >
+                {item}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
+      {brand ? (
         <View style={styles.selection}>
           <Pressable
             accessibilityRole="button"
@@ -515,7 +645,7 @@ export function BuyerBrowse({
           {tab === "Categories" || brand ? (
             productItems.length ? (
               <View style={styles.products}>
-                {productItems.map((item) => renderProduct(item))}
+                {productItems.map((item) => renderProduct(item, !!category))}
               </View>
             ) : (
               empty(
@@ -570,6 +700,16 @@ export function BuyerBrowse({
   );
 }
 const styles = StyleSheet.create({
+  categoryControls: { flexDirection: "row", gap: 12, marginTop: 20 },
+  categoryControlText: { fontSize: 12, fontWeight: "600", color: "#202820" },
+  categoryHeading: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: "700",
+    color: "#202820",
+    marginTop: 22,
+    marginBottom: 20,
+  },
   shopHeading: {
     minHeight: 25,
     flexDirection: "row",

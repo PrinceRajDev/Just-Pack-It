@@ -11,10 +11,15 @@ const assert = require('node:assert/strict');
     const page = await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
     const errors = [];
     let brandedFixture = false;
+    await page.route('https://test-assets.invalid/grocery-photo-*.png', route => route.fulfill({path:path.join(output,new URL(route.request().url()).pathname.slice(1))}));
     page.on('pageerror',error=>errors.push(error.message));
     await page.route('https://just-pack-it-bq64.onrender.com/**',async route=>{
       const url = new URL(route.request().url());
       const resource = url.pathname.slice(1);
+      if (brandedFixture && resource === 'products/grocery-test-1') {
+        const product = JSON.parse(fs.readFileSync(path.join(data,'products.json'),'utf8'))[0];
+        return route.fulfill({json:{...product,id:'grocery-test-1',name:'Yelakki bananas',unit:'6 pieces',price:45},headers:{'access-control-allow-origin':'*'}});
+      }
       if(resource.startsWith('auth/')) return route.abort(); // No login submitted in navigation QA.
       if(/^shops\/[^/]+\/products$/.test(resource)) {
         const products=JSON.parse(fs.readFileSync(path.join(data,'products.json'),'utf8'));
@@ -26,6 +31,19 @@ const assert = require('node:assert/strict');
           ...items[0], id: 'brand-test-' + index, name: 'Test product ' + index,
           attributes: [{label:'Brand',value:brand}],
         }));
+      }
+      if (brandedFixture && resource === 'products' && url.searchParams.get('category') === 'grocery-kirana') {
+        const photo = items[0].image;
+        items = ['Farm fresh tomatoes', 'Yelakki bananas', 'Premium basmati rice', 'Fresh milk'].map((name,index) => ({
+          ...items[0], id: 'grocery-test-' + index, name, categorySlug:'grocery-kirana',
+          image: fs.existsSync(path.join(output,`grocery-photo-${index}.png`)) ? `https://test-assets.invalid/grocery-photo-${index}.png` : photo,
+          unit:['500 g','6 pieces','1 kg','500 ml'][index], price:[24,45,120,30][index],
+          variants:[], stock:5,
+        }));
+        const sort = url.searchParams.get('sort');
+        if (sort === 'price_asc') items.sort((a,b)=>a.price-b.price);
+        if (sort === 'price_desc') items.sort((a,b)=>b.price-a.price);
+        if (sort === 'name') items.sort((a,b)=>a.name.localeCompare(b.name));
       }
       if (url.searchParams.has('category')) items = items.filter(item=>item.categorySlug===url.searchParams.get('category'));
       const q = url.searchParams.get('q')?.trim().toLowerCase();
@@ -126,6 +144,36 @@ const assert = require('node:assert/strict');
     await card.click();
     await page.getByRole('button',{name:'View Test product 0',exact:true}).waitFor();
     assert.equal(await page.getByRole('button',{name:'View Test product 1',exact:true}).count(),0);
+    await page.getByRole('tab',{name:'Categories',exact:true}).click();
+    await page.getByRole('textbox',{name:'Search products, shops and brands'}).fill('');
+    await page.getByRole('button',{name:'Groceries & staples',exact:true}).click();
+    const gridCards = page.getByRole('button',{name:/^View (Farm fresh|Yelakki|Premium|Fresh milk)/});
+    await gridCards.first().waitFor();
+    for (const [width,height] of [[390,844],[360,800],[375,812],[430,932]]) {
+      await page.setViewportSize({width,height});
+      const boxes = await Promise.all([gridCards.nth(0).boundingBox(),gridCards.nth(1).boundingBox()]);
+      assert.equal(Math.round(boxes[0].y),Math.round(boxes[1].y));
+      if (fs.existsSync(path.join(output,'grocery-photo-0.png'))) {
+        await page.waitForFunction(() => [...document.images].some(img => img.src.includes('grocery-photo') && img.complete && img.naturalWidth > 0));
+      }
+      await page.screenshot({path:path.join(output,`groceries-${width}.png`)});
+    }
+    await page.getByRole('button',{name:'All groceries',exact:true}).click();
+    for (const [option,first] of [['Price: High to Low','Premium basmati rice'],['Price: Low to High','Farm fresh tomatoes'],['Name: A to Z','Farm fresh tomatoes'],['Popular','Farm fresh tomatoes']]) {
+      await page.getByRole('button',{name:/^Sort:/}).click();
+      const request = page.waitForResponse(response=>response.url().includes('category=grocery-kirana'));
+      await page.getByRole('button',{name:option,exact:true}).click();
+      await request;
+      await gridCards.first().waitFor();
+      assert.equal(await gridCards.first().getAttribute('aria-label'),'View '+first);
+    }
+    await page.getByRole('textbox',{name:'Search in groceries'}).fill('banana');
+    await page.getByRole('button',{name:'View Yelakki bananas',exact:true}).waitFor();
+    assert.equal(await gridCards.count(),1);
+    await page.getByText('+ Add',{exact:true}).click();
+    await page.getByText('Bag · 1',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'View Yelakki bananas',exact:true}).click();
+    await page.getByRole('button',{name:'Back from product',exact:true}).waitFor();
     assert.deepEqual(errors,[]);
     console.log('PASS: Browse regression, brand cards at four widths, brand search and matching products.');
   } finally { await browser.close(); }

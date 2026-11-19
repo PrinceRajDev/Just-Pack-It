@@ -300,8 +300,9 @@ export default function App() {
       hasBag={count > 0}
       query={query}
       setQuery={setQuery}
-      renderProduct={(item) => (
+      renderProduct={(item, categoryLayout) => (
         <ProductCard
+          categoryLayout={categoryLayout}
           key={item.id}
           item={item}
           shopName={shops.find((shop) => shop.id === item.shopId)?.name}
@@ -1673,6 +1674,7 @@ function ShopPreview({
   );
 }
 function ProductCard({
+  categoryLayout = false,
   compact = false,
   cardWidth,
   onQuantity,
@@ -1684,6 +1686,7 @@ function ProductCard({
   onAdd,
 }: {
   item: Product;
+  categoryLayout?: boolean;
   compact?: boolean;
   cardWidth?: number;
   onQuantity?: (id: string, delta: number) => void;
@@ -1719,6 +1722,12 @@ function ProductCard({
     <View
       style={[
         s.product,
+        categoryLayout && {
+          width: "48.3%",
+          minHeight: 240,
+          padding: 10,
+          backgroundColor: "#FFFFFF",
+        },
         fullWidth && { width: "100%" },
         compact && {
           width: cardWidth ?? "48.3%",
@@ -1733,13 +1742,14 @@ function ProductCard({
         accessibilityLabel={`View ${item.name}`}
         onPress={() => setDetailsOpen(true)}
       >
-        <Thumb item={item} shopImage={compact} />
+        <Thumb item={item} shopImage={compact} categoryImage={categoryLayout} />
       </Pressable>
       <Text
         onPress={() => setDetailsOpen(true)}
         numberOfLines={compact ? 1 : 2}
         style={[
           s.productName,
+          categoryLayout && { fontSize: 13, marginTop: 8 },
           compact && {
             fontSize: 11,
             lineHeight: 14,
@@ -1764,9 +1774,9 @@ function ProductCard({
           },
         ]}
       >
-        {item.unit}
+        {categoryLayout ? selected.unit : item.unit}
       </Text>
-      {!compact && (
+      {!compact && !categoryLayout && (
         <Text
           numberOfLines={1}
           style={{
@@ -1783,11 +1793,22 @@ function ProductCard({
       <View
         style={[
           s.productBottom,
+          categoryLayout && {
+            flexDirection: "column",
+            alignItems: "stretch",
+            gap: 8,
+          },
           compact && { marginHorizontal: 10, marginBottom: 10, paddingTop: 2 },
         ]}
       >
-        <Text style={[s.price, compact && { fontSize: 14 }]}>
-          {money(item.price)}
+        <Text
+          style={[
+            s.price,
+            compact && { fontSize: 14 },
+            categoryLayout && { color: c.green },
+          ]}
+        >
+          {money(categoryLayout ? selected.price : item.price)}
         </Text>
         {compact && quantity > 0 && !item.variants?.length && onQuantity ? (
           <View
@@ -1842,30 +1863,52 @@ function ProductCard({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={compact ? `Add ${item.name}` : undefined}
-            disabled={variant ? item.stock <= 0 : unavailable}
+            disabled={
+              categoryLayout
+                ? unavailable
+                : variant
+                  ? item.stock <= 0
+                  : unavailable
+            }
             style={[
               s.add,
+              categoryLayout && { height: 40, borderRadius: 13 },
               unavailable && s.addDisabled,
               compact && { height: 28, minWidth: 76, borderRadius: 8 },
             ]}
-            onPress={() => (variant ? setDetailsOpen(true) : onAdd(item))}
+            onPress={() =>
+              categoryLayout
+                ? onAdd(selected)
+                : variant
+                  ? setDetailsOpen(true)
+                  : onAdd(item)
+            }
           >
             <Text
               style={[
                 s.addText,
+                categoryLayout && { fontSize: 14 },
                 unavailable && s.addTextDisabled,
                 compact && { fontSize: 10 },
               ]}
             >
-              {variant
-                ? "Options"
-                : item.stock <= 0
-                  ? "Out"
+              {categoryLayout
+                ? selected.stock <= 0
+                  ? "Out of stock"
                   : unavailable
-                    ? "Limit"
-                    : quantity
-                      ? `Add · ${quantity}`
-                      : "+ Add"}
+                    ? "Stock limit"
+                    : selectedQuantity
+                      ? `+ Add · ${selectedQuantity}`
+                      : "+ Add"
+                : variant
+                  ? "Options"
+                  : item.stock <= 0
+                    ? "Out"
+                    : unavailable
+                      ? "Limit"
+                      : quantity
+                        ? `Add · ${quantity}`
+                        : "+ Add"}
             </Text>
           </Pressable>
         )}
@@ -1888,11 +1931,13 @@ function ProductCard({
   );
 }
 function Thumb({
+  categoryImage = false,
   item,
   compact = false,
   shopImage = false,
 }: {
   item: Product;
+  categoryImage?: boolean;
   compact?: boolean;
   shopImage?: boolean;
 }) {
@@ -1902,6 +1947,7 @@ function Thumb({
       source={{ uri: resolveImage(item.image)! }}
       style={[
         s.productImage,
+        categoryImage && { height: 112, borderRadius: 12 },
         compact && { width: 64, height: 64, flexShrink: 0 },
         shopImage && { width: "100%", height: 76, borderRadius: 0 },
       ]}
@@ -1911,6 +1957,7 @@ function Thumb({
     <View
       style={[
         s.productFallback,
+        categoryImage && { height: 112, borderRadius: 12 },
         compact && { width: 64, height: 64, flexShrink: 0 },
         shopImage && { width: "100%", height: 76, borderRadius: 0 },
       ]}

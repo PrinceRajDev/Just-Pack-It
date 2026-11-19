@@ -44,8 +44,25 @@ const assert = require('node:assert/strict');
     await page.getByText('No products are available in this category yet.',{exact:true}).waitFor();
     await page.getByRole('button',{name:'Back to Browse categories',exact:true}).click();
     await page.getByRole('button',{name:'Explore nearby shops',exact:true}).click();
+    await page.getByText('Shops near Raiyam',{exact:true}).waitFor();
+    await page.getByText('2 shops',{exact:true}).waitFor();
     await page.getByText('OM CYBER CAFE RAIYAM',{exact:true}).waitFor();
     await page.screenshot({path:path.join(output,'shops-390.png')});
+    for (const [width,height] of [[360,800],[375,812],[430,932]]) {
+      await page.setViewportSize({width,height});
+      const card = await page.getByRole('button',{name:'OM CYBER CAFE RAIYAM',exact:true}).boundingBox();
+      assert.ok(card && Math.abs(card.width - (width - 40)) < 2);
+      await page.screenshot({path:path.join(output,`shops-${width}.png`)});
+    }
+    await page.setViewportSize({width:390,height:844});
+    const shopSearch = page.getByRole('textbox',{name:'Search products, shops and brands'});
+    await shopSearch.fill('cyber');
+    await page.getByText('1 shop',{exact:true}).waitFor();
+    assert.equal(await page.getByRole('button',{name:'pet shop',exact:true}).count(),0);
+    await shopSearch.fill('no-matching-shop');
+    await page.getByText('No matching shops in this area.',{exact:true}).waitFor();
+    await shopSearch.fill('');
+    await page.getByText('2 shops',{exact:true}).waitFor();
     await page.getByText('OM CYBER CAFE RAIYAM',{exact:true}).click();
     await page.getByText('Fresh picks for today',{exact:true}).waitFor();
     await page.getByRole('button',{name:'Back from shop',exact:true}).click();

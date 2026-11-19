@@ -21,6 +21,7 @@ import { resolveImage } from "./images";
 import { MarketIcon } from "./MarketIcon";
 import { ReferenceArtwork } from "./ReferenceArtwork";
 import { useAndroidBack } from "./useAndroidBack";
+import { BrowseShopCard } from "./BrowseShopCard";
 
 const cards = [
   { slug: "grocery-kirana", name: "Groceries & staples" },
@@ -55,6 +56,8 @@ function brandName(product: Product): string | undefined {
 export function BuyerBrowse({
   session,
   areaId,
+  areaName,
+  onShop,
   categories,
   query,
   setQuery,
@@ -64,6 +67,8 @@ export function BuyerBrowse({
 }: {
   session: Session | null;
   areaId?: string;
+  areaName?: string;
+  onShop: (item: Shop) => void;
   categories: Category[];
   query: string;
   setQuery: (text: string) => void;
@@ -322,78 +327,77 @@ export function BuyerBrowse({
           <Text style={styles.selectionTitle}>{category?.name ?? brand}</Text>
         </View>
       ) : null}
+      {discovery || tab === "Shops" ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Explore nearby shops"
+          onPress={() => {
+            reset();
+            setTab("Shops");
+          }}
+          style={styles.promo}
+        >
+          <Text style={styles.promoTitle}>
+            Your neighbourhood is full of good finds.
+          </Text>
+          <Text style={styles.explore}>Explore nearby shops →</Text>
+        </Pressable>
+      ) : null}
       {discovery ? (
-        <>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Explore nearby shops"
-            onPress={() => {
-              reset();
-              setTab("Shops");
-            }}
-            style={styles.promo}
-          >
-            <Text style={styles.promoTitle}>
-              Your neighbourhood is full of good finds.
-            </Text>
-            <Text style={styles.explore}>Explore nearby shops →</Text>
-          </Pressable>
-          <View style={styles.grid}>
-            {[
-              ...cards.filter((card) =>
-                categories.some((category) => category.slug === card.slug),
-              ),
-              ...categories.filter(
-                (category) =>
-                  !cards.some((card) => card.slug === category.slug),
-              ),
-            ].map((item) => {
-              const index = cards.findIndex((card) => card.slug === item.slug);
-              const backendImage = categories.find(
-                (category) => category.slug === item.slug,
-              )?.image;
-              return (
-                <Pressable
-                  key={item.slug}
-                  accessibilityRole="button"
-                  accessibilityLabel={item.name}
-                  onPress={() => {
-                    setCategory(item);
-                    setBrand(null);
-                    setQuery("");
-                  }}
-                  style={styles.card}
-                >
-                  {index >= 0 ? (
-                    <ReferenceArtwork
-                      source={require("../assets/browse-category-photos.png")}
-                      sourceSize={[270, 200]}
-                      crop={[
-                        (index % 2) * 135,
-                        Math.floor(index / 2) * 100,
-                        135,
-                        100,
-                      ]}
-                      style={styles.cardImage}
-                    />
-                  ) : (
-                    <Image
-                      source={{
-                        uri:
-                          resolveImage(backendImage) ??
-                          resolveImage("/categories/" + item.slug + "-v1.webp"),
-                      }}
-                      style={styles.cardImage}
-                      resizeMode="cover"
-                    />
-                  )}
-                  <Text style={styles.cardName}>{item.name}</Text>
-                  <Text style={styles.explore}>Explore →</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </>
+        <View style={styles.grid}>
+          {[
+            ...cards.filter((card) =>
+              categories.some((category) => category.slug === card.slug),
+            ),
+            ...categories.filter(
+              (category) => !cards.some((card) => card.slug === category.slug),
+            ),
+          ].map((item) => {
+            const index = cards.findIndex((card) => card.slug === item.slug);
+            const backendImage = categories.find(
+              (category) => category.slug === item.slug,
+            )?.image;
+            return (
+              <Pressable
+                key={item.slug}
+                accessibilityRole="button"
+                accessibilityLabel={item.name}
+                onPress={() => {
+                  setCategory(item);
+                  setBrand(null);
+                  setQuery("");
+                }}
+                style={styles.card}
+              >
+                {index >= 0 ? (
+                  <ReferenceArtwork
+                    source={require("../assets/browse-category-photos.png")}
+                    sourceSize={[270, 200]}
+                    crop={[
+                      (index % 2) * 135,
+                      Math.floor(index / 2) * 100,
+                      135,
+                      100,
+                    ]}
+                    style={styles.cardImage}
+                  />
+                ) : (
+                  <Image
+                    source={{
+                      uri:
+                        resolveImage(backendImage) ??
+                        resolveImage("/categories/" + item.slug + "-v1.webp"),
+                    }}
+                    style={styles.cardImage}
+                    resizeMode="cover"
+                  />
+                )}
+                <Text style={styles.cardName}>{item.name}</Text>
+                <Text style={styles.explore}>Explore →</Text>
+              </Pressable>
+            );
+          })}
+        </View>
       ) : !areaId ? (
         empty("Choose a delivery area from Home to browse nearby listings.")
       ) : category &&
@@ -438,10 +442,35 @@ export function BuyerBrowse({
             )
           ) : null}
           {tab === "Shops" ? (
-            <View style={{ gap: 12 }}>
+            <View style={{ gap: 20 }}>
+              <View style={styles.shopHeading}>
+                <Text style={styles.shopHeadingTitle}>
+                  {search
+                    ? "Matching shops"
+                    : areaName
+                      ? `Shops near ${areaName}`
+                      : "Nearby shops"}
+                </Text>
+                <Text style={styles.shopCount}>
+                  {result?.shops.length ?? 0}
+                  {result?.shopCursor ? "+" : ""}{" "}
+                  {result?.shops.length === 1 && !result.shopCursor
+                    ? "shop"
+                    : "shops"}
+                </Text>
+              </View>
               {result?.shops.length
                 ? result.shops.map((item) => (
-                    <View key={item.id}>{renderShop(item)}</View>
+                    <BrowseShopCard
+                      key={item.id}
+                      item={item}
+                      categoryLabel={
+                        categories.find((category) =>
+                          item.categories?.includes(category.slug),
+                        )?.name
+                      }
+                      onPress={() => onShop(item)}
+                    />
                   ))
                 : empty("No matching shops in this area.")}
             </View>
@@ -529,6 +558,21 @@ export function BuyerBrowse({
   );
 }
 const styles = StyleSheet.create({
+  shopHeading: {
+    minHeight: 25,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  shopHeadingTitle: {
+    flex: 1,
+    color: "#202820",
+    fontSize: 18,
+    lineHeight: 25,
+    fontWeight: "600",
+  },
+  shopCount: { color: "#07552F", fontSize: 12, fontWeight: "600" },
   content: {
     paddingHorizontal: 20,
     paddingTop: 0,

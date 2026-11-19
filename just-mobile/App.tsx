@@ -289,6 +289,12 @@ export default function App() {
   ) : screen === "browse" ? (
     <BuyerBrowse
       session={session}
+      areaName={area?.name}
+      onShop={(item) => {
+        setShopOrigin("browse");
+        setShop(item);
+        setScreen("shop");
+      }}
       areaId={area?.id}
       categories={categories}
       hasBag={count > 0}

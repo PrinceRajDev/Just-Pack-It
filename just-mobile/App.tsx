@@ -240,14 +240,25 @@ export default function App() {
     <Home
       key={homeVisit}
       header={
-        <Header
-          session={session}
-          area={area}
-          count={count}
-          onArea={() => setPicker(true)}
-          onBrowse={() => setScreen("browse")}
-          onBag={() => setScreen("bag")}
-        />
+        !session ? (
+          <GuestHomeHeader
+            area={area}
+            onArea={() => setPicker(true)}
+            onSearch={() => {
+              setQuery("");
+              setScreen("browse");
+            }}
+          />
+        ) : (
+          <Header
+            session={session}
+            area={area}
+            count={count}
+            onArea={() => setPicker(true)}
+            onBrowse={() => setScreen("browse")}
+            onBag={() => setScreen("bag")}
+          />
+        )
       }
       session={session}
       onBag={() => {
@@ -391,6 +402,7 @@ export default function App() {
         ) : null}
         {screen !== "shop" && (
           <Nav
+            guestHome={screen === "home" && !session}
             screen={screen}
             count={count}
             home={goHome}
@@ -469,6 +481,121 @@ function Header({
       <Pressable onPress={onBrowse} style={s.search}>
         <MarketIcon name="search" />
         <Text style={s.searchText}>Search products, shops & brands</Text>
+      </Pressable>
+    </View>
+  );
+}
+function GuestHomeHeader({
+  area,
+  onArea,
+  onSearch,
+}: {
+  area: ServiceArea | null;
+  onArea: () => void;
+  onSearch: () => void;
+}) {
+  return (
+    <View style={{ paddingHorizontal: 20 }}>
+      <View
+        style={{
+          height: 58,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginRight: -12,
+        }}
+      >
+        <Text style={{ color: c.green, fontSize: 21, fontWeight: "700" }}>
+          JustPackIt
+        </Text>
+        <HomeNotifications session={null} />
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Change delivery area"
+        onPress={onArea}
+        style={{
+          marginTop: 17,
+          minHeight: 42,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 14,
+        }}
+      >
+        <ReferenceArtwork crop={[22, 120, 16, 20]} style={{ width: 20 }} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 10, color: "#777D72", fontWeight: "600" }}>
+            DELIVERING IN
+          </Text>
+          <Text
+            numberOfLines={1}
+            style={{ fontSize: 15, color: c.ink, fontWeight: "700" }}
+          >
+            {area
+              ? [area.name, area.city].filter(Boolean).join(", ")
+              : "Choose delivery area"}{" "}
+            ⌄
+          </Text>
+        </View>
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        onPress={onSearch}
+        style={{
+          marginTop: 17,
+          minHeight: 48,
+          borderRadius: 12,
+          backgroundColor: "#fff",
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: 14,
+          gap: 10,
+        }}
+      >
+        <MarketIcon name="search" color="#777D72" />
+        <Text style={{ fontSize: 13, color: "#777D72", flex: 1 }}>
+          Search products, shops &amp; brands
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+const guestCategories = [
+  { slug: "grocery-kirana", label: "Groceries" },
+  { slug: "fruits-vegetables", label: "Vegetables" },
+  { slug: "fruits-vegetables", label: "Fruits" },
+  { slug: "dairy-eggs", label: "Dairy" },
+  { slug: "sweets-bakery", label: "Bakery" },
+  { slug: "personal-care-household", label: "Personal care" },
+  { slug: "personal-care-household", label: "Home care" },
+  { slug: "fast-food-snacks", label: "Snacks" },
+];
+function GuestSection({
+  title,
+  action,
+  onPress,
+}: {
+  title: string;
+  action: string;
+  onPress: () => void;
+}) {
+  return (
+    <View
+      style={{
+        marginHorizontal: 20,
+        minHeight: 44,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}
+    >
+      <Text style={{ fontSize: 18, fontWeight: "600", color: c.ink }}>
+        {title}
+      </Text>
+      <Pressable accessibilityRole="button" onPress={onPress} hitSlop={6}>
+        <Text style={{ color: c.green, fontSize: 12, fontWeight: "600" }}>
+          {action}
+        </Text>
       </Pressable>
     </View>
   );
@@ -739,51 +866,123 @@ function Home({
           </SafeAreaView>
         </Modal>
       )}
-      <View testID="home-hero" style={s.referenceHero}>
-        <View style={s.referenceHeroCopy}>
-          <Text style={s.referenceEyebrow}>DISCOVER LOCAL. LOVE LOCAL.</Text>
-          <View style={{ marginTop: 16 }}>
-            {["Your Local", "Market,", "Just a Tap Away"].map((line) => (
-              <Text
-                key={line}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.7}
-                style={[
-                  s.referenceHeadline,
-                  {
-                    fontSize: heroFontSize,
-                    lineHeight: Math.ceil(heroFontSize * 1.16),
-                  },
-                ]}
-              >
-                {line}
-              </Text>
-            ))}
-          </View>
-          <Text style={s.referenceSupport}>
-            From the shops you know & love.
+      {!session ? (
+        <View
+          testID="home-hero"
+          style={{
+            marginHorizontal: 20,
+            marginTop: 20,
+            padding: 16,
+            minHeight: 210,
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: "#DCE3D2",
+            backgroundColor: c.pale,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 28,
+              lineHeight: 38,
+              fontWeight: "700",
+              color: c.green,
+            }}
+          >
+            Good things.{"\n"}Closer to home.
+          </Text>
+          <Text
+            style={{
+              marginTop: 8,
+              fontSize: 12,
+              lineHeight: 17,
+              color: c.green,
+            }}
+          >
+            Shop your neighbourhood favourites.{"\n"}Packed by shops. Delivered
+            by riders.
           </Text>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Explore shops"
             onPress={() => void openShops()}
-            style={s.referenceCta}
+            style={{
+              marginTop: 8,
+              minHeight: 50,
+              borderRadius: 14,
+              backgroundColor: c.green,
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 8,
+            }}
           >
-            <Text style={s.referenceCtaText}>Explore shops</Text>
-            <Text style={s.referenceCtaArrow}>→</Text>
+            <Text
+              style={{
+                color: "#fff",
+                fontWeight: "700",
+                fontSize: 15,
+                textAlign: "center",
+              }}
+            >
+              Explore nearby shops
+            </Text>
           </Pressable>
         </View>
-        <ReferenceArtwork
-          crop={[235, 225, 135, 220]}
-          style={s.referenceHeroImage}
+      ) : (
+        <View testID="home-hero" style={s.referenceHero}>
+          <View style={s.referenceHeroCopy}>
+            <Text style={s.referenceEyebrow}>DISCOVER LOCAL. LOVE LOCAL.</Text>
+            <View style={{ marginTop: 16 }}>
+              {["Your Local", "Market,", "Just a Tap Away"].map((line) => (
+                <Text
+                  key={line}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.7}
+                  style={[
+                    s.referenceHeadline,
+                    {
+                      fontSize: heroFontSize,
+                      lineHeight: Math.ceil(heroFontSize * 1.16),
+                    },
+                  ]}
+                >
+                  {line}
+                </Text>
+              ))}
+            </View>
+            <Text style={s.referenceSupport}>
+              From the shops you know & love.
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Explore shops"
+              onPress={() => void openShops()}
+              style={s.referenceCta}
+            >
+              <Text style={s.referenceCtaText}>Explore shops</Text>
+              <Text style={s.referenceCtaArrow}>→</Text>
+            </Pressable>
+          </View>
+          <ReferenceArtwork
+            crop={[235, 225, 135, 220]}
+            style={s.referenceHeroImage}
+          />
+        </View>
+      )}
+      {!session ? (
+        <View style={{ marginTop: 10 }}>
+          <GuestSection
+            title="Shop by category"
+            action="More →"
+            onPress={() => setShowCategories(true)}
+          />
+        </View>
+      ) : (
+        <Section
+          title="A little of everything"
+          action="View all"
+          onPress={() => setShowCategories(true)}
         />
-      </View>
-      <Section
-        title="A little of everything"
-        action="View all"
-        onPress={() => setShowCategories(true)}
-      />
+      )}
       <Modal
         visible={showCategories}
         animationType="slide"
@@ -830,91 +1029,150 @@ function Home({
           </ScrollView>
         </SafeAreaView>
       </Modal>
-      <View
-        style={{
-          flexDirection: "row",
-          flexWrap: "wrap",
-          paddingHorizontal: 20,
-          justifyContent: "space-between",
-          rowGap: 20,
-        }}
-      >
-        {[
-          { slug: "fruits-vegetables", label: "Vegetables\n& Fruits" },
-          { slug: "grocery-kirana", label: "Grocery" },
-          { slug: "fashion", label: "Fashion" },
-          { slug: "dairy-eggs", label: "Dairy & Eggs" },
-          { slug: "electronics", label: "Electronics" },
-          { slug: "stationery-books", label: "Stationery" },
-          { slug: "personal-care-household", label: "Beauty &\nPersonal Care" },
-          { slug: "more", label: "More" },
-        ].map((entry, index) => {
-          const item = categories.find(
-            (category) => category.slug === entry.slug,
-          );
-          return (
+      {!session ? (
+        <View
+          style={{
+            marginHorizontal: 20,
+            marginTop: 15,
+            flexDirection: "row",
+            flexWrap: "wrap",
+            justifyContent: "space-between",
+            rowGap: 27,
+          }}
+        >
+          {guestCategories.map((entry, index) => (
             <Pressable
+              key={entry.label}
               accessibilityRole="button"
-              accessibilityLabel={entry.label.replace(/\n/g, " ")}
-              accessibilityState={{ selected: picked === entry.slug }}
-              key={entry.slug}
+              accessibilityLabel={entry.label}
               onPress={() =>
-                entry.slug === "more"
-                  ? setShowCategories(true)
-                  : item
-                    ? onChoose(item.slug)
-                    : onQuickSearch(entry.label)
+                categories.some((category) => category.slug === entry.slug)
+                  ? onChoose(entry.slug)
+                  : onQuickSearch(entry.label)
               }
-              style={{ width: "23%" }}
+              style={{ width: "23%", alignItems: "center" }}
             >
-              <View
-                style={{
-                  aspectRatio: 1.25,
-                  borderRadius: 12,
-                  overflow: "hidden",
-                  backgroundColor: c.pale,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderWidth: picked === entry.slug ? 2 : 0,
-                  borderColor: c.green,
-                }}
-              >
-                {index < 7 ? (
-                  <ReferenceArtwork
-                    crop={[
-                      20 + (index % 4) * 90,
-                      index < 4 ? 510 : 629,
-                      80,
-                      64,
-                    ]}
-                    style={{ width: "100%" }}
-                  />
-                ) : (
-                  <MarketIcon name="browse" color="#747D6E" />
-                )}
-              </View>
+              <ReferenceArtwork
+                source={require("./assets/guest-categories.png")}
+                sourceSize={[296, 108]}
+                crop={[(index % 4) * 74, Math.floor(index / 4) * 54, 74, 54]}
+                style={{ width: "100%", maxWidth: 74, borderRadius: 12 }}
+              />
               <Text
-                numberOfLines={2}
                 style={{
-                  textAlign: "center",
-                  fontSize: 11,
+                  fontSize: 10,
                   lineHeight: 14,
-                  marginTop: 9,
-                  minHeight: 28,
+                  fontWeight: "600",
                   color: c.ink,
+                  marginTop: 7,
+                  textAlign: "center",
                 }}
               >
                 {entry.label}
               </Text>
             </Pressable>
-          );
-        })}
-      </View>
-      <Section
-        title="Good shops. Close by."
-        action="See all"
-        onPress={() => void openShops()}
-      />
+          ))}
+        </View>
+      ) : (
+        <View
+          style={{
+            flexDirection: "row",
+            flexWrap: "wrap",
+            paddingHorizontal: 20,
+            justifyContent: "space-between",
+            rowGap: 20,
+          }}
+        >
+          {[
+            { slug: "fruits-vegetables", label: "Vegetables\n& Fruits" },
+            { slug: "grocery-kirana", label: "Grocery" },
+            { slug: "fashion", label: "Fashion" },
+            { slug: "dairy-eggs", label: "Dairy & Eggs" },
+            { slug: "electronics", label: "Electronics" },
+            { slug: "stationery-books", label: "Stationery" },
+            {
+              slug: "personal-care-household",
+              label: "Beauty &\nPersonal Care",
+            },
+            { slug: "more", label: "More" },
+          ].map((entry, index) => {
+            const item = categories.find(
+              (category) => category.slug === entry.slug,
+            );
+            return (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={entry.label.replace(/\n/g, " ")}
+                accessibilityState={{ selected: picked === entry.slug }}
+                key={entry.slug}
+                onPress={() =>
+                  entry.slug === "more"
+                    ? setShowCategories(true)
+                    : item
+                      ? onChoose(item.slug)
+                      : onQuickSearch(entry.label)
+                }
+                style={{ width: "23%" }}
+              >
+                <View
+                  style={{
+                    aspectRatio: 1.25,
+                    borderRadius: 12,
+                    overflow: "hidden",
+                    backgroundColor: c.pale,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderWidth: picked === entry.slug ? 2 : 0,
+                    borderColor: c.green,
+                  }}
+                >
+                  {index < 7 ? (
+                    <ReferenceArtwork
+                      crop={[
+                        20 + (index % 4) * 90,
+                        index < 4 ? 510 : 629,
+                        80,
+                        64,
+                      ]}
+                      style={{ width: "100%" }}
+                    />
+                  ) : (
+                    <MarketIcon name="browse" color="#747D6E" />
+                  )}
+                </View>
+                <Text
+                  numberOfLines={2}
+                  style={{
+                    textAlign: "center",
+                    fontSize: 11,
+                    lineHeight: 14,
+                    marginTop: 9,
+                    minHeight: 28,
+                    color: c.ink,
+                  }}
+                >
+                  {entry.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+      {!session ? (
+        <View style={{ marginTop: 14, marginBottom: 8 }}>
+          <GuestSection
+            title="Shops around you"
+            action="See all"
+            onPress={() => void openShops()}
+          />
+        </View>
+      ) : (
+        <Section
+          title="Good shops. Close by."
+          action="See all"
+          onPress={() => void openShops()}
+        />
+      )}
       <Modal
         visible={showShops}
         animationType="slide"
@@ -980,30 +1238,36 @@ function Home({
         <Empty copy="No shops are available in this area yet" />
       )}
 
-      <View style={s.popularHeading}>
-        <Text style={s.popularTitle}>
-          {picked ? "Available products" : "Popular in Your\nNeighbourhood"}
-        </Text>
-        <Text style={s.popularSubtitle}>
-          Local favourites, across your everyday.
-        </Text>
-      </View>
-      {!picked && productResults}
-      <BuyAgain
-        onAdd={onAdd}
-        key={session?.userId ?? "guest"}
-        session={session}
-        onAccount={onAccount}
-        renderProduct={(item) => (
-          <ProductCard
-            fullWidth
-            item={item}
-            bag={bag}
-            quantity={bag.find((line) => line.id === item.id)?.quantity ?? 0}
+      {session && (
+        <>
+          <View style={s.popularHeading}>
+            <Text style={s.popularTitle}>
+              {picked ? "Available products" : "Popular in Your\nNeighbourhood"}
+            </Text>
+            <Text style={s.popularSubtitle}>
+              Local favourites, across your everyday.
+            </Text>
+          </View>
+          {!picked && productResults}
+          <BuyAgain
             onAdd={onAdd}
+            key={session?.userId ?? "guest"}
+            session={session}
+            onAccount={onAccount}
+            renderProduct={(item) => (
+              <ProductCard
+                fullWidth
+                item={item}
+                bag={bag}
+                quantity={
+                  bag.find((line) => line.id === item.id)?.quantity ?? 0
+                }
+                onAdd={onAdd}
+              />
+            )}
           />
-        )}
-      />
+        </>
+      )}
     </ScrollView>
   );
 }
@@ -1092,6 +1356,7 @@ function Bag({
   );
 }
 function Nav({
+  guestHome = false,
   screen,
   count,
   home,
@@ -1100,6 +1365,7 @@ function Nav({
   account,
   orders,
 }: {
+  guestHome?: boolean;
   screen: Screen;
   count: number;
   home: () => void;
@@ -1109,9 +1375,10 @@ function Nav({
   orders: () => void;
 }) {
   return (
-    <View style={s.nav}>
+    <View style={[s.nav, guestHome && { height: 70, paddingHorizontal: 8 }]}>
       <NavButton
         label="Home"
+        guestHighlight={guestHome}
         active={screen === "home" || screen === "shop"}
         onPress={home}
       />
@@ -1131,16 +1398,25 @@ function Nav({
   );
 }
 function NavButton({
+  guestHighlight = false,
   label,
   active,
   onPress,
 }: {
+  guestHighlight?: boolean;
   label: string;
   active: boolean;
   onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={[s.navButton, active && s.navActive]}>
+    <Pressable
+      onPress={onPress}
+      style={[
+        s.navButton,
+        active && s.navActive,
+        guestHighlight && { width: 75, height: 54 },
+      ]}
+    >
       <MarketIcon
         name={
           (label.startsWith("Bag")

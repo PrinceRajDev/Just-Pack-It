@@ -24,7 +24,7 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
     else result=JSON.parse(fs.readFileSync(path.join(data,resource+'.json'),'utf8'));
     await route.fulfill({body:JSON.stringify(result),contentType:'application/json',headers:{'access-control-allow-origin':'*'}});
    });
-   await page.goto(process.env.PREVIEW_URL||'http://localhost:8084');await page.getByText('Good shops. Close by.',{exact:true}).waitFor({timeout:60000});
+   await page.goto(process.env.PREVIEW_URL||'http://localhost:8084');await page.getByText('Shops around you',{exact:true}).waitFor({timeout:60000});
    await page.addStyleTag({content:'[data-testid="buyer-shell"],[data-testid="product-safe"]{padding-top:40px!important;padding-bottom:20px!important}'});
    await page.getByText('Browse',{exact:true}).click();await page.getByRole('tab',{name:'Shops',exact:true}).click();await page.getByText('pet shop',{exact:true}).click();
    await page.getByRole('button',{name:'View dog food',exact:true}).click();

@@ -20,7 +20,7 @@ const assert = require('node:assert/strict');
       await route.fulfill({body:JSON.stringify(items),contentType:'application/json',headers:{'access-control-allow-origin':'*'}});
     });
     await page.goto(process.env.PREVIEW_URL||'http://localhost:8084');
-    await page.getByText('Good shops. Close by.',{exact:true}).waitFor({timeout:60000});
+    await page.getByText('Shops around you',{exact:true}).waitFor({timeout:60000});
     await page.addStyleTag({content:'[data-testid="buyer-shell"]{padding-top:40px!important;padding-bottom:20px!important}'});
     const openShop=async()=>{
       await page.getByText('Browse',{exact:true}).click();

@@ -14,11 +14,18 @@ const assert = require('node:assert/strict');
   try {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
     const errors = [];
+    const session = {userId:"signed-in-home-qa", name:"QA Buyer", role:"buyer", token:"local-fixture", isDemo:false};
+    await page.addInitScript(value => sessionStorage.setItem("jpi.buyer.session", JSON.stringify(value)), session);
     page.on('pageerror', error => errors.push(error.message));
     // Fresh public API snapshots avoid local-port CORS and flaky Node TLS.
     // They are test inputs only; the app still fetches its real API in builds.
     await page.route('https://just-pack-it-bq64.onrender.com/**', async route => {
       const url = new URL(route.request().url());
+      if (url.pathname === "/auth/me" || url.pathname === "/orders") {
+        const headers = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization" };
+        if (route.request().method() === "OPTIONS") return route.fulfill({status:204, headers});
+        return route.fulfill({json:url.pathname === "/auth/me" ? session : [], headers});
+      }
       const file = url.searchParams.has('category') ? 'category-' + url.searchParams.get('category') : url.pathname.slice(1);
       await route.fulfill({ body: fs.readFileSync(path.join(output, file + '.json'), 'utf8'), contentType: 'application/json', headers: { 'access-control-allow-origin': '*' } });
     });

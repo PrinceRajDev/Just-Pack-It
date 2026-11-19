@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -8,34 +9,24 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { marketApi, type Category, type Product, type Shop } from "./api";
+import {
+  marketApi,
+  type Category,
+  type Product,
+  type Shop,
+  type Session,
+} from "./api";
+import { HomeNotifications } from "./HomeExtras";
+import { resolveImage } from "./images";
 import { MarketIcon } from "./MarketIcon";
 import { ReferenceArtwork } from "./ReferenceArtwork";
 import { useAndroidBack } from "./useAndroidBack";
 
 const cards = [
-  {
-    slug: "fruits-vegetables",
-    name: "Vegetables & Fruits",
-    copy: "Fresh from nearby",
-  },
-  {
-    slug: "grocery-kirana",
-    name: "Atta, Grains & Dal",
-    copy: "Pantry, sorted",
-  },
-  { slug: "fashion", name: "Fashion", copy: "Made for every day" },
-  { slug: "dairy-eggs", name: "Dairy & Eggs", copy: "Your morning staples" },
-  {
-    slug: "kitchen-home-goods",
-    name: "Home & Living",
-    copy: "Little home upgrades",
-  },
-  {
-    slug: "fast-food-snacks",
-    name: "Snacks & More",
-    copy: "A little pick-me-up",
-  },
+  { slug: "grocery-kirana", name: "Groceries & staples" },
+  { slug: "fruits-vegetables", name: "Fruits & vegetables" },
+  { slug: "dairy-eggs", name: "Dairy & eggs" },
+  { slug: "sweets-bakery", name: "Bakery" },
 ];
 type Tab = "Categories" | "Shops" | "Brands";
 type Page = {
@@ -62,6 +53,7 @@ function brandName(product: Product): string | undefined {
 }
 
 export function BuyerBrowse({
+  session,
   areaId,
   categories,
   query,
@@ -70,6 +62,7 @@ export function BuyerBrowse({
   renderShop,
   hasBag,
 }: {
+  session: Session | null;
   areaId?: string;
   categories: Category[];
   query: string;
@@ -276,19 +269,19 @@ export function BuyerBrowse({
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={[styles.content, hasBag && { paddingBottom: 96 }]}
     >
-      <Text style={styles.heading}>Find your everyday.</Text>
-      <Text style={styles.subtitle}>
-        A whole neighbourhood of possibilities.
-      </Text>
+      <View style={styles.header}>
+        <Text style={styles.heading}>Browse</Text>
+        <HomeNotifications session={session} />
+      </View>
       <View style={styles.search}>
         <View style={{ transform: [{ scale: 0.8 }] }}>
-          <MarketIcon name="search" />
+          <MarketIcon name="search" color="#777D72" />
         </View>
         <TextInput
           accessibilityLabel="Search products, shops and brands"
           value={query}
           onChangeText={setQuery}
-          placeholder={'Try "cotton kurta" or "fresh milk"'}
+          placeholder="Search products, shops & brands"
           placeholderTextColor="#737B6D"
           style={styles.input}
           returnKeyType="search"
@@ -307,17 +300,11 @@ export function BuyerBrowse({
               setCategory(null);
               setBrand(null);
             }}
-            style={[
-              styles.tab,
-              item === "Categories" && {
-                width: 108,
-                paddingHorizontal: 0,
-                alignItems: "center",
-              },
-              tab === item && styles.activeTab,
-            ]}
+            style={styles.tab}
           >
-            <Text style={[styles.tabText, tab === item && { color: "#fff" }]}>
+            <Text
+              style={[styles.tabText, tab === item && { fontWeight: "700" }]}
+            >
               {item}
             </Text>
           </Pressable>
@@ -337,60 +324,75 @@ export function BuyerBrowse({
       ) : null}
       {discovery ? (
         <>
-          <View style={styles.grid}>
-            {cards.map((item, index) => (
-              <Pressable
-                key={item.slug}
-                accessibilityRole="button"
-                accessibilityLabel={item.name}
-                onPress={() => {
-                  setCategory(item);
-                  setBrand(null);
-                  setQuery("");
-                }}
-                style={styles.card}
-              >
-                <ReferenceArtwork
-                  source={require("../assets/browse-figma-artwork.png")}
-                  sourceSize={[390, 844]}
-                  crop={[
-                    index % 2 === 0 ? 20 : 201,
-                    228 + Math.floor(index / 2) * 142,
-                    169,
-                    82,
-                  ]}
-                  style={{ width: "100%" }}
-                />
-                <View style={styles.cardBody}>
-                  <Text numberOfLines={1} style={styles.cardName}>
-                    {item.name}
-                  </Text>
-                  <Text numberOfLines={1} style={styles.cardCopy}>
-                    {item.copy}
-                  </Text>
-                </View>
-              </Pressable>
-            ))}
-          </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Meet nearby shops"
+            accessibilityLabel="Explore nearby shops"
             onPress={() => {
               reset();
               setTab("Shops");
             }}
             style={styles.promo}
           >
-            <View>
-              <Text style={styles.promoTitle}>
-                Not just products.{"\n"}People you can trust.
-              </Text>
-              <Text style={styles.promoCopy}>
-                Meet the shops around your corner
-              </Text>
-            </View>
-            <Text style={styles.promoArrow}>→</Text>
+            <Text style={styles.promoTitle}>
+              Your neighbourhood is full of good finds.
+            </Text>
+            <Text style={styles.explore}>Explore nearby shops →</Text>
           </Pressable>
+          <View style={styles.grid}>
+            {[
+              ...cards.filter((card) =>
+                categories.some((category) => category.slug === card.slug),
+              ),
+              ...categories.filter(
+                (category) =>
+                  !cards.some((card) => card.slug === category.slug),
+              ),
+            ].map((item) => {
+              const index = cards.findIndex((card) => card.slug === item.slug);
+              const backendImage = categories.find(
+                (category) => category.slug === item.slug,
+              )?.image;
+              return (
+                <Pressable
+                  key={item.slug}
+                  accessibilityRole="button"
+                  accessibilityLabel={item.name}
+                  onPress={() => {
+                    setCategory(item);
+                    setBrand(null);
+                    setQuery("");
+                  }}
+                  style={styles.card}
+                >
+                  {index >= 0 ? (
+                    <ReferenceArtwork
+                      source={require("../assets/browse-category-photos.png")}
+                      sourceSize={[270, 200]}
+                      crop={[
+                        (index % 2) * 135,
+                        Math.floor(index / 2) * 100,
+                        135,
+                        100,
+                      ]}
+                      style={styles.cardImage}
+                    />
+                  ) : (
+                    <Image
+                      source={{
+                        uri:
+                          resolveImage(backendImage) ??
+                          resolveImage("/categories/" + item.slug + "-v1.webp"),
+                      }}
+                      style={styles.cardImage}
+                      resizeMode="cover"
+                    />
+                  )}
+                  <Text style={styles.cardName}>{item.name}</Text>
+                  <Text style={styles.explore}>Explore →</Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </>
       ) : !areaId ? (
         empty("Choose a delivery area from Home to browse nearby listings.")
@@ -529,25 +531,25 @@ export function BuyerBrowse({
 const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingTop: 0,
     paddingBottom: 12,
     width: "100%",
     maxWidth: 600,
     alignSelf: "center",
   },
-  heading: {
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: "700",
-    letterSpacing: -0.4,
-    color: "#07552F",
+  header: {
+    height: 58,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginRight: -12,
   },
-  subtitle: { fontSize: 12, lineHeight: 16, color: "#737B6D", marginTop: 2 },
+  heading: { fontSize: 21, fontWeight: "700", color: "#07552F" },
   search: {
-    height: 46,
-    marginTop: 14,
-    borderRadius: 14,
-    backgroundColor: "#EAF0D9",
+    height: 48,
+    marginTop: 22,
+    borderRadius: 12,
+    backgroundColor: "#fff",
     flexDirection: "row",
     gap: 8,
     alignItems: "center",
@@ -556,61 +558,71 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     minWidth: 0,
-    fontSize: 12,
+    fontSize: 13,
     color: "#202820",
     height: "100%",
     padding: 0,
   },
-  tabs: { flexDirection: "row", gap: 8, marginTop: 14, marginBottom: 14 },
+  tabs: { flexDirection: "row", gap: 8, marginTop: 20, marginBottom: 20 },
   tab: {
-    height: 34,
-    paddingHorizontal: 24,
+    flex: 1,
+    minHeight: 36,
+    alignItems: "center",
     justifyContent: "center",
     borderRadius: 18,
-    backgroundColor: "#fff",
+    backgroundColor: "#EAF0D9",
   },
-  activeTab: { backgroundColor: "#07552F" },
-  tabText: { fontSize: 11, color: "#5F6859" },
+  tabText: { fontSize: 12, color: "#07552F", fontWeight: "600" },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    rowGap: 12,
+    rowGap: 20,
   },
   card: {
     width: "48.3%",
-    borderRadius: 14,
-    overflow: "hidden",
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E2E4D9",
     backgroundColor: "#fff",
   },
-  cardBody: { height: 48, paddingHorizontal: 10, paddingTop: 8 },
+  cardImage: {
+    width: "100%",
+    aspectRatio: 1.35,
+    borderRadius: 12,
+    backgroundColor: "#FAF8F1",
+  },
   cardName: {
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 14,
+    lineHeight: 18,
+    marginTop: 9,
     fontWeight: "600",
     color: "#202820",
   },
   cardCopy: { fontSize: 10, lineHeight: 14, marginTop: 2, color: "#7A8373" },
   promo: {
-    minHeight: 94,
+    minHeight: 108,
     padding: 16,
-    paddingVertical: 14,
-    marginTop: 14,
+    marginBottom: 20,
     borderRadius: 16,
-    backgroundColor: "#07552F",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
+    borderWidth: 1,
+    borderColor: "#E2E4D9",
+    backgroundColor: "#EAF0D9",
   },
   promoTitle: {
     fontSize: 18,
-    lineHeight: 22,
+    lineHeight: 24,
     fontWeight: "600",
-    color: "#fff",
+    color: "#07552F",
   },
-  promoCopy: { fontSize: 10, lineHeight: 14, color: "#EAF0D9", marginTop: 8 },
-  promoArrow: { fontSize: 28, color: "#E8C94A" },
+  explore: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 8,
+    fontWeight: "600",
+    color: "#07552F",
+  },
   selection: {
     flexDirection: "row",
     gap: 14,

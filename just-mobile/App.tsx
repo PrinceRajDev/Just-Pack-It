@@ -288,6 +288,7 @@ export default function App() {
     />
   ) : screen === "browse" ? (
     <BuyerBrowse
+      session={session}
       areaId={area?.id}
       categories={categories}
       hasBag={count > 0}
@@ -1375,14 +1376,27 @@ function Nav({
   orders: () => void;
 }) {
   return (
-    <View style={[s.nav, guestHome && { height: 70, paddingHorizontal: 8 }]}>
+    <View
+      style={[
+        s.nav,
+        (guestHome || screen === "browse") && {
+          height: 70,
+          paddingHorizontal: 8,
+        },
+      ]}
+    >
       <NavButton
         label="Home"
         guestHighlight={guestHome}
         active={screen === "home" || screen === "shop"}
         onPress={home}
       />
-      <NavButton label="Browse" active={screen === "browse"} onPress={browse} />
+      <NavButton
+        label="Browse"
+        guestHighlight={screen === "browse"}
+        active={screen === "browse"}
+        onPress={browse}
+      />
       <NavButton
         label={count ? `Bag · ${count}` : "Bag"}
         active={screen === "bag"}

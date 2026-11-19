@@ -62,10 +62,16 @@ const assert = require("node:assert/strict");
     await page.getByRole("button",{name:"Search products, shops & brands"}).click();
     await page.getByRole("textbox",{name:"Search products, shops and brands"}).fill("dog");
     await page.getByRole("button",{name:"View dog food",exact:true}).waitFor();
-    for (const [tab,heading] of [["Bag","Your bag is looking empty."],["Orders","Sign in to view orders"],["Account","Sign in to shop"],["Browse","Search products, shops & brands"],["Home","Shop by category"]]) {
+    for (const [tab,heading] of [["Bag","Your bag is looking empty."],["Orders","Sign in to view orders"],["Account","Your neighbourhood starts here."],["Browse","Search products, shops & brands"],["Home","Shop by category"]]) {
       await page.getByText(tab,{exact:true}).click();
       if (tab === "Browse") await page.getByPlaceholder(heading).waitFor(); else await page.getByText(heading,{exact:true}).waitFor();
-      if (tab === "Account") await page.getByRole("button", {name:"Back from sign in"}).click();
+      if (tab === "Account") {
+        await page.getByTestId("buyer-account-hub").screenshot({path:path.join(output,"account-390.png")});
+        await page.getByText("Sign in / Create account",{exact:true}).click();
+        await page.getByTestId("buyer-sign-in").waitFor();
+        await page.getByRole("button", {name:"Back from sign in"}).click();
+        await page.getByTestId("buyer-account-hub").waitFor();
+      }
     }
     await page.getByLabel("Notifications",{exact:true}).click();
     await page.getByText("Notifications",{exact:true}).waitFor();

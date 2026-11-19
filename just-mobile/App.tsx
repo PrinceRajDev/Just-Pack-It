@@ -90,9 +90,18 @@ export default function App() {
     if (screen !== "bag" && screen !== "checkout") setBagOrigin(screen);
     setScreen("bag");
   };
+  const [accountMode, setAccountMode] = useState<"hub" | "auth" | "hub-auth">("hub");
+  const openAccountHub = () => {
+    if (screen === "account") return;
+    setAccountOrigin(screen);
+    setSignInFromBag(false);
+    setAccountMode("hub");
+    setScreen("account");
+  };
   const openAccount = () => {
     if (screen === "account") return;
     setAccountOrigin(screen);
+    setAccountMode("auth");
     setSignInFromBag(screen === "bag" || screen === "checkout");
     setScreen("account");
   };
@@ -114,6 +123,10 @@ export default function App() {
     else setScreen(ordersOrigin);
   };
   const leaveSignIn = () => {
+    if (!session && accountMode === "hub-auth") {
+      setAccountMode("hub");
+      return;
+    }
     setSignInFromBag(false);
     if (accountOrigin === "home") goHome();
     else setScreen(accountOrigin);
@@ -135,7 +148,7 @@ export default function App() {
     else if (screen === "tracking" && currentConfirmation) setScreen("confirmation");
     else if (screen === "confirmation") { setConfirmation(null); setScreen("orders"); }
     else if (screen === "bag") setScreen(bagOrigin);
-    else if (screen === "account" && !session) leaveSignIn();
+    else if (screen === "account") leaveSignIn();
     else if (screen === "orders") leaveOrders();
     else goHome();
     return true;
@@ -218,6 +231,7 @@ export default function App() {
       onSessionExpired((token) => {
         if (session?.token !== token) return;
         setSession(null);
+        setAccountMode("auth");
         setScreen("account");
         void SecureStore.deleteItemAsync("jpi.buyer.session").catch(
           () => undefined,
@@ -262,7 +276,7 @@ export default function App() {
       setSignInFromBag(false);
       setScreen("bag");
     }
-    if (next && !session && accountOrigin === "orders") setScreen("orders");
+    if (next && !session && accountMode === "auth" && accountOrigin === "orders") setScreen("orders");
     if (next)
       await SecureStore.setItemAsync("jpi.buyer.session", JSON.stringify(next));
     else await SecureStore.deleteItemAsync("jpi.buyer.session");
@@ -404,6 +418,18 @@ export default function App() {
       save={saveSession}
       openOrders={openOrders}
       fromBag={signInFromBag}
+      signInOpen={accountMode !== "hub"}
+      startSignIn={() => setAccountMode("hub-auth")}
+      area={area?.name}
+      shops={shops}
+      products={products}
+      browse={() => setScreen("browse")}
+      openShop={(item) => {
+        setShopOrigin("browse");
+        setShop(item);
+        setScreen("shop");
+      }}
+      add={add}
       back={leaveSignIn}
       browseAsGuest={browseAsGuest}
     />
@@ -460,18 +486,6 @@ export default function App() {
     >
       <StatusBar style="dark" />
       <View style={s.app}>
-        {screen !== "home" && screen !== "browse" &&
-          screen !== "shop" && screen !== "bag" && screen !== "checkout" && screen !== "confirmation" && screen !== "tracking" && screen !== "orders" &&
-          !(screen === "account" && !session) && (
-          <Header
-            session={session}
-            area={area}
-            count={count}
-            onArea={() => setPicker(true)}
-            onBrowse={() => setScreen("browse")}
-            onBag={openBag}
-          />
-        )}
         <BuyerProductContext.Provider
           value={{
             areaId: area?.id,
@@ -501,7 +515,7 @@ export default function App() {
             <Text style={s.bagBarAction}>View bag</Text>
           </Pressable>
         ) : null}
-        {screen !== "shop" && screen !== "checkout" && screen !== "confirmation" && screen !== "tracking" && !(screen === "account" && !session) && (
+        {screen !== "shop" && screen !== "checkout" && screen !== "confirmation" && screen !== "tracking" && !(screen === "account" && !session && accountMode !== "hub") && (
           <Nav
             guestHome={screen === "home" && !session}
             screen={screen}
@@ -509,7 +523,7 @@ export default function App() {
             home={goHome}
             browse={() => setScreen("browse")}
             bag={openBag}
-            account={openAccount}
+            account={openAccountHub}
             orders={openOrders}
           />
         )}

@@ -1,3 +1,6 @@
+import { BuyerAccountHub } from "./BuyerAccountHub";
+
+
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -10,7 +13,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { ApiError, buyerApi, type BuyerOrder, type Session } from "./api";
+import { ApiError, buyerApi, type BuyerOrder, type Product, type Session, type Shop } from "./api";
 import { BuyerAuthNotice } from "./BuyerAuthNotice";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { MarketIcon } from "./MarketIcon";
@@ -29,6 +32,8 @@ const c = {
   line: "#DDD6C9",
   green: "#174B34",
 };
+
+
 export function BuyerAccount({
   session,
   save,
@@ -36,6 +41,7 @@ export function BuyerAccount({
   fromBag,
   back,
   browseAsGuest,
+  signInOpen, startSignIn, area, shops, products, browse, openShop, add,
 }: {
   session: Session | null;
   save: (next: Session | null) => Promise<void>;
@@ -43,6 +49,14 @@ export function BuyerAccount({
   fromBag: boolean;
   back: () => void;
   browseAsGuest: () => void;
+  signInOpen: boolean;
+  startSignIn: () => void;
+  area?: string;
+  shops: Shop[];
+  products: Product[];
+  browse: () => void;
+  openShop: (shop: Shop) => void;
+  add: (product: Product) => void;
 }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -124,34 +138,21 @@ export function BuyerAccount({
       setBusy(false);
     }
   };
-  if (session && addressesOpen) return <BuyerAddresses key={session.userId} token={session.token} back={() => setAddressesOpen(false)} />;
+  if (session && addressesOpen) return <Modal onRequestClose={() => setAddressesOpen(false)}><SafeAreaView style={{ flex: 1, backgroundColor: "#F8F6EE" }}><BuyerAddresses key={session.userId} token={session.token} userId={session.userId} area={area} back={() => setAddressesOpen(false)} /></SafeAreaView></Modal>;
   if (!session && recoveryOpen) return <BuyerRecovery back={() => { setPassword(""); setRecoveryOpen(false); }} />;
-  if (session && profileOpen) return <BuyerProfile key={session.userId} token={session.token} back={() => setProfileOpen(false)} onSaved={(updatedName) => save({ ...session, name: updatedName })} />;
-  if (session)
-    return (
-      <ScrollView contentContainerStyle={s.page}>
-        <Text style={s.kicker}>Buyer account</Text>
-        <Text style={s.title}>{session.name}</Text>
-        <Text style={s.copy}>Signed in securely on this device</Text>
-        <Pressable style={s.row} onPress={() => setProfileOpen(true)}><Text style={s.rowTitle}>Your profile</Text><Text style={s.rowCopy}>View account details and update your name</Text></Pressable>
-        <Pressable style={s.row} onPress={() => setAddressesOpen(true)}><Text style={s.rowTitle}>Saved addresses</Text><Text style={s.rowCopy}>Add or update your delivery places</Text></Pressable>
-        <Pressable style={s.row} onPress={openOrders}>
-          <Text style={s.rowTitle}>Your orders</Text>
-          <Text style={s.rowCopy}>Track placed orders and cash status</Text>
-        </Pressable>
-        <Pressable
-          style={s.signout}
-          onPress={() => {
-            void buyerApi
-              .logout(session.token)
-              .catch(() => undefined)
-              .finally(() => void save(null));
-          }}
-        >
-          <Text style={s.signoutText}>Sign out</Text>
-        </Pressable>
-      </ScrollView>
-    );
+  if (session && profileOpen) return <Modal onRequestClose={() => setProfileOpen(false)}><SafeAreaView style={{ flex: 1, backgroundColor: "#F8F6EE" }}><BuyerProfile key={session.userId} token={session.token} back={() => setProfileOpen(false)} onSaved={(updatedName) => save({ ...session, name: updatedName })} /></SafeAreaView></Modal>;
+  if (session || !signInOpen) return (
+    <BuyerAccountHub session={session} area={area} shops={shops} products={products}
+      back={back} signIn={startSignIn} profile={() => setProfileOpen(true)} addresses={() => setAddressesOpen(true)}
+      orders={openOrders} browse={browse} openShop={openShop} add={add}
+      signOut={async () => {
+        if (session) {
+          await buyerApi.logout(session.token);
+          await save(null);
+        }
+      }}
+    />
+  );
   if (!register) return (
     <View style={login.screen} testID="buyer-sign-in">
       <View style={login.header}>

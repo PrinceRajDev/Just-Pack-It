@@ -114,6 +114,7 @@ const assert = require('node:assert/strict');
     await page.getByText('Orders',{exact:true}).click();
     await page.getByText('Sign in to view orders',{exact:true}).waitFor();
     await page.getByText('Account',{exact:true}).click();
+    await page.getByText('Sign in / Create account',{exact:true}).click();
     await page.getByText('Sign in to shop',{exact:true}).waitFor();
     await page.getByRole('button',{name:'Back from sign in'}).click();
     await page.getByText('Browse',{exact:true}).click();

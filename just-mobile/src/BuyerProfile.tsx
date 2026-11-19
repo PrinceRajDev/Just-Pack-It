@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { buyerApi, type BuyerProfile as Profile } from "./api";
+
+import { MarketIcon } from "./MarketIcon";
 
 export function BuyerProfile({ token, back, onSaved }: { token: string; back: () => void; onSaved: (name: string) => Promise<void> }) {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -20,5 +22,44 @@ export function BuyerProfile({ token, back, onSaved }: { token: string; back: ()
     catch (reason) { setError(reason instanceof Error ? reason.message : "Profile could not save"); }
     finally { lock.current = false; setBusy(false); }
   };
-  return <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 120, gap: 16 }} keyboardShouldPersistTaps="handled"><Pressable disabled={busy} onPress={back}><Text style={{ color: "#174B34", paddingVertical: 8 }}>← Account</Text></Pressable><Text style={{ fontSize: 26, color: "#1F2A22" }}>Your profile</Text>{error ? <Text accessibilityRole="alert" style={{ color: "#B3432B" }}>{error}</Text> : null}{!profile && !error ? <ActivityIndicator color="#174B34" /> : null}{profile ? <><Text style={{ fontWeight: "600", color: "#1F2A22" }}>Name</Text><TextInput accessibilityLabel="Name" value={name} onChangeText={(value) => { setName(value); setSuccess(false); }} editable={!busy} maxLength={100} style={{ height: 48, borderRadius: 8, borderWidth: 1, borderColor: "#DDD6C9", backgroundColor: "#FDFBF7", paddingHorizontal: 12, color: "#1F2A22" }} /><Text>Mobile: {profile.phone}</Text>{profile.email ? <Text>Email: {profile.email} · {profile.emailVerified ? "Verified" : "Not verified"}</Text> : null}<Text style={{ color: "#5E554A", lineHeight: 21 }}>Contact details are shown from your account. Contact changes require verification.</Text><Pressable disabled={busy || name.trim() === profile.name} onPress={() => void save()} style={{ minHeight: 48, padding: 12, borderRadius: 8, backgroundColor: "#174B34", alignItems: "center", justifyContent: "center", opacity: busy || name.trim() === profile.name ? 0.5 : 1 }}><Text style={{ color: "#fff", fontWeight: "600" }}>{busy ? "Saving…" : "Save name"}</Text></Pressable>{success ? <Text style={{ color: "#174B34" }}>Profile saved</Text> : null}</> : null}<Pressable disabled={busy} onPress={() => { setSuccess(false); setAttempt((value) => value + 1); }}><Text style={{ color: "#174B34", paddingVertical: 8 }}>Reload profile</Text></Pressable></ScrollView>;
+  const disabled = busy || !profile || name.trim() === profile.name;
+  return <View style={s.screen}>
+    <View style={s.header}><Pressable accessibilityLabel="Back to Account" onPress={back} hitSlop={10}><Text style={s.heading}>‹</Text></Pressable><Text style={s.heading}>Profile</Text></View>
+    <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
+      <View style={s.hero}><View style={s.icon}><MarketIcon name="account" color="#07552F" /></View><Text style={s.heroTitle}>A little about you.</Text></View>
+      {error ? <Text accessibilityRole="alert" style={s.error}>{error}</Text> : null}
+      {!profile && !error ? <ActivityIndicator color="#07552F" /> : null}
+      {!profile && error ? <Pressable onPress={() => { setError(null); setAttempt(value => value + 1); }}><Text style={s.heading}>Retry profile</Text></Pressable> : null}
+      {profile ? <View style={s.card}>
+        <Text style={s.label}>Full name</Text>
+        <TextInput accessibilityLabel="Full name" value={name} onChangeText={(value) => { setName(value); setSuccess(false); }} editable={!busy} maxLength={100} style={s.input} />
+        <Text style={s.label}>Mobile number</Text>
+        <Text selectable style={s.field}>{profile.phone}</Text>
+        <Text style={s.label}>Email</Text>
+        <Text selectable style={s.field}>{profile.email || "No email on file"}</Text>
+        <Text style={s.label}>Contact details are used for sign-in, email recovery and order updates.</Text>
+        {success ? <Text accessibilityRole="alert" style={s.label}>Profile saved</Text> : null}
+      </View> : null}
+    </ScrollView>
+    <View style={s.footer}><Pressable accessibilityRole="button" disabled={disabled} onPress={() => void save()} style={[s.action, disabled && s.disabled]}><Text style={s.actionText}>{busy ? "Saving…" : "Save changes"}</Text></Pressable></View>
+  </View>;
 }
+
+const s = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: "#F8F6EE" },
+  header: { height: 64, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", gap: 16 },
+  heading: { fontSize: 19, fontWeight: "600", color: "#07552F" },
+  content: { padding: 20, gap: 20 },
+  hero: { flexDirection: "row", alignItems: "center", gap: 12, padding: 20, borderRadius: 24, backgroundColor: "#E9EFD8" },
+  icon: { width: 40, height: 40, borderRadius: 12, backgroundColor: "#FFF", alignItems: "center", justifyContent: "center" },
+  heroTitle: { flex: 1, fontSize: 24, fontWeight: "600", color: "#07552F" },
+  card: { padding: 20, borderRadius: 24, borderWidth: 1, borderColor: "#DADFD0", backgroundColor: "#FFF", gap: 12 },
+  label: { color: "#07552F", fontSize: 12, lineHeight: 18 },
+  input: { minHeight: 52, borderRadius: 12, paddingHorizontal: 16, borderWidth: 1, borderColor: "#DADFD0", backgroundColor: "#F8F6EE", color: "#1F2A22" },
+  field: { minHeight: 52, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: "#DADFD0", backgroundColor: "#F8F6EE", color: "#1F2A22" },
+  footer: { backgroundColor: "#FFF", paddingHorizontal: 20, paddingVertical: 16 },
+  action: { backgroundColor: "#07552F", borderRadius: 12, minHeight: 50, alignItems: "center", justifyContent: "center" },
+  disabled: { opacity: 0.55 },
+  actionText: { color: "#FFF", fontWeight: "600", fontSize: 14 },
+  error: { color: "#A33B27" },
+});

@@ -32,7 +32,7 @@ import { BuyerOrderDetails } from "./src/BuyerOrderDetails";
 import { mergeGuestBag, useBuyerBag } from "./src/useBuyerBag";
 import { useAndroidBack } from "./src/useAndroidBack";
 import { resolveImage } from "./src/images";
-import { MarketIcon, type MarketIconName } from "./src/MarketIcon";
+import { MarketIcon } from "./src/MarketIcon";
 import { HomeNotifications, BuyAgain } from "./src/HomeExtras";
 import { ReferenceArtwork } from "./src/ReferenceArtwork";
 import { BuyerBrowse } from "./src/BuyerBrowse";
@@ -1342,6 +1342,14 @@ function Nav({
     </View>
   );
 }
+const navIcons = {
+  Home: require("./assets/nav-icons/home.png"),
+  Browse: require("./assets/nav-icons/browse.png"),
+  Bag: require("./assets/nav-icons/bag.png"),
+  Orders: require("./assets/nav-icons/orders.png"),
+  Account: require("./assets/nav-icons/account.png"),
+};
+
 function NavButton({
   guestHighlight = false,
   label,
@@ -1349,12 +1357,14 @@ function NavButton({
   onPress,
 }: {
   guestHighlight?: boolean;
-  label: string;
+  label: keyof typeof navIcons | `Bag · ${number}`;
   active: boolean;
   onPress: () => void;
 }) {
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
       onPress={onPress}
       style={[
         s.navButton,
@@ -1362,13 +1372,11 @@ function NavButton({
         guestHighlight && { width: 75, height: 54 },
       ]}
     >
-      <MarketIcon
-        name={
-          (label.startsWith("Bag")
-            ? "bag"
-            : label.toLowerCase()) as MarketIconName
-        }
-        color={active ? c.green : "#7B8275"}
+      <Image
+        accessible={false}
+        source={navIcons[label in navIcons ? (label as keyof typeof navIcons) : "Bag"]}
+        resizeMode="contain"
+        style={[s.navIcon, active && s.navIconActive]}
       />
       <Text style={[s.navText, active && s.navTextActive]}>{label}</Text>
     </Pressable>
@@ -2385,6 +2393,8 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  navIcon: { width: 24, height: 24, flexShrink: 0, tintColor: "#687465" },
+  navIconActive: { tintColor: c.green },
   navActive: { backgroundColor: c.pale },
   navText: { color: c.secondary, fontSize: 10, fontWeight: "500" },
   navTextActive: { color: c.green, fontWeight: "600" },

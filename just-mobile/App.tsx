@@ -10,7 +10,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -734,11 +733,6 @@ function Home({
   onAdd: (x: Product) => void;
   onClear: () => void;
 }) {
-  const { width } = useWindowDimensions();
-  const heroFontSize = Math.min(
-    25,
-    Math.max(18, ((Math.min(width, 600) - 40) / 350) * 25),
-  );
   const [categoryResult, setCategoryResult] = useState<{
     key: string;
     items: Product[];
@@ -966,108 +960,29 @@ function Home({
           </SafeAreaView>
         </Modal>
       )}
-      {!session ? (
-        <View
-          testID="home-hero"
-          style={{
-            marginHorizontal: 20,
-            marginTop: 20,
-            padding: 16,
-            minHeight: 210,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderColor: "#DCE3D2",
-            backgroundColor: c.pale,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 28,
-              lineHeight: 38,
-              fontWeight: "700",
-              color: c.green,
-            }}
-          >
-            Good things.{"\n"}Closer to home.
-          </Text>
-          <Text
-            style={{
-              marginTop: 8,
-              fontSize: 12,
-              lineHeight: 17,
-              color: c.green,
-            }}
-          >
-            Shop your neighbourhood favourites.{"\n"}Packed by shops. Delivered
-            by riders.
+      <View testID="home-hero" style={s.referenceHero}>
+        <View style={s.referenceHeroCopy}>
+          <Text accessibilityRole="header" style={s.referenceHeadline}>
+            Your neighbourhood, delivered.
           </Text>
           <Pressable
             accessibilityRole="button"
+            accessibilityLabel="Explore shops"
             onPress={() => void openShops()}
-            style={{
-              marginTop: 8,
-              minHeight: 50,
-              borderRadius: 14,
-              backgroundColor: c.green,
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 8,
-            }}
+            style={s.referenceCta}
           >
-            <Text
-              style={{
-                color: "#fff",
-                fontWeight: "700",
-                fontSize: 15,
-                textAlign: "center",
-              }}
-            >
-              Explore nearby shops
-            </Text>
+            <Text style={s.referenceCtaText}>Explore shops →</Text>
           </Pressable>
         </View>
-      ) : (
-        <View testID="home-hero" style={s.referenceHero}>
-          <View style={s.referenceHeroCopy}>
-            <Text style={s.referenceEyebrow}>DISCOVER LOCAL. LOVE LOCAL.</Text>
-            <View style={{ marginTop: 16 }}>
-              {["Your Local", "Market,", "Just a Tap Away"].map((line) => (
-                <Text
-                  key={line}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.7}
-                  style={[
-                    s.referenceHeadline,
-                    {
-                      fontSize: heroFontSize,
-                      lineHeight: Math.ceil(heroFontSize * 1.16),
-                    },
-                  ]}
-                >
-                  {line}
-                </Text>
-              ))}
-            </View>
-            <Text style={s.referenceSupport}>
-              From the shops you know & love.
-            </Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Explore shops"
-              onPress={() => void openShops()}
-              style={s.referenceCta}
-            >
-              <Text style={s.referenceCtaText}>Explore shops</Text>
-              <Text style={s.referenceCtaArrow}>→</Text>
-            </Pressable>
-          </View>
-          <ReferenceArtwork
-            crop={[235, 225, 135, 220]}
-            style={s.referenceHeroImage}
+        <View style={s.referenceHeroImage}>
+          <Image
+            testID="home-hero-photo"
+            source={require("./assets/home-market-reference.webp")}
+            resizeMode="cover"
+            style={s.marketPhoto}
           />
         </View>
-      )}
+      </View>
       {!session ? (
         <View style={{ marginTop: 10 }}>
           <GuestSection
@@ -2173,51 +2088,43 @@ const s = StyleSheet.create({
   referenceHero: {
     marginHorizontal: 20,
     marginTop: 18,
-    minHeight: 220,
-    borderRadius: 16,
+    minHeight: 184,
+    borderRadius: 18,
     overflow: "hidden",
     backgroundColor: c.green,
     flexDirection: "row",
   },
   referenceHeroCopy: {
-    width: "61.43%",
-    padding: 18,
-    paddingBottom: 14,
-    paddingRight: 5,
-    zIndex: 1,
+    width: "54%",
+    padding: 16,
+    paddingRight: 8,
+    justifyContent: "center",
+    alignItems: "flex-start",
   },
-  referenceEyebrow: { color: "#FFFFFF", fontSize: 8, lineHeight: 10 },
   referenceHeadline: {
     color: "#FFFFFF",
-    fontSize: 25,
-    lineHeight: 29,
-    fontWeight: "600",
-    includeFontPadding: false,
-    letterSpacing: -0.4,
-  },
-  referenceSupport: {
-    color: "#EAF0D9",
-    fontSize: 10,
-    lineHeight: 14,
-    marginTop: 12,
+    fontSize: 22,
+    lineHeight: 25,
+    fontWeight: "700",
+    letterSpacing: -0.6,
   },
   referenceCta: {
-    width: 132,
-    height: 32,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    minHeight: 44,
+    justifyContent: "center",
     paddingHorizontal: 12,
-    marginTop: 16,
+    marginTop: 12,
     backgroundColor: c.lime,
-    borderRadius: 10,
+    borderRadius: 11,
   },
-  referenceCtaText: { color: c.green, fontSize: 11, fontWeight: "600" },
-  referenceCtaArrow: { color: c.green, fontSize: 22, lineHeight: 24 },
+  referenceCtaText: { color: c.green, fontSize: 13, fontWeight: "700" },
   referenceHeroImage: {
+    flex: 1,
+    overflow: "hidden",
+  },
+  marketPhoto: {
     position: "absolute",
-    right: 0,
-    width: "38.57%",
+    right: "-15%",
+    width: "205%",
     height: "100%",
   },
   popularHeading: { marginHorizontal: 20, marginTop: 28, marginBottom: 16 },

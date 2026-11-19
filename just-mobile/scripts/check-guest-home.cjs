@@ -28,6 +28,11 @@ const assert = require("node:assert/strict");
     });
     await page.goto(process.env.PREVIEW_URL || "http://localhost:8084", { timeout: 60000 });
     await page.getByText("Shop by category", { exact: true }).waitFor();
+    await page.getByRole("heading", {name:"Your neighbourhood, delivered."}).waitFor();
+    await page.waitForFunction(() => {
+      const photo = document.querySelector('[data-testid="home-hero-photo"] img');
+      return photo && photo.complete && photo.naturalWidth > 0;
+    });
     await page.addStyleTag({content:'[data-testid="buyer-shell"]{padding-top:28px!important;padding-bottom:20px!important}'});
     for (const [width,height] of [[390,844],[360,800],[375,812],[430,932]]) {
       await page.setViewportSize({width,height});
@@ -49,7 +54,7 @@ const assert = require("node:assert/strict");
     await page.getByRole("button",{name:"More →",exact:true}).click();
     await page.getByText("All categories",{exact:true}).waitFor();
     await page.getByRole("button",{name:"Close categories"}).click();
-    for (const name of ["Explore nearby shops","See all"]) {
+    for (const name of ["Explore shops","See all"]) {
       await page.getByRole("button",{name,exact:true}).click();
       await page.getByText("Shops in Raiyam",{exact:true}).waitFor();
       await page.getByText("←",{exact:true}).first().click();
@@ -57,9 +62,10 @@ const assert = require("node:assert/strict");
     await page.getByRole("button",{name:"Search products, shops & brands"}).click();
     await page.getByRole("textbox",{name:"Search products, shops and brands"}).fill("dog");
     await page.getByRole("button",{name:"View dog food",exact:true}).waitFor();
-    for (const [tab,heading] of [["Bag","Your bag is empty"],["Orders","Sign in to view orders"],["Account","Sign in to shop"],["Browse","Search products, shops & brands"],["Home","Shop by category"]]) {
+    for (const [tab,heading] of [["Bag","Your bag is looking empty."],["Orders","Sign in to view orders"],["Account","Sign in to shop"],["Browse","Search products, shops & brands"],["Home","Shop by category"]]) {
       await page.getByText(tab,{exact:true}).click();
       if (tab === "Browse") await page.getByPlaceholder(heading).waitFor(); else await page.getByText(heading,{exact:true}).waitFor();
+      if (tab === "Account") await page.getByRole("button", {name:"Back from sign in"}).click();
     }
     await page.getByLabel("Notifications",{exact:true}).click();
     await page.getByText("Notifications",{exact:true}).waitFor();

@@ -449,7 +449,7 @@ export default function App() {
       <StatusBar style="dark" />
       <View style={s.app}>
         {screen !== "home" && screen !== "browse" &&
-          screen !== "shop" && screen !== "bag" && screen !== "checkout" && screen !== "confirmation" &&
+          screen !== "shop" && screen !== "bag" && screen !== "checkout" && screen !== "confirmation" && screen !== "tracking" &&
           !(screen === "account" && !session) && (
           <Header
             session={session}
@@ -489,7 +489,7 @@ export default function App() {
             <Text style={s.bagBarAction}>View bag</Text>
           </Pressable>
         ) : null}
-        {screen !== "shop" && screen !== "checkout" && screen !== "confirmation" && !(screen === "account" && !session) && (
+        {screen !== "shop" && screen !== "checkout" && screen !== "confirmation" && screen !== "tracking" && !(screen === "account" && !session) && (
           <Nav
             guestHome={screen === "home" && !session}
             screen={screen}

@@ -65,6 +65,8 @@ const assert = require("node:assert/strict");
     });
     const errors = [];
     let orderRequests = 0;
+    let trackingDelivered = false;
+    let receiptRequests = 0;
     let firstOrderKey;
     const confirmed = {
       id: "JPI-240618-084",
@@ -184,7 +186,18 @@ const assert = require("node:assert/strict");
                   : [],
             })),
           };
-        } else if (resource === "orders/" + confirmed.id) data = confirmed;
+        } else if (resource.endsWith("/receipt-code")) {
+          assert.equal(route.request().headers().authorization, "Bearer fixture-token");
+          assert.equal(resource, `orders/${confirmed.id}/suborders/${shops[0].id}/receipt-code`);
+          assert.deepEqual(route.request().postDataJSON(), { version: 4, confirmReceived: true, confirmCashPaid: true });
+          receiptRequests += 1;
+          data = {code:"628415", expiresAt:new Date(Date.now() + 300000).toISOString(),amount:189};
+        } else if (resource === "orders/" + confirmed.id) {
+          data = { ...confirmed, amountDue: trackingDelivered ? 0 : 189, subOrders: confirmed.subOrders.map((shop,index) => ({
+            ...shop, status: index === 0 ? (trackingDelivered ? "delivered" : "out_for_delivery") : "cancelled",
+            ...(index === 0 ? {deliveryState: trackingDelivered ? "delivered" : "out_for_delivery", amountDue: trackingDelivered ? 0 : 189, version: trackingDelivered ? 5 : 4} : {amountDue:0}),
+          })) };
+        }
         else if (resource === "addresses") data = addresses;
         else if (resource === "auth/me" || resource === "auth/profile")
           data = buyer;
@@ -421,7 +434,26 @@ const assert = require("node:assert/strict");
     }
     await confirmation.getByRole("button", { name: "Track Order" }).click();
     await page.getByText("Sharma Kirana Store", { exact: true }).waitFor();
-    await page.getByText("← Your orders", { exact: true }).click();
+    const tracking = page.getByTestId("buyer-order-details");
+    await tracking.getByText("Picked up", {exact:true}).waitFor();
+    await tracking.getByText("Patil Fresh Mart",{exact:true}).waitFor();
+    await tracking.getByRole("button",{name:"Confirm receipt and get code"}).click();
+    assert.equal(receiptRequests,0);
+    await tracking.getByRole("button",{name:"Received and paid"}).click();
+    await tracking.getByText("628415",{exact:true}).waitFor();
+    assert.equal(receiptRequests,1);
+    for (const [width,height] of [[390,844],[360,800],[375,812],[430,932]]) {
+      await page.setViewportSize({width,height});
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),false);
+      await page.screenshot({path:path.join(output,`tracking-${width}.png`)});
+    }
+    trackingDelivered = true;
+    await tracking.getByRole("button",{name:"Refresh status"}).click();
+    await tracking.getByRole("heading",{name:"Delivered"}).waitFor();
+    assert.equal(await tracking.getByText("628415",{exact:true}).count(),0);
+    await tracking.getByRole("button",{name:"View delivered order"}).click();
+    await tracking.getByText("Sharma Kirana Store · Delivered",{exact:true}).waitFor();
+    await page.getByRole("button", { name: "Back from order details" }).click();
     await confirmation
       .getByRole("button", { name: "Continue Shopping" })
       .click();

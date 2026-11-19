@@ -1,11 +1,147 @@
-import { useRef, useState } from "react";
-import { Alert, Pressable, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { buyerApi } from "./api";
-export function BuyerReceipt({ token, orderId, subId, version, cod, amount }: { token: string; orderId: string; subId: string; version: number; cod: boolean; amount: number }) {
-  const [proof, setProof] = useState<{ code: string; expiresAt: string; amount: number } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+
+export function BuyerReceipt({
+  token,
+  orderId,
+  subId,
+  version,
+  cod,
+  amount,
+  shopName,
+}: {
+  token: string;
+  orderId: string;
+  subId: string;
+  version: number;
+  cod: boolean;
+  amount: number;
+  shopName?: string;
+}) {
+  const [proof, setProof] = useState<{
+    code: string;
+    expiresAt: string;
+  } | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
-  const issue = async () => { if (lock.current) return; lock.current = true; setBusy(true); setError(null); try { setProof(await buyerApi.receiptCode(token, orderId, subId, version, cod)); } catch (reason) { setError(reason instanceof Error ? reason.message : "Code could not generate. Refresh the order and retry."); } finally { lock.current = false; setBusy(false); } };
-  return <View style={{ gap: 12 }}><Text style={{ color: "#5E554A", lineHeight: 20 }}>Share this code only after receiving your goods{cod ? ` and paying ₹${amount.toLocaleString("en-IN")} in cash` : ""}.</Text>{proof ? <View><Text selectable style={{ fontSize: 30, color: "#174B34", letterSpacing: 4 }}>{proof.code}</Text><Text>Expires {new Date(proof.expiresAt).toLocaleTimeString("en-IN")}</Text><Text>The rider must verify this code to complete delivery.</Text></View> : null}<Pressable disabled={busy} onPress={() => Alert.alert("Confirm receipt", cod ? `Have you received these goods and paid ₹${amount.toLocaleString("en-IN")} in cash?` : "Have you received these goods?", [{ text: "Not yet", style: "cancel" }, { text: cod ? "Received and paid" : "Received", onPress: () => void issue() }])} style={{ padding: 14, borderRadius: 8, backgroundColor: "#174B34", alignItems: "center" }}><Text style={{ color: "#fff", fontWeight: "600" }}>{busy ? "Generating…" : proof ? "Generate a new receipt code" : "Confirm receipt and get code"}</Text></Pressable>{error ? <Text style={{ color: "#B3432B" }}>{error}</Text> : null}</View>;
+  useEffect(() => {
+    if (!proof) return;
+    const timer = setTimeout(
+      () => setProof(null),
+      Math.max(0, Date.parse(proof.expiresAt) - Date.now()),
+    );
+    return () => clearTimeout(timer);
+  }, [proof]);
+  const issue = async () => {
+    if (lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      setProof(await buyerApi.receiptCode(token, orderId, subId, version, cod));
+      setConfirming(false);
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Code could not generate. Refresh and retry.",
+      );
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  };
+  return (
+    <View style={s.card}>
+      <Text style={s.heading}>
+        {shopName ? `Receipt code · ${shopName}` : "Receipt code"}
+      </Text>
+      {proof ? (
+        <>
+          <Text selectable style={s.code}>
+            {proof.code}
+          </Text>
+          <Text style={s.copy}>
+            Share this code when you receive your order.
+          </Text>
+        </>
+      ) : (
+        <Text style={s.copy}>
+          Confirm receipt to get your delivery verification code.
+        </Text>
+      )}
+      {confirming ? (
+        <>
+          <Text style={s.copy}>
+            {cod
+              ? `Have you received your items and paid ₹${amount.toLocaleString("en-IN")} in cash?`
+              : "Have you received your items?"}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            disabled={busy}
+            onPress={() => void issue()}
+            style={s.action}
+          >
+            <Text style={s.link}>
+              {busy ? "Generating…" : cod ? "Received and paid" : "Received"}
+            </Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            disabled={busy}
+            onPress={() => setConfirming(false)}
+            style={s.action}
+          >
+            <Text style={s.link}>Not yet</Text>
+          </Pressable>
+        </>
+      ) : !proof ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setConfirming(true)}
+          style={s.action}
+        >
+          <Text style={s.link}>Confirm receipt and get code</Text>
+        </Pressable>
+      ) : null}
+      {error ? (
+        <Text accessibilityRole="alert" style={s.error}>
+          {error}
+        </Text>
+      ) : null}
+      {proof && !confirming && (
+        <View accessibilityRole="button" accessibilityState={{ disabled: true }} style={[s.action, s.delivered]}>
+          <Text style={s.link}>View delivered order</Text>
+        </View>
+      )}
+    </View>
+  );
 }
+
+const s = StyleSheet.create({
+  card: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E0E3D8",
+    backgroundColor: "#EAF0D9",
+    padding: 16,
+    gap: 12,
+  },
+  heading: { color: "#07552F", fontSize: 14, fontWeight: "600" },
+  code: {
+    color: "#07552F",
+    fontSize: 39,
+    lineHeight: 50,
+    letterSpacing: 11,
+    fontWeight: "600",
+  },
+  copy: { color: "#252D25", fontSize: 14, lineHeight: 20, fontWeight: "600" },
+  action: { minHeight: 48, justifyContent: "center", alignItems: "center" },
+  link: { color: "#07552F", fontSize: 15, fontWeight: "600" },
+  error: { color: "#A23425" },
+  delivered: { alignItems: "center", opacity: 0.6 },
+});

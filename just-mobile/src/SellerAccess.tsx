@@ -41,7 +41,11 @@ export function SellerAccess({ close }: { close: () => void }) {
   const [fulfilment, setFulfilment] = useState<string[]>([]);
   const [catalogue, setCatalogue] = useState<{categories:Category[]; areas:ServiceArea[]}>();
   const [picker, setPicker] = useState<"category" | "area" | null>(null);
-  const normalizedPhone = phone.replace(/[\s-]/g, "").replace(/^\+91/, "");
+  const enteredPhone = phone.replace(/[\s()-]/g, "");
+  const normalizedPhone = /^[6-9]\d{9}$/.test(enteredPhone) ? "+91" + enteredPhone
+    : /^91[6-9]\d{9}$/.test(enteredPhone) ? "+" + enteredPhone
+    : enteredPhone;
+  const validPhone = /^\+[1-9]\d{9,14}$/.test(normalizedPhone);
   const expires = challenge ? now >= challenge.expires : false;
   const cooldown = challenge ? Math.max(0, Math.ceil((challenge.retryAt - now) / 1000)) : 0;
 
@@ -128,11 +132,11 @@ export function SellerAccess({ close }: { close: () => void }) {
   const passwordField = <Field label="Password" placeholder="Enter your password" value={password} onChangeText={setPassword} secureTextEntry={!visible} maxLength={128} autoCapitalize="none" suffix={link(visible ? "Hide" : "Show", () => setVisible(value => !value))} />;
   let action;
   if (!picker && step === "login") action = button("Sign in", () => void run(async () => {
-    if (!/^[6-9]\d{9}$/.test(normalizedPhone)) throw new Error("Enter a valid 10-digit Indian mobile number.");
-    await acceptSession(await buyerApi.login("+91" + normalizedPhone, password));
+    if (!validPhone) throw new Error("Enter your registered mobile number, including the country code if needed.");
+    await acceptSession(await buyerApi.login(normalizedPhone, password));
   }), !phone || !password);
   if (!picker && step === "account") action = button("Continue", () => void run(async () => {
-    if (name.trim().length < 2 || !/^[6-9]\d{9}$/.test(normalizedPhone) || password.length < 12) throw new Error("Enter your name, valid mobile number and a password with at least 12 characters.");
+    if (name.trim().length < 2 || !validPhone || password.length < 12) throw new Error("Enter your name, valid mobile number and a password with at least 12 characters.");
     const options = await buyerApi.registrationOptions();
     setVerify(options.emailOtpRequired);
     if (options.emailOtpRequired) {
@@ -160,7 +164,7 @@ export function SellerAccess({ close }: { close: () => void }) {
     if (verify && (!challenge || clockNow() >= challenge.expires)) { go("email"); throw new Error("Your email code has expired. Send a new code."); }
     try {
       const result = await buyerApi.registerSeller({
-        name:name.trim(), phone:"+91"+normalizedPhone, password,
+        name:name.trim(), phone:normalizedPhone, password,
         ...(verify && challenge ? {email:challenge.address, emailChallengeId:challenge.id, emailOtp:otp} : {}),
         shop:{name:shopName.trim(),address:address.trim(),since:Number(since),categoryIds:[category!.id],serviceAreaIds:[area!.id],fulfilment},
       });

@@ -1,3 +1,4 @@
+import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useState } from "react";
 import {
   Image,
@@ -26,6 +27,7 @@ export type BuyerBagProps = {
   bag: Line[];
   shops: Shop[];
   signedIn: boolean;
+  hindi: boolean;
   onBack: () => void;
   onSignIn: () => void;
   delivery: BagDelivery;
@@ -37,6 +39,7 @@ export function BuyerBag({
   bag,
   shops,
   signedIn,
+  hindi,
   onBack,
   onSignIn,
   delivery,
@@ -90,7 +93,7 @@ export function BuyerBag({
           <Text style={s.back}>‹</Text>
         </Pressable>
         <Text accessibilityRole="header" style={s.heading}>
-          Your bag
+          {hindi ? "आपका बैग" : "Your bag"}
         </Text>
       </View>
       {bag.length ? (
@@ -101,12 +104,13 @@ export function BuyerBag({
             testID="bag-scroll"
             showsVerticalScrollIndicator={false}
           >
+            {signedIn && !delivery.checking && delivery.notice && <BuyerStateCard title={delivery.notice.title} copy={delivery.notice.copy} tone="warning" icon="bag" compact action={delivery.notice.action} onAction={delivery.notice.run} />}
             <CheckoutHeading title={shopRemoved ? "Shop removed from your bag" : "Fresh finds, ready to go."} icon="bag" plain />
             {!signedIn && (
               <View style={[s.card, s.signInCard]}>
                 <Text style={[s.cardTitle, s.white]}>Sign in to place your order</Text>
                 <Text style={[s.copy, s.signInCopy]}>
-                  Your bag will be waiting after sign-in.
+                  {hindi ? "आपका बैग" : "Your bag"} will be waiting after sign-in.
                 </Text>
                 <Pressable
                   accessibilityRole="button"
@@ -253,20 +257,9 @@ export function BuyerBag({
           </View>
         </>
       ) : (
-        <View style={s.empty}>
-          <MarketIcon name="bag" color={green} />
-          <Text style={s.title}>Your bag is looking empty.</Text>
-          <Text style={s.copy}>
-            Explore nearby shops and find something fresh.
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            style={[s.button, s.sageButton, s.start]}
-            onPress={onBrowse}
-          >
-            <Text style={[s.buttonText, s.sageText]}>Start shopping</Text>
-          </Pressable>
-        </View>
+        <ScrollView contentContainerStyle={s.content}>
+          <BuyerStateCard title={hindi ? "आपका बैग आपका इंतज़ार कर रहा है।" : "Your bag is waiting."} copy={hindi ? "अपने पड़ोस की स्वतंत्र दुकानों से बढ़िया सामान खोजें।" : "Discover great things from independent shops in your neighbourhood."} icon="bag" action={hindi ? "आस-पास की दुकानें देखें" : "Explore nearby shops"} onAction={onBrowse} />
+        </ScrollView>
       )}
     </View>
   );

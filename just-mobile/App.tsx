@@ -1,3 +1,4 @@
+import { BuyerStateCard, BuyerStateSkeleton } from "./src/BuyerStateCard";
 import { StatusBar } from "expo-status-bar";
 import * as SecureStore from "./src/deviceStorage";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -73,7 +74,7 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [picked, setPicked] = useState<string | null>(null);
   const [shop, setShop] = useState<Shop | null>(null);
-  const [shopOrigin, setShopOrigin] = useState<"home" | "browse">("home");
+  const [shopOrigin, setShopOrigin] = useState<"home" | "browse" | "bag">("home");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [picker, setPicker] = useState(false);
@@ -83,6 +84,7 @@ export default function App() {
   const [confirmation, setConfirmation] = useState<{ order: BuyerOrder; contact: string; userId: string } | null>(null);
   const currentConfirmation = session && confirmation?.userId === session.userId ? confirmation : null;
   const [bagOrigin, setBagOrigin] = useState<Screen>("home");
+  const [hindi, setHindi] = useState(false);
   const [accountOrigin, setAccountOrigin] = useState<Screen>("home");
   const [ordersOrigin, setOrdersOrigin] = useState<Screen>("home");
   const [signInFromBag, setSignInFromBag] = useState(false);
@@ -90,8 +92,10 @@ export default function App() {
     if (screen !== "bag" && screen !== "checkout") setBagOrigin(screen);
     setScreen("bag");
   };
+  const [accountFavourites, setAccountFavourites] = useState(false);
   const [accountMode, setAccountMode] = useState<"hub" | "auth" | "hub-auth">("hub");
   const openAccountHub = () => {
+    setAccountFavourites(false);
     if (screen === "account") return;
     setAccountOrigin(screen);
     setSignInFromBag(false);
@@ -99,6 +103,7 @@ export default function App() {
     setScreen("account");
   };
   const openAccount = () => {
+    setAccountFavourites(false);
     if (screen === "account") return;
     setAccountOrigin(screen);
     setAccountMode("auth");
@@ -143,7 +148,7 @@ export default function App() {
       goHome();
       return true;
     }
-    if (screen === "shop" && shopOrigin === "browse") setScreen("browse");
+    if (screen === "shop" && shopOrigin !== "home") setScreen(shopOrigin);
     else if (screen === "checkout") setScreen("bag");
     else if (screen === "tracking" && currentConfirmation) setScreen("confirmation");
     else if (screen === "confirmation") { setConfirmation(null); setScreen("orders"); }
@@ -281,6 +286,11 @@ export default function App() {
       await SecureStore.setItemAsync("jpi.buyer.session", JSON.stringify(next));
     else await SecureStore.deleteItemAsync("jpi.buyer.session");
   };
+  useEffect(() => {
+    let active = true;
+    void SecureStore.getItemAsync("jpi.account.language").then(value => { if (active) setHindi(value === "hi"); }).catch(() => undefined);
+    return () => { active = false; };
+  }, [screen]);
   const body = !sessionReady ? (
     <State title="Opening your account" copy="Restoring your session" loading />
   ) : bagError ? (
@@ -289,8 +299,8 @@ export default function App() {
     <State title="Loading your bag" copy="Restoring your saved items" loading />
   ) : loading ? (
     <State
-      title="Loading Raiyam"
-      copy="Finding nearby shops and fresh stock"
+      title="Finding your neighbourhood…"
+      copy="Loading shops and products in your browsing area."
       loading
     />
   ) : error ? (
@@ -300,8 +310,16 @@ export default function App() {
       action="Try again"
       onAction={() => void load(area)}
     />
+  ) : screen === "home" && !shops.length && !products.length ? (
+    <View style={{ flex: 1 }}>
+      <View style={[s.top, { paddingHorizontal: 20 }]}><Text style={s.brand}>JustPackIt</Text><HomeNotifications session={session} /></View>
+      <ScrollView contentContainerStyle={{ padding:20, paddingTop:36 }}>
+        <BuyerStateCard title={hindi ? "यहाँ अभी कोई दुकान नहीं है।" : "A little quiet around here."} copy={hindi ? "इस इलाके में अभी दुकानें उपलब्ध नहीं हैं। पास का कोई और इलाका चुनें।" : "There are no shops in this area yet. Try a nearby service area."} icon="shop" action={hindi ? "खरीदारी का क्षेत्र बदलें" : "Change browsing area"} onAction={() => setPicker(true)} />
+      </ScrollView>
+    </View>
   ) : screen === "home" ? (
     <Home
+      onArea={() => setPicker(true)}
       key={homeVisit}
       header={
         !session ? (
@@ -396,7 +414,7 @@ export default function App() {
       categories={categories}
       userId={session?.userId}
       bag={bag}
-      onBack={() => (shopOrigin === "home" ? goHome() : setScreen("browse"))}
+      onBack={() => (shopOrigin === "home" ? goHome() : setScreen(shopOrigin))}
       onBag={openBag}
       renderProduct={(item, cardWidth) => (
         <ProductCard
@@ -418,6 +436,7 @@ export default function App() {
       save={saveSession}
       openOrders={openOrders}
       fromBag={signInFromBag}
+      initialFavourites={accountFavourites}
       signInOpen={accountMode !== "hub"}
       startSignIn={() => setAccountMode("hub-auth")}
       area={area?.name}
@@ -458,7 +477,11 @@ export default function App() {
       bag={bag}
       shops={shops}
       inBag={screen === "bag"}
+      hindi={hindi}
       openCheckout={() => setScreen("checkout")}
+      openOrders={() => { setOrdersOrigin("bag"); setScreen("orders"); }}
+      acceptPrice={(id, price) => setBag(items => items.map(item => item.id === id ? { ...item, price } : item))}
+      openShop={(item) => { setShopOrigin("bag"); setShop(item); setScreen("shop"); }}
       bagActions={{
         onBack: () => setScreen(bagOrigin),
         onSignIn: openAccount,
@@ -491,6 +514,8 @@ export default function App() {
               : shops,
             userId: session?.userId,
             categories,
+            searchNearby: (value) => { setQuery(value); setScreen("browse"); },
+            openFavourites: () => { openAccountHub(); setAccountFavourites(true); },
             openShop: (item) => {
               if (screen === "shop" && shop?.id === item.id) return;
               setShopOrigin(screen === "home" ? "home" : "browse");
@@ -514,6 +539,7 @@ export default function App() {
         ) : null}
         {screen !== "shop" && screen !== "checkout" && screen !== "confirmation" && screen !== "tracking" && !(screen === "account" && !session && accountMode !== "hub") && (
           <Nav
+            hindi={hindi}
             guestHome={screen === "home" && !session}
             screen={screen}
             count={count}
@@ -716,6 +742,7 @@ function Home({
   header,
   onBag,
   onQuickSearch,
+  onArea,
   session,
   onAccount,
   area,
@@ -732,6 +759,7 @@ function Home({
   header: ReactNode;
   onBag: () => void;
   onQuickSearch: (query: string) => void;
+  onArea: () => void;
   session: Session | null;
   onAccount: () => void;
   area: ServiceArea | null;
@@ -1231,7 +1259,7 @@ function Home({
               keyExtractor={(item) => item.id}
               contentContainerStyle={{ padding: 16, gap: 12 }}
               ListEmptyComponent={
-                <Empty copy="No shops are available in this area yet" />
+                <BuyerStateCard title="A little quiet around here." copy="There are no shops in this area yet. Try a nearby service area." icon="shop" action="Change browsing area" onAction={onArea} />
               }
               renderItem={({ item }) => (
                 <ShopRow
@@ -1263,7 +1291,7 @@ function Home({
           ))}
         </View>
       ) : (
-        <Empty copy="No shops are available in this area yet" />
+        <BuyerStateCard title="A little quiet around here." copy="There are no shops in this area yet. Try a nearby service area." icon="shop" action="Change browsing area" onAction={onArea} />
       )}
 
       {session && (
@@ -1278,6 +1306,7 @@ function Home({
           </View>
           {!picked && productResults}
           <BuyAgain
+            onBrowseAlternatives={onQuickSearch}
             onAdd={onAdd}
             key={session?.userId ?? "guest"}
             session={session}
@@ -1300,6 +1329,7 @@ function Home({
   );
 }
 function Nav({
+  hindi,
   guestHome = false,
   screen,
   count,
@@ -1310,6 +1340,7 @@ function Nav({
   orders,
 }: {
   guestHome?: boolean;
+  hindi: boolean;
   screen: Screen;
   count: number;
   home: () => void;
@@ -1328,26 +1359,26 @@ function Nav({
         },
       ]}
     >
-      <NavButton
+      <NavButton hindi={hindi}
         label="Home"
         guestHighlight={guestHome}
         active={screen === "home" || screen === "shop"}
         onPress={home}
       />
-      <NavButton
+      <NavButton hindi={hindi}
         label="Browse"
         guestHighlight={screen === "browse"}
         active={screen === "browse"}
         onPress={browse}
       />
-      <NavButton
+      <NavButton hindi={hindi}
         label={count && screen !== "bag" ? `Bag · ${count}` : "Bag"}
         guestHighlight={screen === "bag"}
         active={screen === "bag"}
         onPress={bag}
       />
-      <NavButton label="Orders" active={screen === "orders"} onPress={orders} />
-      <NavButton
+      <NavButton hindi={hindi} label="Orders" active={screen === "orders"} onPress={orders} />
+      <NavButton hindi={hindi}
         label="Account"
         active={screen === "account"}
         onPress={account}
@@ -1364,16 +1395,20 @@ const navIcons = {
 };
 
 function NavButton({
+  hindi,
   guestHighlight = false,
   label,
   active,
   onPress,
 }: {
   guestHighlight?: boolean;
+  hindi: boolean;
   label: keyof typeof navIcons | `Bag · ${number}`;
   active: boolean;
   onPress: () => void;
 }) {
+  const translated = { Home:"होम", Browse:"खोजें", Bag:"बैग", Orders:"ऑर्डर", Account:"खाता" };
+  const text = !hindi ? label : label.startsWith("Bag ·") ? label.replace("Bag", translated.Bag) : translated[label as keyof typeof translated];
   return (
     <Pressable
       accessibilityRole="button"
@@ -1391,7 +1426,7 @@ function NavButton({
         resizeMode="contain"
         style={[s.navIcon, active && s.navIconActive]}
       />
-      <Text style={[s.navText, active && s.navTextActive]}>{label}</Text>
+      <Text style={[s.navText, active && s.navTextActive]}>{text}</Text>
     </Pressable>
   );
 }
@@ -1983,16 +2018,10 @@ function State({
   loading?: boolean;
 }) {
   return (
-    <View style={s.state}>
-      {loading ? <ActivityIndicator color={c.green} size="large" /> : null}
-      <Text style={s.stateTitle}>{title}</Text>
-      <Text style={s.stateCopy}>{copy}</Text>
-      {action ? (
-        <Pressable style={s.secondary} onPress={onAction}>
-          <Text style={s.secondaryText}>{action}</Text>
-        </Pressable>
-      ) : null}
-    </View>
+    <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 36, gap: 16 }}>
+      <BuyerStateCard title={title} copy={copy} tone={loading ? "info" : "error"} icon="network" loading={loading} compact={loading} action={action} onAction={onAction} />
+      {loading && <BuyerStateSkeleton />}
+    </ScrollView>
   );
 }
 function AreaSheet({
@@ -2022,6 +2051,7 @@ function AreaSheet({
           <Text style={s.sheetCopy}>
             Shops and products update for the place you choose
           </Text>
+          {!areas.some(item => item.active) && <BuyerStateCard title="We’re not here yet." copy="Shops aren’t available in this browsing area." tone="warning" icon="location" action="Back to marketplace" onAction={close} />}
           {areas
             .filter((x) => x.active)
             .map((x) => (

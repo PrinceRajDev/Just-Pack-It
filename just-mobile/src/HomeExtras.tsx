@@ -1,3 +1,4 @@
+import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
@@ -100,11 +101,13 @@ export function BuyAgain({
   renderProduct,
   onAdd,
   onAccount,
+  onBrowseAlternatives,
 }: {
   session: Session | null;
   renderProduct: (product: Product) => ReactNode;
   onAdd: (product: Product) => void;
   onAccount: () => void;
+  onBrowseAlternatives: (query: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
@@ -145,7 +148,8 @@ export function BuyAgain({
       active = false;
     };
   }, [session]);
-  const product = products[0];
+  const product = products.find(item => item.stock > 0 || item.variants?.some(variant => variant.stock > 0)) ?? products[0];
+  const unavailable = products.find(item => item.stock <= 0 && !item.variants?.some(variant => variant.stock > 0));
   return (
     <View
       style={{
@@ -157,6 +161,7 @@ export function BuyAgain({
         backgroundColor: "#EAF0D9",
       }}
     >
+      {unavailable && <View style={{marginBottom:16}}><BuyerStateCard title="Some favourites are unavailable" copy={`${unavailable.name} is out of stock. Explore similar items nearby.`} tone="warning" icon="shop" compact action="Browse alternatives" onAction={() => onBrowseAlternatives(unavailable.name)} /></View>}
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
         <MarketIcon name="bag" />
         <Text

@@ -1,3 +1,4 @@
+import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -10,13 +11,14 @@ const languageKey = "jpi.account.language";
 type Panel = "language" | "notifications" | "favourites" | "signout";
 type Favourite = { id: string; name: string; key: string; shop?: Shop; product?: Product };
 
-export function BuyerAccountHub({ session, area, shops, products, back, signIn, profile, addresses, orders, signOut, browse, openShop, add }: {
+export function BuyerAccountHub({ initialFavourites, session, area, shops, products, back, signIn, profile, addresses, orders, signOut, browse, openShop, add }: {
+  initialFavourites?: boolean;
   session: Session | null; area?: string; shops: Shop[]; products: Product[];
   back: () => void; signIn: () => void; profile: () => void; addresses: () => void;
   orders: () => void; signOut: () => Promise<void>; browse: () => void;
   openShop: (shop: Shop) => void; add: (product: Product) => void;
 }) {
-  const [panel, setPanel] = useState<Panel | null>(null);
+  const [panel, setPanel] = useState<Panel | null>(initialFavourites ? "favourites" : null);
   const [hindi, setHindi] = useState(false);
   const [draftHindi, setDraftHindi] = useState(false);
   const [phone, setPhone] = useState("");
@@ -102,18 +104,18 @@ export function BuyerAccountHub({ session, area, shops, products, back, signIn, 
         <SafeAreaView style={s.screen}>
           <Header title={panels[panel]} back={close} />
           <ScrollView contentContainerStyle={s.content}>
-            {error && <BuyerAuthNotice title="Try again" copy={error} warning />}
+            {error && (panel === "signout" ? <BuyerStateCard title="Couldn’t sign you out" copy={error} tone="error" compact icon="network" action="Try sign out again" onAction={() => void run(signOut,"Couldn’t sign out. Check your connection and try again.")} /> : <BuyerAuthNotice title="Try again" copy={error} warning />)}
             {panel === "language" && <>
               <BuyerAuthNotice title={t("Shop in your language.", "अपनी भाषा में खरीदारी करें।")} copy={t("Choose the language for Account labels. Shop and product names stay as entered.", "खाते के लेबल की भाषा चुनें। दुकान और उत्पाद के नाम वैसे ही रहेंगे।")} />
               {[false,true].map(value => <Pressable key={String(value)} accessibilityRole="radio" accessibilityState={{checked:draftHindi === value}} aria-checked={draftHindi === value} onPress={() => setDraftHindi(value)} style={[s.card, draftHindi === value && s.selected]}><Text style={s.panelTitle}>{draftHindi === value ? "◉" : "○"} {value ? "हिन्दी" : "English"}</Text></Pressable>)}
               <Action label={draftHindi ? "Apply Hindi" : "Apply English"} disabled={busy} onPress={() => void run(async () => { await storage.setItemAsync(languageKey,draftHindi ? "hi" : "en"); setHindi(draftHindi); }, "Couldn’t save the language preference.")} />
             </>}
             {panel === "notifications" && <>
-              <BuyerAuthNotice title="Good news from nearby." copy="Order updates appear here." />
-              {busy ? <ActivityIndicator color="#07552F" /> : error ? <Action label="Retry notifications" onPress={() => { setError(""); setRevision(value => value+1); }} /> : updates.length ? updates.map(item => <View key={item.id} style={[s.card,!item.read && s.unread]}><Text style={s.panelTitle}>{!item.read ? "● " : ""}{item.title}</Text><Text style={s.copy}>{item.body}</Text></View>) : <Text style={s.copy}>{session ? "You’re all caught up." : "Sign in to see your order updates."}</Text>}
+              {!!updates.length && !busy && <BuyerAuthNotice title="Good news from nearby." copy="Order updates appear here." />}
+              {busy ? <ActivityIndicator color="#07552F" /> : error ? <Action label="Retry notifications" onPress={() => { setError(""); setRevision(value => value+1); }} /> : updates.length ? updates.map(item => <View key={item.id} style={[s.card,!item.read && s.unread]}><Text style={s.panelTitle}>{!item.read ? "● " : ""}{item.title}</Text><Text style={s.copy}>{item.body}</Text></View>) : <BuyerStateCard title={session ? "You’re all caught up." : "No updates yet."} copy={session ? "Order updates will appear here, from accepted to delivered." : "Sign in to see your order updates."} icon="bell" action={session ? "Continue shopping" : "Sign in"} onAction={() => { setPanel(null); if (session) browse(); else signIn(); }} />}
             </>}
             {panel === "favourites" && <>
-              <BuyerAuthNotice title="Your local favourites." copy="Saved on this device. Showing favourites available in your current area." />
+              {!!favourites.length && <BuyerAuthNotice title="Your local favourites." copy="Saved on this device. Showing favourites available in your current area." />}
               <View style={s.grid}>{(["products","shops"] as const).map(value => <Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:tab === value}} onPress={() => setTab(value)} style={[s.tile,tab === value && s.selected]}><Text style={s.panelTitle}>{value === "products" ? "Products" : "Shops"}</Text></Pressable>)}</View>
               {busy ? <ActivityIndicator color="#07552F" /> : error ? <Action label="Retry favourites" onPress={() => { setError(""); setRevision(value => value+1); }} /> : <>
                 {favourites.filter(row => tab === "products" ? row.product : row.shop).map(row => <View key={row.key} style={s.card}>
@@ -125,7 +127,7 @@ export function BuyerAccountHub({ session, area, shops, products, back, signIn, 
                   {row.product && !row.product.variants?.length && <Action label={row.product.stock > 0 ? `+ Add · ₹${row.product.price}` : "Unavailable"} disabled={row.product.stock <= 0} soft onPress={() => add(row.product!)} />}
                   <Pressable accessibilityRole="button" onPress={() => void storage.deleteItemAsync(row.key).then(() => setFavourites(rows => rows.filter(item => item.key !== row.key))).catch(() => setError("Couldn’t remove this favourite."))}><Text style={s.copy}>Remove favourite</Text></Pressable>
                 </View>)}
-                {!favourites.some(row => tab === "products" ? row.product : row.shop) && <Action label="Discover favourites" soft onPress={() => { setPanel(null); browse(); }} />}
+                {!favourites.some(row => tab === "products" ? row.product : row.shop) && <BuyerStateCard title="Keep your favourites close." copy="Tap the heart on a product or shop to save it on this device." icon="heart" action="Discover favourites" onAction={() => { setPanel(null); browse(); }} />}
               </>}
             </>}
             {panel === "signout" && <>

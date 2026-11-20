@@ -1,3 +1,4 @@
+import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { buyerApi, type BuyerProfile as Profile } from "./api";
@@ -26,6 +27,7 @@ export function BuyerProfile({ token, back, onSaved }: { token: string; back: ()
   return <View style={s.screen}>
     <View style={s.header}><Pressable accessibilityLabel="Back to Account" onPress={back} hitSlop={10}><Text style={s.heading}>‹</Text></Pressable><Text style={s.heading}>Profile</Text></View>
     <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
+      {success && <BuyerStateCard title="Profile updated" copy="Your details were saved successfully." tone="success" icon="check" compact action="Back to Account" onAction={back} />}
       <View style={s.hero}><View style={s.icon}><MarketIcon name="account" color="#07552F" /></View><Text style={s.heroTitle}>A little about you.</Text></View>
       {error ? <Text accessibilityRole="alert" style={s.error}>{error}</Text> : null}
       {!profile && !error ? <ActivityIndicator color="#07552F" /> : null}
@@ -38,7 +40,7 @@ export function BuyerProfile({ token, back, onSaved }: { token: string; back: ()
         <Text style={s.label}>Email</Text>
         <Text selectable style={s.field}>{profile.email || "No email on file"}</Text>
         <Text style={s.label}>Contact details are used for sign-in, email recovery and order updates.</Text>
-        {success ? <Text accessibilityRole="alert" style={s.label}>Profile saved</Text> : null}
+
       </View> : null}
     </ScrollView>
     <View style={s.footer}><Pressable accessibilityRole="button" disabled={disabled} onPress={() => void save()} style={[s.action, disabled && s.disabled]}><Text style={s.actionText}>{busy ? "Saving…" : "Save changes"}</Text></Pressable></View>

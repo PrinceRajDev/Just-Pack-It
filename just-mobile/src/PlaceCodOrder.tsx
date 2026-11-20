@@ -1,13 +1,17 @@
 import { useRef, useState } from "react";
 import * as SecureStore from "./deviceStorage";
-import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import {
-  buyerApi,
+  ApiError, buyerApi,
   type Address,
   type BuyerOrder,
   type CheckoutLine,
   type Session,
 } from "./api";
+
+function createPlacementKey() {
+  return `mobile_${Date.now()}_${Math.random().toString(36).slice(2, 14)}`;
+}
 
 export function PlaceCodOrder({
   session,
@@ -16,7 +20,7 @@ export function PlaceCodOrder({
   total,
   items,
   shopIds,
-  onConfirmed,
+  onConfirmed, onBusy, onFailure,
 }: {
   session: Session;
   areaId: string;
@@ -25,16 +29,18 @@ export function PlaceCodOrder({
   items: CheckoutLine[];
   shopIds: string[];
   onConfirmed: (order: BuyerOrder) => void;
+  onBusy: (busy: boolean) => void;
+  onFailure: (failure: {message:string; uncertain:boolean; retry:()=>void} | null) => void;
 }) {
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const lock = useRef(false);
   const place = async () => {
     if (lock.current || orderId) return;
     lock.current = true;
     setBusy(true);
-    setMessage(null);
+    onBusy(true);
+    onFailure(null);
     try {
       const input = {
         areaId,
@@ -60,7 +66,7 @@ export function PlaceCodOrder({
         );
       const key =
         pending?.key ??
-        `mobile_${Date.now()}_${Math.random().toString(36).slice(2, 14)}`;
+        createPlacementKey();
       await SecureStore.setItemAsync(
         storageKey,
         JSON.stringify({ key, fingerprint }),
@@ -82,63 +88,20 @@ export function PlaceCodOrder({
       await SecureStore.deleteItemAsync(storageKey).catch(() => undefined);
       onConfirmed(order);
     } catch (reason) {
-      setMessage(
-        reason instanceof Error
-          ? reason.message
-          : "Order result could not be confirmed. Retry with the same bag and address.",
-      );
+      onFailure({
+        message: reason instanceof Error ? reason.message : "Order result could not be confirmed. Check Orders before trying again.",
+        uncertain: !(reason instanceof ApiError) || reason.status >= 500,
+        retry: () => void place(),
+      });
     } finally {
       lock.current = false;
       setBusy(false);
+      onBusy(false);
     }
   };
   return (
     <View style={{ gap: 8 }}>
-      <Modal
-        visible={busy}
-        transparent
-        animationType="fade"
-        onRequestClose={() => undefined}
-      >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(31,42,34,0.5)",
-            justifyContent: "center",
-            padding: 24,
-          }}
-        >
-          <View
-            accessibilityViewIsModal
-            style={{
-              padding: 24,
-              borderRadius: 16,
-              backgroundColor: "#FDFBF7",
-              alignItems: "center",
-              gap: 16,
-            }}
-          >
-            <ActivityIndicator color="#174B34" size="large" />
-            <Text
-              accessibilityRole="header"
-              style={{ fontSize: 22, color: "#1F2A22" }}
-            >
-              Confirming your order
-            </Text>
-            <Text
-              style={{
-                color: "#5E554A",
-                fontSize: 14,
-                lineHeight: 21,
-                textAlign: "center",
-              }}
-            >
-              Please keep the app open while we check your order. Your
-              confirmation will appear here.
-            </Text>
-          </View>
-        </View>
-      </Modal>
+
       {orderId ? (
         <Text
           style={{
@@ -160,25 +123,17 @@ export function PlaceCodOrder({
             borderRadius: 14,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: "#07552F",
-            opacity: busy ? 0.5 : 1,
+            backgroundColor: busy ? "#DDE2D5" : "#07552F",
           }}
         >
-          <Text style={{ color: "#fff", fontWeight: "600", fontSize: 15 }}>
+          <Text style={{ color: busy ? "#697267" : "#fff", fontWeight: "600", fontSize: 15 }}>
             {busy
-              ? "Confirming order…"
+              ? "Placing order…"
               : `Place Order · ₹${total.toLocaleString("en-IN")}`}
           </Text>
         </Pressable>
       )}
-      {message ? (
-        <Text
-          accessibilityRole="alert"
-          style={{ color: "#5E554A", fontSize: 14, lineHeight: 21 }}
-        >
-          {message}
-        </Text>
-      ) : null}
+
     </View>
   );
 }

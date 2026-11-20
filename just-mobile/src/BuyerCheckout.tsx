@@ -1,4 +1,6 @@
+import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useAndroidBack } from "./useAndroidBack";
 import { BuyerBag, type BuyerBagProps } from "./BuyerBag";
 import { PlaceCodOrder } from "./PlaceCodOrder";
 import { BuyerAddresses } from "./BuyerAddresses";
@@ -38,6 +40,7 @@ export type BagDelivery = {
   saved: () => void;
   retry: () => void;
   checkout: () => void;
+  notice?: { title: string; copy: string; action: string; run: () => void };
 };
 
 export function BuyerCheckout({
@@ -48,9 +51,12 @@ export function BuyerCheckout({
   back,
   account,
   onConfirmed,
-  inBag, openCheckout, bagActions,
+  openOrders,
+  acceptPrice, openShop,
+  hindi, inBag, openCheckout, bagActions,
 }: {
   inBag: boolean;
+  hindi: boolean;
   openCheckout: () => void;
   bagActions: Pick<BuyerBagProps, "onBack" | "onSignIn" | "onChange" | "onBrowse">;
   session: Session | null;
@@ -60,6 +66,9 @@ export function BuyerCheckout({
   back: () => void;
   account: () => void;
   onConfirmed: (order: BuyerOrder, contact: string) => void;
+  openOrders: () => void;
+  acceptPrice: (id: string, price: number) => void;
+  openShop: (shop: Shop) => void;
 }) {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedId, setSelectedId] = useState<string>();
@@ -67,6 +76,9 @@ export function BuyerCheckout({
   const [profile, setProfile] = useState<BuyerProfile | null>(null);
   const [review, setReview] = useState<CheckoutReview | null>(null);
   const [reviewedAddress, setReviewedAddress] = useState<Address | null>(null);
+  const [changedQuote, setChangedQuote] = useState<number | null>(null);
+  const [placing, setPlacing] = useState(false);
+  const [placementError, setPlacementError] = useState<{message:string; uncertain:boolean; retry:()=>void} | null>(null);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
@@ -195,6 +207,7 @@ export function BuyerCheckout({
         })),
         [...new Set(bag.map((line) => line.shopId))],
       );
+      if (!inBag && review?.grandTotal != null && result.grandTotal != null && result.grandTotal !== review.grandTotal) setChangedQuote(review.grandTotal);
       setReviewedAddress(selected);
       setReview(result);
       setQuoteKey(currentKey);
@@ -241,10 +254,12 @@ export function BuyerCheckout({
       );
     });
   const openPicker = () => {
+    setPlacementError(previous => previous?.uncertain ? previous : null);
     setSaved(false);
     setError(null);
     setChoosing(true);
   };
+  useAndroidBack(() => placing, 20);
   const contact = profile
     ? [
         profile.name,
@@ -262,12 +277,36 @@ export function BuyerCheckout({
       : [];
   }) : [];
   const checking = !!session && (addressesLoading || busy || (!!currentKey && requestedKey !== currentKey));
-  const ready = !busy && !!currentReview?.checkoutAvailable && !issues.length && hasDelivery && hasCod && total !== null;
+  const changes = currentReview?.lines.flatMap(quoted => {
+    const item = bag.find(line => (line.productId ?? line.id) === quoted.productId && line.variantId === quoted.variantId);
+    return item ? [{ item, quoted }] : [];
+  }) ?? [];
+  const stockChange = changes.find(({ item, quoted }) => quoted.availableStock != null && quoted.availableStock < item.quantity);
+  const priceChange = changes.find(({ item, quoted }) => quoted.unitPrice != null && item.price !== quoted.unitPrice);
+  const minimum = currentReview?.shops.find(group => group.issues.some(issue => issue.code === "MINIMUM_NOT_MET"));
+  const notice = stockChange ? {
+    title: "Not enough stock",
+    copy: `${stockChange.item.name}: only ${stockChange.quoted.availableStock} available.`,
+    action: "Update quantity",
+    run: () => bagActions.onChange(stockChange.item.id, stockChange.quoted.availableStock! - stockChange.item.quantity),
+  } : priceChange ? {
+    title: "A price has changed",
+    copy: `${priceChange.item.name} is now ${money(priceChange.quoted.unitPrice!)}, previously ${money(priceChange.item.price)}.`,
+    action: "Accept updated price",
+    run: () => acceptPrice(priceChange.item.id, priceChange.quoted.unitPrice!),
+  } : minimum ? {
+    title: "Shop minimum not met",
+    copy: minimum.issues.find(issue => issue.code === "MINIMUM_NOT_MET")!.message,
+    action: "Add more from this shop",
+    run: () => openShop(minimum.shop),
+  } : undefined;
+  const ready = !busy && !notice && !!currentReview?.checkoutAvailable && !issues.length && hasDelivery && hasCod && total !== null;
   const delivery: BagDelivery = {
     address: selected, contact, total, checking,
     blocked: !!selected && !ready,
     unavailable,
-    error: error ?? (!checking && !unavailable.length && currentReview && !ready
+    notice,
+    error: error ?? (!checking && !unavailable.length && !notice && currentReview && !ready
       ? issues[0]?.message ?? currentReview.shops.flatMap(group => group.issues)[0]?.message ??
         "Cash on Delivery or delivery quote is unavailable. Try again."
       : null),
@@ -300,6 +339,7 @@ export function BuyerCheckout({
               />
             ) : (
               <ChooseDeliveryAddress
+                hindi={hindi}
                 title={saved ? "Saved addresses" : reviewedAddress ? "Change address" : "Choose address"}
                 rechecking={!!reviewedAddress}
                 rows={addresses}
@@ -326,13 +366,14 @@ export function BuyerCheckout({
           </SafeAreaView>
         </SafeAreaProvider>
       </Modal>
-      {inBag ? <BuyerBag {...bagActions} bag={bag} shops={shops} signedIn={!!session} delivery={delivery} /> : <>
+      {inBag ? <BuyerBag {...bagActions} bag={bag} shops={shops} signedIn={!!session} delivery={delivery} hindi={hindi} /> : <>
       <View style={s.header}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Back from checkout"
           hitSlop={8}
           onPress={back}
+          disabled={placing}
           style={s.backButton}
         >
           <Text style={s.arrow}>‹</Text>
@@ -346,6 +387,10 @@ export function BuyerCheckout({
         contentContainerStyle={s.page}
         testID="checkout-scroll"
       >
+        {placing && <BuyerStateCard title="Placing your order…" copy="Please keep this screen open while we check your order." tone="info" compact busyLabel="Placing order…" />}
+        {placementError && !placing && <BuyerStateCard title={placementError.uncertain ? "Let’s check before trying again." : "Your order wasn’t placed."} copy={placementError.message} tone={placementError.uncertain ? "warning" : "error"} icon={placementError.uncertain ? "clock" : "warning"} compact={!placementError.uncertain} action={placementError.uncertain ? "Check Orders" : "Retry Place Order"} onAction={placementError.uncertain ? openOrders : placementError.retry} />}
+        {changedQuote !== null && total != null && <BuyerStateCard title="Delivery quote updated" copy={`Your total changed from ${money(changedQuote)} to ${money(total)}. Review the new total before placing your order.`} tone="warning" compact icon="wallet" action="Accept new quote" onAction={() => setChangedQuote(null)} />}
+        {notice && <BuyerStateCard title={notice.title} copy={notice.copy} tone="warning" compact action="Review bag" onAction={back} />}
         <CheckoutHeading title="One last look." icon="orders" />
         {!session ? (
           <Pressable
@@ -366,6 +411,7 @@ export function BuyerCheckout({
             <Pressable
               accessibilityRole="button"
               onPress={openPicker}
+              disabled={placing}
               style={[s.button, s.change]}
             >
               <Text style={s.action}>Change address</Text>
@@ -473,7 +519,7 @@ export function BuyerCheckout({
       </ScrollView>
       {session && currentReview && (
         <View style={s.footer} testID="checkout-footer">
-          {currentReview.checkoutAvailable &&
+          {ready && changedQuote === null &&
           !issues.length &&
           hasDelivery &&
           hasCod &&
@@ -496,6 +542,8 @@ export function BuyerCheckout({
                   qty: line.quantity,
                 }))}
                 shopIds={shopIds}
+                onBusy={setPlacing}
+                onFailure={setPlacementError}
                 onConfirmed={(order) => onConfirmed(order, contact)}
               />
             </>

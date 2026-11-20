@@ -1,3 +1,4 @@
+import { BuyerStateCard, BuyerStateSkeleton } from "./BuyerStateCard";
 import {
   useEffect,
   useRef,
@@ -339,33 +340,12 @@ export function BuyerBrowse({
     </View>
   );
   const missingResults = (copy: string) => (
-    <View style={styles.searchState}>
-      <Text style={styles.heading}>No matches, just yet.</Text>
-      <Text style={styles.emptyText}>{copy}</Text>
-      <Pressable
-        accessibilityRole="button"
-        style={[styles.tab, styles.selectedResult]}
-        onPress={() => searchInput.current?.focus()}
-      >
-        <Text style={styles.tabText}>Edit search</Text>
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        style={[styles.tab, styles.selectedResult]}
-        onPress={reset}
-      >
-        <Text style={styles.tabText}>Clear search</Text>
-      </Pressable>
-    </View>
+    <BuyerStateCard title={`No matches for “${search}”.`} copy={copy} icon="search" action="Clear search" onAction={reset} />
   );
-  const searching = (
-    <View style={styles.searchState} accessibilityLiveRegion="polite">
-      <Text style={styles.shopHeadingTitle}>Searching your neighbourhood…</Text>
-      {[0, 1, 2].map((row) => (
-        <View key={row} style={styles.placeholder} />
-      ))}
-    </View>
-  );
+  const searching = <>
+    <BuyerStateCard title="Searching nearby…" copy="Looking across products, shops and brands." tone="info" compact loading />
+    <BuyerStateSkeleton />
+  </>;
   return (
     <ScrollView
       keyboardShouldPersistTaps="handled"
@@ -613,26 +593,14 @@ export function BuyerBrowse({
         !categories.some((item) => item.slug === category.slug) ? (
         empty("This category is not available in your area yet.")
       ) : failure ? (
-        <View style={styles.empty}>
-          <Text style={styles.heading}>Let’s try that again.</Text>
-          <Text style={styles.emptyText}>{failure}</Text>
-          <Pressable
-            onPress={() => {
-              setError(null);
-              setCatalogueError(null);
-              setResult(null);
-              setCatalogue(null);
-              setAttempt((value) => value + 1);
-            }}
-          >
-            <Text style={styles.retry}>Try again</Text>
-          </Pressable>
-          {globalSearch && (
-            <Pressable accessibilityRole="button" onPress={reset}>
-              <Text style={styles.retry}>Back to Browse</Text>
-            </Pressable>
-          )}
-        </View>
+        <BuyerStateCard title={globalSearch ? "Couldn’t load results." : "Couldn’t load Browse."} copy={failure} tone="error" icon="network"
+          action={globalSearch ? "Retry search" : "Try again"} onAction={() => {
+            setError(null);
+            setCatalogueError(null);
+            setResult(null);
+            setCatalogue(null);
+            setAttempt(value => value + 1);
+          }} />
       ) : globalSearch ? (
         <>
           <View accessibilityRole="tablist" style={styles.resultTabs}>
@@ -807,7 +775,7 @@ export function BuyerBrowse({
                 ))}
               </View>
             ) : (
-              empty("No brands have been added in this area yet.")
+              <BuyerStateCard title="No brands to show yet." copy="Our shops haven’t added brand information. You can still shop by category or by shop." icon="browse" action="Browse categories" onAction={() => setTab("Categories")} />
             )
           ) : null}
           {tab === "Shops" ? (

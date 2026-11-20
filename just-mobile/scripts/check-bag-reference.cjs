@@ -286,7 +286,7 @@ async function run() {
     assert.equal(await page.getByRole("button",{name:/Resend in/}).isDisabled(),true);
     await page.screenshot({path:path.join(output,"recovery-email-code-390.png")});
     await page.getByLabel("Recovery code").fill("482196");
-    await page.getByRole("button",{name:"Continue",exact:true}).click();
+    await page.getByRole("button",{name:"Verify code",exact:true}).click();
     await page.getByLabel("New password",{exact:true}).fill("fixture-new-password");
     await page.getByLabel("Confirm password",{exact:true}).fill("fixture-new-password");
     await page.getByRole("button",{name:"Save password"}).click();
@@ -340,7 +340,7 @@ async function run() {
         .click();
     }
     await bag
-      .getByText("Your bag is looking empty.", { exact: true })
+      .getByText("Your bag is waiting.", { exact: true })
       .waitFor();
     await page.getByText("Orders",{exact:true}).click();
     const item = orders.getByRole("button",{name:/Sharma Kirana Store/});

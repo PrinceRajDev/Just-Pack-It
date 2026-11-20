@@ -1,3 +1,4 @@
+import { BuyerStateCard } from "./BuyerStateCard";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import {
   FlatList,
@@ -21,6 +22,8 @@ export const BuyerProductContext = createContext<{
   userId?: string;
   categories?: Category[];
   openShop?: (shop: Shop) => void;
+  searchNearby?: (query: string) => void;
+  openFavourites?: () => void;
 }>({ shops: [] });
 export function BuyerProductDetails({
   item,
@@ -215,6 +218,10 @@ export function BuyerProductDetails({
               Favourite could not be saved. Tap the heart to retry.
             </Text>
           ) : null}
+          {verified && offer && offer.stock <= 0 && <BuyerStateCard title="This pack is out of stock" copy="Try another seller or pack." tone="warning" icon="pack" compact action={context.searchNearby ? "View other sellers" : undefined} onAction={() => { back(); context.searchNearby?.(current.name); }} />}
+          {verified && offer && offer.stock > 0 && quantity >= offer.stock && <BuyerStateCard title="You’ve reached the stock limit" copy={`Only ${offer.stock} available from this shop.`} tone="warning" icon="pack" compact />}
+          {saved === true && <BuyerStateCard title="Saved to your favourites" copy="This product is saved on your device. Tap the filled heart to unsave." tone="success" icon="heart" compact action={context.openFavourites ? "View favourites" : undefined} onAction={() => { back(); context.openFavourites?.(); }} />}
+          {verified && !loadError && offer && offer.stock > quantity && !saved && !!seller && <BuyerStateCard title="Available at one nearby shop" copy={`${seller?.name ?? "This shop"} is the seller for this listing.`} tone="info" icon="pack" compact />}
           <View testID="product-gallery" style={s.gallery}>
             {images.length ? (
               <FlatList

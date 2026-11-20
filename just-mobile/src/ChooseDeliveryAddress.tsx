@@ -1,3 +1,4 @@
+import { BuyerStateCard } from "./BuyerStateCard";
 import {
   ActivityIndicator,
   Pressable,
@@ -10,7 +11,7 @@ import { CheckoutHeading, DeliveryAddressContents } from "./CheckoutPresentation
 import type { Address, BuyerProfile } from "./api";
 
 export function ChooseDeliveryAddress({
-  title, rechecking, rows,
+  title, hindi, rechecking, rows,
   selected,
   preferred,
   profile,
@@ -26,6 +27,7 @@ export function ChooseDeliveryAddress({
   reload,
 }: {
   title: string;
+  hindi: boolean;
   rechecking: boolean;
   rows: Address[];
   selected?: string;
@@ -71,9 +73,9 @@ export function ChooseDeliveryAddress({
         </Text>
         {loading && <ActivityIndicator color="#07552F" />}
         {error && (
-          <Text accessibilityRole="alert" style={s.error}>
-            {error}
-          </Text>
+          <BuyerStateCard title={hindi ? "इस पते की पुष्टि नहीं हो सकी" : "We couldn’t verify this address"} copy={hindi ? "इलाका और 6 अंकों का पिन कोड जाँचें। आपका बैग सुरक्षित है।" : error} icon="location" tone="error" compact
+            action={rows.some(row => row.id === selected) ? (hindi ? "डिलीवरी का पता बदलें" : "Edit delivery address") : undefined}
+            onAction={() => { const address = rows.find(row => row.id === selected); if (address) edit(address); }} />
         )}
         {!loading && (
           <>

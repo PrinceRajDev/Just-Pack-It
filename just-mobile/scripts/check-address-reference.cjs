@@ -65,6 +65,7 @@ const assert = require("node:assert/strict");
     });
     const errors = [];
     let orderRequests = 0;
+    let changedPrice = false;
     let trackingDelivered = false;
     let receiptRequests = 0;
     let firstOrderKey;
@@ -170,7 +171,7 @@ const assert = require("node:assert/strict");
                     ],
                   },
                 ]
-              : [],
+              : changedPrice ? [{ productId: products[0].productId ?? products[0].id, variantId: products[0].variantId, unitPrice: 48, availableStock: 12, issues: [] }] : [],
             shops: shops.map((shop) => ({ shop, issues: [] })),
             fulfilments: shops.map((shop, index) => ({
               shopId: shop.id,
@@ -371,6 +372,9 @@ const assert = require("node:assert/strict");
     await page
       .getByText("Order service unavailable. Please retry.", { exact: true })
       .waitFor();
+    await page.getByRole("button", { name: "Check Orders", exact: true }).waitFor();
+    await page.setViewportSize({width:390,height:844});
+    await page.screenshot({path:path.join(output,"checkout-uncertain-390.png")});
     const confirmation = page.getByTestId("order-confirmation");
     assert.equal(await confirmation.count(), 0);
     assert.equal(
@@ -448,6 +452,14 @@ const assert = require("node:assert/strict");
       ),
       [],
     );
+    changedPrice = true;
+    await page.evaluate(() => sessionStorage.removeItem("qa.address.seeded"));
+    await page.reload();
+    await page.getByText("Bag · 3", {exact:true}).last().click();
+    await page.getByText("A price has changed",{exact:true}).waitFor();
+    await page.screenshot({path:path.join(output,"bag-price-changed-390.png")});
+    await page.getByRole("button",{name:"Accept updated price",exact:true}).click();
+    await page.getByText(/₹48 each/).waitFor();
     assert.deepEqual(errors, []);
     console.log(
       "PASS: address management, four viewports, shop fees, delivery and stock blockers, COD payload, duplicate prevention and confirmed navigation",

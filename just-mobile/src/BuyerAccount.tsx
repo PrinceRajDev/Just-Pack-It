@@ -1,3 +1,4 @@
+import { BuyerStateCard, BuyerStateSkeleton } from "./BuyerStateCard";
 import { BuyerAccountHub } from "./BuyerAccountHub";
 
 
@@ -41,7 +42,7 @@ export function BuyerAccount({
   fromBag,
   back,
   browseAsGuest,
-  signInOpen, startSignIn, area, shops, products, browse, openShop, add,
+  initialFavourites, signInOpen, startSignIn, area, shops, products, browse, openShop, add,
 }: {
   session: Session | null;
   save: (next: Session | null) => Promise<void>;
@@ -49,6 +50,7 @@ export function BuyerAccount({
   fromBag: boolean;
   back: () => void;
   browseAsGuest: () => void;
+  initialFavourites?: boolean;
   signInOpen: boolean;
   startSignIn: () => void;
   area?: string;
@@ -142,7 +144,7 @@ export function BuyerAccount({
   if (!session && recoveryOpen) return <BuyerRecovery back={() => { setPassword(""); setRecoveryOpen(false); }} />;
   if (session && profileOpen) return <Modal onRequestClose={() => setProfileOpen(false)}><SafeAreaView style={{ flex: 1, backgroundColor: "#F8F6EE" }}><BuyerProfile key={session.userId} token={session.token} back={() => setProfileOpen(false)} onSaved={(updatedName) => save({ ...session, name: updatedName })} /></SafeAreaView></Modal>;
   if (session || !signInOpen) return (
-    <BuyerAccountHub session={session} area={area} shops={shops} products={products}
+    <BuyerAccountHub initialFavourites={initialFavourites} session={session} area={area} shops={shops} products={products}
       back={back} signIn={startSignIn} profile={() => setProfileOpen(true)} addresses={() => setAddressesOpen(true)}
       orders={openOrders} browse={browse} openShop={openShop} add={add}
       signOut={async () => {
@@ -162,7 +164,7 @@ export function BuyerAccount({
         <Text accessibilityRole="header" style={login.headerText}>Sign in</Text>
       </View>
       <ScrollView style={login.scroll} contentContainerStyle={login.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        {signInError ? <BuyerAuthNotice title={signInServerError ? "Couldn’t sign you in" : "Check your details"} copy={signInError} warning /> : busy ? <BuyerAuthNotice title="Signing you in…" copy="Your bag is saved. Please wait." /> : passwordVisible ? <BuyerAuthNotice title="Password is visible" copy="Use Hide to keep your password private." warning /> : null}
+        {signInError ? <BuyerAuthNotice title={signInServerError ? "Couldn’t sign you in" : "Check your details"} copy={signInError} warning /> : busy ? <BuyerAuthNotice title="Signing you in…" copy="Your bag is saved. Please wait." busyLabel="Signing in…" /> : passwordVisible ? <BuyerAuthNotice title="Password is visible" copy="Use Hide to keep your password private." tone="info" /> : null}
         <Text accessibilityRole="header" style={login.welcome}>Welcome to{"\n"}JustPackIt</Text>
         <Text style={login.tagline}>Your Neighbourhood, Delivered.</Text>
         <View style={login.card}>
@@ -220,10 +222,12 @@ export function BuyerAccount({
       </ScrollView>
     </View>
   );
+  const canCreate = !busy && !!options && (!options.emailOtpRequired || (options.emailOtpAvailable && !!challenge && !signupExpired && /^\d{6}$/.test(otp)));
   return (
-    <ScrollView contentContainerStyle={login.content} keyboardShouldPersistTaps="handled">
+    <View style={login.screen}>
+    <ScrollView style={login.scroll} contentContainerStyle={login.content} keyboardShouldPersistTaps="handled">
       <Pressable accessibilityRole="button" accessibilityLabel="Back to sign in" disabled={busy} onPress={() => { setSignInError(""); setPasswordVisible(false); setRegister(false); }} style={login.backButton}><Text style={login.headerText}>‹  Sign in</Text></Pressable>
-      <BuyerAuthNotice title="Join your neighbourhood." copy="Create an account to order from independent shops." />
+      <BuyerAuthNotice title="Join your neighbourhood." tone="success" icon="account" copy="Create an account to order from independent shops." />
       {signInError ? <BuyerAuthNotice title="Check your details" copy={signInError} warning /> : null}
       <View style={login.card}>
       {register ? (
@@ -268,14 +272,10 @@ export function BuyerAccount({
       />
       <Text style={s.copy}>Confirm password</Text>
       <TextInput accessibilityLabel="Confirm password" editable={!busy} maxLength={128} value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!passwordVisible} autoCapitalize="none" style={s.input} />
-      {challenge ? <BuyerAuthNotice title={signupExpired ? "This code has expired." : "Check your email."} copy={signupExpired ? "Request a new code to continue." : "Enter the six-digit code sent to your inbox."} /> : null}
+      {challenge ? <BuyerAuthNotice title={signupExpired ? "This code has expired." : "Check your email."} tone={signupExpired ? "warning" : "success"} icon={signupExpired ? "clock" : "mail"} copy={signupExpired ? "Request a new code to continue." : "Enter the six-digit code sent to your inbox."} /> : null}
       {register && optionsError ? <Text style={s.copy}>Registration settings could not load. Reopen Account to retry.</Text> : null}
       {register && options?.emailOtpRequired ? <View><Text style={s.copy}>Verify your email to create an account</Text><TextInput editable={!busy} accessibilityLabel="Email" value={email} onChangeText={(value) => { setEmail(value); setChallenge(null); setOtp(""); }} autoCapitalize="none" keyboardType="email-address" placeholder="Email address" style={s.input} /><Pressable disabled={busy || !options.emailOtpAvailable || signupCooldown > 0} onPress={() => void sendCode()} style={s.signout}><Text style={s.signoutText}>{signupCooldown > 0 ? `Resend in ${signupCooldown}s` : challenge ? "Resend email code" : "Send email code"}</Text></Pressable>{challenge && !signupExpired ? <TextInput editable={!busy} accessibilityLabel="Email verification code" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} placeholder="6-digit email code" style={s.input} /> : null}{!options.emailOtpAvailable ? <Text style={s.copy}>Email verification is temporarily unavailable</Text> : null}</View> : null}
-      <Pressable accessibilityRole="button"
-        disabled={busy || !options || (options.emailOtpRequired && (!options.emailOtpAvailable || !challenge || signupExpired || !/^\d{6}$/.test(otp)))}
-        style={s.primary} onPress={() => void submit()}>
-        <Text style={s.primaryText}>{busy ? "Please wait…" : "Create account"}</Text>
-      </Pressable>
+
       <Pressable disabled={busy} onPress={() => { setSignInError(""); setPasswordVisible(false); setRegister(false); }}>
         <Text style={s.switch}>
           {register
@@ -285,6 +285,8 @@ export function BuyerAccount({
       </Pressable>
       </View>
     </ScrollView>
+    <View style={login.stickyFooter}><Pressable accessibilityRole="button" disabled={!canCreate} onPress={() => void submit()} style={[login.button, login.primary, !canCreate && login.disabledAction]}><Text style={[login.buttonText, canCreate ? login.primaryText : login.disabledLabel]}>{busy ? "Please wait…" : "Create account"}</Text></Pressable></View>
+    </View>
   );
 }
 export function BuyerOrders({
@@ -352,20 +354,13 @@ export function BuyerOrders({
           </View>
         </ScrollView>
       ) : state === "loading" ? (
-        <View style={ordersUI.feedback}><ActivityIndicator color="#07552F" /><Text style={ordersUI.copy}>Loading your orders</Text></View>
+        <ScrollView contentContainerStyle={ordersUI.list}><BuyerStateCard title="Loading your orders" tone="info" compact loading /><BuyerStateSkeleton /></ScrollView>
       ) : state === "error" ? (
-        <View style={ordersUI.feedback}>
-          <View style={ordersUI.card}>
-            <Text accessibilityRole="alert" style={ordersUI.title}>Orders could not load</Text>
-            <Pressable accessibilityRole="button" style={ordersUI.button} onPress={() => { setState("loading"); setAttempt(value => value + 1); }}>
-              <Text style={ordersUI.buttonText}>Try again</Text>
-            </Pressable>
-          </View>
-        </View>
+        <ScrollView contentContainerStyle={ordersUI.list}><BuyerStateCard title="Couldn’t load your orders." copy="Your orders are safe. Check your connection and try again." tone="error" icon="network" action="Retry orders" onAction={() => { setState("loading"); setAttempt(value => value + 1); }} /></ScrollView>
       ) : (
         <FlatList
           data={orders.filter(item => isPastOrder(item) === (tab === "Past"))}
-          ListHeaderComponent={<View style={ordersUI.listHeader}>
+          ListHeaderComponent={!orders.length && !cursor ? undefined : <View style={ordersUI.listHeader}>
             <View style={ordersUI.hero}>
               <Text style={ordersUI.heroLabel}>YOUR LOCAL ORDERS</Text>
               <Text style={ordersUI.heroTitle}>From your neighbourhood.</Text>
@@ -380,14 +375,8 @@ export function BuyerOrders({
           keyExtractor={item => item.id}
           contentContainerStyle={ordersUI.list}
           ListEmptyComponent={
-            <View style={ordersUI.card}>
-              <MarketIcon name="orders" color="#07552F" />
-              <Text style={ordersUI.title}>{!orders.length && !cursor ? "No orders yet" : tab === "Past" ? "No past orders here yet" : "No active orders here yet"}</Text>
-              <Text style={ordersUI.copy}>{cursor ? "Load more orders to check earlier activity." : "Confirmed orders will appear here."}</Text>
-              <Pressable accessibilityRole="button" style={ordersUI.button} onPress={browse}>
-                <Text style={ordersUI.buttonText}>Start shopping</Text>
-              </Pressable>
-            </View>
+            <BuyerStateCard title={!orders.length && !cursor ? "Your first local find awaits." : tab === "Past" ? "No past orders here yet" : "No active orders here yet"} icon="orders"
+              copy={cursor ? "Load more orders to check earlier activity." : "Discover shops nearby and start your first bag."} action="Start shopping" onAction={browse} />
           }
           ListFooterComponent={cursor ? <View style={ordersUI.footer}>
             {moreError && <Text accessibilityRole="alert" style={ordersUI.copy}>Older orders could not load. Please retry.</Text>}
@@ -536,6 +525,9 @@ const login = StyleSheet.create({
   headerText: { color: "#07552F", fontSize: 21, fontWeight: "600" },
   scroll: { flex: 1 },
   content: { paddingTop: 16, paddingHorizontal: 20, paddingBottom: 12, width: "100%", maxWidth: 520, alignSelf: "center" },
+  stickyFooter: { paddingHorizontal: 20, paddingBottom: 16, paddingTop: 6, borderTopWidth: 1, borderColor: "#DADFD0", backgroundColor: "#fff" },
+  disabledAction: { backgroundColor: "#DDE2D5" },
+  disabledLabel: {color:"#697267"},
   checkoutIntro: { backgroundColor: "#07552F", borderRadius: 24, padding: 20 },
   checkoutWelcome: { color: "#fff", fontSize: 28, lineHeight: 39, fontWeight: "500" },
   checkoutTagline: { color: "#EAF0D9", marginTop: 8 },

@@ -1,6 +1,6 @@
+import { BuyerStateCard, BuyerStateSkeleton } from "./BuyerStateCard";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Image,
   Modal,
@@ -222,6 +222,7 @@ export function BuyerShopPage({
         contentContainerStyle={s.content}
         ListHeaderComponent={
           <>
+            {!shop.isOpen && <View style={{margin:20}}><BuyerStateCard title="Closed for now" copy={`${shop.name} is currently closed. Ordering is unavailable while the shop is closed.`} tone="warning" icon="clock" compact /></View>}
             <View style={s.cover}>
               {resolveImage(shop.coverImage) && !coverFailed ? (
                 <Image
@@ -350,14 +351,12 @@ export function BuyerShopPage({
               </Pressable>
             </View>
           ) : catalogue === null ? (
-            <ActivityIndicator color="#07552F" style={{ marginTop: 24 }} />
+            <BuyerStateSkeleton />
           ) : (
-            <View style={s.empty}>
-              <Text style={s.emptyText}>
-                {query || filter !== "All" || stockOnly
-                  ? "No products match these filters."
-                  : "This shop has no active products right now."}
-              </Text>
+            <View style={{paddingHorizontal:20}}>
+              {query || filter !== "All" || stockOnly
+                ? <BuyerStateCard title="No products match these filters." icon="search" />
+                : <BuyerStateCard title="The shelves are being stocked." copy={`${shop.name} hasn’t listed any products yet. Explore other nearby shops.`} icon="shop" action="Browse nearby shops" onAction={onBack} />}
             </View>
           )
         }

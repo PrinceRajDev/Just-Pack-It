@@ -145,19 +145,24 @@ export function BuyerRecovery({ back }: { back: () => void }) {
           : step === "code"
             ? `If ${challenge?.email} is eligible, a six-digit code will arrive in that inbox.`
             : "Use 12–128 characters. Your email code will be verified when you save.";
+  const sendsCode = step === "email" || expired;
+  const primaryAction = sendsCode ? () => void send() : step === "code" ? next : () => void reset();
+  const primaryLabel = busy ? (sendsCode ? "Sending…" : "Saving…") : step === "email" ? "Send verification code" : expired ? "Resend code" : step === "code" ? "Verify code" : "Save password";
+  const primaryDisabled = busy || (sendsCode && resendWait > 0);
   return (
-    <ScrollView
+    <View style={s.screen}>
+    <ScrollView style={s.scroll}
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={s.page}
     >
       <Pressable accessibilityRole="button" disabled={busy} onPress={back}>
         <Text style={s.header}>‹ Sign in</Text>
       </Pressable>
-      <BuyerAuthNotice title={title} copy={copy} />
+      <BuyerAuthNotice title={title} copy={copy} tone={expired ? "warning" : "success"} icon={expired ? "clock" : step === "done" ? "check" : step === "code" ? "mail" : "lock"} action={step === "done" ? "Back to sign in" : undefined} onAction={back} />
       {error ? (
         <BuyerAuthNotice title="Check your details" copy={error} warning />
       ) : null}
-      <View style={s.form}>
+      {step !== "done" && <View style={s.form}>
         {step === "email" && (
           <>
             <Text style={s.label}>Verified account email</Text>
@@ -173,7 +178,7 @@ export function BuyerRecovery({ back }: { back: () => void }) {
             />
           </>
         )}
-        {step === "code" && !expired && (
+        {(step === "code" || expired) && (
           <>
             <Text style={s.label}>Verification code</Text>
             <TextInput
@@ -186,7 +191,7 @@ export function BuyerRecovery({ back }: { back: () => void }) {
               onChangeText={(value) => setCode(value.replace(/\D/g, ""))}
             />
             <Text style={s.label}>
-              Expires in {countdown(Date.parse(challenge!.expiresAt) - now)}
+              {expired ? "Expired · 00:00" : `Expires in ${countdown(Date.parse(challenge!.expiresAt) - now)}`}
             </Text>
           </>
         )}
@@ -235,63 +240,33 @@ export function BuyerRecovery({ back }: { back: () => void }) {
             </Pressable>
           </>
         )}
-        {step !== "done" &&
-          (step === "email" || step === "code" || expired) && (
-            <Pressable
-              accessibilityRole="button"
-              disabled={busy || resendWait > 0}
-              onPress={() => void send()}
-              style={[s.button, (busy || resendWait > 0) && s.disabled]}
-            >
-              <Text style={s.buttonText}>
-                {busy
-                  ? "Sending…"
-                  : step === "email"
-                    ? "Send verification code"
-                    : resendWait > 0
-                      ? `Resend in ${countdown(resendWait)}`
-                      : "Resend code"}
-              </Text>
-            </Pressable>
-          )}
-        {!expired && step === "code" && (
-          <Pressable
-            accessibilityRole="button"
-            disabled={busy}
-            style={s.button}
-            onPress={next}
-          >
-            <Text style={s.buttonText}>Continue</Text>
-          </Pressable>
-        )}
-        {!expired && step === "password" && (
-          <Pressable
-            accessibilityRole="button"
-            disabled={busy}
-            style={[s.button, busy && s.disabled]}
-            onPress={() => void reset()}
-          >
-            <Text style={s.buttonText}>
-              {busy ? "Saving…" : "Save password"}
-            </Text>
+        {step === "code" && !expired && (
+          <Pressable accessibilityRole="button" disabled={busy || resendWait > 0} onPress={() => void send()} style={[s.backAction, s.resend, (busy || resendWait > 0) && s.disabled]}>
+            <Text style={s.link}>{resendWait > 0 ? `Resend in ${countdown(resendWait)}` : "Resend code"}</Text>
           </Pressable>
         )}
         <Pressable
           accessibilityRole="button"
           disabled={busy}
-          style={step === "done" ? s.button : undefined}
+          style={s.backAction}
           onPress={back}
         >
-          <Text style={step === "done" ? s.buttonText : s.link}>
+          <Text style={s.link}>
             Back to sign in
           </Text>
         </Pressable>
-      </View>
+      </View>}
     </ScrollView>
+    {step !== "done" && <View style={s.footer}><Pressable accessibilityRole="button" disabled={primaryDisabled} onPress={primaryAction} style={[s.button, primaryDisabled && s.disabled]}><Text style={s.buttonText}>{primaryLabel}</Text></Pressable></View>}
+    </View>
   );
 }
 
 const s = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: "#F8F6EE" },
+  scroll: { flex: 1 },
+  footer: { padding: 16, paddingHorizontal: 20, backgroundColor: "#fff", borderTopWidth: 1, borderColor: "#DADFD0" },
+  resend: { backgroundColor: "#EAF0D9" },
   page: {
     paddingHorizontal: 20,
     paddingBottom: 24,
@@ -306,7 +281,8 @@ const s = StyleSheet.create({
     fontWeight: "600",
     paddingVertical: 18,
   },
-  form: { backgroundColor: "#fff", borderRadius: 16, padding: 16, gap: 10 },
+  backAction: { borderWidth: 1, borderColor: "#DADFD0", borderRadius: 12, minHeight: 50, justifyContent: "center", alignItems: "center" },
+  form: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#DADFD0", borderRadius: 24, padding: 20, gap: 10 },
   label: { fontSize: 13, color: "#626D61" },
   input: {
     minHeight: 52,
@@ -314,6 +290,7 @@ const s = StyleSheet.create({
     borderColor: "#E0E3D8",
     borderRadius: 12,
     paddingHorizontal: 12,
+    backgroundColor: "#F8F6EE",
     color: "#252D25",
   },
   button: {

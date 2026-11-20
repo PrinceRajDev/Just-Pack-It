@@ -1,3 +1,4 @@
+import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { CheckoutHeading } from "./CheckoutPresentation";
@@ -25,6 +26,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
   }, [userId]);
   const [rows, setRows] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
+  const [savedLabel, setSavedLabel] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(() => checkout ? (checkout.address ? { label: checkout.address.label, line1: checkout.address.line1, locality: checkout.address.locality, city: checkout.address.city, pincode: checkout.address.pincode } : { ...blank }) : null);
   const [editing, setEditing] = useState<Address | null>(checkout?.address ?? null)
@@ -39,7 +41,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
     const input = Object.fromEntries(Object.entries(draft).map(([key, value]) => [key, value.trim()])) as Draft;
     if (!input.label || input.line1.length < 3 || !input.locality || !input.city || !/^[1-9][0-9]{5}$/.test(input.pincode)) { setError("Complete every field and enter a valid 6-digit PIN code"); return; }
     lock.current = true; setBusy(true); setError(null);
-    try { const saved = editing ? await buyerApi.updateAddress(token, editing.id, { ...input, version: editing.version }) : await buyerApi.createAddress(token, input); if (checkout) { checkout.onSaved(saved, makeDefault); return; } setRows((old) => editing ? old.map((row) => row.id === saved.id ? saved : row) : [...old, saved]); setDraft(null); setEditing(null); }
+    try { const saved = editing ? await buyerApi.updateAddress(token, editing.id, { ...input, version: editing.version }) : await buyerApi.createAddress(token, input); if (checkout) { checkout.onSaved(saved, makeDefault); return; } setRows((old) => editing ? old.map((row) => row.id === saved.id ? saved : row) : [...old, saved]); setSavedLabel(saved.label); setDraft(null); setEditing(null); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Address could not save"); }
     finally { lock.current = false; setBusy(false); }
   };
@@ -60,7 +62,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
       <View style={s.header}><Pressable disabled={busy} accessibilityRole="button" accessibilityLabel="Back to address list" onPress={back} hitSlop={10}><Text style={s.headerText}>‹</Text></Pressable><Text style={s.headerText}>{editing ? "Edit address" : "Add address"}</Text></View>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.editorContent}>
         <CheckoutHeading title="Make it easy to find you." icon="home" />
-        {error && <Text accessibilityRole="alert" style={s.error}>{error}</Text>}
+        {error && <BuyerStateCard title={error.includes("PIN code") ? "Check your PIN code" : "Couldn't save this address"} copy={error} tone="error" icon="location" compact action={error.includes("PIN code") ? undefined : "Retry saving address"} onAction={() => void save()} />}
         <View style={s.editorCard}>
           {field("label")}
           {checkout.profile && <>
@@ -81,6 +83,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
   if (!checkout && !draft) return <View style={s.screen}>
     <View style={s.header}><Pressable accessibilityLabel="Back to Account" onPress={back} hitSlop={10}><Text style={s.headerText}>‹</Text></Pressable><Text style={s.headerText}>Saved addresses</Text></View>
     <ScrollView contentContainerStyle={s.content}>
+      {!!savedLabel && <BuyerStateCard title={`${savedLabel} address saved`} copy="You can select this address at checkout. Your browsing area stays the same." tone="success" compact action="Back to Account" onAction={back} />}
       <View style={s.hero}><View style={s.icon}><MarketIcon name="home" color="#07552F" /></View><Text style={s.heroTitle}>Your familiar places.</Text></View>
       {error ? <><Text accessibilityRole="alert" style={s.error}>{error}</Text><Pressable onPress={() => void reload()}><Text style={s.link}>Reload addresses</Text></Pressable></> : null}
       {loading ? <ActivityIndicator color="#07552F" /> : rows.map(row => {

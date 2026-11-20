@@ -15,9 +15,12 @@ const assert = require("node:assert/strict");
     const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
     const errors = [];
     page.on("pageerror", error => errors.push(error.message));
+    let releaseStartup;
+    const startup = new Promise(resolve => { releaseStartup = resolve; });
     await page.route("https://just-pack-it-bq64.onrender.com/**", async route => {
       const url = new URL(route.request().url());
       const resource = url.pathname.slice(1);
+      if (resource === "areas") await startup;
       if (resource.startsWith("auth/")) return route.abort();
       let records = JSON.parse(fs.readFileSync(path.join(snapshot, resource + ".json"), "utf8"));
       const category = url.searchParams.get("category");
@@ -27,6 +30,11 @@ const assert = require("node:assert/strict");
       await route.fulfill({ json: records, headers: { "access-control-allow-origin": "*" } });
     });
     await page.goto(process.env.PREVIEW_URL || "http://localhost:8084", { timeout: 60000 });
+    const loader = page.getByRole("heading", {name:"Loading JustPackIt…",exact:true});
+    await loader.waitFor();
+    assert.equal(await page.getByText("Loading Raiyam",{exact:true}).count(),0);
+    releaseStartup();
+    await loader.waitFor({state:"hidden"});
     await page.getByText("Shop by category", { exact: true }).waitFor();
     await page.getByRole("heading", {name:"Your neighbourhood, delivered."}).waitFor();
     await page.waitForFunction(() => {

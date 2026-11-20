@@ -291,18 +291,15 @@ export default function App() {
     void SecureStore.getItemAsync("jpi.account.language").then(value => { if (active) setHindi(value === "hi"); }).catch(() => undefined);
     return () => { active = false; };
   }, [screen]);
-  const body = !sessionReady ? (
-    <State title="Opening your account" copy="Restoring your session" loading />
-  ) : bagError ? (
-    <State title="Bag unavailable" copy={bagError} />
-  ) : !bagReady ? (
-    <State title="Loading your bag" copy="Restoring your saved items" loading />
-  ) : loading ? (
+  const starting = !sessionReady || (!bagError && (!bagReady || loading));
+  const body = starting ? (
     <State
-      title="Finding your neighbourhood…"
-      copy="Loading shops and products in your browsing area."
+      title={hindi ? "JustPackIt लोड हो रहा है…" : "Loading JustPackIt…"}
+      copy={hindi ? "दुकानें और उत्पाद तैयार हो रहे हैं।" : "Getting shops and products ready."}
       loading
     />
+  ) : bagError ? (
+    <State title="Bag unavailable" copy={bagError} />
   ) : error ? (
     <State
       title="Could not load the market"

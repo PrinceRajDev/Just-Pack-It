@@ -11,8 +11,9 @@ const languageKey = "jpi.account.language";
 type Panel = "language" | "notifications" | "favourites" | "signout";
 type Favourite = { id: string; name: string; key: string; shop?: Shop; product?: Product };
 
-export function BuyerAccountHub({ initialFavourites, session, area, shops, products, back, signIn, profile, addresses, orders, signOut, browse, openShop, add }: {
+export function BuyerAccountHub({ initialFavourites, seller, session, area, shops, products, back, signIn, profile, addresses, orders, signOut, browse, openShop, add }: {
   initialFavourites?: boolean;
+  seller: () => void;
   session: Session | null; area?: string; shops: Shop[]; products: Product[];
   back: () => void; signIn: () => void; profile: () => void; addresses: () => void;
   orders: () => void; signOut: () => Promise<void>; browse: () => void;
@@ -98,6 +99,7 @@ export function BuyerAccountHub({ initialFavourites, session, area, shops, produ
           <Row icon="language" title={panels.language} copy={hindi ? "हिन्दी" : "English"} onPress={() => open("language")} />
           <Row icon="bell" title={panels.notifications} copy={t("Order updates", "ऑर्डर के अपडेट")} onPress={() => open("notifications")} />
         </View>
+        <Action label={t("Seller access", "विक्रेता खाता")} onPress={seller} soft />
         {session && <Action label={panels.signout} onPress={() => open("signout")} soft />}
       </ScrollView>
       {panel && <Modal visible animationType="slide" onRequestClose={close}>

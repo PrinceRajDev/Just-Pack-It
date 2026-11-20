@@ -12,7 +12,7 @@ export type BuyerOrder = { id: string; total: number; amountDue?: number; online
 
 type ListPayload<T> = T[] | { items?: T[] };
 const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
-export class ApiError extends Error { constructor(message: string, public status: number) { super(message); } }
+export class ApiError extends Error { constructor(message: string, public status: number, public code?: string) { super(message); } }
 const sessionListeners = new Set<(token: string) => void>();
 async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
   const controller = new AbortController();
@@ -48,10 +48,10 @@ async function request<T>(path: string, token?: string, options: RequestInit = {
     response = await fetchWithTimeout(`${apiUrl}${path}`, { ...options, headers: { Accept: "application/json", ...(options.body ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers ?? {}) } });
   } catch (reason) { throw reason instanceof Error ? reason : new Error("Check your internet and try again."); }
   if (response.status === 204) return undefined as T;
-  const payload = await response.json().catch(() => ({})) as { message?: string };
+  const payload = await response.json().catch(() => ({})) as { message?: string; code?: string };
   if (!response.ok) {
     if (response.status === 401 && token) sessionListeners.forEach((listener) => listener(token));
-    throw new ApiError(payload.message || `Marketplace request failed (${response.status}). Please try again.`, response.status);
+    throw new ApiError(payload.message || `Marketplace request failed (${response.status}). Please try again.`, response.status, payload.code);
   }
   return payload as T;
 }
@@ -68,6 +68,8 @@ async function searchPage<T>(kind: "products" | "shops", areaId: string, text: s
   return { items: asList<T>(await response.json() as ListPayload<T>, kind), cursor: response.headers.get("X-Has-More") === "true" ? response.headers.get("X-Next-Cursor") : null };
 }
 export const marketApi = {
+  areas: () => getList<ServiceArea>("/areas", "delivery areas"),
+  categories: () => getList<Category>("/categories", "categories"),
   shopsByIds: (ids: string[]) => getList<Shop>(`/catalogue/shops/by-ids?ids=${encodeURIComponent(ids.join(","))}`, "shops"),
   product: (id: string) => get<Product>(`/products/${encodeURIComponent(id)}`),
   searchProducts: (areaId: string, text: string, cursor?: string) => searchPage<Product>("products", areaId, text, cursor),
@@ -129,6 +131,9 @@ export const buyerApi = {
   reviewCheckout: (token: string, areaId: string, address: Address, items: CheckoutLine[], shopIds: string[]) => request<CheckoutReview>("/checkout/review", token, { method: "POST", body: JSON.stringify({ areaId, addressId: address.id, addressVersion: address.version, items, fulfilments: shopIds.map((shopId) => ({ shopId, method: "platform_delivery" })) }) }),
   login: (phone: string, password: string) => request<Session>("/auth/login", undefined, { method: "POST", body: JSON.stringify({ phone, password }) }),
   register: (name: string, phone: string, password: string, proof?: { email: string; emailChallengeId: string; emailOtp: string }) => request<Session>("/auth/register", undefined, { method: "POST", body: JSON.stringify({ name, phone, password, ...proof }) }),
+  registerSeller: (input: { name: string; phone: string; password: string; email?: string; emailChallengeId?: string; emailOtp?: string; shop: { name: string; address: string; categoryIds: string[]; serviceAreaIds: string[]; since: number; fulfilment: string[] } }) =>
+    request<Session>("/auth/register/seller", undefined, { method: "POST", body: JSON.stringify(input) }),
+  sellerShop: (token: string) => request<{ name: string; status: "pending" | "approved" | "rejected" | "suspended"; review?: { reason?: string } }>("/seller/shop", token),
   me: (token: string) => request<Omit<Session, "token">>("/auth/me", token),
   logout: (token: string) => request<void>("/auth/logout", token, { method: "POST" }),
   profile: (token: string) => request<BuyerProfile>("/auth/profile", token),

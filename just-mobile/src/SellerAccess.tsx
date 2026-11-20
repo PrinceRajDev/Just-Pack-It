@@ -1,0 +1,264 @@
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { ApiError, buyerApi, marketApi, type Category, type ServiceArea, type Session } from "./api";
+import { BuyerRecovery } from "./BuyerRecovery";
+import { BuyerStateCard } from "./BuyerStateCard";
+import * as storage from "./deviceStorage";
+
+const pendingRequests = new WeakSet<object>();
+const clockNow = () => Date.now();
+
+const sessionKey = "jpi.seller.session";
+const methods = [["pickup", "Customer pickup"], ["seller_delivery", "Shop delivery"], ["platform_delivery", "Platform rider"]] as const;
+type Step = "login" | "account" | "email" | "shop" | "delivery" | "review" | "status" | "recovery";
+const backSteps: Partial<Record<Step, Step>> = { account:"login", email:"account", delivery:"shop", review:"delivery", recovery:"login" };
+
+export function SellerAccess({ close }: { close: () => void }) {
+  const [step, setStep] = useState<Step>("login");
+  const [session, setSession] = useState<Session | null>(null);
+  const [shop, setShop] = useState<Awaited<ReturnType<typeof buyerApi.sellerShop>>>();
+  const [shopError, setShopError] = useState("");
+  const [refresh, setRefresh] = useState(0);
+  const [restoring, setRestoring] = useState(true);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [requestOwner] = useState(() => ({}));
+  const [visible, setVisible] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [challenge, setChallenge] = useState<{ id:string; expires:number; retryAt:number; address:string }>();
+  const [otp, setOtp] = useState("");
+  const [verify, setVerify] = useState(false);
+  const [now, setNow] = useState(0);
+  const [shopName, setShopName] = useState("");
+  const [address, setAddress] = useState("");
+  const [since, setSince] = useState("");
+  const [category, setCategory] = useState<Category>();
+  const [area, setArea] = useState<ServiceArea>();
+  const [fulfilment, setFulfilment] = useState<string[]>([]);
+  const [catalogue, setCatalogue] = useState<{categories:Category[]; areas:ServiceArea[]}>();
+  const [picker, setPicker] = useState<"category" | "area" | null>(null);
+  const normalizedPhone = phone.replace(/[\s-]/g, "").replace(/^\+91/, "");
+  const expires = challenge ? now >= challenge.expires : false;
+  const cooldown = challenge ? Math.max(0, Math.ceil((challenge.retryAt - now) / 1000)) : 0;
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const saved = await storage.getItemAsync(sessionKey);
+        if (!saved) return;
+        const candidate = JSON.parse(saved) as Session;
+        if (candidate.role !== "seller" || typeof candidate.token !== "string") return;
+        const verified = await buyerApi.me(candidate.token);
+        if (active && verified.role === "seller" && verified.userId === candidate.userId) {
+          setSession({ ...verified, token: candidate.token });
+          setStep("status");
+        }
+      } catch (reason) {
+        if (reason instanceof ApiError && reason.status === 401) await storage.deleteItemAsync(sessionKey).catch(() => undefined);
+      } finally { if (active) setRestoring(false); }
+    })();
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!session) return;
+    let active = true;
+    void buyerApi.sellerShop(session.token).then(value => {
+      if (active) { setShop(value); setShopError(""); }
+    }).catch(reason => {
+      if (active) setShopError(reason instanceof Error ? reason.message : "Could not load shop status.");
+    });
+    return () => { active = false; };
+  }, [session, refresh]);
+
+  useEffect(() => {
+    if (!challenge || step !== "email") return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [challenge, step]);
+
+  const go = (next: Step) => { setVisible(false); setError(""); setStep(next); };
+  const run = async (action: () => Promise<void>) => {
+    if (pendingRequests.has(requestOwner)) return;
+    pendingRequests.add(requestOwner); setBusy(true); setError("");
+    try { await action(); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : "Try again. Your details are still here."); }
+    finally { pendingRequests.delete(requestOwner); setBusy(false); }
+  };
+  const acceptSession = async (next: Session) => {
+    if (next.role !== "seller") {
+      await buyerApi.logout(next.token).catch(() => undefined);
+      throw new Error("This mobile number is not registered as a seller.");
+    }
+    setSession(next);
+    setPassword(""); setOtp(""); setChallenge(undefined);
+    go("status");
+    await storage.setItemAsync(sessionKey, JSON.stringify(next)).catch(() => undefined);
+  };
+  const loadCatalogue = async () => {
+    const [categories, areas] = await Promise.all([marketApi.categories(), marketApi.areas()]);
+    setCatalogue({ categories, areas: areas.filter(item => item.active) });
+  };
+  const send = async () => {
+    const address = email.trim().toLowerCase();
+    const reply = await buyerApi.sendEmailOtp(address);
+    const time = clockNow();
+    setNow(time); setOtp("");
+    setChallenge({ address, id: reply.challengeId, expires: Date.parse(reply.expiresAt), retryAt: time + reply.resendAfterSeconds * 1000 });
+    go("email");
+  };
+  const back = () => {
+    if (busy) return;
+    if (picker) { setPicker(null); return; }
+    if (step === "shop") go(verify ? "email" : "account");
+    else if (backSteps[step]) go(backSteps[step]!);
+    else close();
+  };
+
+  if (step === "recovery") return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><BuyerRecovery back={() => go("login")} /></SafeAreaView></SafeAreaProvider></Modal>;
+  const title = picker === "area" ? "Choose service area" : picker === "category" ? "Choose category" :
+    {login:"Welcome back", account:"Create seller account", email:"Check your email", shop:"Tell us about your shop", delivery:"Address & fulfilment", review:"Review your shop", status:"Your seller workspace"}[step];
+  const button = (label:string, action:()=>void, disabled = false) => <Pressable accessibilityRole="button" disabled={disabled || busy} onPress={action} style={[s.button, (disabled || busy) && s.disabled]}><Text style={[s.buttonText,(disabled || busy) && s.disabledText]}>{busy ? "Please wait…" : label}</Text></Pressable>;
+  const link = (label:string, action:()=>void) => <Pressable accessibilityRole="button" disabled={busy} onPress={action} style={s.link}><Text style={s.linkText}>{label}</Text></Pressable>;
+  const passwordField = <Field label="Password" placeholder="Enter your password" value={password} onChangeText={setPassword} secureTextEntry={!visible} maxLength={128} autoCapitalize="none" suffix={link(visible ? "Hide" : "Show", () => setVisible(value => !value))} />;
+  let action;
+  if (!picker && step === "login") action = button("Sign in", () => void run(async () => {
+    if (!/^[6-9]\d{9}$/.test(normalizedPhone)) throw new Error("Enter a valid 10-digit Indian mobile number.");
+    await acceptSession(await buyerApi.login("+91" + normalizedPhone, password));
+  }), !phone || !password);
+  if (!picker && step === "account") action = button("Continue", () => void run(async () => {
+    if (name.trim().length < 2 || !/^[6-9]\d{9}$/.test(normalizedPhone) || password.length < 12) throw new Error("Enter your name, valid mobile number and a password with at least 12 characters.");
+    const options = await buyerApi.registrationOptions();
+    setVerify(options.emailOtpRequired);
+    if (options.emailOtpRequired) {
+      if (!options.emailOtpAvailable) throw new Error("Email verification is unavailable right now. Try again later.");
+      if (!/^\S+@\S+\.\S+$/.test(email.trim())) throw new Error("Enter a valid email address.");
+      await send();
+    } else { if (!catalogue) await loadCatalogue(); go("shop"); }
+  }));
+  if (!picker && step === "email") action = button("Continue with code", () => void run(async () => {
+    if (!challenge || expires || !/^\d{6}$/.test(otp)) throw new Error("Enter a valid six-digit email code.");
+    if (!catalogue) await loadCatalogue();
+    go("shop");
+  }), !challenge || expires || otp.length !== 6);
+  if (!picker && step === "shop") action = button("Continue", () => {
+    if (shopName.trim().length < 2 || !category || !/^\d{4}$/.test(since) || Number(since) < 1900 || Number(since) > new Date().getFullYear()) {
+      setError("Enter a shop name, category and valid opening year."); return;
+    }
+    go("delivery");
+  });
+  if (!picker && step === "delivery") action = button("Review shop", () => {
+    if (address.trim().length < 2 || !area || !fulfilment.length) { setError("Enter the shop address and choose a service area and fulfilment method."); return; }
+    go("review");
+  });
+  if (!picker && step === "review") action = button("Submit shop for approval", () => void run(async () => {
+    if (verify && (!challenge || clockNow() >= challenge.expires)) { go("email"); throw new Error("Your email code has expired. Send a new code."); }
+    try {
+      const result = await buyerApi.registerSeller({
+        name:name.trim(), phone:"+91"+normalizedPhone, password,
+        ...(verify && challenge ? {email:challenge.address, emailChallengeId:challenge.id, emailOtp:otp} : {}),
+        shop:{name:shopName.trim(),address:address.trim(),since:Number(since),categoryIds:[category!.id],serviceAreaIds:[area!.id],fulfilment},
+      });
+      await acceptSession(result);
+    } catch (reason) {
+      if (reason instanceof ApiError && /EMAIL|OTP/.test(reason.code ?? "")) go("email");
+      throw reason;
+    }
+  }));
+
+  return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}>
+    <View style={s.header}><Text style={s.brand}>JustPackIt</Text><Text style={s.kicker}>SELLER</Text>{link(step === "login" || step === "status" ? "Close" : "Back", back)}</View>
+    {restoring ? <ActivityIndicator style={s.loader} color="#07552F" /> : <>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
+        {!picker && step === "login" && <Text style={s.kicker}>YOUR NEIGHBOURHOOD. YOUR SHOP.</Text>}
+        {!picker && step === "email" && <Text style={s.kicker}>STEP 1 OF 4 · VERIFY EMAIL</Text>}
+        <Text accessibilityRole="header" style={s.title}>{title}</Text>
+        {!!error && <Text accessibilityRole="alert" style={s.error}>{error}</Text>}
+        {picker && (picker === "area" ? catalogue?.areas : catalogue?.categories)?.map(item => <Pressable accessibilityRole="button" key={item.id} style={s.panel} onPress={() => {
+          if (picker === "area") setArea(item as ServiceArea); else setCategory(item as Category);
+          setPicker(null);
+        }}><Text style={s.label}>{item.name}</Text>{"city" in item && <Text style={s.copy}>{item.city}</Text>}</Pressable>)}
+        {picker && !(picker === "area" ? catalogue?.areas.length : catalogue?.categories.length) && <BuyerStateCard title="No options available" copy="Try again to refresh available choices." action="Refresh options" onAction={() => void run(loadCatalogue)} />}
+        {!picker && step === "login" && <>
+          <Text style={s.copy}>Sign in to your JustPackIt seller account.</Text>
+          <View style={s.sage}><Text style={s.label}>Local business. More possibilities.</Text><Text style={s.copy}>Take your shop to customers nearby.</Text></View>
+          <Field label="Mobile number" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholder="+91  Enter 10-digit number" />
+          <Text style={s.copy}>Registered Indian mobile number</Text>
+          {passwordField}
+          {link("Forgot password?", () => { setPassword(""); go("recovery"); })}
+        </>}
+        {!picker && step === "account" && <>
+          <Text style={s.copy}>Your account details</Text>
+          <Field label="Full name" value={name} onChangeText={setName} maxLength={100} />
+          <Field label="Mobile number" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholder="+91" />
+          {verify && <Field label="Email address" value={email} onChangeText={value => { setEmail(value); setChallenge(undefined); setOtp(""); }} autoCapitalize="none" keyboardType="email-address" />}
+          {passwordField}<Text style={s.copy}>Use at least 12 characters.</Text>
+        </>}
+        {!picker && step === "email" && <>
+          <Text style={s.copy}>Enter the 6-digit code sent to</Text>
+          <Text style={s.label}>{challenge?.address ?? email}</Text>
+          {link("Change email address", () => go("account"))}
+          <View style={s.field}>
+            <Text style={s.label}>6-digit verification code</Text>
+            <View style={s.codeRow}>
+              {Array.from({length:6}, (_, index) => <View key={index} style={[s.codeCell, (index === otp.length || !!otp[index]) && s.codeCellFilled]}><Text style={s.codeDigit}>{otp[index] ?? ""}</Text></View>)}
+              <TextInput accessibilityLabel="6-digit verification code" value={otp} onChangeText={value => setOtp(value.replace(/\D/g, ""))} keyboardType="number-pad" maxLength={6} autoComplete="one-time-code" caretHidden style={s.codeInput} />
+            </View>
+            <Text style={s.copy}>Paste the full code from your email.</Text>
+          </View>
+          {cooldown ? <Text style={s.copy}>Resend in {cooldown}s</Text> : link("Send a new code", () => void run(send))}
+          {expires && <Text style={s.error}>This code has expired.</Text>}
+          <View style={s.sage}><Text style={s.copy}>The email code is checked when you submit your shop. Shop approval is a separate step.</Text></View>
+        </>}
+        {!picker && step === "shop" && <>
+          <Field label="Shop name" value={shopName} onChangeText={setShopName} maxLength={100} />
+          {link(category?.name ?? "Choose shop category", () => setPicker("category"))}
+          <Field label="Year opened" value={since} onChangeText={setSince} keyboardType="number-pad" maxLength={4} />
+        </>}
+        {!picker && step === "delivery" && <>
+          <Field label="Street address" value={address} onChangeText={setAddress} maxLength={500} multiline />
+          {link(area ? area.name + ", " + area.city : "Choose service area", () => setPicker("area"))}
+          <Text style={s.label}>Fulfilment methods</Text>
+          {methods.map(([key, label]) => <Pressable accessibilityRole="checkbox" accessibilityState={{checked:fulfilment.includes(key)}} key={key} style={[s.panel, fulfilment.includes(key) && s.sage]} onPress={() => setFulfilment(old => old.includes(key) ? old.filter(item => item !== key) : [...old,key])}><Text style={s.label}>{label}</Text></Pressable>)}
+        </>}
+        {!picker && step === "review" && <View style={s.panel}><Text style={s.label}>{shopName}</Text><Text style={s.copy}>{category?.name} · Opened {since}</Text><Text style={s.copy}>{address}</Text><Text style={s.copy}>{area?.name}, {area?.city}</Text><Text style={s.copy}>{methods.filter(([key]) => fulfilment.includes(key)).map(([,label]) => label).join(" · ")}</Text><Text style={s.copy}>Submitting creates your seller account and sends your shop for review.</Text></View>}
+        {!picker && step === "status" && <>
+          {shop ? <BuyerStateCard title={shop.status === "pending" ? "Your shop is under review" : shop.status === "approved" ? "Your shop is approved" : shop.status === "rejected" ? "Changes requested" : "Shop suspended"} copy={shop.review?.reason || shop.name} tone={shop.status === "approved" ? "success" : "warning"} /> :
+            shopError ? <BuyerStateCard title="Shop status unavailable" copy={shopError} tone="error" action="Retry status" onAction={() => setRefresh(value => value + 1)} /> : <ActivityIndicator color="#07552F" />}
+          <Text style={s.copy}>Signed in as {session?.name}. Manage opening hours and products in the seller workspace on the website.</Text>
+          {link("Open seller workspace", () => void run(() => Linking.openURL("https://justpackit.vercel.app/seller")))}
+          {link("Sign out of seller account", () => void run(async () => {
+            if (session) await buyerApi.logout(session.token);
+            await storage.deleteItemAsync(sessionKey); setSession(null); setShop(undefined); setShopError(""); go("login");
+          }))}
+        </>}
+      </ScrollView>
+      {action && <View style={s.footer}>{action}{step === "login" && link("New to JustPackIt? Create account", () => void run(async () => { const options = await buyerApi.registrationOptions(); setVerify(options.emailOtpRequired); go("account"); }))}{step === "account" && link("Already have an account? Sign in", () => go("login"))}</View>}
+    </>}
+  </SafeAreaView></SafeAreaProvider></Modal>;
+}
+
+function Field({label,suffix,...props}:TextInputProps & {label:string; suffix?:React.ReactNode}) {
+  return <View style={s.field}><Text style={s.label}>{label}</Text><View style={s.inputRow}><TextInput {...props} accessibilityLabel={label} placeholderTextColor="#657166" style={s.input}/>{suffix}</View></View>;
+}
+
+const s = StyleSheet.create({
+  screen:{flex:1,backgroundColor:"#F8F6EE"}, header:{minHeight:64,paddingHorizontal:20,flexDirection:"row",alignItems:"center",gap:16},
+  brand:{color:"#07552F",fontSize:22,fontWeight:"700",flex:1}, kicker:{fontSize:11,color:"#07552F",fontWeight:"700"},
+  content:{padding:20,paddingTop:20,gap:16,width:"100%",maxWidth:540,alignSelf:"center"}, title:{fontSize:29,lineHeight:38,color:"#252D25",fontWeight:"700"},
+  copy:{fontSize:14,lineHeight:20,color:"#596659"}, sage:{backgroundColor:"#EAF0D9",borderRadius:16,padding:14,gap:6}, panel:{backgroundColor:"#fff",borderRadius:16,borderWidth:1,borderColor:"#DADFD0",padding:16,gap:8},
+  field:{gap:8},label:{fontSize:15,fontWeight:"600",color:"#252D25"},inputRow:{flexDirection:"row",alignItems:"center",backgroundColor:"#fff",borderWidth:1,borderColor:"#DADFD0",borderRadius:12},
+  input:{flex:1,minHeight:50,padding:12,color:"#252D25",fontSize:15},link:{minHeight:44,justifyContent:"center",alignItems:"center",paddingHorizontal:10},linkText:{color:"#07552F",textAlign:"center",fontWeight:"600"},
+  codeRow:{flexDirection:"row",gap:8,position:"relative"},
+  codeCell:{flex:1,minHeight:54,borderWidth:1,borderColor:"#DADFD0",borderRadius:10,backgroundColor:"#fff",alignItems:"center",justifyContent:"center"},
+  codeCellFilled:{borderColor:"#07552F"},
+  codeDigit:{fontSize:24,color:"#252D25",fontWeight:"700"},
+  codeInput:{position:"absolute",top:0,right:0,bottom:0,left:0,opacity:0,color:"transparent",backgroundColor:"transparent",fontSize:18},
+  disabledText:{color:"#596659"},
+  footer:{paddingHorizontal:20,paddingVertical:12,gap:4},button:{minHeight:50,backgroundColor:"#07552F",borderRadius:12,justifyContent:"center",alignItems:"center"},buttonText:{color:"#fff",fontSize:15,fontWeight:"600"},disabled:{backgroundColor:"#DDE2D5"},error:{color:"#A23425",fontSize:14,lineHeight:20},loader:{padding:30},
+});

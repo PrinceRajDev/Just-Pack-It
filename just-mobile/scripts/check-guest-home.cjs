@@ -53,7 +53,13 @@ const assert = require("node:assert/strict");
     await page.setViewportSize({width:390,height:844});
     await page.getByRole("button",{name:"Change delivery area"}).click();
     await page.getByText("Choose delivery area",{exact:true}).waitFor();
-    await page.getByText("Raiyam",{exact:true}).last().click();
+    const selectedArea = page.getByRole("radio",{name:"Raiyam",exact:true});
+    assert.equal(await selectedArea.getAttribute("aria-checked"),"true");
+    await selectedArea.waitFor();
+    await page.waitForFunction(() => document.querySelector('[data-testid="delivery-area-sheet"]')?.getBoundingClientRect().bottom <= innerHeight + 1);
+    await page.screenshot({path:path.join(output,"delivery-area-390.png")});
+    await selectedArea.click();
+    await page.getByTestId("delivery-area-sheet").waitFor({state:"hidden"});
     for (const name of ["Groceries","Vegetables","Fruits","Dairy","Bakery","Personal care","Home care","Snacks"]) {
       await page.getByRole("button",{name,exact:true}).click();
       await page.getByText("No active products are available in this category",{exact:true}).waitFor();
@@ -61,7 +67,21 @@ const assert = require("node:assert/strict");
     }
     await page.getByRole("button",{name:"More →",exact:true}).click();
     await page.getByText("All categories",{exact:true}).waitFor();
-    await page.getByRole("button",{name:"Close categories"}).click();
+    const allCategories = page.getByTestId("all-categories");
+    for (const width of [360,390,430]) {
+      await page.setViewportSize({width,height:844});
+      await page.waitForFunction(viewportWidth => {
+        const [first, second] = Array.from(document.querySelectorAll('[data-testid="all-categories"] [data-testid="all-category-card"]')).map(card => card.getBoundingClientRect());
+        return first && second && Math.abs(first.y - second.y) < 1 && second.right >= viewportWidth - 22 && second.right <= viewportWidth;
+      }, width);
+    }
+    await page.setViewportSize({width:390,height:844});
+    await page.waitForFunction(() => document.querySelector('[data-testid="all-categories"]')?.getBoundingClientRect().top < 1);
+    const photos = await allCategories.getByTestId("all-category-photo").evaluateAll(items => items.slice(0,4).map(item => item.getBoundingClientRect().height));
+    assert.ok(photos.length >= 3 && photos.every(height => height >= 105 && height <= 115));
+    await page.screenshot({path:path.join(output,"all-categories-390.png")});
+    await allCategories.getByRole("button",{name:"Electronics & Mobile Accessories",exact:true}).click();
+    await page.getByRole("button",{name:"Back to Home"}).click();
     for (const name of ["Explore shops","See all"]) {
       await page.getByRole("button",{name,exact:true}).click();
       await page.getByText("Shops in Raiyam",{exact:true}).waitFor();

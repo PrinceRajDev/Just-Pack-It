@@ -40,7 +40,7 @@ const cards = [
   { slug: "stationery-books", name: "Stationery" },
   { slug: "personal-care-household", name: "Personal Care" },
 ];
-const categoryPhotos: Record<string, number> = {
+export const browseCategoryPhotos: Record<string, number> = {
   "grocery-kirana": require("../assets/browse-categories/grocery.webp"),
   "fruits-vegetables": require("../assets/browse-categories/vegetables.webp"),
   "dairy-eggs": require("../assets/browse-categories/dairy.webp"),
@@ -569,7 +569,7 @@ export function BuyerBrowse({
                   <View style={styles.cardImage}>
                     <Image
                       source={
-                        categoryPhotos[item.slug] ?? {
+                        browseCategoryPhotos[item.slug] ?? {
                           uri:
                             resolveImage(backendImage) ??
                             resolveImage(

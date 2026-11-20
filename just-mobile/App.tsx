@@ -12,8 +12,9 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import {
   marketApi,
   buyerApi,
@@ -36,7 +37,7 @@ import { resolveImage } from "./src/images";
 import { MarketIcon } from "./src/MarketIcon";
 import { HomeNotifications, BuyAgain } from "./src/HomeExtras";
 import { ReferenceArtwork } from "./src/ReferenceArtwork";
-import { BuyerBrowse } from "./src/BuyerBrowse";
+import { BuyerBrowse, browseCategoryPhotos } from "./src/BuyerBrowse";
 
 import { BuyerShopPage } from "./src/BuyerShopPage";
 import {
@@ -847,6 +848,8 @@ function Home({
     }
   };
   const [showCategories, setShowCategories] = useState(false);
+  const { width } = useWindowDimensions();
+  const categoryCardWidth = (Math.min(width, 600) - 52) / 2;
   const [showShops, setShowShops] = useState(false);
   const [allShops, setAllShops] = useState<Shop[]>([]);
   const [shopsBusy, setShopsBusy] = useState(false);
@@ -1041,16 +1044,11 @@ function Home({
         animationType="slide"
         onRequestClose={() => setShowCategories(false)}
       >
-        <SafeAreaView style={s.safe}>
-          <View
-            style={{
-              padding: 16,
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Text style={s.pageTitle}>All categories</Text>
+        <SafeAreaProvider>
+        <SafeAreaView style={s.safe} testID="all-categories">
+          <StatusBar style="dark" />
+          <View style={s.categoryHeader}>
+            <Text accessibilityRole="header" style={s.categoryHeading}>All categories</Text>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Close categories"
@@ -1061,17 +1059,13 @@ function Home({
             </Pressable>
           </View>
           <ScrollView
-            contentContainerStyle={{
-              padding: 16,
-              gap: 12,
-              flexDirection: "row",
-              flexWrap: "wrap",
-            }}
+            contentContainerStyle={s.categoryGrid}
           >
             {categories.map((item) => (
               <CategoryCard
                 key={item.slug}
                 item={item}
+                width={categoryCardWidth}
                 active={picked === item.slug}
                 onPress={() => {
                   setShowCategories(false);
@@ -1081,6 +1075,7 @@ function Home({
             ))}
           </ScrollView>
         </SafeAreaView>
+        </SafeAreaProvider>
       </Modal>
       {!session ? (
         <View
@@ -1476,26 +1471,33 @@ function Section({
 }
 function CategoryCard({
   item,
+  width,
   active,
   onPress,
 }: {
   item: Category;
+  width: number;
   active: boolean;
   onPress: () => void;
 }) {
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={item.name}
+      testID="all-category-card"
+      accessibilityState={{ selected: active }}
       onPress={onPress}
-      style={[s.category, active && s.categoryActive]}
+      style={[s.category, { width }, active && s.categoryActive]}
     >
-      <CategoryPicture item={item} style={s.categoryImage} />
-      <Text numberOfLines={2} style={s.categoryName}>
+      <CategoryPicture item={item} height={Math.round(width / 1.55)} />
+      <Text style={s.categoryName}>
         {item.name}
       </Text>
     </Pressable>
   );
 }
-function CategoryPicture({ item, style }: { item: Category; style: object }) {
+function CategoryPicture({ item, height }: { item: Category; height: number }) {
+  const style = [s.categoryImage, { height }];
   const [failed, setFailed] = useState(false);
   const [useBundled, setUseBundled] = useState(false);
   const artwork = `https://justpackit.vercel.app/categories/${item.slug}-v1.webp`;
@@ -1505,8 +1507,10 @@ function CategoryPicture({ item, style }: { item: Category; style: object }) {
     </View>
   ) : (
     <Image
-      source={{ uri: useBundled ? artwork : categoryImage(item) }}
+      source={browseCategoryPhotos[item.slug] ?? { uri: useBundled ? artwork : categoryImage(item) }}
+      resizeMode="cover"
       style={style}
+      testID="all-category-photo"
       onError={() => {
         if (!useBundled && categoryImage(item) !== artwork) setUseBundled(true);
         else setFailed(true);
@@ -2034,42 +2038,39 @@ function AreaSheet({
   close: () => void;
   choose: (x: ServiceArea) => void;
 }) {
+  const available = areas.filter(item => item.active);
   return (
-    <Modal
-      transparent
-      visible={open}
-      animationType="slide"
-      onRequestClose={close}
-    >
-      <Pressable style={s.backdrop} onPress={close}>
-        <Pressable style={s.sheet} onPress={(e) => e.stopPropagation()}>
-          <View style={s.handle} />
-          <Text style={s.sheetTitle}>Choose delivery area</Text>
-          <Text style={s.sheetCopy}>
-            Shops and products update for the place you choose
-          </Text>
-          {!areas.some(item => item.active) && <BuyerStateCard title="We’re not here yet." copy="Shops aren’t available in this browsing area." tone="warning" icon="location" action="Back to marketplace" onAction={close} />}
-          {areas
-            .filter((x) => x.active)
-            .map((x) => (
-              <Pressable
-                key={x.id}
-                style={[s.areaRow, selected?.id === x.id && s.areaSelected]}
-                onPress={() => choose(x)}
-              >
-                <View>
-                  <Text style={s.areaName}>{x.name}</Text>
-                  <Text style={s.areaMeta}>
-                    {x.city} · PIN {x.pincodes.join(", ")}
-                  </Text>
-                </View>
-                {selected?.id === x.id ? (
-                  <Text style={s.selected}>Selected</Text>
-                ) : null}
+    <Modal transparent visible={open} animationType="slide" onRequestClose={close}>
+      <SafeAreaProvider>
+        <View style={s.backdrop}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Dismiss delivery area picker" style={StyleSheet.absoluteFill} onPress={close} />
+          <SafeAreaView edges={["bottom", "left", "right"]} style={s.sheet} testID="delivery-area-sheet">
+            <View style={s.handle} />
+            <View style={s.areaHeading}>
+              <View style={s.areaIcon}><MarketIcon name="home" /></View>
+              <Text accessibilityRole="header" style={s.sheetTitle}>Choose delivery area</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel="Close delivery area picker" onPress={close} style={s.areaClose}>
+                <Text style={s.areaCloseText}>×</Text>
               </Pressable>
-            ))}
-        </Pressable>
-      </Pressable>
+            </View>
+            <Text style={s.sheetCopy}>See nearby shops and products for the area you choose.</Text>
+            <ScrollView bounces={false} contentContainerStyle={s.areaOptions}>
+              {!available.length && <BuyerStateCard title="We’re not here yet." copy="Shops aren’t available in this browsing area." tone="warning" icon="location" action="Back to marketplace" onAction={close} />}
+              {available.map(item => {
+                const checked = selected?.id === item.id;
+                return <Pressable key={item.id} accessibilityRole="radio" accessibilityState={{ checked }} aria-checked={checked} accessibilityLabel={item.name} onPress={() => choose(item)} style={[s.areaRow, checked && s.areaSelected]}>
+                  <View style={[s.areaRadio, checked && s.areaRadioChecked]}>{checked && <Text style={s.areaCheck}>✓</Text>}</View>
+                  <View style={s.areaInfo}>
+                    <Text style={s.areaName}>{item.name}</Text>
+                    <Text style={s.areaMeta}>{[item.city, item.pincodes.length ? `PIN ${item.pincodes.join(", ")}` : null].filter(Boolean).join(" · ")}</Text>
+                  </View>
+                  {checked && <Text style={s.selected}>Selected</Text>}
+                </Pressable>;
+              })}
+            </ScrollView>
+          </SafeAreaView>
+        </View>
+      </SafeAreaProvider>
     </Modal>
   );
 }
@@ -2280,8 +2281,10 @@ const s = StyleSheet.create({
   },
   sectionAction: { color: c.green, fontSize: 11, fontWeight: "600" },
   rail: { paddingHorizontal: 16, gap: 12 },
+  categoryHeader: { width: "100%", maxWidth: 600, alignSelf: "center", minHeight: 68, paddingHorizontal: 20, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  categoryHeading: { fontSize: 24, color: "#07552F", fontWeight: "600", flexShrink: 1 },
+  categoryGrid: { width: "100%", maxWidth: 600, alignSelf: "center", paddingHorizontal: 20, paddingTop: 12, paddingBottom: 28, gap: 12, flexDirection: "row", flexWrap: "wrap" },
   category: {
-    width: 104,
     overflow: "hidden",
     borderWidth: 1,
     borderColor: c.line,
@@ -2289,14 +2292,14 @@ const s = StyleSheet.create({
     backgroundColor: c.card,
   },
   categoryActive: { borderColor: c.green, borderWidth: 2 },
-  categoryImage: { width: "100%", height: 76, backgroundColor: c.raised },
+  categoryImage: { width: "100%", backgroundColor: c.raised },
   categoryName: {
-    minHeight: 44,
-    padding: 8,
+    minHeight: 52,
+    padding: 10,
     color: c.ink,
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: "500",
+    fontSize: 14,
+    lineHeight: 19,
+    fontWeight: "600",
   },
   fallback: {
     alignItems: "center",
@@ -2526,34 +2529,29 @@ const s = StyleSheet.create({
     backgroundColor: "rgba(31,27,22,.42)",
   },
   sheet: {
-    maxHeight: "75%",
-    padding: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    backgroundColor: c.card,
-  },
-  handle: {
+    maxHeight: "82%",
+    width: "100%",
+    maxWidth: 600,
     alignSelf: "center",
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: c.line,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    backgroundColor: "#F8F6EE",
   },
-  sheetTitle: { color: c.ink, marginTop: 16, fontSize: 22, fontWeight: "500" },
-  sheetCopy: { color: c.secondary, marginTop: 4, fontSize: 13, lineHeight: 19 },
-  areaRow: {
-    minHeight: 68,
-    padding: 14,
-    marginTop: 12,
-    borderWidth: 1,
-    borderColor: c.line,
-    borderRadius: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  areaSelected: { borderColor: "#9AAF8F", backgroundColor: c.pale },
-  areaName: { color: c.ink, fontSize: 15, fontWeight: "600" },
-  areaMeta: { color: c.secondary, marginTop: 4, fontSize: 12 },
+  handle: { alignSelf: "center", width: 32, height: 4, borderRadius: 2, backgroundColor: c.line, marginTop: 10, marginBottom: 18 },
+  areaHeading: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 20 },
+  areaIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: "#EAF0D9", alignItems: "center", justifyContent: "center" },
+  sheetTitle: { flex: 1, color: "#07552F", fontSize: 21, lineHeight: 28, fontWeight: "600" },
+  areaClose: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  areaCloseText: { color: "#07552F", fontSize: 27 },
+  sheetCopy: { paddingHorizontal: 20, color: c.secondary, marginTop: 8, fontSize: 14, lineHeight: 20 },
+  areaOptions: { padding: 20, gap: 10 },
+  areaRow: { minHeight: 72, padding: 14, borderWidth: 1, borderColor: c.line, borderRadius: 16, backgroundColor: "#fff", flexDirection: "row", alignItems: "center", gap: 12 },
+  areaSelected: { borderColor: "#07552F", backgroundColor: "#EAF0D9" },
+  areaInfo: { flex: 1, minWidth: 0 },
+  areaRadio: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#7C8C76" },
+  areaRadioChecked: { backgroundColor: "#07552F", borderColor: "#07552F" },
+  areaCheck: { color: "#fff", fontSize: 13 },
+  areaName: { color: c.ink, fontSize: 16, fontWeight: "600" },
+  areaMeta: { color: c.secondary, marginTop: 4, fontSize: 12, lineHeight: 16 },
   selected: { color: c.green, fontSize: 12, fontWeight: "600" },
 });

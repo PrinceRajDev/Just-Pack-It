@@ -14,14 +14,15 @@ const methods = [["pickup", "Customer pickup"], ["seller_delivery", "Shop delive
 type Step = "login" | "account" | "email" | "shop" | "delivery" | "review" | "status" | "recovery";
 const backSteps: Partial<Record<Step, Step>> = { account:"login", email:"account", delivery:"shop", review:"delivery", recovery:"login" };
 
-export function SellerAccess({ close }: { close: () => void }) {
-  const [step, setStep] = useState<Step>("login");
-  const [session, setSession] = useState<Session | null>(null);
+export function SellerAccess({ close, initialSession }: { close: () => void; initialSession?: Session }) {
+  const [step, setStep] = useState<Step>(() => initialSession ? "status" : "login");
+  const [session, setSession] = useState<Session | null>(() => initialSession ?? null);
   const [shop, setShop] = useState<Awaited<ReturnType<typeof buyerApi.sellerShop>>>();
   const [shopError, setShopError] = useState("");
   const [refresh, setRefresh] = useState(0);
-  const [restoring, setRestoring] = useState(true);
+  const [restoring, setRestoring] = useState(!initialSession);
   const [error, setError] = useState("");
+  const [requestId, setRequestId] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [requestOwner] = useState(() => ({}));
   const [visible, setVisible] = useState(false);
@@ -50,6 +51,10 @@ export function SellerAccess({ close }: { close: () => void }) {
   const cooldown = challenge ? Math.max(0, Math.ceil((challenge.retryAt - now) / 1000)) : 0;
 
   useEffect(() => {
+    if (initialSession) {
+      void storage.setItemAsync(sessionKey, JSON.stringify(initialSession)).catch(() => undefined);
+      return;
+    }
     let active = true;
     void (async () => {
       try {
@@ -67,7 +72,7 @@ export function SellerAccess({ close }: { close: () => void }) {
       } finally { if (active) setRestoring(false); }
     })();
     return () => { active = false; };
-  }, []);
+  }, [initialSession]);
 
   useEffect(() => {
     if (!session) return;
@@ -86,12 +91,19 @@ export function SellerAccess({ close }: { close: () => void }) {
     return () => clearInterval(timer);
   }, [challenge, step]);
 
-  const go = (next: Step) => { setVisible(false); setError(""); setStep(next); };
+  const go = (next: Step) => { setVisible(false); setError(""); setRequestId(undefined); setStep(next); };
   const run = async (action: () => Promise<void>) => {
     if (pendingRequests.has(requestOwner)) return;
-    pendingRequests.add(requestOwner); setBusy(true); setError("");
+    pendingRequests.add(requestOwner); setBusy(true); setError(""); setRequestId(undefined);
     try { await action(); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : "Try again. Your details are still here."); }
+    catch (reason) {
+      if (reason instanceof ApiError) {
+        setRequestId(reason.requestId);
+        setError(reason.message);
+      } else {
+        setError(reason instanceof Error ? reason.message : "Try again. Your details are still here.");
+      }
+    }
     finally { pendingRequests.delete(requestOwner); setBusy(false); }
   };
   const acceptSession = async (next: Session) => {
@@ -129,7 +141,7 @@ export function SellerAccess({ close }: { close: () => void }) {
     {login:"Welcome back", account:"Create seller account", email:"Check your email", shop:"Tell us about your shop", delivery:"Address & fulfilment", review:"Review your shop", status:"Your seller workspace"}[step];
   const button = (label:string, action:()=>void, disabled = false) => <Pressable accessibilityRole="button" disabled={disabled || busy} onPress={action} style={[s.button, (disabled || busy) && s.disabled]}><Text style={[s.buttonText,(disabled || busy) && s.disabledText]}>{busy ? "Please wait…" : label}</Text></Pressable>;
   const link = (label:string, action:()=>void) => <Pressable accessibilityRole="button" disabled={busy} onPress={action} style={s.link}><Text style={s.linkText}>{label}</Text></Pressable>;
-  const passwordField = <Field label="Password" placeholder="Enter your password" value={password} onChangeText={setPassword} secureTextEntry={!visible} maxLength={128} autoCapitalize="none" suffix={link(visible ? "Hide" : "Show", () => setVisible(value => !value))} />;
+  const passwordField = <Field label="Password" placeholder="Enter your password" value={password} onChangeText={setPassword} secureTextEntry={!visible} maxLength={128} autoCapitalize="none" autoCorrect={false} autoComplete={step === "login" ? "current-password" : "new-password"} suffix={link(visible ? "Hide" : "Show", () => setVisible(value => !value))} />;
   let action;
   if (!picker && step === "login") action = button("Sign in", () => void run(async () => {
     if (!validPhone) throw new Error("Enter your registered mobile number, including the country code if needed.");
@@ -182,7 +194,7 @@ export function SellerAccess({ close }: { close: () => void }) {
         {!picker && step === "login" && <Text style={s.kicker}>YOUR NEIGHBOURHOOD. YOUR SHOP.</Text>}
         {!picker && step === "email" && <Text style={s.kicker}>STEP 1 OF 4 · VERIFY EMAIL</Text>}
         <Text accessibilityRole="header" style={s.title}>{title}</Text>
-        {!!error && <Text accessibilityRole="alert" style={s.error}>{error}</Text>}
+        {!!error && <View style={s.field}><Text accessibilityRole="alert" style={s.error}>{error}</Text>{requestId && <Text selectable style={s.copy}>Support reference: {requestId}</Text>}</View>}
         {picker && (picker === "area" ? catalogue?.areas : catalogue?.categories)?.map(item => <Pressable accessibilityRole="button" key={item.id} style={s.panel} onPress={() => {
           if (picker === "area") setArea(item as ServiceArea); else setCategory(item as Category);
           setPicker(null);

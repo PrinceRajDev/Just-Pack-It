@@ -73,6 +73,7 @@ export function BuyerAccount({
   const [addressesOpen, setAddressesOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [sellerOpen, setSellerOpen] = useState(false);
+  const [sellerHandoff, setSellerHandoff] = useState<Session>();
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   useAndroidBack(() => {
     if (!session && busy) return true;
@@ -130,6 +131,13 @@ export function BuyerAccount({
       const next = register
         ? await buyerApi.register(name.trim(), normalizedPhone, password, options?.emailOtpRequired && challenge ? { email: challenge.email, emailChallengeId: challenge.id, emailOtp: otp } : undefined)
         : await buyerApi.login(normalizedPhone, password);
+      if (!register && next.role === "seller") {
+        setPassword("");
+        setPasswordVisible(false);
+        setSellerHandoff(next);
+        setSellerOpen(true);
+        return;
+      }
       if (next.role !== "buyer")
         throw new Error("Use the matching workspace for this account.");
       await save(next);
@@ -142,7 +150,7 @@ export function BuyerAccount({
       setBusy(false);
     }
   };
-  if (sellerOpen) return <SellerAccess close={() => setSellerOpen(false)} />;
+  if (sellerOpen) return <SellerAccess initialSession={sellerHandoff} close={() => { setSellerHandoff(undefined); setSellerOpen(false); }} />;
   if (session && addressesOpen) return <Modal onRequestClose={() => setAddressesOpen(false)}><SafeAreaView style={{ flex: 1, backgroundColor: "#F8F6EE" }}><BuyerAddresses key={session.userId} token={session.token} userId={session.userId} area={area} back={() => setAddressesOpen(false)} /></SafeAreaView></Modal>;
   if (!session && recoveryOpen) return <BuyerRecovery back={() => { setPassword(""); setRecoveryOpen(false); }} />;
   if (session && profileOpen) return <Modal onRequestClose={() => setProfileOpen(false)}><SafeAreaView style={{ flex: 1, backgroundColor: "#F8F6EE" }}><BuyerProfile key={session.userId} token={session.token} back={() => setProfileOpen(false)} onSaved={(updatedName) => save({ ...session, name: updatedName })} /></SafeAreaView></Modal>;

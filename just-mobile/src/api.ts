@@ -12,7 +12,7 @@ export type BuyerOrder = { id: string; total: number; amountDue?: number; online
 
 type ListPayload<T> = T[] | { items?: T[] };
 const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
-export class ApiError extends Error { constructor(message: string, public status: number, public code?: string) { super(message); } }
+export class ApiError extends Error { constructor(message: string, public status: number, public code?: string, public requestId?: string) { super(message); } }
 const sessionListeners = new Set<(token: string) => void>();
 async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
   const controller = new AbortController();
@@ -48,10 +48,10 @@ async function request<T>(path: string, token?: string, options: RequestInit = {
     response = await fetchWithTimeout(`${apiUrl}${path}`, { ...options, headers: { Accept: "application/json", ...(options.body ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers ?? {}) } });
   } catch (reason) { throw reason instanceof Error ? reason : new Error("Check your internet and try again."); }
   if (response.status === 204) return undefined as T;
-  const payload = await response.json().catch(() => ({})) as { message?: string; code?: string };
+  const payload = await response.json().catch(() => ({})) as { message?: string; code?: string; requestId?: string };
   if (!response.ok) {
     if (response.status === 401 && token) sessionListeners.forEach((listener) => listener(token));
-    throw new ApiError(payload.message || `Marketplace request failed (${response.status}). Please try again.`, response.status, payload.code);
+    throw new ApiError(payload.message || `Marketplace request failed (${response.status}). Please try again.`, response.status, payload.code, payload.requestId ?? response.headers.get("x-request-id") ?? undefined);
   }
   return payload as T;
 }

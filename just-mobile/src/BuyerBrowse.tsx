@@ -41,6 +41,15 @@ const cards = [
   { slug: "personal-care-household", name: "Personal Care" },
 ];
 export const browseCategoryPhotos: Record<string, number> = {
+  "fast-food-snacks": require("../assets/browse-categories/fast-food-snacks.webp"),
+  "flowers-plants": require("../assets/browse-categories/flowers-plants.webp"),
+  "hardware-electrical-plumbing": require("../assets/browse-categories/hardware-electrical-plumbing.webp"),
+  "kitchen-home-goods": require("../assets/browse-categories/kitchen-home-goods.webp"),
+  "meat-seafood": require("../assets/browse-categories/meat-seafood.webp"),
+  "pet-supplies": require("../assets/browse-categories/pet-supplies.webp"),
+  "pooja-supplies": require("../assets/browse-categories/pooja-supplies.webp"),
+  "restaurants-meals": require("../assets/browse-categories/restaurants-meals.webp"),
+  "toys-gifts-decor": require("../assets/browse-categories/toys-gifts-decor.webp"),
   "grocery-kirana": require("../assets/browse-categories/grocery.webp"),
   "fruits-vegetables": require("../assets/browse-categories/vegetables.webp"),
   "dairy-eggs": require("../assets/browse-categories/dairy.webp"),
@@ -578,7 +587,7 @@ export function BuyerBrowse({
                         }
                       }
                       style={styles.categoryPhoto}
-                      resizeMode="cover"
+                      resizeMode="contain"
                     />
                   </View>
                   <Text style={styles.cardName}>{item.name}</Text>

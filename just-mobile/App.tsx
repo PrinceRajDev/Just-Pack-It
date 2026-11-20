@@ -1100,11 +1100,11 @@ function Home({
               }
               style={{ width: "23%", alignItems: "center" }}
             >
-              <View style={{ width: "100%", maxWidth: 74, height: 54, borderRadius: 12, overflow: "hidden" }}>
+              <View style={{ width: "100%", maxWidth: 74, height: 54, borderRadius: 12, overflow: "hidden", backgroundColor: "#F0EEE4" }}>
                 <Image
                   accessible={false}
                   source={entry.photo}
-                  resizeMode="cover"
+                  resizeMode="contain"
                   style={{ width: "100%", height: "100%" }}
                 />
               </View>
@@ -1181,7 +1181,7 @@ function Home({
                     <Image
                       accessible={false}
                       source={entry.photo}
-                      resizeMode="cover"
+                      resizeMode="contain"
                       style={{ width: "100%", height: "100%" }}
                     />
                   ) : (
@@ -1508,7 +1508,7 @@ function CategoryPicture({ item, height }: { item: Category; height: number }) {
   ) : (
     <Image
       source={browseCategoryPhotos[item.slug] ?? { uri: useBundled ? artwork : categoryImage(item) }}
-      resizeMode="cover"
+      resizeMode="contain"
       style={style}
       testID="all-category-photo"
       onError={() => {

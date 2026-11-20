@@ -1508,7 +1508,7 @@ function CategoryPicture({ item, height }: { item: Category; height: number }) {
   ) : (
     <Image
       source={browseCategoryPhotos[item.slug] ?? { uri: useBundled ? artwork : categoryImage(item) }}
-      resizeMode="contain"
+      resizeMode="cover"
       style={style}
       testID="all-category-photo"
       onError={() => {

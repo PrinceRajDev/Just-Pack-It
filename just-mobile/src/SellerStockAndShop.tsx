@@ -367,6 +367,9 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
   const [pickupNote,setPickupNote] = useState(shop.pickupNote ?? "");
   const mutation = useSellerMutation();
   const cover = resolveImage(shop.coverImage);
+  const profileChanged = name.trim() !== shop.name.trim()
+    || address.trim() !== (shop.address ?? "").trim()
+    || description.trim() !== (shop.description ?? "").trim();
   const pauseChanged = closed !== !!shop.temporarilyClosed;
   const savedMethods = shop.fulfilment ?? [];
   const availabilityChanged = pauseChanged
@@ -396,14 +399,20 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
       </Pressable>;
     })}</View>
     {section !== "Availability" && <MutationFeedback error={mutation.error} onReload={reload} />}
-    {!!notice && section !== "Availability" && <Text accessibilityLiveRegion="polite" style={styles.catalogueNotice}>{notice}</Text>}
+    {section === "Shop details" && (profileChanged || !!notice) && <Text accessibilityLiveRegion="polite" style={styles.catalogueNotice}>
+      {profileChanged ? "Unsaved shop details." : notice}
+    </Text>}
     {section === "Shop details" && <SellerCard>
       <Text accessibilityRole="header" style={styles.section}>Shop profile</Text>
       {shop.review?.reason && <Text style={styles.copy}>{shop.review.reason}</Text>}
       <SellerField label="Shop name" value={name} onChangeText={setName} maxLength={100} />
       <SellerField label="Street address" value={address} onChangeText={setAddress} maxLength={500} />
       <SellerField label="Shop description" value={description} onChangeText={setDescription} maxLength={1000} multiline />
-      <SellerButton label="Save shop details" disabled={mutation.busy} onPress={() => void mutation.run(async () => {
+      {profileChanged && <SellerButton label="Discard changes" soft disabled={mutation.busy} onPress={() => {
+        setName(shop.name); setAddress(shop.address ?? ""); setDescription(shop.description ?? "");
+        setNotice(""); mutation.clear();
+      }} />}
+      <SellerButton label="Save shop details" disabled={mutation.busy || !profileChanged} onPress={() => void mutation.run(async () => {
         if (name.trim().length<2 || address.trim().length<2) throw new Error("Enter the shop name and street address.");
         const updated = await sellerApi.saveProfile(token,shop,{name:name.trim(),address:address.trim(),description:description.trim()});
         onSaved(updated);

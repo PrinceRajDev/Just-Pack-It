@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Image, Pressable, Text, TextInput, View } from "react-native";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { AppState, Image, Pressable, Text, TextInput, View } from "react-native";
 import { onSessionExpired, type Session } from "./api";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useAndroidBack } from "./useAndroidBack";
@@ -172,6 +172,25 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
   const [code, setCode] = useState("");
   const [restock, setRestock] = useState(false);
   const mutation = useSellerMutation();
+  const requestedOlderOrders = useRef(false);
+  const reloadOrders = () => {
+    requestedOlderOrders.current = false;
+    listing.reload();
+  };
+  const refreshAfterResume = useEffectEvent(() => {
+    if (!selected && !search.trim() && !listing.loading && !listing.moreBusy && !requestedOlderOrders.current) reloadOrders();
+  });
+  useEffect(() => {
+    let wasBackground = AppState.currentState === "background";
+    const subscription = AppState.addEventListener("change", state => {
+      if (state === "background") wasBackground = true;
+      if (state === "active" && wasBackground) {
+        wasBackground = false;
+        refreshAfterResume();
+      }
+    });
+    return () => subscription.remove();
+  }, []);
   const close = () => { setSelected(undefined); setAction(undefined); mutation.clear(); };
   useAndroidBack(() => { if (!selected) return false; if (!mutation.busy) close(); return true; }, 25);
   const term = search.trim().replace(/^(?:order\s*#\s*|#\s*)/i, "").toLowerCase();
@@ -254,7 +273,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
     </View>}
     </>;
   }
-  return <SellerScroll refreshing={listing.loading} onRefresh={listing.reload}>
+  return <SellerScroll refreshing={listing.loading} onRefresh={reloadOrders}>
     <View style={styles.dispatchBanner}>
       <Image source={dispatchPhoto} resizeMode="cover" style={styles.dispatchBannerImage} accessible={false} testID="seller-dispatch-art" />
       <View style={styles.dispatchBannerCopy}>
@@ -291,7 +310,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
     </View>}
     <View style={styles.orderTop}>
       <Text accessibilityRole="header" style={[styles.section,styles.grow]}>{term ? "Search results" : group === "Completed" ? "Past orders" : group === "Out for delivery" ? group : `${group} orders`}</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel="Refresh orders" disabled={listing.loading} onPress={listing.reload} style={styles.dispatchRefresh}><Text style={styles.link}>{listing.loading ? "Refreshing…" : "Refresh"}</Text></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="Refresh orders" disabled={listing.loading} onPress={reloadOrders} style={styles.dispatchRefresh}><Text style={styles.link}>{listing.loading ? "Refreshing…" : "Refresh"}</Text></Pressable>
     </View>
     {!term && <View accessibilityLabel="Fulfilment filter" style={styles.chips}>{fulfilmentFilters.map(value => {
       const selected = fulfilmentFilter === value;
@@ -335,7 +354,10 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
         </View>
       </Pressable>;
     })}
-    {listing.data?.next && <SellerButton label={listing.moreBusy ? "Loading…" : "Load more orders"} soft disabled={listing.moreBusy} onPress={listing.more} />}
+    {listing.data?.next && <SellerButton label={listing.moreBusy ? "Loading…" : "Load more orders"} soft disabled={listing.moreBusy} onPress={() => {
+      requestedOlderOrders.current = true;
+      listing.more();
+    }} />}
   </SellerScroll>;
 }
 

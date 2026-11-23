@@ -268,8 +268,21 @@ const assert = require("node:assert/strict");
     await workspace.getByRole("button",{name:"Review rider handoff"}).click();
     await workspace.getByRole("button",{name:"Confirm handoff",exact:true}).click();
     await workspace.getByText("Picked up by rider",{exact:true}).waitFor();
+    sellerOrder={...sellerOrder,status:"out_for_delivery",version:sellerOrder.version+1,delivery:{...sellerOrder.delivery,state:"out_for_delivery"}};
+    await page.evaluate(() => {
+      for (const state of ["hidden","visible"]) {
+        Object.defineProperty(document,"visibilityState",{configurable:true,value:state});
+        Object.defineProperty(document,"webkitVisibilityState",{configurable:true,value:state});
+        document.dispatchEvent(new Event("visibilitychange"));
+        document.dispatchEvent(new Event("webkitvisibilitychange"));
+      }
+      delete document.visibilityState;
+      delete document.webkitVisibilityState;
+    });
+    await workspace.getByText("No orders in this view",{exact:true}).waitFor();
+    await workspace.getByRole("tab",{name:"Out for delivery",exact:true}).click();
     await workspace.getByRole("button",{name:/^Order #/}).click();
-    await workspace.getByText("Rider status · picked up",{exact:true}).waitFor();
+    await workspace.getByText("Rider status · out for delivery",{exact:true}).waitFor();
     await workspace.getByRole("tab",{name:"Catalogue",exact:true}).click();
     await workspace.getByRole("button",{name:"Edit Tomatoes",exact:true}).waitFor();
     await workspace.getByLabel("Search products",{exact:true}).fill("tomatoes 1 kg");

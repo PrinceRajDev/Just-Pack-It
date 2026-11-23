@@ -27,10 +27,12 @@ function matchesCatalogueFilter(item: SellerProduct, filter: typeof filters[numb
   }
 }
 
-export function SellerCatalogue({token,lowStock}:{token:string;lowStock:boolean}) {
+export type StockFilter = "Low stock" | "Out of stock";
+
+export function SellerCatalogue({token,stockFilter}:{token:string;stockFilter?:StockFilter}) {
   const listing = useSellerPages(sellerApi.products,token);
   const [query,setQuery] = useState("");
-  const [filter,setFilter] = useState<typeof filters[number]>(lowStock ? "Low stock" : "All");
+  const [filter,setFilter] = useState<typeof filters[number]>(stockFilter ?? "All");
   const [edit,setEdit] = useState<SellerProduct | "new">();
   const [editorSection,setEditorSection] = useState<typeof productSections[number]>("Details");
   const [stockProduct,setStockProduct] = useState<SellerProduct>();

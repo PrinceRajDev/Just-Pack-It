@@ -5,7 +5,7 @@ import { BuyerStateCard } from "./BuyerStateCard";
 import { useAndroidBack } from "./useAndroidBack";
 import { fulfilmentNames, orderStatusNames, sellerApi, type SellerOrder, type OrderStatus, type Settlement } from "./sellerApi";
 import { rupees, styles, LoadState, MutationFeedback, Row, SellerButton, SellerCard, SellerField, SellerScroll, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
-import { SellerCatalogue, SellerShopSettings } from "./SellerStockAndShop";
+import { SellerCatalogue, SellerShopSettings, type StockFilter } from "./SellerStockAndShop";
 
 type Tab = "Home" | "Orders" | "Catalogue" | "Settlements" | "Shop";
 const sellerIcons = {
@@ -50,7 +50,7 @@ function SellerIcon({name,color}: {name:SellerIconName;color:string}) {
 export function SellerWorkspace({ session, back, signOut, expired }: { session: Session; back: () => void; signOut: () => Promise<void>; expired: () => void }) {
   const [tab, setTab] = useState<Tab>("Home");
   const [group, setGroup] = useState<OrderGroup>("Active");
-  const [lowStock, setLowStock] = useState(false);
+  const [stockFilter, setStockFilter] = useState<StockFilter>();
   useEffect(() => onSessionExpired(token => { if (token === session.token) expired(); }), [session.token, expired]);
   useAndroidBack(() => {
     if (tab === "Home") return false;
@@ -58,16 +58,16 @@ export function SellerWorkspace({ session, back, signOut, expired }: { session: 
     return true;
   }, 20);
   const goOrders = (group: OrderGroup) => { setGroup(group); setTab("Orders"); };
-  const goTab = (next: Tab) => { setLowStock(false); setTab(next); };
+  const goTab = (next: Tab) => { setStockFilter(undefined); setTab(next); };
   return <View style={styles.screen} testID="native-seller-workspace">
     <View style={styles.header}>
       <View style={styles.grow}><Text style={styles.eyebrow}>JustPackIt Seller</Text><Text accessibilityRole="header" style={styles.heading}>{tab === "Home" ? "Shop counter" : tab}</Text></View>
       <Pressable accessibilityRole="button" onPress={back} style={styles.tap}><Text style={styles.link}>Close</Text></Pressable>
     </View>
     <View style={styles.grow}>
-      {tab === "Home" && <SellerHome token={session.token} orders={goOrders} open={goTab} openLowStock={() => { setLowStock(true); setTab("Catalogue"); }} />}
+      {tab === "Home" && <SellerHome token={session.token} orders={goOrders} open={goTab} openStock={filter => { setStockFilter(filter); setTab("Catalogue"); }} />}
       {tab === "Orders" && <SellerOrders token={session.token} group={group} setGroup={setGroup} />}
-      {tab === "Catalogue" && <SellerCatalogue token={session.token} lowStock={lowStock} />}
+      {tab === "Catalogue" && <SellerCatalogue token={session.token} stockFilter={stockFilter} />}
       {tab === "Settlements" && <SellerSettlements token={session.token} />}
       {tab === "Shop" && <SellerShopSettings token={session.token} name={session.name} signOut={signOut} />}
     </View>
@@ -81,7 +81,7 @@ export function SellerWorkspace({ session, back, signOut, expired }: { session: 
   </View>;
 }
 
-function SellerHome({token,orders,open,openLowStock}: {token:string;orders:(group:OrderGroup)=>void;open:(tab:Tab)=>void;openLowStock:()=>void}) {
+function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:OrderGroup)=>void;open:(tab:Tab)=>void;openStock:(filter:StockFilter)=>void}) {
   const shop = useSellerData(() => sellerApi.shop(token), token);
   const dashboard = useSellerData(() => sellerApi.dashboard(token), token);
   const counts = dashboard.data?.counts;
@@ -89,7 +89,8 @@ function SellerHome({token,orders,open,openLowStock}: {token:string;orders:(grou
     {title:"New orders", count:counts?.placed ?? 0, action:"Review new orders", open:() => orders("New"), icon:"orders", tint:"#FBE8AE"},
     {title:"To prepare", count:(counts?.accepted ?? 0) + (counts?.preparing ?? 0), action:"Open packing queue", open:() => orders("Preparing"), icon:"bag", tint:"#E6E0F6"},
     {title:"Ready for handoff", count:counts?.ready ?? 0, action:"Review handoffs", open:() => orders("Ready"), icon:"home", tint:"#DAEDDE"},
-    {title:"Low stock", count:dashboard.data?.lowStock?.count ?? 0, action:"Review low stock", open:openLowStock, icon:"browse", tint:"#F5E0D4"},
+    {title:"Out of stock", count:dashboard.data?.lowStock?.outOfStock ?? 0, action:"Review sold-out products", open:() => openStock("Out of stock"), icon:"browse", tint:"#F5E0D4"},
+    {title:"Low stock", count:dashboard.data?.lowStock?.count ?? 0, action:"Review low stock", open:() => openStock("Low stock"), icon:"browse", tint:"#FBE8AE"},
   ] satisfies {title:string;count:number;action:string;open:()=>void;icon:SellerIconName;tint:string}[];
   const next = dashboard.error ? undefined : work.find(item => item.count > 0);
   const refresh = () => { shop.reload(); dashboard.reload(); };

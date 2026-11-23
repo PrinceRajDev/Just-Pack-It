@@ -259,6 +259,10 @@ const assert = require("node:assert/strict");
     await workspace.getByRole("button",{name:"All methods",exact:true}).click();
     for (const [label, tab] of [["Accept order","Preparing"],["Start packing","Preparing"],["Mark ready","Ready"]]) {
       await workspace.getByRole("button",{name:/^Order #/}).click();
+      if (label === "Mark ready") {
+        await workspace.getByRole("checkbox",{name:/^Tomatoes,/}).click();
+        await workspace.getByText("1 of 1 checked",{exact:true}).waitFor();
+      }
       if (label === "Accept order") await page.screenshot({path:path.join(output,"seller-order-detail-390.png"),animations:"disabled"});
       await workspace.getByRole("button",{name:label,exact:true}).click();
       await workspace.getByRole("tab",{name:tab,exact:true}).click();

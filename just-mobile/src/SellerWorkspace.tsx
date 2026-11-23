@@ -167,6 +167,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
   const [search,setSearch] = useState("");
   const [fulfilmentFilter,setFulfilmentFilter] = useState<typeof fulfilmentFilters[number]>("all");
   const [selected, setSelected] = useState<SellerOrder>();
+  const [checkedLines,setCheckedLines] = useState<number[]>([]);
   const [action, setAction] = useState<"cancel" | "cash" | "return" | "pickup">();
   const [reason, setReason] = useState("");
   const [code, setCode] = useState("");
@@ -205,6 +206,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
     const order = selected;
     const packingUnits = order.lines.reduce((total,item) => total + item.qty,0);
     const packingLines = order.lines.length;
+    const canCheckPacking = !order.testMode && (order.status === "accepted" || order.status === "preparing");
     const move = ({placed:"accepted",accepted:"preparing",preparing:"ready",ready:order.fulfilment==="seller_delivery" ? "out_for_delivery" : undefined} as Partial<Record<OrderStatus,OrderStatus>>)[order.status];
     const actionLabel = {placed:"Accept order",accepted:"Start packing",preparing:"Mark ready",ready:"Start delivery"}[order.status as "placed"|"accepted"|"preparing"|"ready"];
     const allowReceipt = order.fulfilment === "pickup" ? order.status === "ready" : order.fulfilment === "seller_delivery" && order.status === "out_for_delivery";
@@ -243,7 +245,25 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
         <Text style={styles.orderStatus}>{packingUnits} {packingUnits === 1 ? "unit" : "units"}</Text>
       </View>
       <Text style={styles.copy}>{packingLines} {packingLines === 1 ? "line item" : "line items"} to check</Text>
-      <SellerCard>{order.lines.map((item,index) => <View key={index} style={[styles.row,index > 0 && styles.packingDivider]}><View style={styles.grow}><Text style={styles.label}>{item.name}</Text>{!!(item.variantLabel || item.unit) && <Text style={styles.copy}>{item.variantLabel || item.unit}</Text>}</View><Text style={styles.workCount}>×{item.qty}</Text></View>)}</SellerCard>
+      {canCheckPacking && <Text accessibilityLiveRegion="polite" style={styles.copy}>{checkedLines.length} of {packingLines} checked</Text>}
+      <SellerCard>{order.lines.map((item,index) => {
+        const checked = checkedLines.includes(index);
+        const contents = <>
+          <View style={styles.grow}>
+            <Text style={styles.label}>{item.name}</Text>
+            {!!(item.variantLabel || item.unit) && <Text style={styles.copy}>{item.variantLabel || item.unit}</Text>}
+          </View>
+          <Text style={styles.workCount}>×{item.qty}</Text>
+        </>;
+        const rowStyle = [styles.row,index > 0 && styles.packingDivider];
+        if (!canCheckPacking) return <View key={index} style={rowStyle}>{contents}</View>;
+        return <Pressable key={index} accessibilityRole="checkbox" accessibilityState={{checked}}
+          accessibilityLabel={[item.name,item.variantLabel || item.unit,`Quantity ${item.qty}`].filter(Boolean).join(", ")}
+          style={rowStyle} onPress={() => setCheckedLines(lines => lines.includes(index) ? lines.filter(line => line !== index) : [...lines,index])}>
+          <View style={[styles.shopCheck,checked && styles.shopChecked]}>{checked && <Text style={styles.shopCheckText}>✓</Text>}</View>
+          {contents}
+        </Pressable>;
+      })}</SellerCard>
       <View style={styles.paymentTicket}>
         <View style={styles.orderTop}><Text style={[styles.title,styles.grow]}>{sellerPaymentLabel(order)}</Text><Text style={styles.orderAmount}>{rupees(order.total)}</Text></View>
         <Text style={styles.copy}>Items {rupees(order.itemsSubtotal)} · Delivery {rupees(order.deliveryFee)}</Text>
@@ -331,7 +351,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
       const nextStep = order.status === "ready" && order.fulfilment === "platform_delivery" && order.delivery?.state !== "claimed"
         ? "View order" : orderNextStep[order.status] ?? "View details";
       const riderStatus = readyRiderLabel(order);
-      return <Pressable key={order.id} accessibilityRole="button" accessibilityLabel={[reference,status,riderStatus].filter(Boolean).join(", ")} accessibilityHint={nextStep} onPress={() => setSelected(order)}
+      return <Pressable key={order.id} accessibilityRole="button" accessibilityLabel={[reference,status,riderStatus].filter(Boolean).join(", ")} accessibilityHint={nextStep} onPress={() => { setCheckedLines([]); setSelected(order); }}
         style={({pressed}) => [styles.dispatchTicket, pressed && styles.pressed]}>
         <View style={styles.dispatchTicketBody}>
           <View style={styles.orderTop}>

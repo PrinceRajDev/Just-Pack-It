@@ -438,7 +438,16 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
       {(availabilityChanged || !!notice) && <Text accessibilityLiveRegion="polite" style={styles.shopSaved}>
         {pauseChanged ? `Save to ${closed ? "pause" : "resume"} your shop.` : availabilityChanged ? "Unsaved availability changes." : notice}
       </Text>}
-      <SellerButton label="Save availability" disabled={mutation.busy || !availabilityChanged} onPress={() => void mutation.run(async () => {
+      <View style={styles.shopTimes}>
+        {availabilityChanged && <View style={styles.grow}><SellerButton label="Discard changes" soft disabled={mutation.busy} onPress={() => {
+          setClosed(!!shop.temporarilyClosed);
+          setHours(shop.openingHours ?? []);
+          setMethods(savedMethods);
+          setPickupNote(shop.pickupNote ?? "");
+          setNotice("");
+          mutation.clear();
+        }} /></View>}
+        <View style={styles.grow}><SellerButton label="Save availability" disabled={mutation.busy || !availabilityChanged} onPress={() => void mutation.run(async () => {
         setNotice("");
         if (!methods.length) throw new Error("Choose at least one fulfilment method.");
         if (hours.some(row=>!validTime(row.opens)||!validTime(row.closes)||row.opens===row.closes)) throw new Error("Enter different opening and closing times in HH:MM format.");
@@ -446,7 +455,8 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
         onSaved(updated);
         setClosed(!!updated.temporarilyClosed); setHours(updated.openingHours ?? []); setMethods(updated.fulfilment ?? []); setPickupNote(updated.pickupNote ?? "");
         setNotice("Availability saved.");
-      })} />
+        })} /></View>
+      </View>
     </View>}
   </>;
 }

@@ -6,10 +6,12 @@ import { resolveImage } from "./images";
 import { fulfilmentNames, sellerApi, type Fulfilment, type SellerProduct, type SellerShop } from "./sellerApi";
 import { rupees, styles, LoadState, MutationFeedback, Row, SellerButton, SellerCard, SellerField, SellerScroll, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
 import { useAndroidBack } from "./useAndroidBack";
+import { SellerProductPhoto } from "./SellerProductPhoto";
 
 const filters = ["All","Active","Inactive","Low stock","Out of stock"] as const;
 const shelfPhoto = require("../assets/browse-categories/grocery.webp");
 const productIcon = require("../assets/nav-icons/bag.png");
+const productSections = ["Details","Pack variants","Photo"] as const;
 
 function stockLevels(item: SellerProduct) {
   return item.variants?.length ? item.variants.map(option => option.stock) : [item.stock];
@@ -141,7 +143,8 @@ function QuickStock({token,product,close,saved,reload}:{token:string;product:Sel
 
 function ProductEditor({token,product,startInPacks,close,saved}:{token:string;product?:SellerProduct;startInPacks:boolean;close:()=>void;saved:()=>void}) {
   const [current,setCurrent] = useState(product);
-  const [section,setSection] = useState<"Details" | "Pack variants">(startInPacks ? "Pack variants" : "Details");
+  const [section,setSection] = useState<typeof productSections[number]>(startInPacks ? "Pack variants" : "Details");
+  const [photoBusy,setPhotoBusy] = useState(false);
   const [name,setName] = useState(product?.name ?? "");
   const [unit,setUnit] = useState(product?.unit ?? "");
   const [description,setDescription] = useState(product?.description ?? "");
@@ -155,7 +158,7 @@ function ProductEditor({token,product,startInPacks,close,saved}:{token:string;pr
   const categories = useSellerData(marketApi.categories,token);
   const mutation = useSellerMutation();
   const hasVariants = !!current?.variants?.length;
-  useAndroidBack(() => { if (!mutation.busy) close(); return true; }, 25);
+  useAndroidBack(() => { if (!mutation.busy && !photoBusy) close(); return true; }, 25);
   const refresh = async () => {
     if (!current) return;
     const next = await sellerApi.product(token,current.id);
@@ -173,7 +176,7 @@ function ProductEditor({token,product,startInPacks,close,saved}:{token:string;pr
   const feedback = <MutationFeedback error={mutation.error} onReload={current ? ()=>void mutation.run(refresh) : undefined} />;
   return <>
   <SellerScroll>
-    <Pressable accessibilityRole="button" onPress={close} disabled={mutation.busy} style={styles.orderBack}><Text style={styles.link}>‹  Back to catalogue</Text></Pressable>
+    <Pressable accessibilityRole="button" onPress={close} disabled={mutation.busy || photoBusy} style={styles.orderBack}><Text style={styles.link}>‹  Back to catalogue</Text></Pressable>
     <View style={styles.orderHero}>
       <View style={styles.orderTop}>
         <Image source={productIcon} resizeMode="contain" style={[styles.sellerIcon,styles.editorIcon]} accessible={false} />
@@ -182,13 +185,17 @@ function ProductEditor({token,product,startInPacks,close,saved}:{token:string;pr
       <Text accessibilityRole="header" style={styles.heroTitle}>{current?.name || "Add product"}</Text>
       {current && <Text style={styles.heroKicker}>{[current.unit,rupees(current.price)].filter(Boolean).join(" · ")}</Text>}
     </View>
-    {current && <View style={styles.shopSections}>{(["Details","Pack variants"] as const).map(value => (
-      <Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:section===value}} disabled={mutation.busy} onPress={() => {
+    {current && <View style={styles.shopSections}>{productSections.map(value => (
+      <Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:section===value}} disabled={mutation.busy || photoBusy} onPress={() => {
         setSection(value); setNotice(""); mutation.clear();
       }} style={[styles.shopSectionTab,section===value && styles.dispatchModeActive]}>
         <Text style={section===value ? styles.dispatchModeTextActive : styles.dispatchModeText}>{value}</Text>
       </Pressable>
     ))}</View>}
+    {!current && <Text style={styles.copy}>Save the product to add a photo or pack variants.</Text>}
+    {section === "Photo" && current && <SellerProductPhoto token={token} product={current} onBusy={setPhotoBusy} onRefresh={refresh} onSaved={updated => {
+      setCurrent(updated); saved();
+    }} />}
     {section === "Details" && <>
     <SellerCard>
       <Text accessibilityRole="header" style={styles.section}>Product details</Text>

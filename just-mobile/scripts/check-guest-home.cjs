@@ -200,6 +200,15 @@ const assert = require("node:assert/strict");
       }
       if(pathname==="/seller/products") json=[sellerProduct];
       if(pathname==="/seller/products/seller-product") json=sellerProduct;
+      if(pathname==="/seller/image-upload") json={enabled:true,maxBytes:5242880,types:["image/jpeg","image/png","image/webp"]};
+      if(pathname==="/seller/products/seller-product/image"){
+        assert.equal(method,"POST");
+        assert.equal(route.request().headers()["content-type"],"image/png");
+        assert.equal(route.request().headers()["x-product-version"],String(sellerProduct.version));
+        assert.equal(route.request().postDataBuffer().subarray(0,8).toString("hex"),"89504e470d0a1a0a");
+        sellerProduct={...sellerProduct,image:"https://images.example.test/tomatoes.webp",version:sellerProduct.version+1};
+        json=sellerProduct;
+      }
       if(pathname.endsWith("/inventory")&&method==="PATCH"){
         assert.deepEqual(route.request().postDataJSON(),{stock:7,version:sellerProduct.version});
         sellerProduct={...sellerProduct,stock:7,version:sellerProduct.version+1};
@@ -261,6 +270,14 @@ const assert = require("node:assert/strict");
     await workspace.getByRole("tab",{name:"Details",exact:true}).click();
     await workspace.getByRole("button",{name:"Save product",exact:true}).waitFor();
     await page.screenshot({path:path.join(output,"seller-product-editor-390.png"),animations:"disabled"});
+    await workspace.getByRole("tab",{name:"Photo",exact:true}).click();
+    const chooserPromise=page.waitForEvent("filechooser");
+    await workspace.getByRole("button",{name:"Choose photo",exact:true}).click();
+    const chooser=await chooserPromise;
+    await chooser.setFiles({name:"product.png",mimeType:"image/png",buffer:Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lWQAAAAASUVORK5CYII=","base64")});
+    await workspace.getByLabel("Selected photo preview",{exact:true}).waitFor();
+    await workspace.getByRole("button",{name:"Upload photo",exact:true}).click();
+    await workspace.getByText("Product photo saved.",{exact:true}).waitFor();
     await workspace.getByRole("tab",{name:"Settlements",exact:true}).click();
     await workspace.getByText("Payout recorded",{exact:true}).waitFor();
     await workspace.getByRole("button",{name:/^View breakdown/}).click();

@@ -27,6 +27,7 @@ export type SellerShop = {
 };
 export type SellerProduct = Product & { version: number; categoryId: string; subcategoryId?: string | null; active: boolean; mrp?: number | null };
 export type ProductInput = Pick<SellerProduct, "name" | "unit" | "categoryId" | "price" | "stock" | "active" | "mrp" | "description"> & { image?: string | null; subcategoryId?: string | null };
+export type ImageUploadCapability = { enabled: boolean; maxBytes: number; types: string[] };
 export type Settlement = {
   id: string; orderId: string; grossAmount: number | null; sellerEntitlement: number | null;
   payoutAmount: number | null; sellerRetained: number | null; platformDeliveryFee: number | null;
@@ -74,6 +75,11 @@ export const sellerApi = {
   },
   products: (token: string, cursor?: string) => page<SellerProduct>(token, "/seller/products", cursor),
   product: (token: string, id: string) => request<SellerProduct>("/seller/products/" + encode(id), token),
+  photoCapability: (token: string) => request<ImageUploadCapability>("/seller/image-upload", token),
+  uploadProductPhoto: (token: string, product: SellerProduct, body: ArrayBuffer, mimeType: string) =>
+    request<SellerProduct>(productPath(product) + "/image", token, {
+      method: "POST", body, headers: {"Content-Type":mimeType,"X-Product-Version":String(product.version)},
+    }),
   saveProduct: (token: string, input: ProductInput, product?: SellerProduct) =>
     write<SellerProduct>(token, productPath(product), product ? "PATCH" : "POST", { ...input, ...(product ? { version: product.version } : {}) }),
   inventory: (token: string, product: SellerProduct, stock: number) =>

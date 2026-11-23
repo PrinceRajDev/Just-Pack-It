@@ -5,9 +5,17 @@
     "scheme": "justpackit",
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Just Pack It to select photos for your product listings.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ],
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/just-pack-it-icon.png",
     "userInterfaceStyle": "light",
@@ -16,6 +24,7 @@
     },
     "android": {
       "package": "com.princeraj.justpackit",
+      "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#F7F1E4",
         "foregroundImage": "./assets/just-pack-it-icon.png"

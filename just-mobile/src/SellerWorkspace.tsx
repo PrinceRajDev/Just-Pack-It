@@ -26,6 +26,7 @@ const orderGroups = {
   "Out for delivery": ["out_for_delivery"], Completed: ["delivered","cancelled"],
 } satisfies Record<string, OrderStatus[]>;
 type OrderGroup = keyof typeof orderGroups;
+const fulfilmentFilters = ["all","pickup","seller_delivery","platform_delivery"] as const;
 const statusLabels = { pending:"Under review", approved:"Approved", rejected:"Changes requested", suspended:"Suspended" };
 const counterPhoto = require("../assets/seller-kirana-counter.jpg");
 const dispatchPhoto = require("../assets/seller-dispatch-parcel.jpg");
@@ -158,6 +159,7 @@ function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:O
 function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;setGroup:(value:OrderGroup)=>void}) {
   const listing = useSellerPages(sellerApi.orders, token);
   const [search,setSearch] = useState("");
+  const [fulfilmentFilter,setFulfilmentFilter] = useState<typeof fulfilmentFilters[number]>("all");
   const [selected, setSelected] = useState<SellerOrder>();
   const [action, setAction] = useState<"cancel" | "cash" | "return" | "pickup">();
   const [reason, setReason] = useState("");
@@ -167,9 +169,12 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
   const close = () => { setSelected(undefined); setAction(undefined); mutation.clear(); };
   useAndroidBack(() => { if (!selected) return false; if (!mutation.busy) close(); return true; }, 25);
   const term = search.trim().replace(/^(?:order\s*#\s*|#\s*)/i, "").toLowerCase();
-  const rows = listing.data?.items.filter(row => term
-    ? row.orderId.toLowerCase().includes(term)
-    : (orderGroups[group] as OrderStatus[]).includes(row.status));
+  const groupStatuses: readonly OrderStatus[] = orderGroups[group];
+  const rows = listing.data?.items.filter(row => {
+    if (term) return row.orderId.toLowerCase().includes(term);
+    return groupStatuses.includes(row.status)
+      && (fulfilmentFilter === "all" || row.fulfilment === fulfilmentFilter);
+  });
   const activeOrderCount = listing.data?.items.filter(order => (orderGroups.Active as OrderStatus[]).includes(order.status)).length;
   if (selected) {
     const order = selected;
@@ -282,10 +287,18 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
       <Text accessibilityRole="header" style={[styles.section,styles.grow]}>{term ? "Search results" : group === "Completed" ? "Past orders" : group === "Out for delivery" ? group : `${group} orders`}</Text>
       <Pressable accessibilityRole="button" accessibilityLabel="Refresh orders" disabled={listing.loading} onPress={listing.reload} style={styles.dispatchRefresh}><Text style={styles.link}>{listing.loading ? "Refreshing…" : "Refresh"}</Text></Pressable>
     </View>
+    {!term && <View accessibilityLabel="Fulfilment filter" style={styles.chips}>{fulfilmentFilters.map(value => {
+      const selected = fulfilmentFilter === value;
+      return <Pressable key={value} accessibilityRole="button" accessibilityState={{selected}} onPress={() => setFulfilmentFilter(value)}
+        style={[styles.chip,styles.catalogueChip,selected && styles.dispatchModeActive]}>
+        <Text style={selected ? styles.dispatchModeTextActive : styles.link}>{value === "all" ? "All methods" : fulfilmentNames[value]}</Text>
+      </Pressable>;
+    })}</View>}
     <LoadState loading={listing.loading && !listing.data} error={listing.error} retry={listing.reload} />
     {!listing.loading && !listing.error && !rows?.length && <BuyerStateCard
       title={term ? "No matching order ID" : "No orders in this view"}
-      copy={listing.data?.next ? "Load more orders to search earlier activity." : term ? "Check the order ID and try again." : "Matching orders will appear here."} icon="orders" />}
+      copy={listing.data?.next ? "Load more orders to check earlier activity." : term ? "Check the order ID and try again." : "Matching orders will appear here."}
+      icon="orders" action={!term && fulfilmentFilter !== "all" ? "Show all methods" : undefined} onAction={() => setFulfilmentFilter("all")} />}
     {rows?.map(order => {
       const reference = `Order #${order.orderId.slice(-8).toUpperCase()}`;
       const status = orderStatusNames[order.status];

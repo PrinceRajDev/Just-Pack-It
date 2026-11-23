@@ -251,6 +251,12 @@ const assert = require("node:assert/strict");
     await workspace.getByLabel("Search order ID",{exact:true}).fill("missing-order");
     await workspace.getByText("No matching order ID",{exact:true}).waitFor();
     await workspace.getByRole("button",{name:"Clear order search",exact:true}).click();
+    await workspace.getByRole("button",{name:"Customer pickup",exact:true}).click();
+    await workspace.getByText("No orders in this view",{exact:true}).waitFor();
+    await workspace.getByRole("button",{name:"Show all methods",exact:true}).click();
+    await workspace.getByRole("button",{name:"Platform rider",exact:true}).click();
+    await workspace.getByRole("button",{name:/^Order #RDER-ONE/}).waitFor();
+    await workspace.getByRole("button",{name:"All methods",exact:true}).click();
     for (const [label, tab] of [["Accept order","Preparing"],["Start packing","Preparing"],["Mark ready","Ready"]]) {
       await workspace.getByRole("button",{name:/^Order #/}).click();
       if (label === "Accept order") await page.screenshot({path:path.join(output,"seller-order-detail-390.png"),animations:"disabled"});

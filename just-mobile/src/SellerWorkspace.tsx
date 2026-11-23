@@ -3,7 +3,7 @@ import { Image, Pressable, Text, View } from "react-native";
 import { onSessionExpired, type Session } from "./api";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useAndroidBack } from "./useAndroidBack";
-import { fulfilmentNames, orderStatusNames, sellerApi, type SellerOrder, type OrderStatus } from "./sellerApi";
+import { fulfilmentNames, orderStatusNames, sellerApi, type SellerOrder, type OrderStatus, type Settlement } from "./sellerApi";
 import { rupees, styles, LoadState, MutationFeedback, Row, SellerButton, SellerCard, SellerField, SellerScroll, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
 import { SellerCatalogue, SellerShopSettings } from "./SellerStockAndShop";
 
@@ -36,6 +36,7 @@ const packingProgress: Record<OrderStatus, number> = {
 const orderNextStep: Partial<Record<OrderStatus,string>> = {
   placed:"Review order", accepted:"Start packing", preparing:"Continue packing", ready:"View handoff", out_for_delivery:"View delivery",
 };
+const statementFilters = ["All", "Recorded payouts", "Pending review"] as const;
 
 function orderTime(createdAt:string) {
   const time = Date.parse(createdAt);
@@ -287,15 +288,71 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
 
 function SellerSettlements({token}:{token:string}) {
   const listing = useSellerPages(sellerApi.settlements, token);
-  return <SellerScroll>
-    <Text style={styles.copy}>Recorded payments, seller entitlement and payout status.</Text>
+  const [filter,setFilter] = useState<typeof statementFilters[number]>("All");
+  const [expanded,setExpanded] = useState<string>();
+  const rows = listing.data?.items ?? [];
+  const visible = rows.filter(row => filter === "All" || (filter === "Recorded payouts" ? row.payout?.state === "recorded" : statementStatus(row) === "Pending review"));
+  const recorded = rows.filter(row => row.payout?.state === "recorded").length;
+  const pending = rows.filter(row => statementStatus(row) === "Pending review").length;
+  return <SellerScroll refreshing={listing.loading} onRefresh={listing.reload}>
+    <View style={styles.statementHero}>
+      <View style={styles.statementHeroIcon}><SellerIcon name="bag" color="#194539" /></View>
+      <Text accessibilityRole="header" style={styles.heroTitle}>Payout activity</Text>
+      {listing.data && <>
+        <View style={styles.statementMetrics}>
+          <View style={styles.grow}><Text style={styles.statementMetric}>{recorded}</Text><Text style={styles.heroKicker}>Payouts recorded</Text></View>
+          <View style={styles.statementRule} />
+          <View style={styles.grow}><Text style={styles.statementMetric}>{pending}</Text><Text style={styles.heroKicker}>Pending review</Text></View>
+        </View>
+        {listing.data.next && <Text style={styles.heroKicker}>Counts reflect loaded statements</Text>}
+      </>}
+    </View>
+    <View style={styles.orderTop}>
+      <Text accessibilityRole="header" style={[styles.section,styles.grow]}>Statements</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel="Refresh statement" disabled={listing.loading} onPress={listing.reload} style={styles.dispatchRefresh}><Text style={styles.link}>{listing.loading ? "Refreshing…" : "Refresh"}</Text></Pressable>
+    </View>
+    {rows.length > 0 && <View style={styles.chips}>{statementFilters.map(value => <Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:value === filter}} onPress={() => setFilter(value)}
+      style={[styles.chip,styles.catalogueChip,value === filter && styles.dispatchModeActive]}><Text style={value === filter ? styles.dispatchModeTextActive : styles.link}>{value}</Text></Pressable>)}</View>}
     <LoadState loading={listing.loading && !listing.data} error={listing.error} retry={listing.reload} />
-    {listing.data?.items.length === 0 && <BuyerStateCard title="No settlements yet" copy="Completed orders will appear here as the platform records them." icon="wallet" />}
-    {listing.data?.items.map(row => <SellerCard key={row.id}><Text style={styles.title}>Order #{row.orderId.slice(-8).toUpperCase()}</Text><Text style={styles.eyebrow}>{row.payout?.state==="recorded" ? "Payout recorded" : row.payout?.state==="prepared" ? "Payout prepared" : row.posted ? "Statement posted" : "Pending review"}</Text>
-      {[["Gross",row.grossAmount],["Seller entitlement",row.sellerEntitlement],["Platform delivery fee",row.platformDeliveryFee],["Cash retained",row.sellerRetained],["Payout amount",row.payoutAmount]].map(([label,value]) => typeof value==="number" ? <Text key={label} style={styles.copy}>{label} · {rupees(value)}</Text> : null)}
-      {row.holdReason && <Text style={styles.copy}>{row.holdReason}</Text>}{row.payout?.reference && <Text selectable style={styles.copy}>Reference · {row.payout.reference}</Text>}
-    </SellerCard>)}
+    {listing.data && !listing.loading && !listing.error && !visible.length && <BuyerStateCard title={filter === "All" ? "No settlements yet" : "No matching statements"} copy={listing.data.next ? "Load more settlements to check earlier statements." : filter === "All" ? "Settlements will appear here as the platform records them." : "Choose All to see your other statements."} icon="wallet" />}
+    {visible.map(row => {
+      const isOpen = expanded === row.id;
+      const breakdown = [
+        {label:"Gross order amount",value:row.grossAmount},
+        {label:"Seller entitlement",value:row.sellerEntitlement},
+        {label:"Platform delivery fee",value:row.platformDeliveryFee},
+        {label:"Cash retained",value:row.sellerRetained},
+      ].filter(entry => typeof entry.value === "number");
+      return <View key={row.id} style={styles.dispatchTicket}>
+        <View style={styles.statementBody}>
+          <View style={styles.orderTop}>
+            <Text style={[styles.title,styles.grow]}>Order #{row.orderId.slice(-8).toUpperCase()}</Text>
+            <Text style={[styles.orderStatus,(!row.posted || row.holdReason) && styles.workCountActive]}>{statementStatus(row)}</Text>
+          </View>
+          <View style={styles.statementAmount}>
+            <Text style={styles.copy}>Payout amount</Text>
+            <Text style={styles.statementValue}>{typeof row.payoutAmount === "number" ? rupees(row.payoutAmount) : "—"}</Text>
+          </View>
+          {!!row.holdReason && <Text style={styles.copy}>{row.holdReason}</Text>}
+          {isOpen && <>
+            {breakdown.map(entry => <View key={entry.label} style={[styles.orderTop,styles.statementLine]}><Text style={[styles.copy,styles.grow]}>{entry.label}</Text><Text style={styles.label}>{rupees(entry.value!)}</Text></View>)}
+            {!!row.payout?.reference && <Text selectable style={styles.copy}>Payout reference · {row.payout.reference}</Text>}
+            {!breakdown.length && !row.payout?.reference && <Text style={styles.copy}>No additional breakdown available.</Text>}
+          </>}
+        </View>
+        <Pressable accessibilityRole="button" accessibilityState={{expanded:isOpen}} onPress={() => setExpanded(isOpen ? undefined : row.id)}
+          style={({pressed}) => [styles.dispatchTicketFooter,pressed && styles.pressed]}>
+          <Text style={styles.dispatchTicketLink}>{isOpen ? "Hide breakdown" : "View breakdown"}</Text>
+          <Text style={styles.link}>{isOpen ? "−" : "+"}</Text>
+        </Pressable>
+      </View>;
+    })}
     {listing.data?.next && <SellerButton label={listing.moreBusy ? "Loading…" : "Load more settlements"} soft disabled={listing.moreBusy} onPress={listing.more} />}
-    <SellerButton label="Refresh statement" soft onPress={listing.reload} />
   </SellerScroll>;
+}
+
+function statementStatus(row:Settlement) {
+  if (row.payout?.state === "recorded") return "Payout recorded";
+  if (row.payout?.state === "prepared") return "Payout prepared";
+  return row.posted ? "Statement posted" : "Pending review";
 }

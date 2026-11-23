@@ -322,6 +322,9 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
   const mutation = useSellerMutation();
   const cover = resolveImage(shop.coverImage);
   const pauseChanged = closed !== !!shop.temporarilyClosed;
+  const availabilityLabel = shop.temporarilyClosed ? "Temporarily paused"
+    : shop.status !== "approved" ? shopApproval[shop.status]
+    : shop.isOpen === true ? "Open now" : shop.isOpen === false ? "Closed now" : "Availability unknown";
   const savedMethods = shop.fulfilment ?? [];
   const availabilityChanged = pauseChanged
     || JSON.stringify(hours) !== JSON.stringify(shop.openingHours ?? [])
@@ -372,7 +375,7 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
       }} />}
     {section === "Availability" && <>
     <View style={styles.shopAvailability}>
-      <View style={styles.grow}><Text style={styles.title}>{shop.temporarilyClosed ? "Shop paused" : "Shop not paused"}</Text>
+      <View style={styles.grow}><Text style={styles.title}>{availabilityLabel}</Text>
         <Text style={styles.copy}>{pauseChanged ? "Save availability to apply this change." : shop.temporarilyClosed ? "Resume to remove the temporary closure." : "Pause temporarily when you need a break."}</Text>
       </View>
       <Pressable accessibilityRole="switch" accessibilityLabel="Pause shop temporarily" accessibilityState={{checked:closed}} disabled={mutation.busy}

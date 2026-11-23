@@ -20,7 +20,7 @@ export type SellerOrder = {
 export type SellerShop = {
   id: string; version: number; name: string; address?: string; locality?: string; tagline?: string;
   status: "pending" | "approved" | "rejected" | "suspended"; review?: { reason?: string };
-  temporarilyClosed?: boolean; fulfilment: Fulfilment[]; timezone: string;
+  temporarilyClosed?: boolean; isOpen?: boolean; fulfilment: Fulfilment[]; timezone: string;
   openingHours: { day: number; opens: string; closes: string }[];
   categoryIds: string[]; serviceAreaIds: string[]; description?: string; coverImage?: string;
   deliveryFee?: number; minimumOrderAmount?: number; pickupNote?: string;

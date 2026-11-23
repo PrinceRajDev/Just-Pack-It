@@ -267,6 +267,7 @@ const assert = require("node:assert/strict");
     await workspace.getByRole("button",{name:/^Order #/}).click();
     await workspace.getByRole("button",{name:"Review rider handoff"}).click();
     await workspace.getByRole("button",{name:"Confirm handoff",exact:true}).click();
+    await workspace.getByText("Picked up by rider",{exact:true}).waitFor();
     await workspace.getByRole("button",{name:/^Order #/}).click();
     await workspace.getByText("Rider status · picked up",{exact:true}).waitFor();
     await workspace.getByRole("tab",{name:"Catalogue",exact:true}).click();

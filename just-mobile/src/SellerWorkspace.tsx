@@ -37,6 +37,13 @@ const packingProgress: Record<OrderStatus, number> = {
 const orderNextStep: Partial<Record<OrderStatus,string>> = {
   placed:"Review order", accepted:"Start packing", preparing:"Continue packing", ready:"View handoff", out_for_delivery:"View delivery",
 };
+function readyRiderLabel(order: SellerOrder) {
+  if (order.testMode || order.status !== "ready" || order.fulfilment !== "platform_delivery") return undefined;
+  if (!order.delivery) return "Waiting for a rider";
+  if (order.delivery.state === "claimed") return "Rider assigned";
+  if (order.delivery.state === "picked_up") return "Picked up by rider";
+  return undefined;
+}
 const statementFilters = ["All", "Recorded payouts", "Pending review"] as const;
 function sellerPaymentLabel(order: SellerOrder) {
   if (order.paymentMethod === "razorpay") {
@@ -229,7 +236,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
       <MutationFeedback error={mutation.error} onReload={() => {close(); listing.reload();}} />
       {!order.testMode && !action && <>
         {(order.status === "placed" || order.status === "accepted") && <SellerButton label="Cancel order" soft onPress={() => openAction("cancel")} disabled={mutation.busy} />}
-        {order.status === "ready" && order.fulfilment === "platform_delivery" && !riderReady && <Text style={styles.copy}>Waiting for a platform rider to claim this order.</Text>}
+        {readyRiderLabel(order) === "Waiting for a rider" && <Text style={styles.copy}>Waiting for a platform rider to claim this order.</Text>}
         {order.delivery?.state === "returning" && <SellerButton label="Record goods received" soft onPress={() => openAction("return")} />}
       </>}
       {action && <SellerCard>
@@ -302,7 +309,10 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
       const reference = `Order #${order.orderId.slice(-8).toUpperCase()}`;
       const status = orderStatusNames[order.status];
       const units = order.lines.reduce((sum,item) => sum + item.qty,0);
-      return <Pressable key={order.id} accessibilityRole="button" accessibilityLabel={`${reference}, ${status}`} accessibilityHint={orderNextStep[order.status]} onPress={() => setSelected(order)}
+      const nextStep = order.status === "ready" && order.fulfilment === "platform_delivery" && order.delivery?.state !== "claimed"
+        ? "View order" : orderNextStep[order.status] ?? "View details";
+      const riderStatus = readyRiderLabel(order);
+      return <Pressable key={order.id} accessibilityRole="button" accessibilityLabel={[reference,status,riderStatus].filter(Boolean).join(", ")} accessibilityHint={nextStep} onPress={() => setSelected(order)}
         style={({pressed}) => [styles.dispatchTicket, pressed && styles.pressed]}>
         <View style={styles.dispatchTicketBody}>
           <View style={styles.orderTop}>
@@ -316,11 +326,12 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
           <View style={styles.dispatchRoute}>
             <Text style={styles.label}>{units} {units === 1 ? "unit" : "units"}{order.lines[0] ? ` · ${order.lines[0].name}` : ""}{order.lines.length > 1 ? ` +${order.lines.length - 1} more` : ""}</Text>
             <Text style={styles.copy}>{fulfilmentNames[order.fulfilment]} · {order.testMode ? "Test order" : sellerPaymentLabel(order)}</Text>
+            {!!riderStatus && <Text style={styles.label}>{riderStatus}</Text>}
           </View>
         </View>
         <View style={styles.dispatchTicketFooter}>
           <Text style={styles.orderAmount}>{rupees(order.total)}</Text>
-          <Text style={styles.dispatchTicketLink}>{orderNextStep[order.status] ?? "View details"}  ›</Text>
+          <Text style={styles.dispatchTicketLink}>{nextStep}  ›</Text>
         </View>
       </Pressable>;
     })}

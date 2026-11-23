@@ -24,6 +24,7 @@ const orderGroups = {
   Active: ["placed","accepted","preparing","ready","out_for_delivery"],
   New: ["placed"], Preparing: ["accepted","preparing"], Ready: ["ready"],
   "Out for delivery": ["out_for_delivery"], Completed: ["delivered","cancelled"],
+  Delivered: ["delivered"], Cancelled: ["cancelled"],
 } satisfies Record<string, OrderStatus[]>;
 type OrderGroup = keyof typeof orderGroups;
 const fulfilmentFilters = ["all","pickup","seller_delivery","platform_delivery"] as const;
@@ -197,6 +198,8 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
   useAndroidBack(() => { if (!selected) return false; if (!mutation.busy) close(); return true; }, 25);
   const term = search.trim().replace(/^(?:order\s*#\s*|#\s*)/i, "").toLowerCase();
   const groupStatuses: readonly OrderStatus[] = orderGroups[group];
+  const completed = group === "Completed" || group === "Delivered" || group === "Cancelled";
+  const queues = completed ? ["Delivered","Cancelled"] as const : ["New","Preparing","Ready","Out for delivery"] as const;
   const rows = listing.data?.items.filter(row => {
     if (term) return row.orderId.toLowerCase().includes(term);
     return groupStatuses.includes(row.status)
@@ -327,15 +330,14 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
     {!term && <View style={styles.dispatchPanel}>
       <View style={styles.dispatchModes}>
         {(["Active","Completed"] as const).map(mode => {
-          const selected = mode === "Completed" ? group === mode : group !== "Completed";
+          const selected = mode === "Completed" ? completed : !completed;
           return <Pressable key={mode} accessibilityRole="tab" accessibilityLabel={mode} accessibilityState={{selected}} onPress={() => setGroup(mode)} style={[styles.dispatchMode,selected && styles.dispatchModeActive]}>
             <Text style={selected ? styles.dispatchModeTextActive : styles.dispatchModeText}>{mode}</Text>
           </Pressable>;
         })}
       </View>
-      {group !== "Completed" && <>
       <View style={styles.dispatchCounters}>
-        {(["New","Preparing","Ready","Out for delivery"] as const).map(queue => {
+        {queues.map(queue => {
           const count = listing.data?.items.filter(order => (orderGroups[queue] as OrderStatus[]).includes(order.status)).length;
           const selected = group === queue;
           return <Pressable key={queue} accessibilityRole="tab" accessibilityLabel={queue} accessibilityState={{selected}} accessibilityHint={count === undefined ? undefined : `${count} orders loaded`} onPress={() => setGroup(queue)} style={[styles.dispatchCounter,selected && styles.dispatchSelected]}>
@@ -344,7 +346,6 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
         })}
       </View>
       {listing.data?.next && <Text style={styles.copy}>Counts reflect loaded orders</Text>}
-      </>}
     </View>}
     <View style={styles.orderTop}>
       <Text accessibilityRole="header" style={[styles.section,styles.grow]}>{term ? "Search results" : group === "Completed" ? "Past orders" : group === "Out for delivery" ? group : `${group} orders`}</Text>

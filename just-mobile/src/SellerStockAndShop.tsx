@@ -199,6 +199,14 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
   const categories = useSellerData(marketApi.categories,token);
   const mutation = useSellerMutation();
   const hasVariants = !!current?.variants?.length;
+  const detailsChanged = !current || name.trim() !== current.name.trim()
+    || unit.trim() !== current.unit.trim()
+    || description.trim() !== (current.description ?? "").trim()
+    || categoryId !== current.categoryId
+    || !validMoney(price) || Number(price) !== current.price
+    || (mrp === "" ? null : Number(mrp)) !== (current.mrp ?? null)
+    || (!hasVariants && (!validStock(stock) || Number(stock) !== current.stock))
+    || isActive !== current.active;
   useAndroidBack(() => { if (!mutation.busy && !photoBusy) close(); return true; }, 25);
   const refresh = async () => {
     if (!current) return;
@@ -289,12 +297,14 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
   </SellerScroll>
   {section === "Details" && <View style={styles.orderDock}>
     {feedback}
-    {!!notice && <Text accessibilityLiveRegion="polite" style={styles.shopSaved}>{notice}</Text>}
+    {(!!notice || (!!current && detailsChanged)) && <Text accessibilityLiveRegion="polite" style={styles.shopSaved}>
+      {current && detailsChanged ? "Unsaved product changes." : notice}
+    </Text>}
     <View style={styles.shopTimes}>
       {offerPhoto && <View style={styles.grow}><SellerButton label="Add photo" soft disabled={mutation.busy} onPress={() => {
         setSection("Photo"); setNotice(""); mutation.clear();
       }} /></View>}
-      <View style={styles.grow}><SellerButton label="Save product" disabled={mutation.busy} onPress={save} /></View>
+      <View style={styles.grow}><SellerButton label="Save product" disabled={mutation.busy || !detailsChanged} onPress={save} /></View>
     </View>
   </View>}
   </>;

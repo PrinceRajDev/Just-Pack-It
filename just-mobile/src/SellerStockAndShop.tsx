@@ -9,10 +9,10 @@ import { useAndroidBack } from "./useAndroidBack";
 
 const filters = ["All","Active","Inactive","Low stock","Out of stock"] as const;
 
-export function SellerCatalogue({token}:{token:string}) {
+export function SellerCatalogue({token,lowStock}:{token:string;lowStock:boolean}) {
   const listing = useSellerPages(sellerApi.products,token);
   const [query,setQuery] = useState("");
-  const [filter,setFilter] = useState<typeof filters[number]>("All");
+  const [filter,setFilter] = useState<typeof filters[number]>(lowStock ? "Low stock" : "All");
   const [edit,setEdit] = useState<SellerProduct | "new">();
   const open = useSellerMutation();
   const leaveEditor = () => setEdit(undefined);

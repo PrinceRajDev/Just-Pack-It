@@ -218,6 +218,11 @@ const assert = require("node:assert/strict");
     await page.getByRole("button",{name:"Open seller workspace",exact:true}).click();
     const workspace=page.getByTestId("native-seller-workspace");
     await workspace.getByText("Fixture Kirana",{exact:true}).waitFor();
+    await workspace.getByRole("button",{name:/^Low stock/}).click();
+    await workspace.getByText("No products in this view",{exact:true}).waitFor();
+    await workspace.getByRole("tab",{name:"Home",exact:true}).click();
+    await workspace.getByRole("button",{name:/^New orders/}).waitFor();
+    await page.screenshot({path:path.join(output,"seller-workspace-390.png"),animations:"disabled"});
     await workspace.getByRole("button",{name:/^New orders/}).click();
     for (const [label, tab] of [["Accept order","Preparing"],["Start packing","Preparing"],["Mark ready","Ready"]]) {
       await workspace.getByRole("button",{name:/^Order #/}).click();

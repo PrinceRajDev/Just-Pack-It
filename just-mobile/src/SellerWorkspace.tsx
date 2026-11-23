@@ -23,6 +23,7 @@ const statusLabels = { pending:"Under review", approved:"Approved", rejected:"Ch
 export function SellerWorkspace({ session, back, signOut, expired }: { session: Session; back: () => void; signOut: () => Promise<void>; expired: () => void }) {
   const [tab, setTab] = useState<Tab>("Home");
   const [group, setGroup] = useState<OrderGroup>("Active");
+  const [lowStock, setLowStock] = useState(false);
   useEffect(() => onSessionExpired(token => { if (token === session.token) expired(); }), [session.token, expired]);
   useAndroidBack(() => {
     if (tab === "Home") return false;
@@ -30,41 +31,72 @@ export function SellerWorkspace({ session, back, signOut, expired }: { session: 
     return true;
   }, 20);
   const goOrders = (group: OrderGroup) => { setGroup(group); setTab("Orders"); };
+  const goTab = (next: Tab) => { setLowStock(false); setTab(next); };
   return <View style={styles.screen} testID="native-seller-workspace">
-    <View style={styles.header}><View style={styles.grow}><Text style={styles.eyebrow}>JUSTPACKIT SELLER</Text><Text accessibilityRole="header" style={styles.heading}>{tab === "Home" ? "Seller Home" : tab}</Text></View><Pressable accessibilityRole="button" onPress={back} style={styles.tap}><Text style={styles.link}>Close</Text></Pressable></View>
+    <View style={styles.header}>
+      <View style={styles.grow}><Text style={styles.eyebrow}>JustPackIt Seller</Text><Text accessibilityRole="header" style={styles.heading}>{tab === "Home" ? "Shop counter" : tab}</Text></View>
+      <Pressable accessibilityRole="button" onPress={back} style={styles.tap}><Text style={styles.link}>Close</Text></Pressable>
+    </View>
     <View style={styles.grow}>
-      {tab === "Home" && <SellerHome token={session.token} orders={goOrders} open={setTab} />}
+      {tab === "Home" && <SellerHome token={session.token} orders={goOrders} open={goTab} openLowStock={() => { setLowStock(true); setTab("Catalogue"); }} />}
       {tab === "Orders" && <SellerOrders token={session.token} group={group} setGroup={setGroup} />}
-      {tab === "Catalogue" && <SellerCatalogue token={session.token} />}
+      {tab === "Catalogue" && <SellerCatalogue token={session.token} lowStock={lowStock} />}
       {tab === "Settlements" && <SellerSettlements token={session.token} />}
       {tab === "Shop" && <SellerShopSettings token={session.token} name={session.name} signOut={signOut} />}
     </View>
-    <View style={styles.nav}>{tabs.map(item => <Pressable key={item.name} accessibilityRole="tab" accessibilityState={{selected:tab===item.name}} onPress={() => setTab(item.name)} style={[styles.navItem,tab===item.name && styles.sage]}><MarketIcon name={item.icon} /><Text numberOfLines={1} style={styles.navLabel}>{item.name}</Text></Pressable>)}</View>
+    <View style={styles.nav}>{tabs.map(item => {
+      const selected = tab === item.name;
+      return <Pressable key={item.name} accessibilityRole="tab" accessibilityState={{selected}} onPress={() => { if (!selected) goTab(item.name); }} style={styles.navItem}>
+        <View style={[styles.navIcon, selected && styles.sage]}><MarketIcon name={item.icon} color={selected ? "#174638" : "#5A655E"} /></View>
+        <Text style={[styles.navLabel, selected && styles.link, styles.navText]}>{item.name}</Text>
+      </Pressable>;
+    })}</View>
   </View>;
 }
 
-function SellerHome({token,orders,open}: {token:string;orders:(group:OrderGroup)=>void;open:(tab:Tab)=>void}) {
+function SellerHome({token,orders,open,openLowStock}: {token:string;orders:(group:OrderGroup)=>void;open:(tab:Tab)=>void;openLowStock:()=>void}) {
   const shop = useSellerData(() => sellerApi.shop(token), token);
   const dashboard = useSellerData(() => sellerApi.dashboard(token), token);
   return <SellerScroll>
-    {shop.data && <View style={styles.hero}><Text style={styles.heroKicker}>{statusLabels[shop.data.status]}</Text><Text style={styles.heroTitle}>{shop.data.name}</Text><Text style={styles.heroKicker}>{[shop.data.locality,shop.data.temporarilyClosed ? "Temporarily closed" : ""].filter(Boolean).join(" · ")}</Text></View>}
+    {shop.data && <View style={styles.hero}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Shop settings" onPress={() => open("Shop")} style={styles.heroTop}>
+        <View style={styles.heroBadge}><View style={styles.statusDot} /><Text style={styles.heroBadgeText}>{shop.data.temporarilyClosed ? "Temporarily closed" : statusLabels[shop.data.status]}</Text></View>
+        <Text style={styles.heroArrow}>↗</Text>
+      </Pressable>
+      <Text style={styles.heroTitle}>{shop.data.name}</Text>
+      {!!shop.data.locality && <Text style={styles.heroKicker}>{shop.data.locality}</Text>}
+      {dashboard.data && <View style={styles.heroMetrics}>
+        <View style={styles.grow}><Text style={styles.heroNumber}>{dashboard.data.todayOrders}</Text><Text style={styles.heroKicker}>Orders today</Text></View>
+        <View style={styles.metricDivider} />
+        <View style={styles.grow}><Text style={styles.heroNumber}>{dashboard.data.pendingPayment}</Text><Text style={styles.heroKicker}>Awaiting payment</Text></View>
+      </View>}
+    </View>}
     <LoadState loading={shop.loading && !shop.data} error={shop.error} retry={shop.reload} />
     {shop.data && shop.data.status !== "approved" && <BuyerStateCard title={statusLabels[shop.data.status]} copy={shop.data.review?.reason || "You can prepare your catalogue and shop details while your shop status is reviewed."} tone="warning" compact icon="shop" action="Shop settings" onAction={() => open("Shop")} />}
     <LoadState loading={dashboard.loading && !dashboard.data} error={dashboard.error} retry={dashboard.reload} />
     {dashboard.data && <>
-      <Text style={styles.section}>Needs attention</Text>
-      <SellerCard>
-        <Row title="New orders" detail={String(dashboard.data.counts?.placed ?? 0)} onPress={() => orders("New")} />
-        <Row title="To prepare" detail={String((dashboard.data.counts?.accepted ?? 0)+(dashboard.data.counts?.preparing ?? 0))} onPress={() => orders("Preparing")} />
-        <Row title="Ready for handoff" detail={String(dashboard.data.counts?.ready ?? 0)} onPress={() => orders("Ready")} />
-        <Row title="Low stock" detail={String(dashboard.data.lowStock?.count ?? 0)} onPress={() => open("Catalogue")} />
-      </SellerCard>
-      <Text style={styles.section}>Today</Text>
-      <SellerCard><Text style={styles.title}>{dashboard.data.todayOrders} orders</Text><Text style={styles.copy}>{dashboard.data.pendingPayment} awaiting payment</Text></SellerCard>
+      <Text accessibilityRole="header" style={styles.section}>Work queue</Text>
+      <View style={styles.queue}>
+        <QueueTile title="New orders" count={dashboard.data.counts?.placed ?? 0} onPress={() => orders("New")} />
+        <QueueTile title="To prepare" count={(dashboard.data.counts?.accepted ?? 0) + (dashboard.data.counts?.preparing ?? 0)} onPress={() => orders("Preparing")} />
+        <QueueTile title="Ready for handoff" count={dashboard.data.counts?.ready ?? 0} onPress={() => orders("Ready")} />
+        <QueueTile title="Low stock" count={dashboard.data.lowStock?.count ?? 0} onPress={openLowStock} />
+      </View>
     </>}
-    <SellerButton label="Manage catalogue" onPress={() => open("Catalogue")} />
-    <SellerButton label="Manage shop and opening hours" soft onPress={() => open("Shop")} />
+    <Text accessibilityRole="header" style={styles.section}>Shop tools</Text>
+    <SellerCard>
+      <Row title="Manage catalogue" onPress={() => open("Catalogue")} />
+      <Row title="Opening hours and shop settings" onPress={() => open("Shop")} />
+    </SellerCard>
   </SellerScroll>;
+}
+
+function QueueTile({title,count,onPress}: {title:string;count:number;onPress:()=>void}) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={`${title}, ${count}`} onPress={onPress}
+    style={({pressed}) => [styles.queueTile, count > 0 && styles.queueActive, pressed && styles.pressed]}>
+    <View style={styles.queueTop}><Text style={styles.queueNumber}>{count}</Text><Text style={styles.link}>↗</Text></View>
+    <Text style={styles.label}>{title}</Text>
+  </Pressable>;
 }
 
 function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;setGroup:(value:OrderGroup)=>void}) {
@@ -121,7 +153,19 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
     <View style={styles.chips}>{(Object.keys(orderGroups) as OrderGroup[]).map(name => <Pressable key={name} accessibilityRole="tab" accessibilityState={{selected:group===name}} onPress={() => setGroup(name)} style={[styles.chip,group===name && styles.sage]}><Text style={styles.link}>{name}</Text></Pressable>)}</View>
     <LoadState loading={listing.loading && !listing.data} error={listing.error} retry={listing.reload} />
     {!listing.loading && !listing.error && !rows?.length && <BuyerStateCard title="No orders in this view" copy={listing.data?.next ? "Load more orders to check earlier activity." : "Matching orders will appear here."} icon="orders" />}
-    {rows?.map(order => <SellerCard key={order.id}><Row title={`Order #${order.orderId.slice(-8).toUpperCase()}`} detail={orderStatusNames[order.status]} onPress={() => setSelected(order)} /><Text style={styles.copy}>{fulfilmentNames[order.fulfilment]} · {order.lines.reduce((sum,item)=>sum+item.qty,0)} items · {rupees(order.total)}</Text><Text style={styles.copy}>{order.testMode ? "Test order" : order.paymentMethod === "razorpay" ? "Paid online" : order.cashCollection ? "Cash recorded" : "Cash on delivery"}</Text></SellerCard>)}
+    {rows?.map(order => {
+      const reference = `Order #${order.orderId.slice(-8).toUpperCase()}`;
+      const status = orderStatusNames[order.status];
+      return <Pressable key={order.id} accessibilityRole="button" accessibilityLabel={`${reference}, ${status}`} onPress={() => setSelected(order)}
+        style={({pressed}) => [styles.card, pressed && styles.pressed]}>
+        <View style={styles.orderTop}><Text style={styles.title}>{reference}</Text><Text style={styles.orderStatus}>{status}</Text></View>
+        <Text style={styles.copy}>{fulfilmentNames[order.fulfilment]} · {order.lines.reduce((sum,item) => sum + item.qty,0)} items</Text>
+        <View style={styles.orderTotal}>
+          <Text style={styles.copy}>{order.testMode ? "Test order" : order.paymentMethod === "razorpay" ? "Paid online" : order.cashCollection ? "Cash recorded" : "Cash on delivery"}</Text>
+          <Text style={styles.label}>{rupees(order.total)} ›</Text>
+        </View>
+      </Pressable>;
+    })}
     {listing.data?.next && <SellerButton label={listing.moreBusy ? "Loading…" : "Load more orders"} soft disabled={listing.moreBusy} onPress={listing.more} />}
     <SellerButton label="Refresh orders" soft onPress={listing.reload} />
   </SellerScroll>;

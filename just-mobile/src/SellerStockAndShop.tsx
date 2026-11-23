@@ -357,6 +357,11 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
           <View style={styles.grow}><SellerField label="Opens (HH:MM)" editable={!mutation.busy} value={row.opens} onChangeText={opens=>setHours(old=>old.map((item,i)=>i===index?{...item,opens}:item))} maxLength={5}/></View>
           <View style={styles.grow}><SellerField label="Closes (HH:MM)" editable={!mutation.busy} value={row.closes} onChangeText={closes=>setHours(old=>old.map((item,i)=>i===index?{...item,closes}:item))} maxLength={5}/></View>
         </View>
+        {hours.length === 1 && validTime(row.opens) && validTime(row.closes) && row.opens !== row.closes &&
+          <SellerButton label="Use these hours every day" soft disabled={mutation.busy} onPress={() => {
+            setHours([1,2,3,4,5,6,0].map(day => ({day,opens:row.opens,closes:row.closes})));
+            setNotice("");
+          }} />}
       </View>)}
       <SellerButton label="Add opening interval" soft disabled={mutation.busy || hours.length>=28} onPress={()=>setHours(old=>{
         const nextDay = [1,2,3,4,5,6,0].find(day=>!old.some(row=>row.day===day));

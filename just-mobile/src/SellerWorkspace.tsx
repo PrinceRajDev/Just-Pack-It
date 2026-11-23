@@ -358,7 +358,10 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
       const nextStep = order.status === "ready" && order.fulfilment === "platform_delivery" && order.delivery?.state !== "claimed"
         ? "View order" : orderNextStep[order.status] ?? "View details";
       const riderStatus = readyRiderLabel(order);
-      return <Pressable key={order.id} accessibilityRole="button" accessibilityLabel={[reference,status,riderStatus,packingProgressLabel].filter(Boolean).join(", ")} accessibilityHint={nextStep} onPress={() => setSelected(order)}
+      const cashDue = !order.testMode && order.paymentMethod === "cod" && !order.cashCollection
+        && order.status !== "cancelled" && order.status !== "delivered" && order.amountDue > 0
+        ? `Cash due ${rupees(order.amountDue)}` : undefined;
+      return <Pressable key={order.id} accessibilityRole="button" accessibilityLabel={[reference,status,riderStatus,packingProgressLabel,cashDue].filter(Boolean).join(", ")} accessibilityHint={nextStep} onPress={() => setSelected(order)}
         style={({pressed}) => [styles.dispatchTicket, pressed && styles.pressed]}>
         <View style={styles.dispatchTicketBody}>
           <View style={styles.orderTop}>
@@ -377,7 +380,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
           </View>
         </View>
         <View style={styles.dispatchTicketFooter}>
-          <Text style={styles.orderAmount}>{rupees(order.total)}</Text>
+          <Text style={styles.orderAmount}>{cashDue ?? rupees(order.total)}</Text>
           <Text style={styles.dispatchTicketLink}>{nextStep}  ›</Text>
         </View>
       </Pressable>;

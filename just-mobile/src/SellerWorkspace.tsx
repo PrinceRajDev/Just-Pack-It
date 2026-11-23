@@ -106,6 +106,7 @@ function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:O
     {title:"Ready for handoff", count:counts?.ready ?? 0, action:"Review handoffs", open:() => orders("Ready"), icon:"home", tint:"#DAEDDE"},
     {title:"Out of stock", count:dashboard.data?.lowStock?.outOfStock ?? 0, action:"Review sold-out products", open:() => openStock("Out of stock"), icon:"browse", tint:"#F5E0D4"},
     {title:"Low stock", count:dashboard.data?.lowStock?.count ?? 0, action:"Review low stock", open:() => openStock("Low stock"), icon:"browse", tint:"#FBE8AE"},
+    {title:"On the way", count:counts?.out_for_delivery ?? 0, action:"View active deliveries", open:() => orders("Out for delivery"), icon:"orders", tint:"#E6E0F6"},
   ] satisfies {title:string;count:number;action:string;open:()=>void;icon:SellerIconName;tint:string}[];
   const next = dashboard.error ? undefined : work.find(item => item.count > 0);
   const refresh = () => { shop.reload(); dashboard.reload(); };

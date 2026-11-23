@@ -207,6 +207,19 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
     || (mrp === "" ? null : Number(mrp)) !== (current.mrp ?? null)
     || (!hasVariants && (!validStock(stock) || Number(stock) !== current.stock))
     || isActive !== current.active;
+  const discardDetails = () => {
+    if (!current) return;
+    setName(current.name);
+    setUnit(current.unit);
+    setDescription(current.description ?? "");
+    setCategory(current.categoryId);
+    setPrice(String(current.price));
+    setMrp(current.mrp == null ? "" : String(current.mrp));
+    setStock(String(current.stock));
+    setIsActive(current.active);
+    setNotice("");
+    mutation.clear();
+  };
   useAndroidBack(() => { if (!mutation.busy && !photoBusy) close(); return true; }, 25);
   const refresh = async () => {
     if (!current) return;
@@ -301,7 +314,8 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
       {current && detailsChanged ? "Unsaved product changes." : notice}
     </Text>}
     <View style={styles.shopTimes}>
-      {offerPhoto && <View style={styles.grow}><SellerButton label="Add photo" soft disabled={mutation.busy} onPress={() => {
+      {current && detailsChanged && <View style={styles.grow}><SellerButton label="Discard changes" soft disabled={mutation.busy} onPress={discardDetails} /></View>}
+      {offerPhoto && !detailsChanged && <View style={styles.grow}><SellerButton label="Add photo" soft disabled={mutation.busy} onPress={() => {
         setSection("Photo"); setNotice(""); mutation.clear();
       }} /></View>}
       <View style={styles.grow}><SellerButton label="Save product" disabled={mutation.busy || !detailsChanged} onPress={save} /></View>

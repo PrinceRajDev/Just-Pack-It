@@ -27,6 +27,20 @@ const orderGroups = {
 type OrderGroup = keyof typeof orderGroups;
 const statusLabels = { pending:"Under review", approved:"Approved", rejected:"Changes requested", suspended:"Suspended" };
 const counterPhoto = require("../assets/seller-kirana-counter.jpg");
+const dispatchPhoto = require("../assets/seller-dispatch-parcel.jpg");
+const orderDate = new Intl.DateTimeFormat("en-IN", {day:"numeric",month:"short",hour:"numeric",minute:"2-digit"});
+const packingStages = ["Accept", "Pack", "Handoff", "Complete"];
+const packingProgress: Record<OrderStatus, number> = {
+  placed:0, accepted:1, preparing:1, ready:2, out_for_delivery:2, delivered:3, cancelled:-1,
+};
+const orderNextStep: Partial<Record<OrderStatus,string>> = {
+  placed:"Review order", accepted:"Start packing", preparing:"Continue packing", ready:"View handoff", out_for_delivery:"View delivery",
+};
+
+function orderTime(createdAt:string) {
+  const time = Date.parse(createdAt);
+  return Number.isNaN(time) ? "" : orderDate.format(time);
+}
 
 function SellerIcon({name,color}: {name:SellerIconName;color:string}) {
   return <Image source={sellerIcons[name]} resizeMode="contain" accessible={false} style={[styles.sellerIcon,{tintColor:color}]} />;
@@ -142,6 +156,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
   const close = () => { setSelected(undefined); setAction(undefined); mutation.clear(); };
   useAndroidBack(() => { if (!selected) return false; if (!mutation.busy) close(); return true; }, 25);
   const rows = listing.data?.items.filter(row => (orderGroups[group] as OrderStatus[]).includes(row.status));
+  const activeOrderCount = listing.data?.items.filter(order => (orderGroups.Active as OrderStatus[]).includes(order.status)).length;
   if (selected) {
     const order = selected;
     const move = ({placed:"accepted",accepted:"preparing",preparing:"ready",ready:order.fulfilment==="seller_delivery" ? "out_for_delivery" : undefined} as Partial<Record<OrderStatus,OrderStatus>>)[order.status];
@@ -149,25 +164,44 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
     const allowReceipt = order.fulfilment === "pickup" ? order.status === "ready" : order.fulfilment === "seller_delivery" && order.status === "out_for_delivery";
     const perform = (task:()=>Promise<unknown>) => void mutation.run(async () => { await task(); close(); listing.reload(); });
     const openAction = (value: typeof action) => { setAction(value); setReason(""); setCode(""); setRestock(false); mutation.clear(); };
-    return <SellerScroll>
-      <SellerButton label="Back to orders" soft onPress={close} disabled={mutation.busy} />
-      <SellerCard><Text style={styles.eyebrow}>{orderStatusNames[order.status]}</Text><Text style={styles.title}>Order #{order.orderId.slice(-8).toUpperCase()}</Text><Text style={styles.copy}>{fulfilmentNames[order.fulfilment]} · {new Date(order.createdAt).toLocaleString("en-IN")}</Text>{order.delivery && <Text style={styles.copy}>Rider status · {order.delivery.state.replaceAll("_"," ")}</Text>}</SellerCard>
+    const riderReady = order.status === "ready" && order.fulfilment === "platform_delivery" && order.delivery?.state === "claimed";
+    const primary = move ? {label:actionLabel,press:() => perform(() => sellerApi.move(token,order,move))}
+      : riderReady ? {label:"Review rider handoff",press:() => openAction("pickup")}
+      : allowReceipt ? {label:"Verify buyer receipt code",press:() => openAction("cash")} : undefined;
+    return <>
+    <SellerScroll>
+      <Pressable accessibilityRole="button" onPress={close} disabled={mutation.busy} style={styles.orderBack}><Text style={styles.link}>‹  Back to orders</Text></Pressable>
+      <View style={styles.orderHero}>
+        <View style={styles.orderTop}><SellerIcon name="orders" color="#F7D46A" /><Text style={styles.orderStatus}>{orderStatusNames[order.status]}</Text></View>
+        <Text style={styles.heroTitle}>Order #{order.orderId.slice(-8).toUpperCase()}</Text>
+        <Text style={styles.heroKicker}>{[fulfilmentNames[order.fulfilment],orderTime(order.createdAt)].filter(Boolean).join(" · ")}</Text>
+        {order.delivery && <Text style={styles.heroKicker}>Rider status · {order.delivery.state.replaceAll("_"," ")}</Text>}
+        {order.status !== "cancelled" && <View style={styles.stageTray}>
+          {packingStages.map((stage,index) => {
+            const current = index === packingProgress[order.status];
+            const reached = index <= packingProgress[order.status];
+            return <View key={stage} style={styles.stage} accessible accessibilityLabel={`${stage}, ${current ? "current step" : reached ? "done" : "upcoming"}`}>
+              <View style={[styles.stageLine,reached && styles.stageLineReached,current && styles.stageLineCurrent]} />
+              <Text style={[styles.stageText,current && styles.stageCurrent]}>{stage}</Text>
+            </View>;
+          })}
+        </View>}
+      </View>
       {order.testMode && <BuyerStateCard title="Test order" copy="Skip physical fulfilment and cash collection." tone="warning" compact />}
       <Text style={styles.section}>Packing list</Text>
-      <SellerCard>{order.lines.map((item,index) => <View key={index} style={styles.row}><View style={styles.grow}><Text style={styles.label}>{item.name}</Text><Text style={styles.copy}>{item.variantLabel || item.unit}</Text></View><Text style={styles.title}>×{item.qty}</Text></View>)}</SellerCard>
-      <SellerCard><Text style={styles.title}>{order.paymentMethod === "razorpay" ? "Paid online" : order.cashCollection ? "Cash recorded" : "Cash on delivery"}</Text>
+      <SellerCard>{order.lines.map((item,index) => <View key={index} style={[styles.row,index > 0 && styles.packingDivider]}><View style={styles.grow}><Text style={styles.label}>{item.name}</Text>{!!(item.variantLabel || item.unit) && <Text style={styles.copy}>{item.variantLabel || item.unit}</Text>}</View><Text style={styles.workCount}>×{item.qty}</Text></View>)}</SellerCard>
+      <View style={styles.paymentTicket}>
+        <View style={styles.orderTop}><Text style={styles.title}>{order.paymentMethod === "razorpay" ? "Paid online" : order.cashCollection ? "Cash recorded" : "Cash on delivery"}</Text><Text style={styles.orderAmount}>{rupees(order.total)}</Text></View>
         <Text style={styles.copy}>Items {rupees(order.itemsSubtotal)} · Delivery {rupees(order.deliveryFee)}</Text>
-        <Text style={styles.label}>Total {rupees(order.total)}{order.paymentMethod === "cod" && !order.cashCollection ? ` · Due ${rupees(order.amountDue)}` : ""}</Text>
+        {order.paymentMethod === "cod" && !order.cashCollection && <Text style={styles.label}>{rupees(order.amountDue)} due</Text>}
         {order.refund && <Text style={styles.copy}>Refund {order.refund.state} · {rupees(order.refund.amount)}</Text>}
         {order.cancelReason && <Text style={styles.copy}>Cancellation · {order.cancelReason}</Text>}
-      </SellerCard>
+      </View>
       {order.deliveryAddress && <SellerCard><Text style={styles.label}>Delivery address</Text><Text style={styles.copy}>{[order.deliveryAddress.line1,order.deliveryAddress.locality,order.deliveryAddress.city,order.deliveryAddress.pincode].filter(Boolean).join(", ")}</Text></SellerCard>}
       <MutationFeedback error={mutation.error} onReload={() => {close(); listing.reload();}} />
       {!order.testMode && !action && <>
-        {move && <SellerButton label={actionLabel} onPress={() => perform(() => sellerApi.move(token,order,move))} disabled={mutation.busy} />}
         {(order.status === "placed" || order.status === "accepted") && <SellerButton label="Cancel order" soft onPress={() => openAction("cancel")} disabled={mutation.busy} />}
-        {order.status === "ready" && order.fulfilment === "platform_delivery" && (order.delivery?.state === "claimed" ? <SellerButton label="Review rider handoff" onPress={() => openAction("pickup")} /> : <Text style={styles.copy}>Waiting for a platform rider to claim this order.</Text>)}
-        {allowReceipt && <SellerButton label="Verify buyer receipt code" onPress={() => openAction("cash")} />}
+        {order.status === "ready" && order.fulfilment === "platform_delivery" && !riderReady && <Text style={styles.copy}>Waiting for a platform rider to claim this order.</Text>}
         {order.delivery?.state === "returning" && <SellerButton label="Record goods received" soft onPress={() => openAction("return")} />}
       </>}
       {action && <SellerCard>
@@ -179,27 +213,75 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
         </>}
         <SellerButton label="Go back" soft onPress={() => openAction(undefined)} disabled={mutation.busy} />
       </SellerCard>}
-    </SellerScroll>;
+    </SellerScroll>
+    {!order.testMode && !action && primary && <View style={styles.orderDock}>
+      <SellerButton label={primary.label} onPress={primary.press} disabled={mutation.busy} />
+    </View>}
+    </>;
   }
-  return <SellerScroll>
-    <View style={styles.chips}>{(Object.keys(orderGroups) as OrderGroup[]).map(name => <Pressable key={name} accessibilityRole="tab" accessibilityState={{selected:group===name}} onPress={() => setGroup(name)} style={[styles.chip,group===name && styles.sage]}><Text style={styles.link}>{name}</Text></Pressable>)}</View>
+  return <SellerScroll refreshing={listing.loading} onRefresh={listing.reload}>
+    <View style={styles.dispatchBanner}>
+      <Image source={dispatchPhoto} resizeMode="cover" style={styles.dispatchBannerImage} accessible={false} testID="seller-dispatch-art" />
+      <View style={styles.dispatchBannerCopy}>
+        <Text accessibilityRole="header" style={styles.dispatchTitle}>Dispatch desk</Text>
+        {activeOrderCount !== undefined && !listing.error && <Text style={styles.dispatchBannerStatus}>{activeOrderCount}{listing.data?.next ? "+" : ""} active {activeOrderCount === 1 && !listing.data?.next ? "order" : "orders"}</Text>}
+      </View>
+    </View>
+    <View style={styles.dispatchPanel}>
+      <View style={styles.dispatchModes}>
+        {(["Active","Completed"] as const).map(mode => {
+          const selected = mode === "Completed" ? group === mode : group !== "Completed";
+          return <Pressable key={mode} accessibilityRole="tab" accessibilityLabel={mode} accessibilityState={{selected}} onPress={() => setGroup(mode)} style={[styles.dispatchMode,selected && styles.dispatchModeActive]}>
+            <Text style={selected ? styles.dispatchModeTextActive : styles.dispatchModeText}>{mode}</Text>
+          </Pressable>;
+        })}
+      </View>
+      {group !== "Completed" && <>
+      <View style={styles.dispatchCounters}>
+        {(["New","Preparing","Ready"] as const).map(queue => {
+          const count = listing.data?.items.filter(order => (orderGroups[queue] as OrderStatus[]).includes(order.status)).length;
+          const selected = group === queue;
+          return <Pressable key={queue} accessibilityRole="tab" accessibilityLabel={queue} accessibilityState={{selected}} accessibilityHint={count === undefined ? undefined : `${count} orders loaded`} onPress={() => setGroup(queue)} style={[styles.dispatchCounter,selected && styles.dispatchSelected]}>
+            <Text style={[styles.dispatchNumber,selected && styles.dispatchInk]}>{count ?? "–"}</Text><Text style={[styles.dispatchModeText,selected && styles.dispatchInk]}>{queue}</Text>
+          </Pressable>;
+        })}
+      </View>
+      {listing.data?.next && <Text style={styles.heroKicker}>Counts reflect loaded orders</Text>}
+      </>}
+    </View>
+    <View style={styles.orderTop}>
+      <Text accessibilityRole="header" style={[styles.section,styles.grow]}>{group === "Active" ? "Active orders" : group === "Completed" ? "Past orders" : `${group} orders`}</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel="Refresh orders" disabled={listing.loading} onPress={listing.reload} style={styles.dispatchRefresh}><Text style={styles.link}>{listing.loading ? "Refreshing…" : "Refresh"}</Text></Pressable>
+    </View>
     <LoadState loading={listing.loading && !listing.data} error={listing.error} retry={listing.reload} />
     {!listing.loading && !listing.error && !rows?.length && <BuyerStateCard title="No orders in this view" copy={listing.data?.next ? "Load more orders to check earlier activity." : "Matching orders will appear here."} icon="orders" />}
     {rows?.map(order => {
       const reference = `Order #${order.orderId.slice(-8).toUpperCase()}`;
       const status = orderStatusNames[order.status];
-      return <Pressable key={order.id} accessibilityRole="button" accessibilityLabel={`${reference}, ${status}`} onPress={() => setSelected(order)}
-        style={({pressed}) => [styles.card, pressed && styles.pressed]}>
-        <View style={styles.orderTop}><Text style={styles.title}>{reference}</Text><Text style={styles.orderStatus}>{status}</Text></View>
-        <Text style={styles.copy}>{fulfilmentNames[order.fulfilment]} · {order.lines.reduce((sum,item) => sum + item.qty,0)} items</Text>
-        <View style={styles.orderTotal}>
-          <Text style={styles.copy}>{order.testMode ? "Test order" : order.paymentMethod === "razorpay" ? "Paid online" : order.cashCollection ? "Cash recorded" : "Cash on delivery"}</Text>
-          <Text style={styles.label}>{rupees(order.total)} ›</Text>
+      const units = order.lines.reduce((sum,item) => sum + item.qty,0);
+      return <Pressable key={order.id} accessibilityRole="button" accessibilityLabel={`${reference}, ${status}`} accessibilityHint={orderNextStep[order.status]} onPress={() => setSelected(order)}
+        style={({pressed}) => [styles.dispatchTicket, pressed && styles.pressed]}>
+        <View style={styles.dispatchTicketBody}>
+          <View style={styles.orderTop}>
+            <View style={[styles.workIcon,styles.ticketIcon]}><SellerIcon name="orders" color="#174638" /></View>
+            <View style={styles.grow}>
+              <Text style={styles.title}>{reference}</Text>
+              <Text style={styles.copy}>{orderTime(order.createdAt)}</Text>
+            </View>
+            <Text style={[styles.orderStatus,order.status === "placed" && styles.workCountActive]}>{status}</Text>
+          </View>
+          <View style={styles.dispatchRoute}>
+            <Text style={styles.label}>{units} {units === 1 ? "unit" : "units"}{order.lines[0] ? ` · ${order.lines[0].name}` : ""}{order.lines.length > 1 ? ` +${order.lines.length - 1} more` : ""}</Text>
+            <Text style={styles.copy}>{fulfilmentNames[order.fulfilment]} · {order.testMode ? "Test order" : order.paymentMethod === "razorpay" ? "Online payment" : order.cashCollection ? "Cash recorded" : "Cash on delivery"}</Text>
+          </View>
+        </View>
+        <View style={styles.dispatchTicketFooter}>
+          <Text style={styles.orderAmount}>{rupees(order.total)}</Text>
+          <Text style={styles.dispatchTicketLink}>{orderNextStep[order.status] ?? "View details"}  ›</Text>
         </View>
       </Pressable>;
     })}
     {listing.data?.next && <SellerButton label={listing.moreBusy ? "Loading…" : "Load more orders"} soft disabled={listing.moreBusy} onPress={listing.more} />}
-    <SellerButton label="Refresh orders" soft onPress={listing.reload} />
   </SellerScroll>;
 }
 

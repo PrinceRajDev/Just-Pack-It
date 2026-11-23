@@ -1,6 +1,6 @@
-import { theme } from "./theme";
+import { theme, themedStyles } from "./theme";
 import { useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Pressable, Text, View } from "react-native";
 import { buyerApi } from "./api";
 
 export function BuyerReceipt({
@@ -123,7 +123,7 @@ export function BuyerReceipt({
   );
 }
 
-const s = StyleSheet.create({
+const s = themedStyles(() => StyleSheet.create({
   card: {
     borderRadius: 24,
     borderWidth: 1,
@@ -134,7 +134,7 @@ const s = StyleSheet.create({
   },
   heading: { color: theme.accentInk, fontSize: 18, fontWeight: "600" },
   digits: { flexDirection: "row", gap: 10 },
-  digit: { flex: 1, minHeight: 66, borderRadius: 12, backgroundColor: theme.lime, alignItems: "center", justifyContent: "center" },
+  digit: { flex: 1, minHeight: 66, borderRadius: 12, backgroundColor: theme.selected, alignItems: "center", justifyContent: "center" },
   code: {
     color: theme.accentInk,
     fontSize: 28,
@@ -143,8 +143,8 @@ const s = StyleSheet.create({
     fontWeight: "600",
   },
   copy: { color: theme.ink, fontSize: 14, lineHeight: 20, fontWeight: "600" },
-  action: { minHeight: 50, backgroundColor: theme.lime, borderRadius: 12, justifyContent: "center", alignItems: "center" },
+  action: { minHeight: 50, backgroundColor: theme.selected, borderRadius: 12, justifyContent: "center", alignItems: "center" },
   link: { color: theme.accentInk, fontSize: 15, fontWeight: "600" },
   error: { color: theme.error },
   delivered: { alignItems: "center", opacity: 0.6 },
-});
+}));

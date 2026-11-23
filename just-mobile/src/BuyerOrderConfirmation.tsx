@@ -1,9 +1,8 @@
-import { theme } from "./theme";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { theme, themedStyles } from "./theme";
+import { StyleSheet, Pressable, ScrollView, Text, View } from "react-native";
 import { DeliveryAddressContents } from "./CheckoutPresentation";
 import type { BuyerOrder } from "./api";
 
-const green = theme.accentInk;
 const money = (amount: number) => `₹${amount.toLocaleString("en-IN")}`;
 
 export function BuyerOrderConfirmation({
@@ -94,7 +93,7 @@ export function BuyerOrderConfirmation({
   );
 }
 
-const s = StyleSheet.create({
+const s = themedStyles(() => StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.canvas },
   header: {
     height: 64,
@@ -104,8 +103,8 @@ const s = StyleSheet.create({
     gap: 14,
   },
   back: { minHeight: 44, justifyContent: "center" },
-  arrow: { color: green, fontSize: 27, lineHeight: 30 },
-  headerTitle: { fontSize: 18, color: green, fontWeight: "500" },
+  arrow: { color: theme.accentInk, fontSize: 27, lineHeight: 30 },
+  headerTitle: { fontSize: 18, color: theme.accentInk, fontWeight: "500" },
   content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24, gap: 16 },
   card: {
     backgroundColor: theme.surface,
@@ -114,18 +113,18 @@ const s = StyleSheet.create({
     borderRadius: 24,
     padding: 16,
   },
-  success: { backgroundColor:theme.mint, borderColor:theme.mint, padding: 19 },
-  selected: { borderColor: green },
-  paymentCard: { borderRadius: 20, padding: 16, gap: 8, backgroundColor: theme.lime },
+  success: { backgroundColor:theme.success, borderColor:theme.success, padding: 19 },
+  selected: { borderColor: theme.accentInk },
+  paymentCard: { borderRadius: 20, padding: 16, gap: 8, backgroundColor: theme.selected },
   footer: { borderTopWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, paddingHorizontal: 20, paddingVertical: 16, gap: 8 },
   checkArea: {
-    width: 48, height: 48, borderRadius: 16, backgroundColor: theme.lime,
+    width: 48, height: 48, borderRadius: 16, backgroundColor: theme.selected,
     justifyContent: "center", alignItems: "center", marginBottom: 14,
   },
   check: {
     width: 23,
     height: 13,
-    borderColor: green,
+    borderColor: theme.accentInk,
     borderLeftWidth: 3,
     borderBottomWidth: 3,
     transform: [{ translateY: -2 }, { rotate: "-45deg" }],
@@ -145,13 +144,13 @@ const s = StyleSheet.create({
     marginTop: 10,
   },
   payment: {
-    color: green,
+    color: theme.accentInk,
     fontSize: 12,
     lineHeight: 18,
   },
-  amount: { color: green, fontSize: 24, lineHeight: 33, fontWeight: "500" },
+  amount: { color: theme.accentInk, fontSize: 24, lineHeight: 33, fontWeight: "500" },
   addressTitle: {
-    color: green,
+    color: theme.accentInk,
     fontSize: 16,
     lineHeight: 22,
     fontWeight: "600",
@@ -171,9 +170,9 @@ const s = StyleSheet.create({
     justifyContent: "center",
     padding: 10,
   },
-  track: { backgroundColor: theme.coral },
-  continue: { backgroundColor: theme.lime },
-  buttonText: { color: green, fontSize: 15, fontWeight: "600" },
-  trackText: { color: theme.ink },
+  track: { backgroundColor: theme.primary },
+  continue: { backgroundColor: theme.selected },
+  buttonText: { color: theme.accentInk, fontSize: 15, fontWeight: "600" },
+  trackText: { color: theme.onPrimary },
   note: { color: theme.muted, fontSize: 12, lineHeight: 16 },
-});
+}));

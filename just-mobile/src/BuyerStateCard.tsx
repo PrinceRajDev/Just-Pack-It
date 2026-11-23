@@ -1,5 +1,5 @@
-import { theme } from "./theme";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { theme, themedStyles } from "./theme";
+import { StyleSheet, ActivityIndicator, Pressable, Text, View } from "react-native";
 import { MarketIcon, type MarketIconName } from "./MarketIcon";
 import { OrderSymbol } from "./BuyerOrderDetails";
 
@@ -40,7 +40,7 @@ function StateIcon({ icon, red }: { icon: Icon; red: boolean }) {
   const line = { borderColor: color, borderWidth: 1.5 };
   if (icon === "lock") return <View style={{width:22,height:22,alignItems:"center",justifyContent:"flex-end"}}>
     <View style={[line,{position:"absolute",top:2,width:9,height:10,borderRadius:5}]} />
-    <View style={[line,{width:14,height:13,borderRadius:2,backgroundColor:theme.lime,alignItems:"center",justifyContent:"center"}]}><View style={{width:1.5,height:4,backgroundColor:color}} /></View>
+    <View style={[line,{width:14,height:13,borderRadius:2,backgroundColor:theme.selected,alignItems:"center",justifyContent:"center"}]}><View style={{width:1.5,height:4,backgroundColor:color}} /></View>
   </View>;
   if (icon === "network") return <View style={{width:24,height:22,alignItems:"center",justifyContent:"center"}}>
     {[22,15,7].map((width,index) => <View key={width} style={{position:"absolute",width,height:width/2,borderColor:color,borderTopWidth:1.5,borderRadius:width,top:3+index*4}} />)}
@@ -59,14 +59,14 @@ export function BuyerStateSkeleton() {
   </View>;
 }
 
-const s = StyleSheet.create({
+const s = themedStyles(() => StyleSheet.create({
   card: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: 24, padding: 20, gap: 14 },
   neutral: {},
   warning: { borderColor: theme.warningBorder },
   error: { borderColor: theme.errorBorder },
-  info: { backgroundColor:theme.lime, borderColor: theme.border },
-  success: { backgroundColor:theme.mint, borderColor:theme.mint },
-  icon: { width: 42, height: 42, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: theme.lime },
+  info: { backgroundColor:theme.selected, borderColor: theme.border },
+  success: { backgroundColor:theme.success, borderColor:theme.success },
+  icon: { width: 42, height: 42, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: theme.selected },
   largeIcon: { width: 54, height: 54, borderRadius: 16 },
   errorIcon: { backgroundColor: theme.canvas },
   whiteIcon: { backgroundColor: theme.surface },
@@ -79,15 +79,15 @@ const s = StyleSheet.create({
   red: { color: theme.error },
   light: { color: theme.ink },
   lightCopy: { color:theme.secondary },
-  action: { minHeight: 50, paddingHorizontal: 12, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: theme.coral },
-  actionText: { fontSize: 15, color: theme.ink, fontWeight: "500", textAlign: "center" },
-  secondary: { backgroundColor: theme.lime },
+  action: { minHeight: 50, paddingHorizontal: 12, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: theme.primary },
+  actionText: { fontSize: 15, color: theme.onPrimary, fontWeight: "500", textAlign: "center" },
+  secondary: { backgroundColor: theme.selected },
   green: { color: theme.accentInk },
   disabled: { backgroundColor: theme.disabled },
   disabledText: { color: theme.muted, fontSize: 15, textAlign: "center" },
   skeletonList: { gap: 16 },
   skeletonRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 20, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface },
-  skeletonPhoto: { height: 64, width: 64, borderRadius: 12, backgroundColor: theme.lime },
+  skeletonPhoto: { height: 64, width: 64, borderRadius: 12, backgroundColor: theme.selected },
   skeletonLines: { flex: 1, gap: 8 },
-  skeletonLine: { height: 10, borderRadius: 6, backgroundColor: theme.lime },
-});
+  skeletonLine: { height: 10, borderRadius: 6, backgroundColor: theme.selected },
+}));

@@ -1,7 +1,7 @@
-import { theme } from "./theme";
+import { theme, themedStyles } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { buyerApi, type Product, type Session, type Shop } from "./api";
 import { BuyerAuthNotice } from "./BuyerAuthNotice";
@@ -161,14 +161,14 @@ function Tile({icon,title,copy,onPress}:{icon:MarketIconName;title:string;copy:s
 function Row({icon,title,copy,onPress}:{icon:MarketIconName | "heart" | "language";title:string;copy:string;onPress:()=>void}) {
   return <Pressable accessibilityRole="button" onPress={onPress} style={s.row}><View style={s.icon}>{icon === "heart" || icon === "language" ? <Text style={s.panelTitle}>{icon === "heart" ? "♡" : "Aa"}</Text> : <MarketIcon name={icon} />}</View><View style={s.rowText}><Text style={s.rowTitle}>{title}</Text><Text style={s.copy}>{copy}</Text></View><Text style={s.panelTitle}>›</Text></Pressable>;
 }
-const s = StyleSheet.create({
+const s = themedStyles(() => StyleSheet.create({
   screen:{flex:1,backgroundColor:theme.canvas}, header:{height:64,paddingHorizontal:20,flexDirection:"row",alignItems:"center",gap:16}, chevron:{fontSize:29,color:theme.accentInk},
   content:{padding:20,gap:16,width:"100%",maxWidth:600,alignSelf:"center"},
-  hero:{backgroundColor:theme.peach,borderRadius:24,padding:20,gap:10}, eyebrow:{color:theme.accentInk,fontSize:11}, heroTitle:{color:theme.ink,fontSize:28,lineHeight:36,fontWeight:"600"}, heroCopy:{color:theme.secondary,fontSize:14,lineHeight:20},
+  hero:{backgroundColor:theme.hero,borderRadius:24,padding:20,gap:10}, eyebrow:{color:theme.accentInk,fontSize:11}, heroTitle:{color:theme.ink,fontSize:28,lineHeight:36,fontWeight:"600"}, heroCopy:{color:theme.secondary,fontSize:14,lineHeight:20},
   grid:{flexDirection:"row",gap:12}, tile:{flex:1,minWidth:0,borderWidth:1,borderColor:theme.border,backgroundColor:theme.surface,borderRadius:20,padding:16,gap:10},
-  section:{color:theme.accentInk,fontSize:11}, card:{backgroundColor:theme.surface,borderWidth:1,borderColor:theme.border,borderRadius:20,padding:16,gap:12}, selected:{backgroundColor:theme.lime}, unread:{borderColor:theme.accentInk},
-  favouritePhoto:{width:"100%",aspectRatio:2.6,borderRadius:12,backgroundColor:theme.lime},
-  row:{flexDirection:"row",minHeight:54,alignItems:"center",gap:12}, rowText:{flex:1,gap:3}, icon:{backgroundColor:theme.lime,width:40,height:40,borderRadius:11,alignItems:"center",justifyContent:"center"},
+  section:{color:theme.accentInk,fontSize:11}, card:{backgroundColor:theme.surface,borderWidth:1,borderColor:theme.border,borderRadius:20,padding:16,gap:12}, selected:{backgroundColor:theme.selected}, unread:{borderColor:theme.accentInk},
+  favouritePhoto:{width:"100%",aspectRatio:2.6,borderRadius:12,backgroundColor:theme.selected},
+  row:{flexDirection:"row",minHeight:54,alignItems:"center",gap:12}, rowText:{flex:1,gap:3}, icon:{backgroundColor:theme.selected,width:40,height:40,borderRadius:11,alignItems:"center",justifyContent:"center"},
   rowTitle:{color:theme.ink,fontSize:15,fontWeight:"600"}, panelTitle:{color:theme.accentInk,fontSize:18,fontWeight:"600"}, copy:{color:theme.muted,fontSize:13,lineHeight:18},
-  button:{backgroundColor:theme.coral,borderRadius:12,minHeight:48,alignItems:"center",justifyContent:"center",padding:12}, buttonText:{color:theme.ink,fontWeight:"600",textAlign:"center"}, softText:{color:theme.accentInk},
-});
+  button:{backgroundColor:theme.primary,borderRadius:12,minHeight:48,alignItems:"center",justifyContent:"center",padding:12}, buttonText:{color:theme.onPrimary,fontWeight:"600",textAlign:"center"}, softText:{color:theme.accentInk},
+}));

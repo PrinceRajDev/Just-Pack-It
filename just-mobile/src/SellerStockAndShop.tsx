@@ -65,7 +65,7 @@ export function SellerCatalogue({token,stockFilter}:{token:string;stockFilter?:S
         <Text accessibilityRole="header" style={styles.heroTitle}>Shop shelves</Text>
         {listing.data && <Text style={styles.heroKicker}>{listing.data.items.length}{listing.data.next ? "+" : ""} {listing.data.items.length === 1 && !listing.data.next ? "product" : "products"}</Text>}
         <Pressable accessibilityRole="button" accessibilityLabel="Add product" onPress={() => setEdit("new")} style={({pressed}) => [styles.catalogueAdd,pressed && styles.pressed]}>
-          <Text style={styles.label}>＋ Add product</Text>
+          <Text style={[styles.label, styles.onPrimary]}>＋ Add product</Text>
         </Pressable>
       </View>
       <Image source={shelfPhoto} resizeMode="cover" style={styles.catalogueHeroPhoto} accessible={false} />

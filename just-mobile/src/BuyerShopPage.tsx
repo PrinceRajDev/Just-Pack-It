@@ -1,13 +1,12 @@
-import { theme } from "./theme";
+import { theme, themedStyles } from "./theme";
 import { BuyerStateCard, BuyerStateSkeleton } from "./BuyerStateCard";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import {
+import { StyleSheet,
   FlatList,
   Image,
   Modal,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -253,12 +252,15 @@ export function BuyerShopPage({
                   typeof shop.distanceKm === "number"
                     ? `${shop.distanceKm.toFixed(1)} km`
                     : null,
-                  typeof shop.rating === "number"
-                    ? `★ ${shop.rating.toFixed(1)}${typeof info.ratingCount === "number" ? ` (${info.ratingCount})` : ""}`
-                    : null,
                 ]
                   .filter(Boolean)
                   .join("  |  ")}
+                {typeof shop.rating === "number" && Number.isFinite(shop.rating) ? (
+                  <Text style={{ color: theme.successInk }}>
+                    {"  |  "}★ {shop.rating.toFixed(1)}
+                    {typeof info.ratingCount === "number" ? ` (${info.ratingCount})` : ""}
+                  </Text>
+                ) : null}
               </Text>
               {info.address || shop.locality ? (
                 <Text style={s.address}>{info.address || shop.locality}</Text>
@@ -442,7 +444,7 @@ export function BuyerShopPage({
     </View>
   );
 }
-const s = StyleSheet.create({
+const s = themedStyles(() => StyleSheet.create({
   clearSearch: { fontSize: 18, color: theme.muted },
   header: {
     height: 60,
@@ -475,7 +477,7 @@ const s = StyleSheet.create({
     height: 176,
 
     overflow: "hidden",
-    backgroundColor: theme.lime,
+    backgroundColor: theme.selected,
   },
   coverImage: { width: "100%", height: "100%", resizeMode: "cover" },
   coverFallback: { flex: 1, alignItems: "center", justifyContent: "center" },
@@ -543,11 +545,11 @@ const s = StyleSheet.create({
     height: 36,
     paddingHorizontal: 6,
     borderRadius: 18,
-    backgroundColor: theme.lime,
+    backgroundColor: theme.selected,
     alignItems: "center",
     justifyContent: "center",
   },
-  activePill: { backgroundColor: theme.lime },
+  activePill: { backgroundColor: theme.selected },
   pillText: {
     fontSize: 12,
     color: theme.accentInk,
@@ -593,17 +595,19 @@ const s = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 14,
-    backgroundColor: theme.coral,
+    backgroundColor: theme.primary,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
     gap: 12,
   },
-  cartTotal: { fontSize: 14, lineHeight: 18, color: theme.ink, fontWeight: "600" },
-  cartCopy: { fontSize: 10, lineHeight: 14, color: theme.ink, marginTop: 2 },
-  cartAction: { fontSize: 14, color: theme.ink, fontWeight: "600" },
+  cartTotal: { fontSize: 14, lineHeight: 18, color: theme.onPrimary, fontWeight: "600" },
+  cartCopy: { fontSize: 10, lineHeight: 14, color: theme.onPrimary, marginTop: 2 },
+  cartAction: { fontSize: 14, color: theme.onPrimary, fontWeight: "600" },
   backdrop: { flex: 1, backgroundColor: theme.overlay, justifyContent: "flex-end" },
   sheet: {
+    borderTopWidth: 1,
+    borderColor: theme.border,
     padding: 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -619,9 +623,9 @@ const s = StyleSheet.create({
   apply: {
     padding: 14,
     borderRadius: 12,
-    backgroundColor: theme.coral,
+    backgroundColor: theme.primary,
     alignItems: "center",
     marginTop: 12,
   },
-  applyText: { fontSize: 14, color: theme.ink, fontWeight: "600" },
-});
+  applyText: { fontSize: 14, color: theme.onPrimary, fontWeight: "600" },
+}));

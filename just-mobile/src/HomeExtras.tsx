@@ -159,7 +159,7 @@ export function BuyAgain({
         padding: 14,
         minHeight: 128,
         borderRadius: 16,
-        backgroundColor: theme.lime,
+        backgroundColor: theme.selected,
       }}
     >
       {unavailable && <View style={{marginBottom:16}}><BuyerStateCard title="Some favourites are unavailable" copy={`${unavailable.name} is out of stock. Explore similar items nearby.`} tone="warning" icon="shop" compact action="Browse alternatives" onAction={() => onBrowseAlternatives(unavailable.name)} /></View>}

@@ -1,4 +1,4 @@
-import { theme } from "./src/theme";
+import { theme, themedStyles } from "./src/theme";
 import { BuyerStateCard, BuyerStateSkeleton } from "./src/BuyerStateCard";
 import { StatusBar } from "expo-status-bar";
 import * as SecureStore from "./src/deviceStorage";
@@ -14,6 +14,7 @@ import {
   Text,
   View,
   useWindowDimensions,
+  useColorScheme,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -49,24 +50,13 @@ import {
 type Screen =
   "home" | "browse" | "bag" | "shop" | "account" | "orders" | "checkout" | "confirmation" | "tracking";
 type BagLine = Product & { quantity: number };
-const c = {
-  paper: theme.canvas,
-  card: theme.canvas,
-  raised: theme.surfaceSoft,
-  ink: theme.ink,
-  secondary: theme.secondary,
-  muted: theme.muted,
-  line: theme.border,
-  green: theme.accentInk,
-  lime: theme.coral,
-  pale: theme.lime,
-};
 const money = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 const categoryImage = (x: Category) =>
   resolveImage(x.image) ||
   `https://justpackit.vercel.app/categories/${x.slug}-v1.webp`;
 
 export default function App() {
+  const colorScheme = useColorScheme();
   const [screen, setScreen] = useState<Screen>("home");
   const [areas, setAreas] = useState<ServiceArea[]>([]);
   const [area, setArea] = useState<ServiceArea | null>(null);
@@ -503,7 +493,7 @@ export default function App() {
       style={s.safe}
       edges={["top", "left", "right", "bottom"]}
     >
-      <StatusBar style="dark" />
+      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
       <View style={s.app}>
         <BuyerProductContext.Provider
           value={{
@@ -599,7 +589,7 @@ function Header({
         </View>
         <HomeNotifications session={session} />
         <Pressable onPress={onBag} style={s.bagTop}>
-          <MarketIcon name="bag" color={c.green} />
+          <MarketIcon name="bag" color={theme.accentInk} />
           <Text style={s.bagCount}>{count}</Text>
         </Pressable>
       </View>
@@ -642,7 +632,7 @@ function GuestHomeHeader({
           marginRight: -12,
         }}
       >
-        <Text style={{ color: c.green, fontSize: 21, fontWeight: "700" }}>
+        <Text style={{ color: theme.accentInk, fontSize: 21, fontWeight: "700" }}>
           JustPackIt
         </Text>
         <HomeNotifications session={null} />
@@ -666,7 +656,7 @@ function GuestHomeHeader({
           </Text>
           <Text
             numberOfLines={1}
-            style={{ fontSize: 15, color: c.ink, fontWeight: "700" }}
+            style={{ fontSize: 15, color: theme.ink, fontWeight: "700" }}
           >
             {area
               ? [area.name, area.city].filter(Boolean).join(", ")
@@ -681,6 +671,8 @@ function GuestHomeHeader({
         style={{
           marginTop: 17,
           minHeight: 48,
+          borderWidth: 1,
+          borderColor: theme.controlBorder,
           borderRadius: 12,
           backgroundColor: theme.surface,
           flexDirection: "row",
@@ -726,11 +718,11 @@ function GuestSection({
         justifyContent: "space-between",
       }}
     >
-      <Text style={{ fontSize: 18, fontWeight: "600", color: c.ink }}>
+      <Text style={{ fontSize: 18, fontWeight: "600", color: theme.ink }}>
         {title}
       </Text>
       <Pressable accessibilityRole="button" onPress={onPress} hitSlop={6}>
-        <Text style={{ color: c.green, fontSize: 12, fontWeight: "600" }}>
+        <Text style={{ color: theme.accentInk, fontSize: 12, fontWeight: "600" }}>
           {action}
         </Text>
       </Pressable>
@@ -882,7 +874,7 @@ function Home({
           }}
         />
       ) : picked && categoryResult?.key !== categoryKey ? (
-        <ActivityIndicator color={c.green} />
+        <ActivityIndicator color={theme.accentInk} />
       ) : categoryProducts.length ? (
         <View style={s.grid}>
           {categoryProducts.slice(0, picked ? undefined : 12).map((x) => (
@@ -984,13 +976,13 @@ function Home({
                   margin: 20,
                   padding: 16,
                   borderRadius: 12,
-                  backgroundColor: theme.coral,
+                  backgroundColor: theme.primary,
                 }}
               >
                 <Text
                   style={{
                     textAlign: "center",
-                    color: theme.ink,
+                    color: theme.onPrimary,
                     fontWeight: "600",
                   }}
                 >
@@ -1047,7 +1039,7 @@ function Home({
       >
         <SafeAreaProvider>
         <SafeAreaView style={s.safe} testID="all-categories">
-          <StatusBar style="dark" />
+          <StatusBar style="auto" />
           <View style={s.categoryHeader}>
             <Text accessibilityRole="header" style={s.categoryHeading}>All categories</Text>
             <Pressable
@@ -1101,7 +1093,7 @@ function Home({
               }
               style={{ width: "23%", alignItems: "center" }}
             >
-              <View style={{ width: "100%", maxWidth: 74, height: 54, borderRadius: 12, overflow: "hidden", backgroundColor: theme.surfaceSoft }}>
+              <View style={{ width: "100%", maxWidth: 74, height: 54, borderRadius: 12, borderWidth: 1, borderColor: theme.tileBorder, overflow: "hidden", backgroundColor: theme.surfaceSoft }}>
                 <Image
                   accessible={false}
                   source={entry.photo}
@@ -1114,7 +1106,7 @@ function Home({
                   fontSize: 10,
                   lineHeight: 14,
                   fontWeight: "600",
-                  color: c.ink,
+                  color: theme.ink,
                   marginTop: 7,
                   textAlign: "center",
                 }}
@@ -1171,11 +1163,11 @@ function Home({
                     aspectRatio: 1.25,
                     borderRadius: 12,
                     overflow: "hidden",
-                    backgroundColor: c.pale,
+                    backgroundColor: theme.selected,
                     alignItems: "center",
                     justifyContent: "center",
-                    borderWidth: picked === entry.slug ? 2 : 0,
-                    borderColor: c.green,
+                    borderWidth: picked === entry.slug ? 2 : 1,
+                    borderColor: picked === entry.slug ? theme.accentInk : theme.tileBorder,
                   }}
                 >
                   {entry.photo ? (
@@ -1197,7 +1189,7 @@ function Home({
                     lineHeight: 14,
                     marginTop: 9,
                     minHeight: 28,
-                    color: c.ink,
+                    color: theme.ink,
                   }}
                 >
                   {entry.label}
@@ -1582,7 +1574,7 @@ function ShopPreview({
         <View
           style={{
             height: 98,
-            backgroundColor: c.pale,
+            backgroundColor: theme.selected,
             alignItems: "center",
             justifyContent: "center",
           }}
@@ -1600,8 +1592,8 @@ function ShopPreview({
           paddingHorizontal: 8,
           paddingVertical: 5,
           borderRadius: 6,
-          backgroundColor: c.pale,
-          color: c.green,
+          backgroundColor: theme.selected,
+          color: theme.accentInk,
           fontSize: 9,
         }}
       >
@@ -1615,39 +1607,39 @@ function ShopPreview({
             lineHeight: 17,
             minHeight: 17,
             fontWeight: "600",
-            color: c.ink,
+            color: theme.ink,
           }}
         >
           {item.name}
         </Text>
-        <Text numberOfLines={1} style={{ fontSize: 11, color: c.secondary }}>
+        <Text numberOfLines={1} style={{ fontSize: 11, color: theme.secondary }}>
           {categoryLabel || item.tagline || item.locality}
         </Text>
         <Text
           numberOfLines={1}
-          style={{ fontSize: 11, lineHeight: 16, color: c.green }}
+          style={{ fontSize: 11, lineHeight: 16, color: theme.accentInk }}
         >
           {typeof item.rating === "number"
-            ? `☆ ${item.rating.toFixed(1)} · `
+            ? <Text style={{ color: theme.successInk }}>★ {item.rating.toFixed(1)} · </Text>
             : ""}
           {typeof item.distanceKm === "number"
             ? `${item.distanceKm.toFixed(1)} km`
             : item.locality}
         </Text>
-        <Text style={{ fontSize: 11, color: c.green, marginTop: 4 }}>
+        <Text style={{ fontSize: 11, color: theme.accentInk, marginTop: 4 }}>
           {item.isOpen ? "Open now" : "Currently closed"}
         </Text>
         <View
           style={{
             height: 30,
             borderRadius: 10,
-            backgroundColor: c.pale,
+            backgroundColor: theme.selected,
             alignItems: "center",
             justifyContent: "center",
             marginTop: 2,
           }}
         >
-          <Text style={{ fontSize: 12, fontWeight: "600", color: c.green }}>
+          <Text style={{ fontSize: 12, fontWeight: "600", color: theme.accentInk }}>
             View Shop
           </Text>
         </View>
@@ -1767,7 +1759,7 @@ function ProductCard({
         <Text
           numberOfLines={1}
           style={{
-            color: c.secondary,
+            color: theme.secondary,
             fontSize: 10,
             lineHeight: 16,
             minHeight: 16,
@@ -1797,7 +1789,7 @@ function ProductCard({
           style={[
             s.price,
             compact && { fontSize: 14 },
-            categoryLayout && { color: c.green },
+            categoryLayout && { color: theme.accentInk },
           ]}
         >
           {money(categoryLayout ? selected.price : item.price)}
@@ -1808,7 +1800,7 @@ function ProductCard({
               height: browseLayout ? 44 : 28,
               width: browseLayout ? "100%" : 76,
               borderRadius: 8,
-              backgroundColor: c.pale,
+              backgroundColor: theme.selected,
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "space-between",
@@ -1826,11 +1818,11 @@ function ProductCard({
                 justifyContent: "center",
               }}
             >
-              <Text style={{ color: c.green, fontWeight: "600" }}>−</Text>
+              <Text style={{ color: theme.accentInk, fontWeight: "600" }}>−</Text>
             </Pressable>
             <Text
               accessibilityLabel={`${selectedQuantity} in bag`}
-              style={{ fontSize: 11, color: c.green, fontWeight: "600" }}
+              style={{ fontSize: 11, color: theme.accentInk, fontWeight: "600" }}
             >
               {selectedQuantity}
             </Text>
@@ -1848,7 +1840,7 @@ function ProductCard({
                 opacity: unavailable ? 0.4 : 1,
               }}
             >
-              <Text style={{ color: c.green, fontWeight: "600" }}>+</Text>
+              <Text style={{ color: theme.accentInk, fontWeight: "600" }}>+</Text>
             </Pressable>
           </View>
         ) : (
@@ -2076,11 +2068,11 @@ function AreaSheet({
   );
 }
 
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: c.paper },
-  app: { flex: 1, backgroundColor: c.paper },
+const s = themedStyles(() => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: theme.canvas },
+  app: { flex: 1, backgroundColor: theme.canvas },
   header: {
-    backgroundColor: c.paper,
+    backgroundColor: theme.canvas,
     paddingTop: 8,
   },
   top: {
@@ -2098,13 +2090,13 @@ const s = StyleSheet.create({
   },
   logo: { width: 46, height: 46, marginRight: 11 },
   brand: {
-    color: c.green,
+    color: theme.accentInk,
     fontSize: 24,
     lineHeight: 28,
     fontWeight: "700",
     letterSpacing: -0.8,
   },
-  tagline: { color: c.green, marginTop: 0, fontSize: 9 },
+  tagline: { color: theme.accentInk, marginTop: 0, fontSize: 9 },
   bagTop: {
     height: 36,
     width: 32,
@@ -2114,7 +2106,7 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: c.paper,
+    backgroundColor: theme.canvas,
   },
   bagTopText: { color: theme.ink, fontSize: 13, fontWeight: "500" },
   bagCount: {
@@ -2126,8 +2118,8 @@ const s = StyleSheet.create({
     borderRadius: 9,
     textAlign: "center",
     overflow: "hidden",
-    backgroundColor: c.lime,
-    color: c.green,
+    backgroundColor: theme.primary,
+    color: theme.onPrimary,
     fontSize: 12,
     fontWeight: "600",
     lineHeight: 18,
@@ -2136,7 +2128,7 @@ const s = StyleSheet.create({
     height: 55,
     paddingHorizontal: 20,
     borderTopWidth: 0,
-    borderTopColor: c.line,
+    borderTopColor: theme.border,
     flexDirection: "row",
     alignItems: "center",
   },
@@ -2148,12 +2140,14 @@ const s = StyleSheet.create({
     justifyContent: "center",
     marginRight: 10,
   },
-  pinText: { color: c.green, fontSize: 18 },
-  locationLabel: { color: c.secondary, fontSize: 8, lineHeight: 12 },
-  locationName: { color: c.ink, marginTop: 2, fontSize: 13, fontWeight: "600" },
-  change: { color: c.green, fontSize: 11, fontWeight: "600" },
+  pinText: { color: theme.accentInk, fontSize: 18 },
+  locationLabel: { color: theme.secondary, fontSize: 8, lineHeight: 12 },
+  locationName: { color: theme.ink, marginTop: 2, fontSize: 13, fontWeight: "600" },
+  change: { color: theme.accentInk, fontSize: 11, fontWeight: "600" },
   search: {
     height: 48,
+    borderWidth: 1,
+    borderColor: theme.controlBorder,
     paddingHorizontal: 14,
     marginHorizontal: 20,
     marginBottom: 0,
@@ -2162,10 +2156,10 @@ const s = StyleSheet.create({
     gap: 12,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: c.pale,
+    backgroundColor: theme.selected,
   },
-  searchIcon: { color: c.secondary, marginRight: 10, fontSize: 22 },
-  searchText: { color: c.muted, fontSize: 12, flex: 1, flexShrink: 1 },
+  searchIcon: { color: theme.secondary, marginRight: 10, fontSize: 22 },
+  searchText: { color: theme.muted, fontSize: 12, flex: 1, flexShrink: 1 },
   content: {
     paddingBottom: 24,
     width: "100%",
@@ -2178,7 +2172,7 @@ const s = StyleSheet.create({
     minHeight: 184,
     borderRadius: 18,
     overflow: "hidden",
-    backgroundColor:theme.peach,
+    backgroundColor:theme.hero,
     flexDirection: "row",
   },
   referenceHeroCopy: {
@@ -2200,10 +2194,10 @@ const s = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 12,
     marginTop: 12,
-    backgroundColor:theme.coral,
+    backgroundColor:theme.primary,
     borderRadius: 11,
   },
-  referenceCtaText: { color: c.green, fontSize: 13, fontWeight: "700" },
+  referenceCtaText: { color: theme.onPrimary, fontSize: 13, fontWeight: "700" },
   referenceHeroImage: {
     flex: 1,
     overflow: "hidden",
@@ -2216,7 +2210,7 @@ const s = StyleSheet.create({
   },
   popularHeading: { marginHorizontal: 20, marginTop: 28, marginBottom: 16 },
   popularTitle: {
-    color: c.ink,
+    color: theme.ink,
     fontSize: 20,
     lineHeight: 25,
     fontWeight: "600",
@@ -2235,7 +2229,7 @@ const s = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     flexDirection: "row",
-    backgroundColor:theme.peach,
+    backgroundColor:theme.hero,
   },
   marketLabel: { color:theme.accentInk, fontSize: 12, fontWeight: "500" },
   marketTitle: {
@@ -2260,7 +2254,7 @@ const s = StyleSheet.create({
     width: 122,
     height: 122,
     borderTopLeftRadius: 56,
-    backgroundColor: c.pale,
+    backgroundColor: theme.selected,
   },
   section: {
     minHeight: 65,
@@ -2273,14 +2267,14 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
   },
   sectionTitle: {
-    color: c.ink,
+    color: theme.ink,
     fontSize: 20,
     lineHeight: 25,
     fontWeight: "600",
     flex: 1,
     flexShrink: 1,
   },
-  sectionAction: { color: c.green, fontSize: 11, fontWeight: "600" },
+  sectionAction: { color: theme.accentInk, fontSize: 11, fontWeight: "600" },
   rail: { paddingHorizontal: 16, gap: 12 },
   categoryHeader: { width: "100%", maxWidth: 600, alignSelf: "center", minHeight: 68, paddingHorizontal: 20, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   categoryHeading: { fontSize: 24, color: theme.accentInk, fontWeight: "600", flexShrink: 1 },
@@ -2288,16 +2282,16 @@ const s = StyleSheet.create({
   category: {
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: c.line,
+    borderColor: theme.border,
     borderRadius: 12,
-    backgroundColor: c.card,
+    backgroundColor: theme.canvas,
   },
-  categoryActive: { borderColor: c.green, borderWidth: 2 },
-  categoryImage: { width: "100%", backgroundColor: c.raised },
+  categoryActive: { borderColor: theme.accentInk, borderWidth: 2 },
+  categoryImage: { width: "100%", backgroundColor: theme.surfaceSoft },
   categoryName: {
     minHeight: 52,
     padding: 10,
-    color: c.ink,
+    color: theme.ink,
     fontSize: 14,
     lineHeight: 19,
     fontWeight: "600",
@@ -2305,9 +2299,9 @@ const s = StyleSheet.create({
   fallback: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: c.pale,
+    backgroundColor: theme.selected,
   },
-  fallbackText: { color: c.green, fontSize: 22, fontWeight: "500" },
+  fallbackText: { color: theme.accentInk, fontSize: 22, fontWeight: "500" },
   filter: {
     height: 40,
     paddingHorizontal: 16,
@@ -2317,33 +2311,33 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: c.pale,
+    backgroundColor: theme.selected,
   },
-  filterText: { color: c.secondary, fontSize: 12 },
-  clear: { color: c.green, fontSize: 12, fontWeight: "600" },
+  filterText: { color: theme.secondary, fontSize: 12 },
+  clear: { color: theme.accentInk, fontSize: 12, fontWeight: "600" },
   shopList: { paddingHorizontal: 16, gap: 8 },
   shopRow: {
     minHeight: 88,
     padding: 8,
     borderWidth: 1,
-    borderColor: c.line,
+    borderColor: theme.border,
     borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: c.card,
+    backgroundColor: theme.canvas,
   },
   shopThumb: {
     width: 70,
     height: 70,
     borderRadius: 8,
-    backgroundColor: c.raised,
+    backgroundColor: theme.surfaceSoft,
   },
   shopInfo: { flex: 1, marginLeft: 12 },
-  shopName: { color: c.ink, fontSize: 15, fontWeight: "600" },
-  shopMeta: { color: c.green, marginTop: 4, fontSize: 12 },
-  shopTagline: { color: c.secondary, marginTop: 5, fontSize: 12 },
+  shopName: { color: theme.ink, fontSize: 15, fontWeight: "600" },
+  shopMeta: { color: theme.accentInk, marginTop: 4, fontSize: 12 },
+  shopTagline: { color: theme.secondary, marginTop: 5, fontSize: 12 },
   arrow: {
-    color: c.secondary,
+    color: theme.secondary,
     marginHorizontal: 6,
     fontSize: 28,
     lineHeight: 30,
@@ -2368,7 +2362,7 @@ const s = StyleSheet.create({
     width: "100%",
     height: 107,
     borderRadius: 8,
-    backgroundColor: c.raised,
+    backgroundColor: theme.surfaceSoft,
     resizeMode: "cover",
   },
   productFallback: {
@@ -2376,17 +2370,17 @@ const s = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: c.pale,
+    backgroundColor: theme.selected,
   },
   productName: {
     minHeight: 18,
-    color: c.ink,
+    color: theme.ink,
     marginTop: 10,
     fontSize: 12,
     lineHeight: 18,
     fontWeight: "600",
   },
-  unit: { color: c.muted, marginTop: 2, fontSize: 11 },
+  unit: { color: theme.muted, marginTop: 2, fontSize: 11 },
   productBottom: {
     marginTop: "auto",
     paddingTop: 10,
@@ -2394,7 +2388,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  price: { color: c.ink, fontSize: 16, fontWeight: "600" },
+  price: { color: theme.ink, fontSize: 16, fontWeight: "600" },
   add: {
     minWidth: 64,
     height: 32,
@@ -2402,44 +2396,44 @@ const s = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: c.pale,
+    backgroundColor: theme.selected,
   },
-  addDisabled: { backgroundColor: c.raised },
-  addText: { color: c.green, fontSize: 12, fontWeight: "600" },
-  addTextDisabled: { color: c.muted },
+  addDisabled: { backgroundColor: theme.surfaceSoft },
+  addText: { color: theme.accentInk, fontSize: 12, fontWeight: "600" },
+  addTextDisabled: { color: theme.muted },
   title: {
     minHeight: 72,
     paddingHorizontal: 16,
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: c.line,
+    borderBottomColor: theme.border,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: c.card,
+    backgroundColor: theme.canvas,
   },
-  back: { color: c.green, fontSize: 28, lineHeight: 32 },
-  pageTitle: { color: c.ink, fontSize: 22, lineHeight: 27, fontWeight: "500" },
-  pageCopy: { color: c.secondary, marginTop: 2, fontSize: 12 },
+  back: { color: theme.accentInk, fontSize: 28, lineHeight: 32 },
+  pageTitle: { color: theme.ink, fontSize: 22, lineHeight: 27, fontWeight: "500" },
+  pageCopy: { color: theme.secondary, marginTop: 2, fontSize: 12 },
   searchPage: { padding: 16, paddingBottom: 4 },
   searchInput: {
     height: 48,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: c.line,
+    borderColor: theme.controlBorder,
     borderRadius: 10,
-    backgroundColor: c.card,
-    color: c.ink,
+    backgroundColor: theme.canvas,
+    color: theme.ink,
     fontSize: 15,
   },
   intro: {
     marginBottom: 12,
     padding: 16,
     borderRadius: 12,
-    backgroundColor: c.pale,
+    backgroundColor: theme.selected,
   },
-  introTitle: { color: c.ink, fontSize: 16, fontWeight: "600" },
-  introCopy: { color: c.secondary, marginTop: 6, fontSize: 13, lineHeight: 19 },
-  minimum: { color: c.green, marginTop: 10, fontSize: 12, fontWeight: "600" },
+  introTitle: { color: theme.ink, fontSize: 16, fontWeight: "600" },
+  introCopy: { color: theme.secondary, marginTop: 6, fontSize: 13, lineHeight: 19 },
+  minimum: { color: theme.accentInk, marginTop: 10, fontSize: 12, fontWeight: "600" },
   bagBar: {
     position: "absolute",
     right: 16,
@@ -2451,11 +2445,11 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: theme.coral,
+    backgroundColor: theme.primary,
   },
-  bagBarTitle: { color: theme.ink, fontSize: 14, fontWeight: "600" },
-  bagBarCopy: { color: theme.secondary, marginTop: 2, fontSize: 11 },
-  bagBarAction: { color: c.lime, fontSize: 13, fontWeight: "600" },
+  bagBarTitle: { color: theme.onPrimary, fontSize: 14, fontWeight: "600" },
+  bagBarCopy: { color: theme.onPrimary, marginTop: 2, fontSize: 11 },
+  bagBarAction: { color: theme.onPrimary, fontSize: 13, fontWeight: "600" },
   nav: {
     height: 62,
     paddingHorizontal: 12,
@@ -2475,23 +2469,23 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   packBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: theme.overlayStrong },
-  packSheet: { backgroundColor: theme.surface, padding: 20, borderTopLeftRadius: 24, borderTopRightRadius: 24, gap: 12 },
-  packTitle: { color: c.green, fontSize: 16, fontWeight: "600" },
-  packOption: { minHeight: 44, borderRadius: 12, padding: 10, marginTop: 8, backgroundColor: c.pale, alignItems: "center", justifyContent: "center" },
+  packSheet: { borderTopWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, padding: 20, borderTopLeftRadius: 24, borderTopRightRadius: 24, gap: 12 },
+  packTitle: { color: theme.accentInk, fontSize: 16, fontWeight: "600" },
+  packOption: { minHeight: 44, borderRadius: 12, padding: 10, marginTop: 8, backgroundColor: theme.selected, alignItems: "center", justifyContent: "center" },
   navIcon: { width: 24, height: 24, flexShrink: 0, tintColor: theme.muted },
-  navIconActive: { tintColor: c.green },
-  navActive: { backgroundColor: c.pale },
-  navText: { color: c.secondary, fontSize: 10, fontWeight: "500" },
-  navTextActive: { color: c.green, fontWeight: "600" },
+  navIconActive: { tintColor: theme.accentInk },
+  navActive: { backgroundColor: theme.selected, borderWidth: 1, borderColor: theme.accentInk },
+  navText: { color: theme.secondary, fontSize: 10, fontWeight: "500" },
+  navTextActive: { color: theme.accentInk, fontWeight: "600" },
   state: {
     flex: 1,
     padding: 32,
     alignItems: "center",
     justifyContent: "center",
   },
-  stateTitle: { color: c.ink, marginTop: 16, fontSize: 20, fontWeight: "500" },
+  stateTitle: { color: theme.ink, marginTop: 16, fontSize: 20, fontWeight: "500" },
   stateCopy: {
-    color: c.secondary,
+    color: theme.secondary,
     maxWidth: 280,
     marginTop: 8,
     textAlign: "center",
@@ -2503,23 +2497,23 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     marginTop: 20,
     borderWidth: 1,
-    borderColor: c.green,
+    borderColor: theme.accentInk,
     borderRadius: 8,
     justifyContent: "center",
   },
-  secondaryText: { color: c.green, fontSize: 14, fontWeight: "600" },
+  secondaryText: { color: theme.accentInk, fontSize: 14, fontWeight: "600" },
   empty: {
     minHeight: 88,
     padding: 16,
     marginHorizontal: 16,
     borderWidth: 1,
-    borderColor: c.line,
+    borderColor: theme.border,
     borderRadius: 12,
     justifyContent: "center",
-    backgroundColor: c.card,
+    backgroundColor: theme.canvas,
   },
   emptyText: {
-    color: c.secondary,
+    color: theme.secondary,
     textAlign: "center",
     fontSize: 13,
     lineHeight: 19,
@@ -2530,6 +2524,8 @@ const s = StyleSheet.create({
     backgroundColor: theme.overlay,
   },
   sheet: {
+    borderTopWidth: 1,
+    borderColor: theme.border,
     maxHeight: "82%",
     width: "100%",
     maxWidth: 600,
@@ -2538,21 +2534,21 @@ const s = StyleSheet.create({
     borderTopRightRadius: 28,
     backgroundColor: theme.canvas,
   },
-  handle: { alignSelf: "center", width: 32, height: 4, borderRadius: 2, backgroundColor: c.line, marginTop: 10, marginBottom: 18 },
+  handle: { alignSelf: "center", width: 32, height: 4, borderRadius: 2, backgroundColor: theme.border, marginTop: 10, marginBottom: 18 },
   areaHeading: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 20 },
-  areaIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: theme.lime, alignItems: "center", justifyContent: "center" },
+  areaIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: theme.selected, alignItems: "center", justifyContent: "center" },
   sheetTitle: { flex: 1, color: theme.accentInk, fontSize: 21, lineHeight: 28, fontWeight: "600" },
   areaClose: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   areaCloseText: { color: theme.accentInk, fontSize: 27 },
-  sheetCopy: { paddingHorizontal: 20, color: c.secondary, marginTop: 8, fontSize: 14, lineHeight: 20 },
+  sheetCopy: { paddingHorizontal: 20, color: theme.secondary, marginTop: 8, fontSize: 14, lineHeight: 20 },
   areaOptions: { padding: 20, gap: 10 },
-  areaRow: { minHeight: 72, padding: 14, borderWidth: 1, borderColor: c.line, borderRadius: 16, backgroundColor: theme.surface, flexDirection: "row", alignItems: "center", gap: 12 },
-  areaSelected: { borderColor: theme.accentInk, backgroundColor: theme.lime },
+  areaRow: { minHeight: 72, padding: 14, borderWidth: 1, borderColor: theme.border, borderRadius: 16, backgroundColor: theme.surface, flexDirection: "row", alignItems: "center", gap: 12 },
+  areaSelected: { borderColor: theme.accentInk, backgroundColor: theme.selected },
   areaInfo: { flex: 1, minWidth: 0 },
   areaRadio: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: theme.muted },
-  areaRadioChecked: { backgroundColor: theme.coral, borderColor: theme.accentInk },
-  areaCheck: { color: theme.ink, fontSize: 13 },
-  areaName: { color: c.ink, fontSize: 16, fontWeight: "600" },
-  areaMeta: { color: c.secondary, marginTop: 4, fontSize: 12, lineHeight: 16 },
-  selected: { color: c.green, fontSize: 12, fontWeight: "600" },
-});
+  areaRadioChecked: { backgroundColor: theme.primary, borderColor: theme.accentInk },
+  areaCheck: { color: theme.onPrimary, fontSize: 13 },
+  areaName: { color: theme.ink, fontSize: 16, fontWeight: "600" },
+  areaMeta: { color: theme.secondary, marginTop: 4, fontSize: 12, lineHeight: 16 },
+  selected: { color: theme.accentInk, fontSize: 12, fontWeight: "600" },
+}));

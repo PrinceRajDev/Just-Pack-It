@@ -41,6 +41,16 @@ const assert = require("node:assert/strict");
       const photo = document.querySelector('[data-testid="home-hero-photo"] img');
       return photo && photo.complete && photo.naturalWidth > 0;
     });
+    const shell = page.getByTestId("buyer-shell");
+    const backgroundIs = (element, expected) =>
+      page.waitForFunction(({ node, color }) => getComputedStyle(node).backgroundColor === color,
+        { node: element, color: expected });
+    const shellNode = await shell.elementHandle();
+    await page.emulateMedia({ colorScheme: "dark" });
+    await backgroundIs(shellNode, "rgb(18, 18, 18)");
+    await page.screenshot({ path: path.join(output, "guest-dark-390.png") });
+    await page.emulateMedia({ colorScheme: "light" });
+    await backgroundIs(shellNode, "rgb(244, 245, 247)");
     await page.addStyleTag({content:'[data-testid="buyer-shell"]{padding-top:28px!important;padding-bottom:20px!important}'});
     for (const [width,height] of [[390,844],[360,800],[375,812],[430,932]]) {
       await page.setViewportSize({width,height});
@@ -245,6 +255,12 @@ const assert = require("node:assert/strict");
     await workspace.getByRole("tab",{name:"Home",exact:true}).click();
     await workspace.getByRole("button",{name:/^New orders/}).waitFor();
     await page.screenshot({path:path.join(output,"seller-workspace-390.png"),animations:"disabled"});
+    const workspaceNode = await workspace.elementHandle();
+    await page.emulateMedia({ colorScheme: "dark" });
+    await backgroundIs(workspaceNode, "rgb(18, 18, 18)");
+    await page.screenshot({ path: path.join(output, "seller-workspace-dark-390.png"), animations: "disabled" });
+    await page.emulateMedia({ colorScheme: "light" });
+    await backgroundIs(workspaceNode, "rgb(244, 245, 247)");
     await workspace.getByRole("button",{name:/^New orders/}).click();
     await workspace.getByText("Cash due ₹119",{exact:true}).waitFor();
     await workspace.getByText(/20 Nov 2026.*2:00\s*pm IST/i).waitFor();

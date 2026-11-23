@@ -1,6 +1,6 @@
-import { theme } from "./theme";
+import { theme, themedStyles } from "./theme";
 import { useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Image, Pressable, Text, View } from "react-native";
 import type { Shop } from "./api";
 import { MarketIcon } from "./MarketIcon";
 import { resolveImage } from "./images";
@@ -59,7 +59,6 @@ export function BrowseShopCard({
     Number.isFinite(item.distanceKm)
       ? `${item.distanceKm!.toFixed(1)} km`
       : undefined,
-    Number.isFinite(item.rating) ? `★ ${item.rating!.toFixed(1)}` : undefined,
   ]
     .filter(Boolean)
     .join("  ·  ");
@@ -89,7 +88,12 @@ export function BrowseShopCard({
           <Text style={styles.description}>{description}</Text>
         ) : null}
         <View style={styles.bottom}>
-          <Text style={styles.metadata}>{metadata}</Text>
+          <Text style={styles.metadata}>
+            {metadata}
+            {typeof item.rating === "number" && Number.isFinite(item.rating)
+              ? <Text style={{ color: theme.successInk }}> · ★ {item.rating.toFixed(1)}</Text>
+              : null}
+          </Text>
           <Text style={styles.metadata}>{actionLabel ?? "View shop ›"}</Text>
         </View>
       </View>
@@ -97,7 +101,7 @@ export function BrowseShopCard({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles(() => StyleSheet.create({
   card: {
     overflow: "hidden",
     borderWidth: 1,
@@ -114,7 +118,7 @@ const styles = StyleSheet.create({
   missing: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: theme.lime,
+    backgroundColor: theme.selected,
   },
   body: { padding: 16 },
   bottom: {
@@ -131,4 +135,4 @@ const styles = StyleSheet.create({
   },
   metadata: { marginTop: 8, color: theme.accentInk, fontSize: 12, lineHeight: 17 },
   description: { marginTop: 8, color: theme.muted, fontSize: 12, lineHeight: 17 },
-});
+}));

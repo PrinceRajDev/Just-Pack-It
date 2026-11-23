@@ -1,4 +1,4 @@
-import { theme } from "./theme";
+import { theme, themedStyles } from "./theme";
 import { BuyerStateCard, BuyerStateSkeleton } from "./BuyerStateCard";
 import {
   useEffect,
@@ -7,12 +7,11 @@ import {
   type ComponentRef,
   type ReactNode,
 } from "react";
-import {
+import { StyleSheet,
   ActivityIndicator,
   Image,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -897,9 +896,9 @@ export function BuyerBrowse({
     </ScrollView>
   );
 }
-const styles = StyleSheet.create({
+const styles = themedStyles(() => StyleSheet.create({
   searchState: { gap: 14, marginTop: 6 },
-  placeholder: { height: 98, borderRadius: 14, backgroundColor: theme.lime },
+  placeholder: { height: 98, borderRadius: 14, backgroundColor: theme.selected },
   clearSearch: { fontSize: 18, color: theme.muted, paddingHorizontal: 4 },
   resultsHeading: {
     fontSize: 22,
@@ -914,7 +913,7 @@ const styles = StyleSheet.create({
     marginTop: 21,
     marginBottom: 20,
   },
-  selectedResult: { backgroundColor: theme.lime },
+  selectedResult: { backgroundColor: theme.selected },
   searchProducts: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -969,7 +968,7 @@ const styles = StyleSheet.create({
     height: 48,
     marginTop: 16,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: theme.controlBorder,
     borderRadius: 12,
     backgroundColor: theme.surface,
     flexDirection: "row",
@@ -1087,4 +1086,4 @@ const styles = StyleSheet.create({
   },
   brandLink: { marginTop: 10, fontSize: 13, lineHeight: 18, color: theme.muted },
   brandSearch: { marginBottom: 12 },
-});
+}));

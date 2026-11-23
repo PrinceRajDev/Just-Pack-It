@@ -1,12 +1,11 @@
-import { theme } from "./theme";
+import { theme, themedStyles } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import {
+import { StyleSheet,
   FlatList,
   Image,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
   useWindowDimensions,
@@ -401,7 +400,7 @@ export function BuyerProductDetails({
     </SafeAreaProvider>
   );
 }
-const s = StyleSheet.create({
+const s = themedStyles(() => StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.canvas },
   header: {
     height: 60,
@@ -441,7 +440,7 @@ const s = StyleSheet.create({
     aspectRatio: 350 / 238,
     borderRadius: 12,
     overflow: "hidden",
-    backgroundColor: theme.lime,
+    backgroundColor: theme.selected,
   },
   image: { width: "100%", height: "100%", resizeMode: "cover" },
   imageFallback: { flex: 1, alignItems: "center", justifyContent: "center" },
@@ -461,7 +460,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.accentInk,
   },
-  dotActive: { backgroundColor: theme.coral },
+  dotActive: { backgroundColor: theme.primary },
   title: {
     fontSize: 24,
     lineHeight: 30,
@@ -497,7 +496,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  packActive: { backgroundColor: theme.lime },
+  packActive: { backgroundColor: theme.selected },
   packText: {
     fontSize: 15,
     lineHeight: 20,
@@ -525,15 +524,15 @@ const s = StyleSheet.create({
     minHeight: 50,
     padding: 12,
     borderRadius: 14,
-    backgroundColor: theme.coral,
+    backgroundColor: theme.primary,
     alignItems: "center",
     justifyContent: "center",
   },
   ctaText: {
     fontSize: 15,
     lineHeight: 20,
-    color: theme.ink,
+    color: theme.onPrimary,
     fontWeight: "600",
     textAlign: "center",
   },
-});
+}));

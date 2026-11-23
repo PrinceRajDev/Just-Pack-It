@@ -118,12 +118,12 @@ function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:O
   const dashboard = useSellerData(() => sellerApi.dashboard(token), token);
   const counts = dashboard.data?.counts;
   const work = [
-    {title:"New orders", count:counts?.placed ?? 0, action:"Review new orders", open:() => orders("New"), icon:"orders", tint:theme.coral},
-    {title:"To prepare", count:(counts?.accepted ?? 0) + (counts?.preparing ?? 0), action:"Open packing queue", open:() => orders("Preparing"), icon:"bag", tint:theme.peach},
-    {title:"Ready for handoff", count:counts?.ready ?? 0, action:"Review handoffs", open:() => orders("Ready"), icon:"home", tint:theme.mint},
-    {title:"Out of stock", count:dashboard.data?.lowStock?.outOfStock ?? 0, action:"Review sold-out products", open:() => openStock("Out of stock"), icon:"browse", tint:theme.peach},
-    {title:"Low stock", count:dashboard.data?.lowStock?.count ?? 0, action:"Review low stock", open:() => openStock("Low stock"), icon:"browse", tint:theme.coral},
-    {title:"On the way", count:counts?.out_for_delivery ?? 0, action:"View active deliveries", open:() => orders("Out for delivery"), icon:"orders", tint:theme.peach},
+    {title:"New orders", count:counts?.placed ?? 0, action:"Review new orders", open:() => orders("New"), icon:"orders", tint:theme.selected},
+    {title:"To prepare", count:(counts?.accepted ?? 0) + (counts?.preparing ?? 0), action:"Open packing queue", open:() => orders("Preparing"), icon:"bag", tint:theme.hero},
+    {title:"Ready for handoff", count:counts?.ready ?? 0, action:"Review handoffs", open:() => orders("Ready"), icon:"home", tint:theme.success},
+    {title:"Out of stock", count:dashboard.data?.lowStock?.outOfStock ?? 0, action:"Review sold-out products", open:() => openStock("Out of stock"), icon:"browse", tint:theme.hero},
+    {title:"Low stock", count:dashboard.data?.lowStock?.count ?? 0, action:"Review low stock", open:() => openStock("Low stock"), icon:"browse", tint:theme.selected},
+    {title:"On the way", count:counts?.out_for_delivery ?? 0, action:"View active deliveries", open:() => orders("Out for delivery"), icon:"orders", tint:theme.hero},
   ] satisfies {title:string;count:number;action:string;open:()=>void;icon:SellerIconName;tint:string}[];
   const next = dashboard.error ? undefined : work.find(item => item.count > 0);
   const refresh = () => { shop.reload(); dashboard.reload(); };
@@ -142,8 +142,8 @@ function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:O
       <Image source={counterPhoto} style={styles.heroPhoto} resizeMode="cover" accessible={false} />
       <View style={styles.heroFooter}>
         <Pressable accessibilityRole="button" onPress={next?.open ?? (() => orders("Active"))} style={({pressed}) => [styles.heroAction, pressed && styles.pressed]}>
-          <Text style={[styles.label, styles.grow]}>{next?.action ?? "View active orders"}</Text>
-          <Text style={styles.label}>{next ? `${next.count}  ›` : "›"}</Text>
+          <Text style={[styles.label, styles.grow, styles.onPrimary]}>{next?.action ?? "View active orders"}</Text>
+          <Text style={[styles.label, styles.onPrimary]}>{next ? `${next.count}  ›` : "›"}</Text>
         </Pressable>
       </View>
     </View>}

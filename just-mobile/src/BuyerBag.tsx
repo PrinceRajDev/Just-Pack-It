@@ -1,11 +1,10 @@
-import { theme } from "./theme";
+import { theme, themedStyles } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useState } from "react";
-import {
+import { StyleSheet,
   Image,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from "react-native";
@@ -18,8 +17,6 @@ import { OrderSymbol } from "./BuyerOrderDetails";
 import type { BagDelivery } from "./BuyerCheckout";
 
 type Line = Product & { quantity: number };
-const green = theme.accentInk;
-const sage = theme.lime;
 const money = (amount: number) => `₹${amount.toLocaleString("en-IN")}`;
 const subtotal = (lines: Line[]) =>
   lines.reduce((sum, line) => sum + line.price * line.quantity, 0);
@@ -181,7 +178,7 @@ export function BuyerBag({
                               resizeMode="cover"
                             />
                           ) : (
-                            <MarketIcon name="bag" color={green} />
+                            <MarketIcon name="bag" color={theme.accentInk} />
                           )}
                         </View>
                         <View style={s.item}>
@@ -266,7 +263,7 @@ export function BuyerBag({
   );
 }
 
-const s = StyleSheet.create({
+const s = themedStyles(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: theme.canvas },
   header: {
     minHeight: 64,
@@ -276,8 +273,8 @@ const s = StyleSheet.create({
     gap: 14,
   },
   backButton: { minHeight: 44, justifyContent: "center" },
-  back: { color: green, fontSize: 27, lineHeight: 30 },
-  heading: { color: green, fontSize: 18, fontWeight: "500" },
+  back: { color: theme.accentInk, fontSize: 27, lineHeight: 30 },
+  heading: { color: theme.accentInk, fontSize: 18, fontWeight: "500" },
   scroll: { flex: 1 },
   content: {
     paddingHorizontal: 20,
@@ -293,21 +290,21 @@ const s = StyleSheet.create({
     backgroundColor: theme.surface,
     padding: 16,
   },
-  signInCard: { backgroundColor:theme.peach, borderColor:theme.border, padding: 19 },
+  signInCard: { backgroundColor:theme.hero, borderColor:theme.border, padding: 19 },
   white: { color: theme.ink, fontSize: 18 },
   signInCopy: { color: theme.ink, marginBottom: 4 },
   problem: { borderColor: theme.error },
-  selected: { borderColor: green },
+  selected: { borderColor: theme.accentInk },
   spaced: { marginTop: 12 },
-  checking: { flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: sage, borderRadius: 16, minHeight: 64, padding: 16 },
+  checking: { flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: theme.selected, borderRadius: 16, minHeight: 64, padding: 16 },
   addressActions: { flexDirection: "row", gap: 12 },
   addressButton: { flex: 1, minHeight: 44, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, paddingHorizontal: 4 },
-  addressSage: { backgroundColor: sage, borderColor: sage },
-  addressActionText: { color: green, fontSize: 13, textAlign: "center", fontWeight: "500" },
+  addressSage: { backgroundColor: theme.selected, borderColor: theme.selected },
+  addressActionText: { color: theme.accentInk, fontSize: 13, textAlign: "center", fontWeight: "500" },
   removeShop: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.error, marginTop: 10 },
   footerDisabled: { backgroundColor: theme.disabled },
   shopHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
-  shopIcon: { width: 36, height: 36, backgroundColor: sage, borderRadius: 11, alignItems: "center", justifyContent: "center" },
+  shopIcon: { width: 36, height: 36, backgroundColor: theme.selected, borderRadius: 11, alignItems: "center", justifyContent: "center" },
   cardTitle: {
     color: theme.ink,
     fontSize: 16,
@@ -318,16 +315,16 @@ const s = StyleSheet.create({
   button: {
     minHeight: 50,
     borderRadius: 14,
-    backgroundColor: theme.coral,
+    backgroundColor: theme.primary,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 12,
   },
-  buttonText: { color: theme.ink, fontSize: 15, fontWeight: "600" },
-  sageButton: { backgroundColor: sage, marginTop: 10 },
-  sageText: { color: green },
+  buttonText: { color: theme.onPrimary, fontSize: 15, fontWeight: "600" },
+  sageButton: { backgroundColor: theme.selected, marginTop: 10 },
+  sageText: { color: theme.accentInk },
   delivery: {
-    color: green,
+    color: theme.accentInk,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: "600",
@@ -340,7 +337,7 @@ const s = StyleSheet.create({
     height: 80,
     borderRadius: 10,
     overflow: "hidden",
-    backgroundColor: sage,
+    backgroundColor: theme.selected,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -353,7 +350,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     alignSelf: "flex-start",
-    backgroundColor: sage,
+    backgroundColor: theme.selected,
     borderRadius: 10,
     minHeight: 36,
     marginTop: 3,
@@ -364,7 +361,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  step: { color: green, fontSize: 14, fontWeight: "700" },
+  step: { color: theme.accentInk, fontSize: 14, fontWeight: "700" },
   disabled: { opacity: 0.4 },
   removeButton: { alignSelf: "flex-start", paddingBottom: 2 },
   remove: { color: theme.error, fontSize: 12, lineHeight: 18, fontWeight: "400" },
@@ -391,4 +388,4 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   start: { paddingHorizontal: 22 },
-});
+}));

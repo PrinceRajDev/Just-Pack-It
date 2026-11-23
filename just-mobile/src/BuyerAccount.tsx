@@ -1,16 +1,15 @@
-import { theme } from "./theme";
+import { theme, themedStyles } from "./theme";
 import { BuyerStateCard, BuyerStateSkeleton } from "./BuyerStateCard";
 import { BuyerAccountHub } from "./BuyerAccountHub";
 
 
 import { useEffect, useRef, useState } from "react";
-import {
+import { StyleSheet,
   ActivityIndicator,
   FlatList,
   Modal,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -26,15 +25,6 @@ import { useAndroidBack } from "./useAndroidBack";
 import { SellerAccess } from "./SellerAccess";
 import { BuyerRecovery } from "./BuyerRecovery";
 
-const c = {
-  paper: theme.canvas,
-  card: theme.canvas,
-  ink: theme.ink,
-  secondary: theme.secondary,
-  muted: theme.muted,
-  line: theme.border,
-  green: theme.accentInk,
-};
 
 
 export function BuyerAccount({
@@ -253,7 +243,7 @@ export function BuyerAccount({
           value={name}
           onChangeText={setName}
           placeholder="Your name"
-          placeholderTextColor={c.muted}
+          placeholderTextColor={theme.muted}
           style={s.input}
         />
         </View>
@@ -266,11 +256,11 @@ export function BuyerAccount({
         value={phone}
         onChangeText={setPhone}
         placeholder="Mobile number with +91"
-        placeholderTextColor={c.muted}
+        placeholderTextColor={theme.muted}
         keyboardType="phone-pad"
         style={s.input}
       />
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}><Text style={s.copy}>Password</Text><Pressable accessibilityRole="button" accessibilityLabel={passwordVisible ? "Hide password" : "Show password"} disabled={busy} onPress={() => setPasswordVisible((value) => !value)} style={{ padding: 12 }}><Text style={{ color: c.green, fontWeight: "600" }}>{passwordVisible ? "Hide" : "Show"}</Text></Pressable></View>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}><Text style={s.copy}>Password</Text><Pressable accessibilityRole="button" accessibilityLabel={passwordVisible ? "Hide password" : "Show password"} disabled={busy} onPress={() => setPasswordVisible((value) => !value)} style={{ padding: 12 }}><Text style={{ color: theme.accentInk, fontWeight: "600" }}>{passwordVisible ? "Hide" : "Show"}</Text></Pressable></View>
       <TextInput
         accessibilityLabel="Password"
         editable={!busy}
@@ -280,7 +270,7 @@ export function BuyerAccount({
         value={password}
         onChangeText={setPassword}
         placeholder="Password"
-        placeholderTextColor={c.muted}
+        placeholderTextColor={theme.muted}
         secureTextEntry={!passwordVisible}
         style={s.input}
       />
@@ -437,7 +427,7 @@ export function BuyerOrders({
   );
 }
 
-const ordersUI = StyleSheet.create({
+const ordersUI = themedStyles(() => StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.canvas },
   header: { height: 64, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", gap: 14 },
   back: { minHeight: 44, justifyContent: "center" },
@@ -445,51 +435,51 @@ const ordersUI = StyleSheet.create({
   headerTitle: { color: theme.accentInk, fontSize: 18, fontWeight: "500" },
   list: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24, gap: 20 },
   listHeader: { gap: 20 },
-  hero: { minHeight: 99, justifyContent: "center", padding: 20, gap: 10, backgroundColor:theme.peach, borderRadius: 24 },
+  hero: { minHeight: 99, justifyContent: "center", padding: 20, gap: 10, backgroundColor:theme.hero, borderRadius: 24 },
   heroLabel: { color: theme.ink, fontSize: 12 },
   heroTitle: { color: theme.ink, fontSize: 24, fontWeight: "500" },
   tabs: { padding: 4, borderWidth: 1, borderColor: theme.border, borderRadius: 16, flexDirection: "row", backgroundColor: theme.surface, gap: 4 },
   tab: { flex: 1, minHeight: 50, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  tabSelected: { backgroundColor:theme.lime },
+  tabSelected: { backgroundColor:theme.selected },
   orderCard: { borderRadius: 24, padding: 20, gap: 10 },
   lead: { borderColor: theme.accentInk },
   cardTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
-  badge: { color: theme.accentInk, backgroundColor: theme.lime, fontSize: 12, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 6, flexShrink: 1 },
+  badge: { color: theme.accentInk, backgroundColor: theme.selected, fontSize: 12, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 6, flexShrink: 1 },
   tabText: { color: theme.muted, fontSize: 15, fontWeight: "500" },
   tabTextSelected: { color: theme.ink },
   total: { fontSize: 24, fontWeight: "600", color: theme.ink },
-  detailsLink: { color: theme.accentInk, backgroundColor: theme.lime, fontSize: 12, borderRadius: 12, padding: 10 },
+  detailsLink: { color: theme.accentInk, backgroundColor: theme.selected, fontSize: 12, borderRadius: 12, padding: 10 },
   card: { padding: 16, borderRadius: 16, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, gap: 8 },
-  sage: { backgroundColor: theme.lime },
+  sage: { backgroundColor: theme.selected },
   title: { fontSize: 23, lineHeight: 30, color: theme.ink, fontWeight: "600" },
   copy: { fontSize: 13, lineHeight: 19, color: theme.muted },
-  button: { backgroundColor: theme.coral, borderRadius: 14, minHeight: 50, padding: 12, alignItems: "center", justifyContent: "center", marginTop: 6 },
+  button: { backgroundColor: theme.primary, borderRadius: 14, minHeight: 50, padding: 12, alignItems: "center", justifyContent: "center", marginTop: 6 },
   buttonText: { color: theme.ink, fontSize: 15, fontWeight: "600" },
   action: { color: theme.accentInk, fontSize: 14, fontWeight: "600" },
   orderTitle: { color: theme.ink, fontSize: 18, fontWeight: "500" },
   orderFooter: { borderTopWidth: 1, borderColor: theme.border, paddingTop: 12, marginTop: 2, flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 8 },
   feedback: { padding: 20, gap: 10 },
   footer: { gap: 8 },
-});
-const s = StyleSheet.create({
+}));
+const s = themedStyles(() => StyleSheet.create({
   page: {
     flexGrow: 1,
     padding: 24,
     paddingBottom: 96,
-    backgroundColor: c.paper,
+    backgroundColor: theme.canvas,
   },
-  kicker: { color: c.green, fontSize: 13, fontWeight: "600" },
-  title: { color: c.ink, marginTop: 8, fontSize: 28, fontWeight: "500" },
-  copy: { color: c.secondary, marginTop: 8, fontSize: 14, lineHeight: 20 },
+  kicker: { color: theme.accentInk, fontSize: 13, fontWeight: "600" },
+  title: { color: theme.ink, marginTop: 8, fontSize: 28, fontWeight: "500" },
+  copy: { color: theme.secondary, marginTop: 8, fontSize: 14, lineHeight: 20 },
   input: {
     height: 48,
     paddingHorizontal: 14,
     marginTop: 16,
     borderWidth: 1,
-    borderColor: c.line,
+    borderColor: theme.controlBorder,
     borderRadius: 10,
-    backgroundColor: c.card,
-    color: c.ink,
+    backgroundColor: theme.canvas,
+    color: theme.ink,
     fontSize: 15,
   },
   primary: {
@@ -499,11 +489,11 @@ const s = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: theme.coral,
+    backgroundColor: theme.primary,
   },
-  primaryText: { color: theme.ink, fontSize: 14, fontWeight: "600" },
+  primaryText: { color: theme.onPrimary, fontSize: 14, fontWeight: "600" },
   switch: {
-    color: c.green,
+    color: theme.accentInk,
     marginTop: 20,
     textAlign: "center",
     fontSize: 13,
@@ -513,25 +503,25 @@ const s = StyleSheet.create({
     padding: 16,
     marginTop: 24,
     borderWidth: 1,
-    borderColor: c.line,
+    borderColor: theme.border,
     borderRadius: 12,
-    backgroundColor: c.card,
+    backgroundColor: theme.canvas,
   },
-  rowTitle: { color: c.ink, fontSize: 16, fontWeight: "600" },
-  rowCopy: { color: c.secondary, marginTop: 5, fontSize: 13 },
+  rowTitle: { color: theme.ink, fontSize: 16, fontWeight: "600" },
+  rowCopy: { color: theme.secondary, marginTop: 5, fontSize: 13 },
   signout: {
     height: 44,
     marginTop: 20,
     borderWidth: 1,
-    borderColor: c.line,
+    borderColor: theme.border,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
   },
-  signoutText: { color: c.secondary, fontSize: 14, fontWeight: "600" },
-});
+  signoutText: { color: theme.secondary, fontSize: 14, fontWeight: "600" },
+}));
 
-const login = StyleSheet.create({
+const login = themedStyles(() => StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.canvas },
   header: { height: 64, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", gap: 14 },
   backButton: { minHeight: 44, justifyContent: "center" },
@@ -542,7 +532,7 @@ const login = StyleSheet.create({
   stickyFooter: { paddingHorizontal: 20, paddingBottom: 16, paddingTop: 6, borderTopWidth: 1, borderColor: theme.border, backgroundColor: theme.surface },
   disabledAction: { backgroundColor: theme.disabled },
   disabledLabel: {color:theme.muted},
-  checkoutIntro: { backgroundColor:theme.peach, borderRadius: 24, padding: 20 },
+  checkoutIntro: { backgroundColor:theme.hero, borderRadius: 24, padding: 20 },
   checkoutWelcome: { color: theme.ink, fontSize: 28, lineHeight: 39, fontWeight: "500" },
   checkoutTagline: { color: theme.ink, marginTop: 8 },
   checkoutCard: { borderRadius: 24, marginTop: 16, padding: 20 },
@@ -560,10 +550,10 @@ const login = StyleSheet.create({
   error: { color: theme.error, marginTop: 10, fontSize: 13, lineHeight: 18 },
   button: { minHeight: 50, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 12, gap: 8 },
   buttonText: { color: theme.accentInk, fontSize: 15, fontWeight: "600", textAlign: "center" },
-  primary: { backgroundColor: theme.coral, marginTop: 10 },
-  primaryText: { color: theme.ink },
+  primary: { backgroundColor: theme.primary, marginTop: 10 },
+  primaryText: { color: theme.onPrimary },
   recovery: { minHeight: 50, marginTop: 10, alignItems: "center", justifyContent: "center" },
   newAccount: { color: theme.muted, fontSize: 14, lineHeight: 20, marginTop: 20 },
-  create: { backgroundColor: theme.lime, marginTop: 20 },
+  create: { backgroundColor: theme.selected, marginTop: 20 },
   guest: { backgroundColor: theme.surface, marginTop: 20 },
-});
+}));

@@ -124,7 +124,7 @@ export function PlaceCodOrder({
             borderRadius: 14,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: busy ? theme.disabled : theme.coral,
+            backgroundColor: busy ? theme.disabled : theme.primary,
           }}
         >
           <Text style={{ color: busy ? theme.muted : theme.surface, fontWeight: "600", fontSize: 15 }}>

@@ -1,7 +1,7 @@
-import { theme } from "./theme";
+import { theme, themedStyles } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { buyerApi, type BuyerProfile as Profile } from "./api";
 
 import { MarketIcon } from "./MarketIcon";
@@ -48,21 +48,21 @@ export function BuyerProfile({ token, back, onSaved }: { token: string; back: ()
   </View>;
 }
 
-const s = StyleSheet.create({
+const s = themedStyles(() => StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.canvas },
   header: { height: 64, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", gap: 16 },
   heading: { fontSize: 19, fontWeight: "600", color: theme.accentInk },
   content: { padding: 20, gap: 20 },
-  hero: { flexDirection: "row", alignItems: "center", gap: 12, padding: 20, borderRadius: 24, backgroundColor: theme.lime },
+  hero: { flexDirection: "row", alignItems: "center", gap: 12, padding: 20, borderRadius: 24, backgroundColor: theme.selected },
   icon: { width: 40, height: 40, borderRadius: 12, backgroundColor: theme.surface, alignItems: "center", justifyContent: "center" },
   heroTitle: { flex: 1, fontSize: 24, fontWeight: "600", color: theme.accentInk },
   card: { padding: 20, borderRadius: 24, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, gap: 12 },
   label: { color: theme.accentInk, fontSize: 12, lineHeight: 18 },
-  input: { minHeight: 52, borderRadius: 12, paddingHorizontal: 16, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.canvas, color: theme.ink },
+  input: { minHeight: 52, borderRadius: 12, paddingHorizontal: 16, borderWidth: 1, borderColor: theme.controlBorder, backgroundColor: theme.canvas, color: theme.ink },
   field: { minHeight: 52, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.canvas, color: theme.ink },
   footer: { backgroundColor: theme.surface, paddingHorizontal: 20, paddingVertical: 16 },
-  action: { backgroundColor: theme.coral, borderRadius: 12, minHeight: 50, alignItems: "center", justifyContent: "center" },
+  action: { backgroundColor: theme.primary, borderRadius: 12, minHeight: 50, alignItems: "center", justifyContent: "center" },
   disabled: { opacity: 0.55 },
-  actionText: { color: theme.ink, fontWeight: "600", fontSize: 14 },
+  actionText: { color: theme.onPrimary, fontWeight: "600", fontSize: 14 },
   error: { color: theme.error },
-});
+}));

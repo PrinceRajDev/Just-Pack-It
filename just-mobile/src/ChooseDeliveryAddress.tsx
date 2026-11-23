@@ -1,10 +1,9 @@
-import { theme } from "./theme";
+import { theme, themedStyles } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
-import {
+import { StyleSheet,
   ActivityIndicator,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from "react-native";
@@ -172,8 +171,7 @@ export function ChooseDeliveryAddress({
   );
 }
 
-const green = theme.accentInk;
-const s = StyleSheet.create({
+const s = themedStyles(() => StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.canvas },
   header: {
     height: 64,
@@ -183,8 +181,8 @@ const s = StyleSheet.create({
     gap: 14,
   },
   backButton: { minHeight: 44, justifyContent: "center" },
-  arrow: { color: green, fontSize: 27, lineHeight: 30 },
-  headerText: { color: green, fontSize: 18, fontWeight: "500" },
+  arrow: { color: theme.accentInk, fontSize: 27, lineHeight: 30 },
+  headerText: { color: theme.accentInk, fontSize: 18, fontWeight: "500" },
   scroll: { flex: 1 },
   content: {
     paddingHorizontal: 20,
@@ -202,20 +200,20 @@ const s = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: theme.surface,
   },
-  selected: { borderColor: green },
+  selected: { borderColor: theme.accentInk },
   labelRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   radio: {
     width: 13,
     height: 13,
     borderRadius: 7,
     borderWidth: 1.5,
-    borderColor: green,
+    borderColor: theme.accentInk,
     alignItems: "center",
     justifyContent: "center",
   },
-  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.coral },
+  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.primary },
   label: {
-    color: green,
+    color: theme.accentInk,
     fontSize: 16,
     lineHeight: 22,
     fontWeight: "600",
@@ -241,12 +239,12 @@ const s = StyleSheet.create({
     gap: 8,
   },
   buttonText: {
-    color: green,
+    color: theme.accentInk,
     fontSize: 15,
     fontWeight: "600",
     textAlign: "center",
   },
-  add: { backgroundColor: theme.lime },
+  add: { backgroundColor: theme.selected },
   footer: {
     paddingHorizontal: 20,
     paddingVertical: 16,
@@ -254,8 +252,8 @@ const s = StyleSheet.create({
     borderColor: theme.border,
     backgroundColor: theme.surface,
   },
-  confirm: { backgroundColor: theme.coral },
-  confirmText: { color: theme.ink },
+  confirm: { backgroundColor: theme.primary },
+  confirmText: { color: theme.onPrimary },
   disabled: { opacity: 0.55 },
   error: { color: theme.error, fontSize: 14, lineHeight: 20 },
-});
+}));

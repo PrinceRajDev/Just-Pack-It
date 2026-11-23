@@ -1,6 +1,6 @@
-import { theme } from "./theme";
+import { theme, themedStyles } from "./theme";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
+import { StyleSheet, useColorScheme, ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, TextInput, View, type TextInputProps } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { ApiError, buyerApi, marketApi, type Category, type ServiceArea, type Session } from "./api";
 import { StatusBar } from "expo-status-bar";
@@ -19,6 +19,7 @@ type Step = "login" | "account" | "email" | "shop" | "delivery" | "review" | "st
 const backSteps: Partial<Record<Step, Step>> = { account:"login", email:"account", delivery:"shop", review:"delivery", recovery:"login" };
 
 export function SellerAccess({ close, initialSession }: { close: () => void; initialSession?: Session }) {
+  const colorScheme = useColorScheme();
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [step, setStep] = useState<Step>(() => initialSession ? "status" : "login");
   const [session, setSession] = useState<Session | null>(() => initialSession ?? null);
@@ -160,7 +161,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     else close();
   };
 
-  if (workspaceOpen && session) return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style="dark" /><SellerWorkspace session={session} back={back} signOut={signOut} expired={expire} /></SafeAreaView></SafeAreaProvider></Modal>;
+  if (workspaceOpen && session) return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style={colorScheme === "dark" ? "light" : "dark"} /><SellerWorkspace session={session} back={back} signOut={signOut} expired={expire} /></SafeAreaView></SafeAreaProvider></Modal>;
   if (step === "recovery") return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><BuyerRecovery back={() => go("login")} /></SafeAreaView></SafeAreaProvider></Modal>;
   const title = picker === "area" ? "Choose service area" : picker === "category" ? "Choose category" :
     {login:"Welcome back", account:"Create seller account", email:"Check your email", shop:"Tell us about your shop", delivery:"Address & fulfilment", review:"Review your shop", status:"Your seller workspace"}[step];
@@ -214,7 +215,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   }));
   if (!picker && step === "status") action = button("Open seller workspace", () => setWorkspaceOpen(true));
 
-  return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style="dark" />
+  return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
     <View style={s.header}><Text style={s.brand}>JustPackIt</Text><Text style={s.kicker}>SELLER</Text>{link(step === "login" || step === "status" ? "Close" : "Back", back)}</View>
     {restoring ? <ActivityIndicator style={s.loader} color={theme.accentInk} /> : <>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
@@ -289,18 +290,18 @@ function Field({label,suffix,...props}:TextInputProps & {label:string; suffix?:R
   return <View style={s.field}><Text style={s.label}>{label}</Text><View style={s.inputRow}><TextInput {...props} accessibilityLabel={label} placeholderTextColor={theme.secondary} style={s.input}/>{suffix}</View></View>;
 }
 
-const s = StyleSheet.create({
+const s = themedStyles(() => StyleSheet.create({
   screen:{flex:1,backgroundColor:theme.canvas}, header:{minHeight:64,paddingHorizontal:20,flexDirection:"row",alignItems:"center",gap:16,width:"100%",maxWidth:540,alignSelf:"center"},
   brand:{color:theme.accentInk,fontSize:22,fontWeight:"700",flex:1}, kicker:{fontSize:11,color:theme.accentInk,fontWeight:"700"},
   content:{padding:20,paddingTop:20,gap:16,width:"100%",maxWidth:540,alignSelf:"center"}, title:{fontSize:29,lineHeight:38,color:theme.ink,fontWeight:"700"},
-  cover:{borderRadius:22,overflow:"hidden",backgroundColor:theme.peach},
+  cover:{borderRadius:22,overflow:"hidden",backgroundColor:theme.hero},
   coverPhoto:{width:"100%",height:120},
   coverCopy:{padding:16,gap:4},
   coverTitle:{color:theme.ink,fontSize:29,lineHeight:34,letterSpacing:-0.7,fontWeight:"700"},
   coverCaption:{color:theme.secondary,fontSize:14,lineHeight:20},
   stepHeading:{gap:4,paddingHorizontal:12,paddingVertical:8,borderLeftWidth:4,borderColor:theme.warningBorder},
-  copy:{fontSize:14,lineHeight:20,color:theme.secondary}, sage:{backgroundColor:theme.lime,borderRadius:16,padding:14,gap:6}, panel:{backgroundColor:theme.surface,borderRadius:16,borderWidth:1,borderColor:theme.border,padding:16,gap:8},
-  field:{gap:8},label:{fontSize:15,fontWeight:"600",color:theme.ink},inputRow:{flexDirection:"row",alignItems:"center",backgroundColor:theme.surface,borderWidth:1,borderColor:theme.border,borderRadius:12},
+  copy:{fontSize:14,lineHeight:20,color:theme.secondary}, sage:{backgroundColor:theme.selected,borderRadius:16,padding:14,gap:6}, panel:{backgroundColor:theme.surface,borderRadius:16,borderWidth:1,borderColor:theme.border,padding:16,gap:8},
+  field:{gap:8},label:{fontSize:15,fontWeight:"600",color:theme.ink},inputRow:{flexDirection:"row",alignItems:"center",backgroundColor:theme.surface,borderWidth:1,borderColor:theme.controlBorder,borderRadius:12},
   input:{flex:1,minHeight:50,padding:12,color:theme.ink,fontSize:15},link:{minHeight:44,justifyContent:"center",alignItems:"center",paddingHorizontal:10},linkText:{color:theme.accentInk,textAlign:"center",fontWeight:"600"},
   codeRow:{flexDirection:"row",gap:8,position:"relative"},
   codeCell:{flex:1,minHeight:54,borderWidth:1,borderColor:theme.border,borderRadius:10,backgroundColor:theme.surface,alignItems:"center",justifyContent:"center"},
@@ -308,5 +309,5 @@ const s = StyleSheet.create({
   codeDigit:{fontSize:24,color:theme.ink,fontWeight:"700"},
   codeInput:{position:"absolute",top:0,right:0,bottom:0,left:0,opacity:0,color:"transparent",backgroundColor:"transparent",fontSize:18},
   disabledText:{color:theme.secondary},
-  footer:{paddingHorizontal:20,paddingVertical:12,gap:4,width:"100%",maxWidth:540,alignSelf:"center",backgroundColor:theme.surface,borderTopWidth:1,borderColor:theme.border},button:{minHeight:50,backgroundColor:theme.coral,borderRadius:12,justifyContent:"center",alignItems:"center"},buttonText:{color:theme.ink,fontSize:15,fontWeight:"600"},disabled:{backgroundColor:theme.disabled},error:{color:theme.error,fontSize:14,lineHeight:20},loader:{padding:30},
-});
+  footer:{paddingHorizontal:20,paddingVertical:12,gap:4,width:"100%",maxWidth:540,alignSelf:"center",backgroundColor:theme.surface,borderTopWidth:1,borderColor:theme.border},button:{minHeight:50,backgroundColor:theme.primary,borderRadius:12,justifyContent:"center",alignItems:"center"},buttonText:{color:theme.onPrimary,fontSize:15,fontWeight:"600"},disabled:{backgroundColor:theme.disabled},error:{color:theme.error,fontSize:14,lineHeight:20},loader:{padding:30},
+}));

@@ -1,9 +1,8 @@
-import { theme } from "./theme";
+import { theme, themedStyles } from "./theme";
 import { useEffect, useRef, useState } from "react";
-import {
+import { StyleSheet,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -263,11 +262,11 @@ export function BuyerRecovery({ back }: { back: () => void }) {
   );
 }
 
-const s = StyleSheet.create({
+const s = themedStyles(() => StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.canvas },
   scroll: { flex: 1 },
   footer: { padding: 16, paddingHorizontal: 20, backgroundColor: theme.surface, borderTopWidth: 1, borderColor: theme.border },
-  resend: { backgroundColor: theme.lime },
+  resend: { backgroundColor: theme.selected },
   page: {
     paddingHorizontal: 20,
     paddingBottom: 24,
@@ -288,14 +287,14 @@ const s = StyleSheet.create({
   input: {
     minHeight: 52,
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: theme.controlBorder,
     borderRadius: 12,
     paddingHorizontal: 12,
     backgroundColor: theme.canvas,
     color: theme.ink,
   },
   button: {
-    backgroundColor: theme.coral,
+    backgroundColor: theme.primary,
     borderRadius: 12,
     minHeight: 48,
     alignItems: "center",
@@ -303,11 +302,11 @@ const s = StyleSheet.create({
     padding: 10,
   },
   disabled: { backgroundColor: theme.muted },
-  buttonText: { color: theme.ink, fontWeight: "600", textAlign: "center" },
+  buttonText: { color: theme.onPrimary, fontWeight: "600", textAlign: "center" },
   link: {
     color: theme.accentInk,
     textAlign: "center",
     fontWeight: "600",
     paddingVertical: 12,
   },
-});
+}));

@@ -1,4 +1,4 @@
-import { theme } from "./theme";
+import { theme, themedStyles } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useAndroidBack } from "./useAndroidBack";
@@ -8,11 +8,10 @@ import { BuyerAddresses } from "./BuyerAddresses";
 import { ChooseDeliveryAddress } from "./ChooseDeliveryAddress";
 import * as storage from "./deviceStorage";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import {
+import { StyleSheet,
   Modal,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from "react-native";
@@ -574,8 +573,7 @@ function Section({ title }: { title: string }) {
   return <View style={s.sectionRow}><Text style={s.section}>{title}</Text><View style={s.rule} /></View>;
 }
 
-const green = theme.accentInk;
-const s = StyleSheet.create({
+const s = themedStyles(() => StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.canvas },
   header: {
     height: 64,
@@ -585,23 +583,23 @@ const s = StyleSheet.create({
     gap: 14,
   },
   backButton: { minHeight: 44, justifyContent: "center" },
-  arrow: { color: green, fontSize: 27, lineHeight: 30 },
-  headerText: { color: green, fontSize: 18, fontWeight: "500" },
+  arrow: { color: theme.accentInk, fontSize: 27, lineHeight: 30 },
+  headerText: { color: theme.accentInk, fontSize: 18, fontWeight: "500" },
   scroll: { flex: 1 },
   page: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20, gap: 16 },
   sectionRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   rule: { backgroundColor: theme.border, height: 1, flex: 1 },
-  selected: { borderColor: green },
-  paymentCard: { backgroundColor: theme.lime, borderColor: green },
-  change: { alignSelf: "flex-end", backgroundColor: theme.lime, minHeight: 40, paddingHorizontal: 22, paddingVertical: 8 },
+  selected: { borderColor: theme.accentInk },
+  paymentCard: { backgroundColor: theme.selected, borderColor: theme.accentInk },
+  change: { alignSelf: "flex-end", backgroundColor: theme.selected, minHeight: 40, paddingHorizontal: 22, paddingVertical: 8 },
   shopRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   shopInfo: { flex: 1 },
-  shopIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: theme.lime, alignItems: "center", justifyContent: "center" },
+  shopIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: theme.selected, alignItems: "center", justifyContent: "center" },
   wallet: { backgroundColor: theme.surface, width: 40, height: 40 },
   section: {
     fontSize: 11,
     lineHeight: 15,
-    color: green,
+    color: theme.accentInk,
     fontWeight: "400",
   },
   card: {
@@ -611,7 +609,7 @@ const s = StyleSheet.create({
     borderColor: theme.border,
     backgroundColor: theme.surface,
   },
-  choice: { color: green, fontSize: 16, fontWeight: "600", lineHeight: 22 },
+  choice: { color: theme.accentInk, fontSize: 16, fontWeight: "600", lineHeight: 22 },
   contact: {
     fontSize: 13,
     lineHeight: 18,
@@ -628,9 +626,9 @@ const s = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: theme.surface,
   },
-  action: { color: green, fontSize: 15, fontWeight: "600" },
-  primary: { backgroundColor: theme.coral },
-  primaryText: { color: theme.ink, fontSize: 15, fontWeight: "600" },
+  action: { color: theme.accentInk, fontSize: 15, fontWeight: "600" },
+  primary: { backgroundColor: theme.primary },
+  primaryText: { color: theme.onPrimary, fontSize: 15, fontWeight: "600" },
   disabled: { opacity: 0.5 },
   shopTitle: {
     color: theme.ink,
@@ -638,7 +636,7 @@ const s = StyleSheet.create({
     lineHeight: 21,
     fontWeight: "600",
   },
-  delivery: { color: green, fontSize: 12, lineHeight: 17, marginTop: 3 },
+  delivery: { color: theme.accentInk, fontSize: 12, lineHeight: 17, marginTop: 3 },
   shopSpacing: { marginTop: 12 },
   note: { color: theme.muted, fontSize: 10, lineHeight: 14, marginTop: 10 },
   footer: {
@@ -651,10 +649,10 @@ const s = StyleSheet.create({
     gap: 8,
   },
   paymentSummary: {
-    color: green,
+    color: theme.accentInk,
     fontSize: 12,
     lineHeight: 17,
     fontWeight: "600",
   },
   error: { color: theme.error, fontSize: 13, lineHeight: 18 },
-});
+}));

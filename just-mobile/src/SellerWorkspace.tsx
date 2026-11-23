@@ -50,7 +50,13 @@ function sellerPaymentLabel(order: SellerOrder) {
   if (order.paymentMethod === "razorpay") {
     return order.paymentStatus === "paid" ? "Paid online" : "Online payment pending";
   }
-  return order.cashCollection ? "Cash recorded" : "Cash on delivery";
+  if (order.cashCollection) return "Cash recorded";
+  return order.status === "cancelled" ? "No cash to collect" : "Cash on delivery";
+}
+
+function sellerCashDue(order: SellerOrder) {
+  return !order.testMode && order.paymentMethod === "cod" && !order.cashCollection
+    && order.status !== "cancelled" && order.status !== "delivered" && order.amountDue > 0;
 }
 const payoutDate = new Intl.DateTimeFormat("en-IN", {day:"numeric",month:"short",year:"numeric",timeZone:"Asia/Kolkata"});
 
@@ -286,9 +292,10 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
         </Pressable>;
       })}</SellerCard>
       <View style={styles.paymentTicket}>
-        <View style={styles.orderTop}><Text style={[styles.title,styles.grow]}>{sellerPaymentLabel(order)}</Text><Text style={styles.orderAmount}>{rupees(order.total)}</Text></View>
+        <View style={styles.orderTop}><Text style={[styles.title,styles.grow]}>{sellerPaymentLabel(order)}</Text>{order.status !== "cancelled" && <Text style={styles.orderAmount}>{rupees(order.total)}</Text>}</View>
         <Text style={styles.copy}>Items {rupees(order.itemsSubtotal)} · Delivery {rupees(order.deliveryFee)}</Text>
-        {order.paymentMethod === "cod" && !order.cashCollection && <Text style={styles.label}>{rupees(order.amountDue)} due</Text>}
+        {sellerCashDue(order) && <Text style={styles.label}>{rupees(order.amountDue)} due</Text>}
+        {order.status === "cancelled" && <Text style={styles.copy}>Original order total · {rupees(order.total)}</Text>}
         {order.refund && <Text style={styles.copy}>Refund {order.refund.state} · {rupees(order.refund.amount)}</Text>}
         {order.cancelReason && <Text style={styles.copy}>Cancellation · {order.cancelReason}</Text>}
       </View>
@@ -372,9 +379,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
       const nextStep = order.status === "ready" && order.fulfilment === "platform_delivery" && order.delivery?.state !== "claimed"
         ? "View order" : orderNextStep[order.status] ?? "View details";
       const riderStatus = readyRiderLabel(order);
-      const cashDue = !order.testMode && order.paymentMethod === "cod" && !order.cashCollection
-        && order.status !== "cancelled" && order.status !== "delivered" && order.amountDue > 0
-        ? `Cash due ${rupees(order.amountDue)}` : undefined;
+      const cashDue = sellerCashDue(order) ? `Cash due ${rupees(order.amountDue)}` : undefined;
       return <Pressable key={order.id} accessibilityRole="button" accessibilityLabel={[reference,status,riderStatus,packingProgressLabel,cashDue].filter(Boolean).join(", ")} accessibilityHint={nextStep} onPress={() => setSelected(order)}
         style={({pressed}) => [styles.dispatchTicket, pressed && styles.pressed]}>
         <View style={styles.dispatchTicketBody}>
@@ -397,7 +402,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
           </View>
         </View>
         <View style={styles.dispatchTicketFooter}>
-          <Text style={styles.orderAmount}>{cashDue ?? rupees(order.total)}</Text>
+          <Text style={styles.orderAmount}>{cashDue ?? (order.status === "cancelled" ? `Original ${rupees(order.total)}` : rupees(order.total))}</Text>
           <Text style={styles.dispatchTicketLink}>{nextStep}  ›</Text>
         </View>
       </Pressable>;

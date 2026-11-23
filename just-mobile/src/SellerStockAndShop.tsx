@@ -17,6 +17,16 @@ function stockLevels(item: SellerProduct) {
   return item.variants?.length ? item.variants.map(option => option.stock) : [item.stock];
 }
 
+function matchesCatalogueFilter(item: SellerProduct, filter: typeof filters[number]) {
+  switch (filter) {
+    case "All": return true;
+    case "Active": return item.active;
+    case "Inactive": return !item.active;
+    case "Low stock": return item.active && stockLevels(item).some(stock => stock > 0 && stock <= 5);
+    case "Out of stock": return item.active && stockLevels(item).some(stock => stock === 0);
+  }
+}
+
 export function SellerCatalogue({token,lowStock}:{token:string;lowStock:boolean}) {
   const listing = useSellerPages(sellerApi.products,token);
   const [query,setQuery] = useState("");
@@ -35,13 +45,9 @@ export function SellerCatalogue({token,lowStock}:{token:string;lowStock:boolean}
       setStockProduct(undefined);
       listing.reload();
     }} />;
-  const rows = listing.data?.items.filter(item => {
-    const stocks = stockLevels(item);
-    return item.name.toLowerCase().includes(query.trim().toLowerCase()) &&
-      (filter === "All" || (filter==="Active" && item.active) || (filter==="Inactive" && !item.active) ||
-        (filter==="Low stock" && item.active && stocks.some(value => value > 0 && value <= 5)) ||
-        (filter==="Out of stock" && item.active && stocks.some(value => value === 0)));
-  });
+  const term = query.trim().toLowerCase();
+  const matching = listing.data?.items.filter(item => item.name.toLowerCase().includes(term));
+  const rows = matching?.filter(item => matchesCatalogueFilter(item,filter));
   return <SellerScroll refreshing={listing.loading} onRefresh={listing.reload}>
     <View style={styles.catalogueHero}>
       <View style={styles.catalogueHeroCopy}>
@@ -60,8 +66,15 @@ export function SellerCatalogue({token,lowStock}:{token:string;lowStock:boolean}
       </View>
       <View style={styles.chips}>{filters.map(value => {
         const selected = value === filter;
-        return <Pressable key={value} accessibilityRole="tab" accessibilityState={{selected}} style={[styles.chip,styles.catalogueChip,selected && styles.dispatchModeActive]} onPress={() => setFilter(value)}><Text style={selected ? styles.dispatchModeTextActive : styles.link}>{value}</Text></Pressable>;
+        const count = value === "Low stock" || value === "Out of stock"
+          ? matching?.filter(item => matchesCatalogueFilter(item,value)).length : undefined;
+        return <Pressable key={value} accessibilityRole="tab" accessibilityLabel={value}
+          accessibilityHint={count === undefined ? undefined : `${count} matching products loaded`}
+          accessibilityState={{selected}} style={[styles.chip,styles.catalogueChip,selected && styles.dispatchModeActive]} onPress={() => setFilter(value)}>
+          <Text style={selected ? styles.dispatchModeTextActive : styles.link}>{value}{count === undefined ? "" : ` · ${count}`}</Text>
+        </Pressable>;
       })}</View>
+      {listing.data?.next && <Text style={styles.copy}>Counts reflect loaded products.</Text>}
     </View>
     <View style={styles.orderTop}>
       <Text accessibilityRole="header" style={[styles.section,styles.grow]}>{filter === "All" ? "Products" : filter}</Text>
@@ -70,7 +83,10 @@ export function SellerCatalogue({token,lowStock}:{token:string;lowStock:boolean}
     <LoadState error={listing.error} loading={listing.loading&&!listing.data} retry={listing.reload} />
     <MutationFeedback error={open.error} />
     {!!notice && <Text accessibilityLiveRegion="polite" style={styles.catalogueNotice}>{notice}</Text>}
-    {!listing.loading && !listing.error && !rows?.length && <BuyerStateCard title="No products in this view" copy="Add a product or try a different search or filter." icon="bag" />}
+    {!listing.loading && !listing.error && !rows?.length && <BuyerStateCard title="No products in this view"
+      copy={listing.data?.next ? "Load more products to check the rest of your catalogue." : "Add a product or try a different search or filter."}
+      icon="bag" action={term || filter !== "All" ? "Reset filters" : undefined}
+      onAction={() => { setQuery(""); setFilter("All"); }} />}
     {rows?.map(item => <CatalogueProduct key={item.id} item={item} disabled={open.busy}
       onPress={() => void open.run(async () => { setNotice(""); setEdit(await sellerApi.product(token,item.id)); })}
       onPhoto={() => void open.run(async () => {

@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { useState } from "react";
 import { Image, Pressable, Text, TextInput, View } from "react-native";
 import { marketApi } from "./api";
@@ -71,7 +72,7 @@ export function SellerCatalogue({token,stockFilter}:{token:string;stockFilter?:S
     </View>
     <View style={styles.catalogueFilters}>
       <View style={styles.catalogueSearch}>
-        <TextInput accessibilityLabel="Search products" placeholder="Search by name or pack size" placeholderTextColor="#57665E" value={query} onChangeText={setQuery} returnKeyType="search" style={styles.catalogueSearchInput} />
+        <TextInput accessibilityLabel="Search products" placeholder="Search by name or pack size" placeholderTextColor={theme.secondary} value={query} onChangeText={setQuery} returnKeyType="search" style={styles.catalogueSearchInput} />
         {!!query && <Pressable accessibilityRole="button" accessibilityLabel="Clear product search" onPress={() => setQuery("")} style={styles.catalogueAction}><Text style={styles.link}>Clear</Text></Pressable>}
       </View>
       <View style={styles.chips}>{filters.map(value => {

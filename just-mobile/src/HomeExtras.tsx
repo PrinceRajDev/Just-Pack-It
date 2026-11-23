@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useState, type ReactNode } from "react";
 import {
@@ -47,20 +48,20 @@ export function HomeNotifications({ session }: { session: Session | null }) {
         animationType="slide"
         onRequestClose={() => setOpen(false)}
       >
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#FAF8F1" }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.canvas }}>
           <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
             <Pressable onPress={() => setOpen(false)}>
-              <Text style={{ color: "#07552F", paddingVertical: 12 }}>
+              <Text style={{ color: theme.accentInk, paddingVertical: 12 }}>
                 ← Home
               </Text>
             </Pressable>
-            <Text style={{ fontSize: 26, color: "#202820" }}>
+            <Text style={{ fontSize: 26, color: theme.ink }}>
               Notifications
             </Text>
             {!session ? (
               <Text>Sign in from Account to see your updates.</Text>
             ) : busy ? (
-              <ActivityIndicator color="#07552F" />
+              <ActivityIndicator color={theme.accentInk} />
             ) : error ? (
               <Pressable onPress={() => void load()}>
                 <Text>Could not load updates. Tap to retry.</Text>
@@ -72,16 +73,16 @@ export function HomeNotifications({ session }: { session: Session | null }) {
                   style={{
                     padding: 16,
                     borderRadius: 12,
-                    backgroundColor: "#fff",
+                    backgroundColor: theme.surface,
                     borderWidth: 1,
-                    borderColor: "#E5E2D8",
+                    borderColor: theme.surfaceSoft,
                   }}
                 >
-                  <Text style={{ fontWeight: "600", color: "#202820" }}>
+                  <Text style={{ fontWeight: "600", color: theme.ink }}>
                     {item.title}
                   </Text>
                   <Text
-                    style={{ marginTop: 8, color: "#5E554A", lineHeight: 21 }}
+                    style={{ marginTop: 8, color: theme.secondary, lineHeight: 21 }}
                   >
                     {item.body}
                   </Text>
@@ -158,14 +159,14 @@ export function BuyAgain({
         padding: 14,
         minHeight: 128,
         borderRadius: 16,
-        backgroundColor: "#EAF0D9",
+        backgroundColor: theme.lime,
       }}
     >
       {unavailable && <View style={{marginBottom:16}}><BuyerStateCard title="Some favourites are unavailable" copy={`${unavailable.name} is out of stock. Explore similar items nearby.`} tone="warning" icon="shop" compact action="Browse alternatives" onAction={() => onBrowseAlternatives(unavailable.name)} /></View>}
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
         <MarketIcon name="bag" />
         <Text
-          style={{ fontSize: 18, fontWeight: "600", color: "#07552F", flex: 1 }}
+          style={{ fontSize: 18, fontWeight: "600", color: theme.accentInk, flex: 1 }}
         >
           Buy Again
         </Text>
@@ -173,20 +174,20 @@ export function BuyAgain({
           onPress={() => (session ? setExpanded(!expanded) : onAccount())}
           accessibilityLabel="Show recent purchases"
         >
-          <Text style={{ fontSize: 20, color: "#07552F" }}>→</Text>
+          <Text style={{ fontSize: 20, color: theme.accentInk }}>→</Text>
         </Pressable>
       </View>
-      <Text style={{ fontSize: 11, color: "#687161", marginTop: 6 }}>
+      <Text style={{ fontSize: 11, color: theme.muted, marginTop: 6 }}>
         Your favourites, one tap away
       </Text>
       {!session ? (
         <Pressable onPress={onAccount}>
-          <Text style={{ fontSize: 12, color: "#07552F", marginTop: 16 }}>
+          <Text style={{ fontSize: 12, color: theme.accentInk, marginTop: 16 }}>
             Sign in to see your purchases →
           </Text>
         </Pressable>
       ) : !done ? (
-        <ActivityIndicator color="#07552F" style={{ marginTop: 16 }} />
+        <ActivityIndicator color={theme.accentInk} style={{ marginTop: 16 }} />
       ) : product ? (
         <View
           style={{
@@ -202,18 +203,18 @@ export function BuyAgain({
               width: 40,
               height: 40,
               borderRadius: 8,
-              backgroundColor: "#FAF8F1",
+              backgroundColor: theme.canvas,
             }}
           />
           <View style={{ flex: 1 }}>
             <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: "600" }}>
               {product.name}
             </Text>
-            <Text style={{ fontSize: 10, color: "#687161", marginTop: 4 }}>
+            <Text style={{ fontSize: 10, color: theme.muted, marginTop: 4 }}>
               {product.unit}
             </Text>
           </View>
-          <Text style={{ fontSize: 12, color: "#07552F", fontWeight: "600" }}>
+          <Text style={{ fontSize: 12, color: theme.accentInk, fontWeight: "600" }}>
             ₹{product.price.toLocaleString("en-IN")}
           </Text>
           <Pressable
@@ -223,7 +224,7 @@ export function BuyAgain({
             }
             style={{ padding: 8 }}
           >
-            <Text style={{ fontSize: 11, color: "#07552F", fontWeight: "600" }}>
+            <Text style={{ fontSize: 11, color: theme.accentInk, fontWeight: "600" }}>
               {product.stock <= 0 ? "Out" : "+ Add"}
             </Text>
           </Pressable>
@@ -233,7 +234,7 @@ export function BuyAgain({
           style={{
             fontSize: 12,
             lineHeight: 18,
-            color: "#687161",
+            color: theme.muted,
             marginTop: 16,
           }}
         >

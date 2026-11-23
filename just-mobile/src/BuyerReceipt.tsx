@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { buyerApi } from "./api";
@@ -126,24 +127,24 @@ const s = StyleSheet.create({
   card: {
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#07552F",
-    backgroundColor: "#fff",
+    borderColor: theme.accentInk,
+    backgroundColor: theme.surface,
     padding: 20,
     gap: 12,
   },
-  heading: { color: "#07552F", fontSize: 18, fontWeight: "600" },
+  heading: { color: theme.accentInk, fontSize: 18, fontWeight: "600" },
   digits: { flexDirection: "row", gap: 10 },
-  digit: { flex: 1, minHeight: 66, borderRadius: 12, backgroundColor: "#EAF0D9", alignItems: "center", justifyContent: "center" },
+  digit: { flex: 1, minHeight: 66, borderRadius: 12, backgroundColor: theme.lime, alignItems: "center", justifyContent: "center" },
   code: {
-    color: "#07552F",
+    color: theme.accentInk,
     fontSize: 28,
     lineHeight: 50,
 
     fontWeight: "600",
   },
-  copy: { color: "#252D25", fontSize: 14, lineHeight: 20, fontWeight: "600" },
-  action: { minHeight: 50, backgroundColor: "#EAF0D9", borderRadius: 12, justifyContent: "center", alignItems: "center" },
-  link: { color: "#07552F", fontSize: 15, fontWeight: "600" },
-  error: { color: "#A23425" },
+  copy: { color: theme.ink, fontSize: 14, lineHeight: 20, fontWeight: "600" },
+  action: { minHeight: 50, backgroundColor: theme.lime, borderRadius: 12, justifyContent: "center", alignItems: "center" },
+  link: { color: theme.accentInk, fontSize: 15, fontWeight: "600" },
+  error: { color: theme.error },
   delivered: { alignItems: "center", opacity: 0.6 },
 });

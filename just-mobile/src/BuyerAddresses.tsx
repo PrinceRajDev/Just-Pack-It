@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
@@ -84,12 +85,12 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
     <View style={s.header}><Pressable accessibilityLabel="Back to Account" onPress={back} hitSlop={10}><Text style={s.headerText}>‹</Text></Pressable><Text style={s.headerText}>Saved addresses</Text></View>
     <ScrollView contentContainerStyle={s.content}>
       {!!savedLabel && <BuyerStateCard title={`${savedLabel} address saved`} copy="You can select this address at checkout. Your browsing area stays the same." tone="success" compact action="Back to Account" onAction={back} />}
-      <View style={s.hero}><View style={s.icon}><MarketIcon name="home" color="#07552F" /></View><Text style={s.heroTitle}>Your familiar places.</Text></View>
+      <View style={s.hero}><View style={s.icon}><MarketIcon name="home" color={theme.accentInk} /></View><Text style={s.heroTitle}>Your familiar places.</Text></View>
       {error ? <><Text accessibilityRole="alert" style={s.error}>{error}</Text><Pressable onPress={() => void reload()}><Text style={s.link}>Reload addresses</Text></Pressable></> : null}
-      {loading ? <ActivityIndicator color="#07552F" /> : rows.map(row => {
+      {loading ? <ActivityIndicator color={theme.accentInk} /> : rows.map(row => {
         const isDefault = row.id === defaultId;
         return <View key={row.id} style={[s.savedCard, isDefault && s.defaultCard]}>
-          <View style={s.addressHeading}><View style={s.icon}><MarketIcon name="home" color="#07552F" /></View><Text style={s.headerText}>{row.label}{isDefault ? " · Default" : ""}</Text></View>
+          <View style={s.addressHeading}><View style={s.icon}><MarketIcon name="home" color={theme.accentInk} /></View><Text style={s.headerText}>{row.label}{isDefault ? " · Default" : ""}</Text></View>
           <Text style={s.copy}>{row.line1}{"\n"}{row.locality}, {row.city} · {row.pincode}</Text>
           <View style={s.savedActions}>
             <Pressable disabled={busy} onPress={() => { setEditing(row); setDraft({ label: row.label, line1: row.line1, locality: row.locality, city: row.city, pincode: row.pincode }); setError(null); }}><Text style={s.link}>Edit</Text></Pressable>
@@ -102,28 +103,28 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
     </ScrollView>
     <View style={s.footer}><Pressable disabled={busy} onPress={() => { setDraft({ ...blank }); setEditing(null); setError(null); }} style={s.primary}><Text style={s.buttonText}>+ Add new address</Text></Pressable></View>
   </View>;
-  return <ScrollView contentContainerStyle={s.page} keyboardShouldPersistTaps="handled"><Pressable disabled={busy} onPress={draft && !checkout ? () => { setDraft(null); setEditing(null); setError(null); } : back}><Text style={s.link}>← {checkout ? "Choose address" : draft ? "Address list" : "Account"}</Text></Pressable><Text style={s.title}>{draft ? editing ? "Edit address" : "Add address" : "Saved addresses"}</Text><Text style={s.copy}>Delivery availability is checked separately at checkout</Text>{error ? <Text accessibilityRole="alert" style={s.error}>{error}</Text> : null}{draft ? <View>{fields.map(({ key, label }) => <View key={key}><Text style={s.label}>{label}</Text><TextInput editable={!busy} accessibilityLabel={label} value={draft[key]} onChangeText={(value) => setDraft((old) => old ? { ...old, [key]: value } : old)} keyboardType={key === "pincode" ? "number-pad" : "default"} maxLength={key === "pincode" ? 6 : key === "line1" ? 300 : key === "label" ? 60 : 120} style={s.input} /></View>)}{checkout ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: makeDefault }} aria-checked={makeDefault} disabled={busy} onPress={() => setMakeDefault(value => !value)} style={s.link}><Text style={{color: "#07552F"}}>{makeDefault ? "✓ " : ""}Set as default on this device</Text></Pressable> : null}<Pressable disabled={busy} onPress={() => void save()} style={s.button}><Text style={s.buttonText}>{busy ? "Saving…" : "Save address"}</Text></Pressable></View> : loading ? <ActivityIndicator color="#174B34" /> : <View><Pressable disabled={busy} onPress={() => { setDraft({ ...blank }); setEditing(null); setError(null); }} style={s.button}><Text style={s.buttonText}>Add new address</Text></Pressable>{error ? <Pressable onPress={() => void reload()}><Text style={s.link}>Reload addresses</Text></Pressable> : null}{rows.map((row) => <View key={row.id} style={s.card}><Text style={s.label}>{row.label}</Text><Text style={s.copy}>{row.line1}{"\n"}{row.locality}, {row.city} {row.pincode}</Text><View style={s.actions}><Pressable disabled={busy} onPress={() => { const { id: _id, version: _version, ...values } = row; setEditing(row); setDraft({ label: values.label, line1: values.line1, locality: values.locality, city: values.city, pincode: values.pincode }); setError(null); }}><Text style={s.link}>Edit</Text></Pressable><Pressable disabled={busy} onPress={() => remove(row)}><Text style={s.error}>Delete</Text></Pressable></View></View>)}{!rows.length && !error ? <Text style={s.copy}>No saved addresses yet</Text> : null}</View>}</ScrollView>;
+  return <ScrollView contentContainerStyle={s.page} keyboardShouldPersistTaps="handled"><Pressable disabled={busy} onPress={draft && !checkout ? () => { setDraft(null); setEditing(null); setError(null); } : back}><Text style={s.link}>← {checkout ? "Choose address" : draft ? "Address list" : "Account"}</Text></Pressable><Text style={s.title}>{draft ? editing ? "Edit address" : "Add address" : "Saved addresses"}</Text><Text style={s.copy}>Delivery availability is checked separately at checkout</Text>{error ? <Text accessibilityRole="alert" style={s.error}>{error}</Text> : null}{draft ? <View>{fields.map(({ key, label }) => <View key={key}><Text style={s.label}>{label}</Text><TextInput editable={!busy} accessibilityLabel={label} value={draft[key]} onChangeText={(value) => setDraft((old) => old ? { ...old, [key]: value } : old)} keyboardType={key === "pincode" ? "number-pad" : "default"} maxLength={key === "pincode" ? 6 : key === "line1" ? 300 : key === "label" ? 60 : 120} style={s.input} /></View>)}{checkout ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: makeDefault }} aria-checked={makeDefault} disabled={busy} onPress={() => setMakeDefault(value => !value)} style={s.link}><Text style={{color: theme.accentInk}}>{makeDefault ? "✓ " : ""}Set as default on this device</Text></Pressable> : null}<Pressable disabled={busy} onPress={() => void save()} style={s.button}><Text style={s.buttonText}>{busy ? "Saving…" : "Save address"}</Text></Pressable></View> : loading ? <ActivityIndicator color={theme.accentInk} /> : <View><Pressable disabled={busy} onPress={() => { setDraft({ ...blank }); setEditing(null); setError(null); }} style={s.button}><Text style={s.buttonText}>Add new address</Text></Pressable>{error ? <Pressable onPress={() => void reload()}><Text style={s.link}>Reload addresses</Text></Pressable> : null}{rows.map((row) => <View key={row.id} style={s.card}><Text style={s.label}>{row.label}</Text><Text style={s.copy}>{row.line1}{"\n"}{row.locality}, {row.city} {row.pincode}</Text><View style={s.actions}><Pressable disabled={busy} onPress={() => { const { id: _id, version: _version, ...values } = row; setEditing(row); setDraft({ label: values.label, line1: values.line1, locality: values.locality, city: values.city, pincode: values.pincode }); setError(null); }}><Text style={s.link}>Edit</Text></Pressable><Pressable disabled={busy} onPress={() => remove(row)}><Text style={s.error}>Delete</Text></Pressable></View></View>)}{!rows.length && !error ? <Text style={s.copy}>No saved addresses yet</Text> : null}</View>}</ScrollView>;
 }
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#F8F6EE" },
+  screen: { flex: 1, backgroundColor: theme.canvas },
   header: { height: 64, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", gap: 16 },
-  headerText: { color: "#07552F", fontSize: 17, fontWeight: "600", flexShrink: 1 },
+  headerText: { color: theme.accentInk, fontSize: 17, fontWeight: "600", flexShrink: 1 },
   content: { padding: 20, gap: 20 },
-  hero: { flexDirection: "row", alignItems: "center", gap: 12, padding: 20, borderRadius: 24, backgroundColor: "#E9EFD8" },
-  heroTitle: { flex: 1, color: "#07552F", fontSize: 24, fontWeight: "600" },
-  icon: { width: 40, height: 40, borderRadius: 12, backgroundColor: "#E9EFD8", alignItems: "center", justifyContent: "center" },
-  savedCard: { backgroundColor: "#FFF", borderWidth: 1, borderColor: "#DADFD0", borderRadius: 24, padding: 20, gap: 12 },
-  defaultCard: { borderColor: "#07552F" },
+  hero: { flexDirection: "row", alignItems: "center", gap: 12, padding: 20, borderRadius: 24, backgroundColor: theme.lime },
+  heroTitle: { flex: 1, color: theme.accentInk, fontSize: 24, fontWeight: "600" },
+  icon: { width: 40, height: 40, borderRadius: 12, backgroundColor: theme.lime, alignItems: "center", justifyContent: "center" },
+  savedCard: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: 24, padding: 20, gap: 12 },
+  defaultCard: { borderColor: theme.accentInk },
   addressHeading: { flexDirection: "row", alignItems: "center", gap: 12 },
-  savedActions: { flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, borderColor: "#DADFD0" },
-  footer: { padding: 16, backgroundColor: "#FFF" },
+  savedActions: { flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, borderColor: theme.border },
+  footer: { padding: 16, backgroundColor: theme.surface },
   editorContent: { padding: 20, paddingTop: 16, gap: 16 },
-  editorCard: { borderWidth: 1, borderColor: "#DADFD0", backgroundColor: "#fff", borderRadius: 24, padding: 20, gap: 12 },
+  editorCard: { borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, borderRadius: 24, padding: 20, gap: 12 },
   editorField: { flex: 1, minWidth: 0, gap: 10 },
-  editorLabel: { color: "#07552F", fontSize: 12, lineHeight: 18 },
-  editorInput: { minHeight: 52, borderWidth: 1, borderColor: "#DADFD0", borderRadius: 12, paddingHorizontal: 16, backgroundColor: "#F8F6EE", color: "#252D25" },
-  readonly: { borderWidth: 1, borderColor: "#DADFD0", borderRadius: 12, padding: 16, backgroundColor: "#F8F6EE", color: "#252D25" },
+  editorLabel: { color: theme.accentInk, fontSize: 12, lineHeight: 18 },
+  editorInput: { minHeight: 52, borderWidth: 1, borderColor: theme.border, borderRadius: 12, paddingHorizontal: 16, backgroundColor: theme.canvas, color: theme.ink },
+  readonly: { borderWidth: 1, borderColor: theme.border, borderRadius: 12, padding: 16, backgroundColor: theme.canvas, color: theme.ink },
   editorRow: { flexDirection: "row", gap: 12 },
-  editorFooter: { backgroundColor: "#fff", borderTopWidth: 1, borderColor: "#DADFD0", paddingHorizontal: 20, paddingVertical: 16 },
-  primary: { minHeight: 50, borderRadius: 12, backgroundColor: "#07552F", justifyContent: "center", alignItems: "center" },
-  page:{padding:24,paddingBottom:120,gap:16},title:{fontSize:26,color:"#1F2A22",fontWeight:"500"},copy:{fontSize:14,lineHeight:21,color:"#5E554A"},link:{color:"#174B34",fontSize:14,fontWeight:"600",paddingVertical:8},error:{color:"#B3432B",fontSize:14,paddingVertical:8},label:{fontSize:15,color:"#1F2A22",marginTop:12,fontWeight:"600"},input:{height:48,borderWidth:1,borderColor:"#DDD6C9",borderRadius:8,paddingHorizontal:12,marginTop:8,color:"#1F2A22",backgroundColor:"#FDFBF7"},button:{backgroundColor:"#174B34",minHeight:48,borderRadius:8,padding:12,alignItems:"center",justifyContent:"center",marginVertical:16},buttonText:{color:"#fff",fontWeight:"600",fontSize:14},card:{borderWidth:1,borderColor:"#DDD6C9",borderRadius:12,padding:16,marginBottom:12,backgroundColor:"#FDFBF7"},actions:{flexDirection:"row",gap:24,marginTop:8} });
+  editorFooter: { backgroundColor: theme.surface, borderTopWidth: 1, borderColor: theme.border, paddingHorizontal: 20, paddingVertical: 16 },
+  primary: { minHeight: 50, borderRadius: 12, backgroundColor: theme.coral, justifyContent: "center", alignItems: "center" },
+  page:{padding:24,paddingBottom:120,gap:16},title:{fontSize:26,color:theme.ink,fontWeight:"500"},copy:{fontSize:14,lineHeight:21,color:theme.secondary},link:{color:theme.accentInk,fontSize:14,fontWeight:"600",paddingVertical:8},error:{color:theme.error,fontSize:14,paddingVertical:8},label:{fontSize:15,color:theme.ink,marginTop:12,fontWeight:"600"},input:{height:48,borderWidth:1,borderColor:theme.border,borderRadius:8,paddingHorizontal:12,marginTop:8,color:theme.ink,backgroundColor:theme.canvas},button:{backgroundColor:theme.coral,minHeight:48,borderRadius:8,padding:12,alignItems:"center",justifyContent:"center",marginVertical:16},buttonText:{color:theme.ink,fontWeight:"600",fontSize:14},card:{borderWidth:1,borderColor:theme.border,borderRadius:12,padding:16,marginBottom:12,backgroundColor:theme.canvas},actions:{flexDirection:"row",gap:24,marginTop:8} });

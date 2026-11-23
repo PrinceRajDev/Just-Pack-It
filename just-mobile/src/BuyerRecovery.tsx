@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { useEffect, useRef, useState } from "react";
 import {
   Pressable,
@@ -263,10 +264,10 @@ export function BuyerRecovery({ back }: { back: () => void }) {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#F8F6EE" },
+  screen: { flex: 1, backgroundColor: theme.canvas },
   scroll: { flex: 1 },
-  footer: { padding: 16, paddingHorizontal: 20, backgroundColor: "#fff", borderTopWidth: 1, borderColor: "#DADFD0" },
-  resend: { backgroundColor: "#EAF0D9" },
+  footer: { padding: 16, paddingHorizontal: 20, backgroundColor: theme.surface, borderTopWidth: 1, borderColor: theme.border },
+  resend: { backgroundColor: theme.lime },
   page: {
     paddingHorizontal: 20,
     paddingBottom: 24,
@@ -276,35 +277,35 @@ const s = StyleSheet.create({
     alignSelf: "center",
   },
   header: {
-    color: "#07552F",
+    color: theme.accentInk,
     fontSize: 21,
     fontWeight: "600",
     paddingVertical: 18,
   },
-  backAction: { borderWidth: 1, borderColor: "#DADFD0", borderRadius: 12, minHeight: 50, justifyContent: "center", alignItems: "center" },
-  form: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#DADFD0", borderRadius: 24, padding: 20, gap: 10 },
-  label: { fontSize: 13, color: "#626D61" },
+  backAction: { borderWidth: 1, borderColor: theme.border, borderRadius: 12, minHeight: 50, justifyContent: "center", alignItems: "center" },
+  form: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: 24, padding: 20, gap: 10 },
+  label: { fontSize: 13, color: theme.secondary },
   input: {
     minHeight: 52,
     borderWidth: 1,
-    borderColor: "#E0E3D8",
+    borderColor: theme.border,
     borderRadius: 12,
     paddingHorizontal: 12,
-    backgroundColor: "#F8F6EE",
-    color: "#252D25",
+    backgroundColor: theme.canvas,
+    color: theme.ink,
   },
   button: {
-    backgroundColor: "#07552F",
+    backgroundColor: theme.coral,
     borderRadius: 12,
     minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
     padding: 10,
   },
-  disabled: { backgroundColor: "#6C796B" },
-  buttonText: { color: "#fff", fontWeight: "600", textAlign: "center" },
+  disabled: { backgroundColor: theme.muted },
+  buttonText: { color: theme.ink, fontWeight: "600", textAlign: "center" },
   link: {
-    color: "#07552F",
+    color: theme.accentInk,
     textAlign: "center",
     fontWeight: "600",
     paddingVertical: 12,

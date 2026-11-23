@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { StyleSheet, Text, View } from "react-native";
 import type { Address } from "./api";
 import { MarketIcon, type MarketIconName } from "./MarketIcon";
@@ -21,14 +22,14 @@ export function DeliveryAddressContents({ address, contact, selected }: { addres
 }
 
 const s = StyleSheet.create({
-  hero: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16, borderRadius: 24, backgroundColor: "#EAF0D9" },
+  hero: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16, borderRadius: 24, backgroundColor: theme.lime },
   plain: { backgroundColor: "transparent", padding: 0 },
   row: { flexDirection: "row", alignItems: "center", gap: 10 },
-  icon: { width: 40, height: 40, borderRadius: 12, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
+  icon: { width: 40, height: 40, borderRadius: 12, backgroundColor: theme.surface, alignItems: "center", justifyContent: "center" },
   addressIcon: { width: 32, height: 32, borderRadius: 10 },
-  sage: { backgroundColor: "#EAF0D9" },
-  title: { color: "#07552F", fontSize: 24, lineHeight: 34, fontWeight: "500", flex: 1 },
-  label: { color: "#07552F", fontSize: 15, fontWeight: "500", flexShrink: 1 },
-  contact: { color: "#252D25", fontSize: 14, marginTop: 12, lineHeight: 20, fontWeight: "500" },
-  detail: { color: "#73796E", fontSize: 12, marginTop: 10, lineHeight: 18 },
+  sage: { backgroundColor: theme.lime },
+  title: { color: theme.accentInk, fontSize: 24, lineHeight: 34, fontWeight: "500", flex: 1 },
+  label: { color: theme.accentInk, fontSize: 15, fontWeight: "500", flexShrink: 1 },
+  contact: { color: theme.ink, fontSize: 14, marginTop: 12, lineHeight: 20, fontWeight: "500" },
+  detail: { color: theme.muted, fontSize: 12, marginTop: 10, lineHeight: 18 },
 });

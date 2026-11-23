@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { AppState, Image, Pressable, Text, TextInput, View } from "react-native";
 import { onSessionExpired, type Session } from "./api";
@@ -29,7 +30,7 @@ const orderGroups = {
 type OrderGroup = keyof typeof orderGroups;
 const fulfilmentFilters = ["all","pickup","seller_delivery","platform_delivery"] as const;
 const counterPhoto = require("../assets/seller-kirana-counter.jpg");
-const dispatchPhoto = require("../assets/seller-dispatch-parcel.jpg");
+const dispatchPhoto = require("../assets/seller-dispatch-peach.jpg");
 const indiaTimeZone = "Asia/Kolkata";
 const orderDate = new Intl.DateTimeFormat("en-IN", {
   day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit",timeZone:indiaTimeZone,
@@ -105,7 +106,7 @@ export function SellerWorkspace({ session, back, signOut, expired }: { session: 
     <View style={styles.nav}>{tabs.map(item => {
       const selected = tab === item.name;
       return <Pressable key={item.name} accessibilityRole="tab" accessibilityState={{selected}} onPress={() => { if (!selected) goTab(item.name); }} style={styles.navItem}>
-        <View style={[styles.navIcon, selected && styles.sage]}><SellerIcon name={item.icon} color={selected ? "#174638" : "#5A655E"} /></View>
+        <View style={[styles.navIcon, selected && styles.sage]}><SellerIcon name={item.icon} color={selected ? theme.accentInk : theme.secondary} /></View>
         <Text style={[styles.navLabel, selected && styles.link, styles.navText]}>{item.name}</Text>
       </Pressable>;
     })}</View>
@@ -117,12 +118,12 @@ function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:O
   const dashboard = useSellerData(() => sellerApi.dashboard(token), token);
   const counts = dashboard.data?.counts;
   const work = [
-    {title:"New orders", count:counts?.placed ?? 0, action:"Review new orders", open:() => orders("New"), icon:"orders", tint:"#FBE8AE"},
-    {title:"To prepare", count:(counts?.accepted ?? 0) + (counts?.preparing ?? 0), action:"Open packing queue", open:() => orders("Preparing"), icon:"bag", tint:"#E6E0F6"},
-    {title:"Ready for handoff", count:counts?.ready ?? 0, action:"Review handoffs", open:() => orders("Ready"), icon:"home", tint:"#DAEDDE"},
-    {title:"Out of stock", count:dashboard.data?.lowStock?.outOfStock ?? 0, action:"Review sold-out products", open:() => openStock("Out of stock"), icon:"browse", tint:"#F5E0D4"},
-    {title:"Low stock", count:dashboard.data?.lowStock?.count ?? 0, action:"Review low stock", open:() => openStock("Low stock"), icon:"browse", tint:"#FBE8AE"},
-    {title:"On the way", count:counts?.out_for_delivery ?? 0, action:"View active deliveries", open:() => orders("Out for delivery"), icon:"orders", tint:"#E6E0F6"},
+    {title:"New orders", count:counts?.placed ?? 0, action:"Review new orders", open:() => orders("New"), icon:"orders", tint:theme.coral},
+    {title:"To prepare", count:(counts?.accepted ?? 0) + (counts?.preparing ?? 0), action:"Open packing queue", open:() => orders("Preparing"), icon:"bag", tint:theme.peach},
+    {title:"Ready for handoff", count:counts?.ready ?? 0, action:"Review handoffs", open:() => orders("Ready"), icon:"home", tint:theme.mint},
+    {title:"Out of stock", count:dashboard.data?.lowStock?.outOfStock ?? 0, action:"Review sold-out products", open:() => openStock("Out of stock"), icon:"browse", tint:theme.peach},
+    {title:"Low stock", count:dashboard.data?.lowStock?.count ?? 0, action:"Review low stock", open:() => openStock("Low stock"), icon:"browse", tint:theme.coral},
+    {title:"On the way", count:counts?.out_for_delivery ?? 0, action:"View active deliveries", open:() => orders("Out for delivery"), icon:"orders", tint:theme.peach},
   ] satisfies {title:string;count:number;action:string;open:()=>void;icon:SellerIconName;tint:string}[];
   const next = dashboard.error ? undefined : work.find(item => item.count > 0);
   const refresh = () => { shop.reload(); dashboard.reload(); };
@@ -158,7 +159,7 @@ function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:O
         {work.map(item => <Pressable key={item.title} accessibilityRole="button" accessibilityLabel={`${item.title}, ${item.count}`} onPress={item.open}
           style={({pressed}) => [styles.workTile, pressed && styles.pressed]}>
           <View style={styles.queueTop}>
-            <View style={[styles.workIcon,{backgroundColor:item.tint}]}><SellerIcon name={item.icon} color="#183B31" /></View>
+            <View style={[styles.workIcon,{backgroundColor:item.tint}]}><SellerIcon name={item.icon} color={theme.accentInk} /></View>
             <Text style={[styles.workCount, item.count > 0 && styles.workCountActive]}>{item.count}</Text>
           </View>
           <View style={styles.queueTop}><Text style={[styles.label,styles.grow]}>{item.title}</Text><Text style={styles.link}>›</Text></View>
@@ -253,7 +254,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
         </Pressable>}
       </View>
       <View style={styles.orderHero}>
-        <View style={styles.orderTop}><SellerIcon name="orders" color="#F7D46A" /><Text style={styles.orderStatus}>{orderStatusNames[order.status]}</Text></View>
+        <View style={styles.orderTop}><SellerIcon name="orders" color={theme.accentInk} /><Text style={styles.orderStatus}>{orderStatusNames[order.status]}</Text></View>
         <Text style={styles.heroTitle}>Order #{order.orderId.slice(-8).toUpperCase()}</Text>
         <View style={styles.orderReference}>
           <Text style={styles.heroKicker}>Full order ID</Text>
@@ -339,7 +340,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
       </View>
     </View>
     <View style={styles.catalogueSearch}>
-      <TextInput accessibilityLabel="Search order ID" placeholder="Search order ID" placeholderTextColor="#57665E" value={search}
+      <TextInput accessibilityLabel="Search order ID" placeholder="Search order ID" placeholderTextColor={theme.secondary} value={search}
         onChangeText={setSearch} autoCapitalize="none" autoCorrect={false} returnKeyType="search" style={styles.catalogueSearchInput} />
       {!!search && <Pressable accessibilityRole="button" accessibilityLabel="Clear order search" onPress={() => setSearch("")} style={styles.catalogueAction}><Text style={styles.link}>Clear</Text></Pressable>}
     </View>
@@ -394,7 +395,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
         style={({pressed}) => [styles.dispatchTicket, pressed && styles.pressed]}>
         <View style={styles.dispatchTicketBody}>
           <View style={styles.orderTop}>
-            <View style={[styles.workIcon,styles.ticketIcon]}><SellerIcon name="orders" color="#174638" /></View>
+            <View style={[styles.workIcon,styles.ticketIcon]}><SellerIcon name="orders" color={theme.accentInk} /></View>
             <View style={styles.grow}>
               <Text style={styles.title}>{reference}</Text>
               <Text style={styles.copy}>{orderTime(order.createdAt)}</Text>
@@ -442,7 +443,7 @@ function SellerSettlements({token}:{token:string}) {
   const pending = rows.filter(row => statementStatus(row) === "Pending review").length;
   return <SellerScroll refreshing={listing.loading} onRefresh={listing.reload}>
     <View style={styles.statementHero}>
-      <View style={styles.statementHeroIcon}><SellerIcon name="bag" color="#194539" /></View>
+      <View style={styles.statementHeroIcon}><SellerIcon name="bag" color={theme.accentInk} /></View>
       <Text accessibilityRole="header" style={styles.heroTitle}>Payout activity</Text>
       {listing.data && <>
         <View style={styles.statementMetrics}>
@@ -458,7 +459,7 @@ function SellerSettlements({token}:{token:string}) {
       <Pressable accessibilityRole="button" accessibilityLabel="Refresh statement" disabled={listing.loading} onPress={listing.reload} style={styles.dispatchRefresh}><Text style={styles.link}>{listing.loading ? "Refreshing…" : "Refresh"}</Text></Pressable>
     </View>
     {rows.length > 0 && <View style={styles.catalogueSearch}>
-      <TextInput accessibilityLabel="Search statements" placeholder="Order ID or payout reference" placeholderTextColor="#57665E"
+      <TextInput accessibilityLabel="Search statements" placeholder="Order ID or payout reference" placeholderTextColor={theme.secondary}
         value={search} onChangeText={setSearch} autoCapitalize="none" autoCorrect={false} returnKeyType="search" style={styles.catalogueSearchInput} />
       {!!search && <Pressable accessibilityRole="button" accessibilityLabel="Clear statement search" onPress={() => setSearch("")} style={styles.catalogueAction}><Text style={styles.link}>Clear</Text></Pressable>}
     </View>}

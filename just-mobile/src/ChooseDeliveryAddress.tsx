@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
 import {
   ActivityIndicator,
@@ -71,7 +72,7 @@ export function ChooseDeliveryAddress({
           Delivery eligibility and fees are checked for this address, shop by
           shop.
         </Text>
-        {loading && <ActivityIndicator color="#07552F" />}
+        {loading && <ActivityIndicator color={theme.accentInk} />}
         {error && (
           <BuyerStateCard title={hindi ? "इस पते की पुष्टि नहीं हो सकी" : "We couldn’t verify this address"} copy={hindi ? "इलाका और 6 अंकों का पिन कोड जाँचें। आपका बैग सुरक्षित है।" : error} icon="location" tone="error" compact
             action={rows.some(row => row.id === selected) ? (hindi ? "डिलीवरी का पता बदलें" : "Edit delivery address") : undefined}
@@ -161,7 +162,7 @@ export function ChooseDeliveryAddress({
           onPress={confirm}
           style={[s.button, s.confirm, (!canDeliver || loading) && s.disabled]}
         >
-          {busy && <ActivityIndicator color="#fff" />}
+          {busy && <ActivityIndicator color={theme.ink} />}
           <Text style={[s.buttonText, s.confirmText]}>
             {busy ? "Checking delivery…" : rechecking ? "Recheck delivery" : "Deliver to this address"}
           </Text>
@@ -171,9 +172,9 @@ export function ChooseDeliveryAddress({
   );
 }
 
-const green = "#07552F";
+const green = theme.accentInk;
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#F8F6EE" },
+  screen: { flex: 1, backgroundColor: theme.canvas },
   header: {
     height: 64,
     paddingHorizontal: 20,
@@ -191,15 +192,15 @@ const s = StyleSheet.create({
     paddingBottom: 20,
     gap: 16,
   },
-  title: { color: "#252D25", fontSize: 25, lineHeight: 34, fontWeight: "600" },
-  description: { color: "#73796E", fontSize: 14, lineHeight: 18 },
+  title: { color: theme.ink, fontSize: 25, lineHeight: 34, fontWeight: "600" },
+  description: { color: theme.muted, fontSize: 14, lineHeight: 18 },
   addresses: { gap: 16 },
   card: {
     padding: 16,
     borderWidth: 1,
-    borderColor: "#E0E3D8",
+    borderColor: theme.border,
     borderRadius: 24,
-    backgroundColor: "#fff",
+    backgroundColor: theme.surface,
   },
   selected: { borderColor: green },
   labelRow: { flexDirection: "row", alignItems: "center", gap: 8 },
@@ -212,7 +213,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: green },
+  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.coral },
   label: {
     color: green,
     fontSize: 16,
@@ -221,15 +222,15 @@ const s = StyleSheet.create({
     flexShrink: 1,
   },
   detailPrimary: {
-    color: "#252D25",
+    color: theme.ink,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 10,
     fontWeight: "600",
   },
-  detail: { color: "#73796E", fontSize: 13, lineHeight: 18, marginTop: 9 },
+  detail: { color: theme.muted, fontSize: 13, lineHeight: 18, marginTop: 9 },
   button: {
-    backgroundColor: "#fff",
+    backgroundColor: theme.surface,
     minHeight: 50,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -245,16 +246,16 @@ const s = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
   },
-  add: { backgroundColor: "#EAF0D9" },
+  add: { backgroundColor: theme.lime },
   footer: {
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderColor: "#DADFD0",
-    backgroundColor: "#fff",
+    borderColor: theme.border,
+    backgroundColor: theme.surface,
   },
-  confirm: { backgroundColor: green },
-  confirmText: { color: "#fff" },
+  confirm: { backgroundColor: theme.coral },
+  confirmText: { color: theme.ink },
   disabled: { opacity: 0.55 },
-  error: { color: "#A23425", fontSize: 14, lineHeight: 20 },
+  error: { color: theme.error, fontSize: 14, lineHeight: 20 },
 });

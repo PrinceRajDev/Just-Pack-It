@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useAndroidBack } from "./useAndroidBack";
@@ -573,9 +574,9 @@ function Section({ title }: { title: string }) {
   return <View style={s.sectionRow}><Text style={s.section}>{title}</Text><View style={s.rule} /></View>;
 }
 
-const green = "#07552F";
+const green = theme.accentInk;
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#F8F6EE" },
+  safe: { flex: 1, backgroundColor: theme.canvas },
   header: {
     height: 64,
     paddingHorizontal: 20,
@@ -589,14 +590,14 @@ const s = StyleSheet.create({
   scroll: { flex: 1 },
   page: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20, gap: 16 },
   sectionRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  rule: { backgroundColor: "#DADFD0", height: 1, flex: 1 },
+  rule: { backgroundColor: theme.border, height: 1, flex: 1 },
   selected: { borderColor: green },
-  paymentCard: { backgroundColor: "#EAF0D9", borderColor: green },
-  change: { alignSelf: "flex-end", backgroundColor: "#EAF0D9", minHeight: 40, paddingHorizontal: 22, paddingVertical: 8 },
+  paymentCard: { backgroundColor: theme.lime, borderColor: green },
+  change: { alignSelf: "flex-end", backgroundColor: theme.lime, minHeight: 40, paddingHorizontal: 22, paddingVertical: 8 },
   shopRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   shopInfo: { flex: 1 },
-  shopIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: "#EAF0D9", alignItems: "center", justifyContent: "center" },
-  wallet: { backgroundColor: "#fff", width: 40, height: 40 },
+  shopIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: theme.lime, alignItems: "center", justifyContent: "center" },
+  wallet: { backgroundColor: theme.surface, width: 40, height: 40 },
   section: {
     fontSize: 11,
     lineHeight: 15,
@@ -607,44 +608,44 @@ const s = StyleSheet.create({
     padding: 16,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#E0E3D8",
-    backgroundColor: "#fff",
+    borderColor: theme.border,
+    backgroundColor: theme.surface,
   },
   choice: { color: green, fontSize: 16, fontWeight: "600", lineHeight: 22 },
   contact: {
     fontSize: 13,
     lineHeight: 18,
-    color: "#252D25",
+    color: theme.ink,
     marginTop: 10,
     fontWeight: "600",
   },
-  copy: { fontSize: 13, lineHeight: 18, color: "#73796E", marginTop: 9 },
+  copy: { fontSize: 13, lineHeight: 18, color: theme.muted, marginTop: 9 },
   button: {
     minHeight: 50,
     padding: 12,
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#fff",
+    backgroundColor: theme.surface,
   },
   action: { color: green, fontSize: 15, fontWeight: "600" },
-  primary: { backgroundColor: green },
-  primaryText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+  primary: { backgroundColor: theme.coral },
+  primaryText: { color: theme.ink, fontSize: 15, fontWeight: "600" },
   disabled: { opacity: 0.5 },
   shopTitle: {
-    color: "#252D25",
+    color: theme.ink,
     fontSize: 15,
     lineHeight: 21,
     fontWeight: "600",
   },
   delivery: { color: green, fontSize: 12, lineHeight: 17, marginTop: 3 },
   shopSpacing: { marginTop: 12 },
-  note: { color: "#73796E", fontSize: 10, lineHeight: 14, marginTop: 10 },
+  note: { color: theme.muted, fontSize: 10, lineHeight: 14, marginTop: 10 },
   footer: {
-    backgroundColor: "#fff",
+    backgroundColor: theme.surface,
     paddingHorizontal: 20,
     borderTopWidth: 1,
-    borderColor: "#DADFD0",
+    borderColor: theme.border,
     paddingTop: 16,
     paddingBottom: 16,
     gap: 8,
@@ -655,5 +656,5 @@ const s = StyleSheet.create({
     lineHeight: 17,
     fontWeight: "600",
   },
-  error: { color: "#A23425", fontSize: 13, lineHeight: 18 },
+  error: { color: theme.error, fontSize: 13, lineHeight: 18 },
 });

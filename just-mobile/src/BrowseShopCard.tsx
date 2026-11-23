@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import type { Shop } from "./api";
@@ -78,7 +79,7 @@ export function BrowseShopCard({
         />
       ) : (
         <View style={[styles.cover, styles.missing]}>
-          <MarketIcon name="home" color="#07552F" />
+          <MarketIcon name="home" color={theme.accentInk} />
           <Text style={styles.description}>Neighbourhood shop</Text>
         </View>
       )}
@@ -100,20 +101,20 @@ const styles = StyleSheet.create({
   card: {
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#E2E4D9",
+    borderColor: theme.border,
     borderRadius: 16,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.surface,
   },
   cover: {
     width: "100%",
     height: 130,
 
-    backgroundColor: "#FAF8F1",
+    backgroundColor: theme.canvas,
   },
   missing: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#EAF0D9",
+    backgroundColor: theme.lime,
   },
   body: { padding: 16 },
   bottom: {
@@ -123,11 +124,11 @@ const styles = StyleSheet.create({
     columnGap: 10,
   },
   name: {
-    color: "#202820",
+    color: theme.ink,
     fontSize: 16,
     lineHeight: 20,
     fontWeight: "600",
   },
-  metadata: { marginTop: 8, color: "#07552F", fontSize: 12, lineHeight: 17 },
-  description: { marginTop: 8, color: "#777D72", fontSize: 12, lineHeight: 17 },
+  metadata: { marginTop: 8, color: theme.accentInk, fontSize: 12, lineHeight: 17 },
+  description: { marginTop: 8, color: theme.muted, fontSize: 12, lineHeight: 17 },
 });

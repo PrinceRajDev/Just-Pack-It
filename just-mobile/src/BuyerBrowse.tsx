@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { BuyerStateCard, BuyerStateSkeleton } from "./BuyerStateCard";
 import {
   useEffect,
@@ -378,7 +379,7 @@ export function BuyerBrowse({
         ]}
       >
         <View style={{ transform: [{ scale: 0.8 }] }}>
-          <MarketIcon name="search" color="#777D72" />
+          <MarketIcon name="search" color={theme.muted} />
         </View>
         <TextInput
           ref={searchInput}
@@ -400,8 +401,8 @@ export function BuyerBrowse({
               ? `Search in ${categoryLabel}`
               : "Search products, shops & brands"
           }
-          placeholderTextColor="#737B6D"
-          style={[styles.input, globalSearch && { color: "#777D72" }]}
+          placeholderTextColor={theme.muted}
+          style={[styles.input, globalSearch && { color: theme.muted }]}
           returnKeyType="search"
           clearButtonMode="while-editing"
         />
@@ -754,7 +755,7 @@ export function BuyerBrowse({
           ) : null}
         </>
       ) : pending ? (
-        <ActivityIndicator style={{ marginTop: 36 }} color="#07552F" />
+        <ActivityIndicator style={{ marginTop: 36 }} color={theme.accentInk} />
       ) : (
         <>
           {tab === "Brands" && !brand ? (
@@ -898,13 +899,13 @@ export function BuyerBrowse({
 }
 const styles = StyleSheet.create({
   searchState: { gap: 14, marginTop: 6 },
-  placeholder: { height: 98, borderRadius: 14, backgroundColor: "#EAF0D9" },
-  clearSearch: { fontSize: 18, color: "#777D72", paddingHorizontal: 4 },
+  placeholder: { height: 98, borderRadius: 14, backgroundColor: theme.lime },
+  clearSearch: { fontSize: 18, color: theme.muted, paddingHorizontal: 4 },
   resultsHeading: {
     fontSize: 22,
     lineHeight: 28,
     fontWeight: "700",
-    color: "#202820",
+    color: theme.ink,
     marginTop: 22,
   },
   resultTabs: {
@@ -913,7 +914,7 @@ const styles = StyleSheet.create({
     marginTop: 21,
     marginBottom: 20,
   },
-  selectedResult: { backgroundColor: "#EAF0D9" },
+  selectedResult: { backgroundColor: theme.lime },
   searchProducts: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -921,12 +922,12 @@ const styles = StyleSheet.create({
     rowGap: 20,
   },
   categoryControls: { flexDirection: "row", gap: 12, marginTop: 20 },
-  categoryControlText: { fontSize: 12, fontWeight: "600", color: "#202820" },
+  categoryControlText: { fontSize: 12, fontWeight: "600", color: theme.ink },
   categoryHeading: {
     fontSize: 22,
     lineHeight: 28,
     fontWeight: "700",
-    color: "#202820",
+    color: theme.ink,
     marginTop: 22,
     marginBottom: 20,
   },
@@ -939,12 +940,12 @@ const styles = StyleSheet.create({
   },
   shopHeadingTitle: {
     flex: 1,
-    color: "#202820",
+    color: theme.ink,
     fontSize: 18,
     lineHeight: 25,
     fontWeight: "600",
   },
-  shopCount: { color: "#07552F", fontSize: 12, fontWeight: "600" },
+  shopCount: { color: theme.accentInk, fontSize: 12, fontWeight: "600" },
   content: {
     paddingHorizontal: 20,
     paddingTop: 0,
@@ -960,17 +961,17 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginRight: -12,
   },
-  area: { color: "#73796E", fontSize: 12, lineHeight: 17 },
-  focusedSearch: { borderColor: "#07552F" },
-  inactiveTab: { color: "#73796E" },
-  heading: { fontSize: 27, fontWeight: "700", color: "#07552F" },
+  area: { color: theme.muted, fontSize: 12, lineHeight: 17 },
+  focusedSearch: { borderColor: theme.accentInk },
+  inactiveTab: { color: theme.muted },
+  heading: { fontSize: 27, fontWeight: "700", color: theme.accentInk },
   search: {
     height: 48,
     marginTop: 16,
     borderWidth: 1,
-    borderColor: "#E0E3D8",
+    borderColor: theme.border,
     borderRadius: 12,
-    backgroundColor: "#fff",
+    backgroundColor: theme.surface,
     flexDirection: "row",
     gap: 8,
     alignItems: "center",
@@ -980,7 +981,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     fontSize: 13,
-    color: "#202820",
+    color: theme.ink,
     height: "100%",
     padding: 0,
   },
@@ -992,7 +993,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 12,
   },
-  tabText: { fontSize: 12, color: "#07552F", fontWeight: "600" },
+  tabText: { fontSize: 12, color: theme.accentInk, fontWeight: "600" },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -1005,14 +1006,14 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E2E4D9",
-    backgroundColor: "#fff",
+    borderColor: theme.border,
+    backgroundColor: theme.surface,
   },
   cardImage: {
     width: "100%",
     height: 122,
     overflow: "hidden",
-    backgroundColor: "#FAF8F1",
+    backgroundColor: theme.canvas,
   },
   categoryPhoto: { width: "100%", height: "100%" },
   cardName: {
@@ -1021,7 +1022,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 16,
     fontWeight: "600",
-    color: "#202820",
+    color: theme.ink,
   },
   selection: {
     flexDirection: "row",
@@ -1029,12 +1030,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  back: { fontSize: 24, color: "#07552F", paddingVertical: 8 },
+  back: { fontSize: 24, color: theme.accentInk, paddingVertical: 8 },
   selectionTitle: {
     flex: 1,
     fontSize: 20,
     fontWeight: "600",
-    color: "#202820",
+    color: theme.ink,
   },
   products: {
     flexDirection: "row",
@@ -1045,14 +1046,14 @@ const styles = StyleSheet.create({
   empty: {
     padding: 20,
     borderRadius: 14,
-    backgroundColor: "#fff",
+    backgroundColor: theme.surface,
     marginTop: 8,
   },
-  emptyText: { fontSize: 13, lineHeight: 20, color: "#737B6D" },
+  emptyText: { fontSize: 13, lineHeight: 20, color: theme.muted },
   retry: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#07552F",
+    color: theme.accentInk,
     paddingVertical: 12,
   },
   more: { alignItems: "center", marginTop: 16 },
@@ -1060,10 +1061,10 @@ const styles = StyleSheet.create({
   brandHeading: {
     fontSize: 22,
     lineHeight: 28,
-    color: "#202820",
+    color: theme.ink,
     fontWeight: "700",
   },
-  brandNote: { marginTop: 21, fontSize: 13, lineHeight: 18, color: "#777D72" },
+  brandNote: { marginTop: 21, fontSize: 13, lineHeight: 18, color: theme.muted },
   brandList: { gap: 20 },
   brand: {
     minHeight: 68,
@@ -1074,16 +1075,16 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E2E4D9",
-    backgroundColor: "#fff",
+    borderColor: theme.border,
+    backgroundColor: theme.surface,
   },
   brandName: {
     flex: 1,
     fontSize: 15,
     lineHeight: 20,
     fontWeight: "600",
-    color: "#07552F",
+    color: theme.accentInk,
   },
-  brandLink: { marginTop: 10, fontSize: 13, lineHeight: 18, color: "#777D72" },
+  brandLink: { marginTop: 10, fontSize: 13, lineHeight: 18, color: theme.muted },
   brandSearch: { marginBottom: 12 },
 });

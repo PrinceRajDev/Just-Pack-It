@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
@@ -28,9 +29,9 @@ export function BuyerProfile({ token, back, onSaved }: { token: string; back: ()
     <View style={s.header}><Pressable accessibilityLabel="Back to Account" onPress={back} hitSlop={10}><Text style={s.heading}>‹</Text></Pressable><Text style={s.heading}>Profile</Text></View>
     <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
       {success && <BuyerStateCard title="Profile updated" copy="Your details were saved successfully." tone="success" icon="check" compact action="Back to Account" onAction={back} />}
-      <View style={s.hero}><View style={s.icon}><MarketIcon name="account" color="#07552F" /></View><Text style={s.heroTitle}>A little about you.</Text></View>
+      <View style={s.hero}><View style={s.icon}><MarketIcon name="account" color={theme.accentInk} /></View><Text style={s.heroTitle}>A little about you.</Text></View>
       {error ? <Text accessibilityRole="alert" style={s.error}>{error}</Text> : null}
-      {!profile && !error ? <ActivityIndicator color="#07552F" /> : null}
+      {!profile && !error ? <ActivityIndicator color={theme.accentInk} /> : null}
       {!profile && error ? <Pressable onPress={() => { setError(null); setAttempt(value => value + 1); }}><Text style={s.heading}>Retry profile</Text></Pressable> : null}
       {profile ? <View style={s.card}>
         <Text style={s.label}>Full name</Text>
@@ -48,20 +49,20 @@ export function BuyerProfile({ token, back, onSaved }: { token: string; back: ()
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#F8F6EE" },
+  screen: { flex: 1, backgroundColor: theme.canvas },
   header: { height: 64, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", gap: 16 },
-  heading: { fontSize: 19, fontWeight: "600", color: "#07552F" },
+  heading: { fontSize: 19, fontWeight: "600", color: theme.accentInk },
   content: { padding: 20, gap: 20 },
-  hero: { flexDirection: "row", alignItems: "center", gap: 12, padding: 20, borderRadius: 24, backgroundColor: "#E9EFD8" },
-  icon: { width: 40, height: 40, borderRadius: 12, backgroundColor: "#FFF", alignItems: "center", justifyContent: "center" },
-  heroTitle: { flex: 1, fontSize: 24, fontWeight: "600", color: "#07552F" },
-  card: { padding: 20, borderRadius: 24, borderWidth: 1, borderColor: "#DADFD0", backgroundColor: "#FFF", gap: 12 },
-  label: { color: "#07552F", fontSize: 12, lineHeight: 18 },
-  input: { minHeight: 52, borderRadius: 12, paddingHorizontal: 16, borderWidth: 1, borderColor: "#DADFD0", backgroundColor: "#F8F6EE", color: "#1F2A22" },
-  field: { minHeight: 52, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: "#DADFD0", backgroundColor: "#F8F6EE", color: "#1F2A22" },
-  footer: { backgroundColor: "#FFF", paddingHorizontal: 20, paddingVertical: 16 },
-  action: { backgroundColor: "#07552F", borderRadius: 12, minHeight: 50, alignItems: "center", justifyContent: "center" },
+  hero: { flexDirection: "row", alignItems: "center", gap: 12, padding: 20, borderRadius: 24, backgroundColor: theme.lime },
+  icon: { width: 40, height: 40, borderRadius: 12, backgroundColor: theme.surface, alignItems: "center", justifyContent: "center" },
+  heroTitle: { flex: 1, fontSize: 24, fontWeight: "600", color: theme.accentInk },
+  card: { padding: 20, borderRadius: 24, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, gap: 12 },
+  label: { color: theme.accentInk, fontSize: 12, lineHeight: 18 },
+  input: { minHeight: 52, borderRadius: 12, paddingHorizontal: 16, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.canvas, color: theme.ink },
+  field: { minHeight: 52, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.canvas, color: theme.ink },
+  footer: { backgroundColor: theme.surface, paddingHorizontal: 20, paddingVertical: 16 },
+  action: { backgroundColor: theme.coral, borderRadius: 12, minHeight: 50, alignItems: "center", justifyContent: "center" },
   disabled: { opacity: 0.55 },
-  actionText: { color: "#FFF", fontWeight: "600", fontSize: 14 },
-  error: { color: "#A33B27" },
+  actionText: { color: theme.ink, fontWeight: "600", fontSize: 14 },
+  error: { color: theme.error },
 });

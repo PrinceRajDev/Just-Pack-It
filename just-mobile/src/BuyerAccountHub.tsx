@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -114,12 +115,12 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
             </>}
             {panel === "notifications" && <>
               {!!updates.length && !busy && <BuyerAuthNotice title="Good news from nearby." copy="Order updates appear here." />}
-              {busy ? <ActivityIndicator color="#07552F" /> : error ? <Action label="Retry notifications" onPress={() => { setError(""); setRevision(value => value+1); }} /> : updates.length ? updates.map(item => <View key={item.id} style={[s.card,!item.read && s.unread]}><Text style={s.panelTitle}>{!item.read ? "● " : ""}{item.title}</Text><Text style={s.copy}>{item.body}</Text></View>) : <BuyerStateCard title={session ? "You’re all caught up." : "No updates yet."} copy={session ? "Order updates will appear here, from accepted to delivered." : "Sign in to see your order updates."} icon="bell" action={session ? "Continue shopping" : "Sign in"} onAction={() => { setPanel(null); if (session) browse(); else signIn(); }} />}
+              {busy ? <ActivityIndicator color={theme.accentInk} /> : error ? <Action label="Retry notifications" onPress={() => { setError(""); setRevision(value => value+1); }} /> : updates.length ? updates.map(item => <View key={item.id} style={[s.card,!item.read && s.unread]}><Text style={s.panelTitle}>{!item.read ? "● " : ""}{item.title}</Text><Text style={s.copy}>{item.body}</Text></View>) : <BuyerStateCard title={session ? "You’re all caught up." : "No updates yet."} copy={session ? "Order updates will appear here, from accepted to delivered." : "Sign in to see your order updates."} icon="bell" action={session ? "Continue shopping" : "Sign in"} onAction={() => { setPanel(null); if (session) browse(); else signIn(); }} />}
             </>}
             {panel === "favourites" && <>
               {!!favourites.length && <BuyerAuthNotice title="Your local favourites." copy="Saved on this device. Showing favourites available in your current area." />}
               <View style={s.grid}>{(["products","shops"] as const).map(value => <Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:tab === value}} onPress={() => setTab(value)} style={[s.tile,tab === value && s.selected]}><Text style={s.panelTitle}>{value === "products" ? "Products" : "Shops"}</Text></Pressable>)}</View>
-              {busy ? <ActivityIndicator color="#07552F" /> : error ? <Action label="Retry favourites" onPress={() => { setError(""); setRevision(value => value+1); }} /> : <>
+              {busy ? <ActivityIndicator color={theme.accentInk} /> : error ? <Action label="Retry favourites" onPress={() => { setError(""); setRevision(value => value+1); }} /> : <>
                 {favourites.filter(row => tab === "products" ? row.product : row.shop).map(row => <View key={row.key} style={s.card}>
                   {row.product?.image ? <Image accessibilityIgnoresInvertColors source={{uri: row.product.image}} style={s.favouritePhoto} resizeMode="cover" /> : null}
                   <Text style={s.panelTitle}>{row.name}</Text>
@@ -161,13 +162,13 @@ function Row({icon,title,copy,onPress}:{icon:MarketIconName | "heart" | "languag
   return <Pressable accessibilityRole="button" onPress={onPress} style={s.row}><View style={s.icon}>{icon === "heart" || icon === "language" ? <Text style={s.panelTitle}>{icon === "heart" ? "♡" : "Aa"}</Text> : <MarketIcon name={icon} />}</View><View style={s.rowText}><Text style={s.rowTitle}>{title}</Text><Text style={s.copy}>{copy}</Text></View><Text style={s.panelTitle}>›</Text></Pressable>;
 }
 const s = StyleSheet.create({
-  screen:{flex:1,backgroundColor:"#FAF8F1"}, header:{height:64,paddingHorizontal:20,flexDirection:"row",alignItems:"center",gap:16}, chevron:{fontSize:29,color:"#07552F"},
+  screen:{flex:1,backgroundColor:theme.canvas}, header:{height:64,paddingHorizontal:20,flexDirection:"row",alignItems:"center",gap:16}, chevron:{fontSize:29,color:theme.accentInk},
   content:{padding:20,gap:16,width:"100%",maxWidth:600,alignSelf:"center"},
-  hero:{backgroundColor:"#07552F",borderRadius:24,padding:20,gap:10}, eyebrow:{color:"#EAF0D9",fontSize:11}, heroTitle:{color:"#fff",fontSize:28,lineHeight:36,fontWeight:"600"}, heroCopy:{color:"#EAF0D9",fontSize:14,lineHeight:20},
-  grid:{flexDirection:"row",gap:12}, tile:{flex:1,minWidth:0,borderWidth:1,borderColor:"#E0E3D8",backgroundColor:"#fff",borderRadius:20,padding:16,gap:10},
-  section:{color:"#07552F",fontSize:11}, card:{backgroundColor:"#fff",borderWidth:1,borderColor:"#E0E3D8",borderRadius:20,padding:16,gap:12}, selected:{backgroundColor:"#EAF0D9"}, unread:{borderColor:"#07552F"},
-  favouritePhoto:{width:"100%",aspectRatio:2.6,borderRadius:12,backgroundColor:"#EAF0D9"},
-  row:{flexDirection:"row",minHeight:54,alignItems:"center",gap:12}, rowText:{flex:1,gap:3}, icon:{backgroundColor:"#EAF0D9",width:40,height:40,borderRadius:11,alignItems:"center",justifyContent:"center"},
-  rowTitle:{color:"#252D25",fontSize:15,fontWeight:"600"}, panelTitle:{color:"#07552F",fontSize:18,fontWeight:"600"}, copy:{color:"#73796E",fontSize:13,lineHeight:18},
-  button:{backgroundColor:"#07552F",borderRadius:12,minHeight:48,alignItems:"center",justifyContent:"center",padding:12}, buttonText:{color:"#fff",fontWeight:"600",textAlign:"center"}, softText:{color:"#07552F"},
+  hero:{backgroundColor:theme.peach,borderRadius:24,padding:20,gap:10}, eyebrow:{color:theme.accentInk,fontSize:11}, heroTitle:{color:theme.ink,fontSize:28,lineHeight:36,fontWeight:"600"}, heroCopy:{color:theme.secondary,fontSize:14,lineHeight:20},
+  grid:{flexDirection:"row",gap:12}, tile:{flex:1,minWidth:0,borderWidth:1,borderColor:theme.border,backgroundColor:theme.surface,borderRadius:20,padding:16,gap:10},
+  section:{color:theme.accentInk,fontSize:11}, card:{backgroundColor:theme.surface,borderWidth:1,borderColor:theme.border,borderRadius:20,padding:16,gap:12}, selected:{backgroundColor:theme.lime}, unread:{borderColor:theme.accentInk},
+  favouritePhoto:{width:"100%",aspectRatio:2.6,borderRadius:12,backgroundColor:theme.lime},
+  row:{flexDirection:"row",minHeight:54,alignItems:"center",gap:12}, rowText:{flex:1,gap:3}, icon:{backgroundColor:theme.lime,width:40,height:40,borderRadius:11,alignItems:"center",justifyContent:"center"},
+  rowTitle:{color:theme.ink,fontSize:15,fontWeight:"600"}, panelTitle:{color:theme.accentInk,fontSize:18,fontWeight:"600"}, copy:{color:theme.muted,fontSize:13,lineHeight:18},
+  button:{backgroundColor:theme.coral,borderRadius:12,minHeight:48,alignItems:"center",justifyContent:"center",padding:12}, buttonText:{color:theme.ink,fontWeight:"600",textAlign:"center"}, softText:{color:theme.accentInk},
 });

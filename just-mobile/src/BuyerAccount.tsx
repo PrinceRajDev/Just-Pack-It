@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { BuyerStateCard, BuyerStateSkeleton } from "./BuyerStateCard";
 import { BuyerAccountHub } from "./BuyerAccountHub";
 
@@ -26,13 +27,13 @@ import { SellerAccess } from "./SellerAccess";
 import { BuyerRecovery } from "./BuyerRecovery";
 
 const c = {
-  paper: "#F7F4EE",
-  card: "#FDFBF7",
-  ink: "#1F2A22",
-  secondary: "#5E554A",
-  muted: "#7B7266",
-  line: "#DDD6C9",
-  green: "#174B34",
+  paper: theme.canvas,
+  card: theme.canvas,
+  ink: theme.ink,
+  secondary: theme.secondary,
+  muted: theme.muted,
+  line: theme.border,
+  green: theme.accentInk,
 };
 
 
@@ -151,9 +152,9 @@ export function BuyerAccount({
     }
   };
   if (sellerOpen) return <SellerAccess initialSession={sellerHandoff} close={() => { setSellerHandoff(undefined); setSellerOpen(false); }} />;
-  if (session && addressesOpen) return <Modal onRequestClose={() => setAddressesOpen(false)}><SafeAreaView style={{ flex: 1, backgroundColor: "#F8F6EE" }}><BuyerAddresses key={session.userId} token={session.token} userId={session.userId} area={area} back={() => setAddressesOpen(false)} /></SafeAreaView></Modal>;
+  if (session && addressesOpen) return <Modal onRequestClose={() => setAddressesOpen(false)}><SafeAreaView style={{ flex: 1, backgroundColor: theme.canvas }}><BuyerAddresses key={session.userId} token={session.token} userId={session.userId} area={area} back={() => setAddressesOpen(false)} /></SafeAreaView></Modal>;
   if (!session && recoveryOpen) return <BuyerRecovery back={() => { setPassword(""); setRecoveryOpen(false); }} />;
-  if (session && profileOpen) return <Modal onRequestClose={() => setProfileOpen(false)}><SafeAreaView style={{ flex: 1, backgroundColor: "#F8F6EE" }}><BuyerProfile key={session.userId} token={session.token} back={() => setProfileOpen(false)} onSaved={(updatedName) => save({ ...session, name: updatedName })} /></SafeAreaView></Modal>;
+  if (session && profileOpen) return <Modal onRequestClose={() => setProfileOpen(false)}><SafeAreaView style={{ flex: 1, backgroundColor: theme.canvas }}><BuyerProfile key={session.userId} token={session.token} back={() => setProfileOpen(false)} onSaved={(updatedName) => save({ ...session, name: updatedName })} /></SafeAreaView></Modal>;
   if (session || !signInOpen) return (
     <BuyerAccountHub initialFavourites={initialFavourites} session={session} area={area} shops={shops} products={products}
       back={back} signIn={startSignIn} profile={() => setProfileOpen(true)} addresses={() => setAddressesOpen(true)}
@@ -217,7 +218,7 @@ export function BuyerAccount({
             </Pressable>
           </View>
           <Pressable accessibilityRole="button" disabled={busy} onPress={() => void submit()} style={[login.button, login.primary]}>
-            {busy && <ActivityIndicator size="small" color="#fff" />}
+            {busy && <ActivityIndicator size="small" color={theme.ink} />}
             <Text style={[login.buttonText, login.primaryText]}>{busy ? "Signing in…" : "Sign in"}</Text>
           </Pressable>
           <Pressable accessibilityRole="button" disabled={busy} onPress={() => { setPasswordVisible(false); setSignInError(""); setRecoveryOpen(true); }} style={login.recovery}>
@@ -358,7 +359,7 @@ export function BuyerOrders({
       {!session ? (
         <ScrollView contentContainerStyle={ordersUI.list}>
           <View style={[ordersUI.card, ordersUI.sage]}>
-            <MarketIcon name="orders" color="#07552F" />
+            <MarketIcon name="orders" color={theme.accentInk} />
             <Text accessibilityRole="header" style={ordersUI.title}>Sign in to view orders</Text>
             <Text style={ordersUI.copy}>Track deliveries and see orders from your neighbourhood shops.</Text>
             <Pressable accessibilityRole="button" onPress={signIn} style={ordersUI.button}>
@@ -437,36 +438,36 @@ export function BuyerOrders({
 }
 
 const ordersUI = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#F8F6EE" },
+  screen: { flex: 1, backgroundColor: theme.canvas },
   header: { height: 64, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", gap: 14 },
   back: { minHeight: 44, justifyContent: "center" },
-  chevron: { color: "#07552F", fontSize: 27, lineHeight: 30 },
-  headerTitle: { color: "#07552F", fontSize: 18, fontWeight: "500" },
+  chevron: { color: theme.accentInk, fontSize: 27, lineHeight: 30 },
+  headerTitle: { color: theme.accentInk, fontSize: 18, fontWeight: "500" },
   list: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24, gap: 20 },
   listHeader: { gap: 20 },
-  hero: { minHeight: 99, justifyContent: "center", padding: 20, gap: 10, backgroundColor: "#07552F", borderRadius: 24 },
-  heroLabel: { color: "#EDF2DD", fontSize: 12 },
-  heroTitle: { color: "#fff", fontSize: 24, fontWeight: "500" },
-  tabs: { padding: 4, borderWidth: 1, borderColor: "#DADFD0", borderRadius: 16, flexDirection: "row", backgroundColor: "#fff", gap: 4 },
+  hero: { minHeight: 99, justifyContent: "center", padding: 20, gap: 10, backgroundColor:theme.peach, borderRadius: 24 },
+  heroLabel: { color: theme.ink, fontSize: 12 },
+  heroTitle: { color: theme.ink, fontSize: 24, fontWeight: "500" },
+  tabs: { padding: 4, borderWidth: 1, borderColor: theme.border, borderRadius: 16, flexDirection: "row", backgroundColor: theme.surface, gap: 4 },
   tab: { flex: 1, minHeight: 50, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  tabSelected: { backgroundColor: "#07552F" },
+  tabSelected: { backgroundColor:theme.lime },
   orderCard: { borderRadius: 24, padding: 20, gap: 10 },
-  lead: { borderColor: "#07552F" },
+  lead: { borderColor: theme.accentInk },
   cardTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
-  badge: { color: "#07552F", backgroundColor: "#EAF0D9", fontSize: 12, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 6, flexShrink: 1 },
-  tabText: { color: "#73796E", fontSize: 15, fontWeight: "500" },
-  tabTextSelected: { color: "#fff" },
-  total: { fontSize: 24, fontWeight: "600", color: "#252D25" },
-  detailsLink: { color: "#07552F", backgroundColor: "#EAF0D9", fontSize: 12, borderRadius: 12, padding: 10 },
-  card: { padding: 16, borderRadius: 16, borderWidth: 1, borderColor: "#E0E3D8", backgroundColor: "#fff", gap: 8 },
-  sage: { backgroundColor: "#EAF0D9" },
-  title: { fontSize: 23, lineHeight: 30, color: "#252D25", fontWeight: "600" },
-  copy: { fontSize: 13, lineHeight: 19, color: "#73796E" },
-  button: { backgroundColor: "#07552F", borderRadius: 14, minHeight: 50, padding: 12, alignItems: "center", justifyContent: "center", marginTop: 6 },
-  buttonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
-  action: { color: "#07552F", fontSize: 14, fontWeight: "600" },
-  orderTitle: { color: "#252D25", fontSize: 18, fontWeight: "500" },
-  orderFooter: { borderTopWidth: 1, borderColor: "#E0E3D8", paddingTop: 12, marginTop: 2, flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 8 },
+  badge: { color: theme.accentInk, backgroundColor: theme.lime, fontSize: 12, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 6, flexShrink: 1 },
+  tabText: { color: theme.muted, fontSize: 15, fontWeight: "500" },
+  tabTextSelected: { color: theme.ink },
+  total: { fontSize: 24, fontWeight: "600", color: theme.ink },
+  detailsLink: { color: theme.accentInk, backgroundColor: theme.lime, fontSize: 12, borderRadius: 12, padding: 10 },
+  card: { padding: 16, borderRadius: 16, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, gap: 8 },
+  sage: { backgroundColor: theme.lime },
+  title: { fontSize: 23, lineHeight: 30, color: theme.ink, fontWeight: "600" },
+  copy: { fontSize: 13, lineHeight: 19, color: theme.muted },
+  button: { backgroundColor: theme.coral, borderRadius: 14, minHeight: 50, padding: 12, alignItems: "center", justifyContent: "center", marginTop: 6 },
+  buttonText: { color: theme.ink, fontSize: 15, fontWeight: "600" },
+  action: { color: theme.accentInk, fontSize: 14, fontWeight: "600" },
+  orderTitle: { color: theme.ink, fontSize: 18, fontWeight: "500" },
+  orderFooter: { borderTopWidth: 1, borderColor: theme.border, paddingTop: 12, marginTop: 2, flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 8 },
   feedback: { padding: 20, gap: 10 },
   footer: { gap: 8 },
 });
@@ -498,9 +499,9 @@ const s = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: c.green,
+    backgroundColor: theme.coral,
   },
-  primaryText: { color: "#fff", fontSize: 14, fontWeight: "600" },
+  primaryText: { color: theme.ink, fontSize: 14, fontWeight: "600" },
   switch: {
     color: c.green,
     marginTop: 20,
@@ -531,38 +532,38 @@ const s = StyleSheet.create({
 });
 
 const login = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#F8F6EE" },
+  screen: { flex: 1, backgroundColor: theme.canvas },
   header: { height: 64, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", gap: 14 },
   backButton: { minHeight: 44, justifyContent: "center" },
-  chevron: { color: "#07552F", fontSize: 27, lineHeight: 30 },
-  headerText: { color: "#07552F", fontSize: 21, fontWeight: "600" },
+  chevron: { color: theme.accentInk, fontSize: 27, lineHeight: 30 },
+  headerText: { color: theme.accentInk, fontSize: 21, fontWeight: "600" },
   scroll: { flex: 1 },
   content: { paddingTop: 16, paddingHorizontal: 20, paddingBottom: 12, width: "100%", maxWidth: 520, alignSelf: "center" },
-  stickyFooter: { paddingHorizontal: 20, paddingBottom: 16, paddingTop: 6, borderTopWidth: 1, borderColor: "#DADFD0", backgroundColor: "#fff" },
-  disabledAction: { backgroundColor: "#DDE2D5" },
-  disabledLabel: {color:"#697267"},
-  checkoutIntro: { backgroundColor: "#07552F", borderRadius: 24, padding: 20 },
-  checkoutWelcome: { color: "#fff", fontSize: 28, lineHeight: 39, fontWeight: "500" },
-  checkoutTagline: { color: "#EAF0D9", marginTop: 8 },
+  stickyFooter: { paddingHorizontal: 20, paddingBottom: 16, paddingTop: 6, borderTopWidth: 1, borderColor: theme.border, backgroundColor: theme.surface },
+  disabledAction: { backgroundColor: theme.disabled },
+  disabledLabel: {color:theme.muted},
+  checkoutIntro: { backgroundColor:theme.peach, borderRadius: 24, padding: 20 },
+  checkoutWelcome: { color: theme.ink, fontSize: 28, lineHeight: 39, fontWeight: "500" },
+  checkoutTagline: { color: theme.ink, marginTop: 8 },
   checkoutCard: { borderRadius: 24, marginTop: 16, padding: 20 },
-  welcome: { color: "#07552F", fontSize: 32, lineHeight: 45, fontWeight: "700" },
-  tagline: { color: "#73796E", fontSize: 14, lineHeight: 20, marginTop: 20 },
-  card: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#E0E3D8", borderRadius: 16, marginTop: 20, padding: 16 },
-  cardTitle: { color: "#252D25", fontSize: 20, lineHeight: 28, fontWeight: "600" },
-  description: { color: "#73796E", fontSize: 13, lineHeight: 18, marginTop: 10 },
-  label: { color: "#73796E", fontSize: 12, lineHeight: 16, fontWeight: "600", marginTop: 10 },
-  field: { flexDirection: "row", minHeight: 52, borderWidth: 1, borderColor: "#E0E3D8", borderRadius: 12, backgroundColor: "#fff", marginTop: 11 },
-  phone: { paddingHorizontal: 16, fontSize: 14, color: "#252D25" },
-  password: { flex: 1, minWidth: 0, paddingHorizontal: 16, fontSize: 14, color: "#252D25" },
+  welcome: { color: theme.accentInk, fontSize: 32, lineHeight: 45, fontWeight: "700" },
+  tagline: { color: theme.muted, fontSize: 14, lineHeight: 20, marginTop: 20 },
+  card: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: 16, marginTop: 20, padding: 16 },
+  cardTitle: { color: theme.ink, fontSize: 20, lineHeight: 28, fontWeight: "600" },
+  description: { color: theme.muted, fontSize: 13, lineHeight: 18, marginTop: 10 },
+  label: { color: theme.muted, fontSize: 12, lineHeight: 16, fontWeight: "600", marginTop: 10 },
+  field: { flexDirection: "row", minHeight: 52, borderWidth: 1, borderColor: theme.border, borderRadius: 12, backgroundColor: theme.surface, marginTop: 11 },
+  phone: { paddingHorizontal: 16, fontSize: 14, color: theme.ink },
+  password: { flex: 1, minWidth: 0, paddingHorizontal: 16, fontSize: 14, color: theme.ink },
   visibility: { minWidth: "46%", justifyContent: "center", alignItems: "flex-start", paddingHorizontal: 8 },
-  visibilityText: { color: "#73796E", fontSize: 14 },
-  error: { color: "#A23425", marginTop: 10, fontSize: 13, lineHeight: 18 },
+  visibilityText: { color: theme.muted, fontSize: 14 },
+  error: { color: theme.error, marginTop: 10, fontSize: 13, lineHeight: 18 },
   button: { minHeight: 50, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 12, gap: 8 },
-  buttonText: { color: "#07552F", fontSize: 15, fontWeight: "600", textAlign: "center" },
-  primary: { backgroundColor: "#07552F", marginTop: 10 },
-  primaryText: { color: "#fff" },
+  buttonText: { color: theme.accentInk, fontSize: 15, fontWeight: "600", textAlign: "center" },
+  primary: { backgroundColor: theme.coral, marginTop: 10 },
+  primaryText: { color: theme.ink },
   recovery: { minHeight: 50, marginTop: 10, alignItems: "center", justifyContent: "center" },
-  newAccount: { color: "#73796E", fontSize: 14, lineHeight: 20, marginTop: 20 },
-  create: { backgroundColor: "#EAF0D9", marginTop: 20 },
-  guest: { backgroundColor: "#fff", marginTop: 20 },
+  newAccount: { color: theme.muted, fontSize: 14, lineHeight: 20, marginTop: 20 },
+  create: { backgroundColor: theme.lime, marginTop: 20 },
+  guest: { backgroundColor: theme.surface, marginTop: 20 },
 });

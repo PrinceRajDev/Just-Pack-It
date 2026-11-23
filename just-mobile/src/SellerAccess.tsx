@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -215,7 +216,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
 
   return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style="dark" />
     <View style={s.header}><Text style={s.brand}>JustPackIt</Text><Text style={s.kicker}>SELLER</Text>{link(step === "login" || step === "status" ? "Close" : "Back", back)}</View>
-    {restoring ? <ActivityIndicator style={s.loader} color="#07552F" /> : <>
+    {restoring ? <ActivityIndicator style={s.loader} color={theme.accentInk} /> : <>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
         {hasCover ? <View style={s.cover}>
           <Image source={storefront} resizeMode="cover" style={s.coverPhoto} accessible={false} testID="seller-access-cover" />
@@ -274,7 +275,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
         {!picker && step === "review" && <View style={s.panel}><Text style={s.label}>{shopName}</Text><Text style={s.copy}>{category?.name} · Opened {since}</Text><Text style={s.copy}>{address}</Text><Text style={s.copy}>{area?.name}, {area?.city}</Text><Text style={s.copy}>{methods.filter(([key]) => fulfilment.includes(key)).map(([,label]) => label).join(" · ")}</Text><Text style={s.copy}>Submitting creates your seller account and sends your shop for review.</Text></View>}
         {!picker && step === "status" && <>
           {shop ? <BuyerStateCard title={shop.status === "pending" ? "Your shop is under review" : shop.status === "approved" ? "Your shop is approved" : shop.status === "rejected" ? "Changes requested" : "Shop suspended"} copy={shop.review?.reason || shop.name} tone={shop.status === "approved" ? "success" : "warning"} /> :
-            shopError ? <BuyerStateCard title="Shop status unavailable" copy={shopError} tone="error" action="Retry status" onAction={() => setRefresh(value => value + 1)} /> : <ActivityIndicator color="#07552F" />}
+            shopError ? <BuyerStateCard title="Shop status unavailable" copy={shopError} tone="error" action="Retry status" onAction={() => setRefresh(value => value + 1)} /> : <ActivityIndicator color={theme.accentInk} />}
           <Text style={s.copy}>Signed in as {session?.name}.</Text>
           {link("Sign out of seller account", () => void run(signOut))}
         </>}
@@ -285,27 +286,27 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
 }
 
 function Field({label,suffix,...props}:TextInputProps & {label:string; suffix?:React.ReactNode}) {
-  return <View style={s.field}><Text style={s.label}>{label}</Text><View style={s.inputRow}><TextInput {...props} accessibilityLabel={label} placeholderTextColor="#657166" style={s.input}/>{suffix}</View></View>;
+  return <View style={s.field}><Text style={s.label}>{label}</Text><View style={s.inputRow}><TextInput {...props} accessibilityLabel={label} placeholderTextColor={theme.secondary} style={s.input}/>{suffix}</View></View>;
 }
 
 const s = StyleSheet.create({
-  screen:{flex:1,backgroundColor:"#F5F3EE"}, header:{minHeight:64,paddingHorizontal:20,flexDirection:"row",alignItems:"center",gap:16,width:"100%",maxWidth:540,alignSelf:"center"},
-  brand:{color:"#07552F",fontSize:22,fontWeight:"700",flex:1}, kicker:{fontSize:11,color:"#07552F",fontWeight:"700"},
-  content:{padding:20,paddingTop:20,gap:16,width:"100%",maxWidth:540,alignSelf:"center"}, title:{fontSize:29,lineHeight:38,color:"#252D25",fontWeight:"700"},
-  cover:{borderRadius:22,overflow:"hidden",backgroundColor:"#153C32"},
+  screen:{flex:1,backgroundColor:theme.canvas}, header:{minHeight:64,paddingHorizontal:20,flexDirection:"row",alignItems:"center",gap:16,width:"100%",maxWidth:540,alignSelf:"center"},
+  brand:{color:theme.accentInk,fontSize:22,fontWeight:"700",flex:1}, kicker:{fontSize:11,color:theme.accentInk,fontWeight:"700"},
+  content:{padding:20,paddingTop:20,gap:16,width:"100%",maxWidth:540,alignSelf:"center"}, title:{fontSize:29,lineHeight:38,color:theme.ink,fontWeight:"700"},
+  cover:{borderRadius:22,overflow:"hidden",backgroundColor:theme.peach},
   coverPhoto:{width:"100%",height:120},
   coverCopy:{padding:16,gap:4},
-  coverTitle:{color:"#FFF9EE",fontSize:29,lineHeight:34,letterSpacing:-0.7,fontWeight:"700"},
-  coverCaption:{color:"#D6E2D7",fontSize:14,lineHeight:20},
-  stepHeading:{gap:4,paddingHorizontal:12,paddingVertical:8,borderLeftWidth:4,borderColor:"#D8A83D"},
-  copy:{fontSize:14,lineHeight:20,color:"#596659"}, sage:{backgroundColor:"#EAF0D9",borderRadius:16,padding:14,gap:6}, panel:{backgroundColor:"#fff",borderRadius:16,borderWidth:1,borderColor:"#DADFD0",padding:16,gap:8},
-  field:{gap:8},label:{fontSize:15,fontWeight:"600",color:"#252D25"},inputRow:{flexDirection:"row",alignItems:"center",backgroundColor:"#fff",borderWidth:1,borderColor:"#DADFD0",borderRadius:12},
-  input:{flex:1,minHeight:50,padding:12,color:"#252D25",fontSize:15},link:{minHeight:44,justifyContent:"center",alignItems:"center",paddingHorizontal:10},linkText:{color:"#07552F",textAlign:"center",fontWeight:"600"},
+  coverTitle:{color:theme.ink,fontSize:29,lineHeight:34,letterSpacing:-0.7,fontWeight:"700"},
+  coverCaption:{color:theme.secondary,fontSize:14,lineHeight:20},
+  stepHeading:{gap:4,paddingHorizontal:12,paddingVertical:8,borderLeftWidth:4,borderColor:theme.warningBorder},
+  copy:{fontSize:14,lineHeight:20,color:theme.secondary}, sage:{backgroundColor:theme.lime,borderRadius:16,padding:14,gap:6}, panel:{backgroundColor:theme.surface,borderRadius:16,borderWidth:1,borderColor:theme.border,padding:16,gap:8},
+  field:{gap:8},label:{fontSize:15,fontWeight:"600",color:theme.ink},inputRow:{flexDirection:"row",alignItems:"center",backgroundColor:theme.surface,borderWidth:1,borderColor:theme.border,borderRadius:12},
+  input:{flex:1,minHeight:50,padding:12,color:theme.ink,fontSize:15},link:{minHeight:44,justifyContent:"center",alignItems:"center",paddingHorizontal:10},linkText:{color:theme.accentInk,textAlign:"center",fontWeight:"600"},
   codeRow:{flexDirection:"row",gap:8,position:"relative"},
-  codeCell:{flex:1,minHeight:54,borderWidth:1,borderColor:"#DADFD0",borderRadius:10,backgroundColor:"#fff",alignItems:"center",justifyContent:"center"},
-  codeCellFilled:{borderColor:"#07552F"},
-  codeDigit:{fontSize:24,color:"#252D25",fontWeight:"700"},
+  codeCell:{flex:1,minHeight:54,borderWidth:1,borderColor:theme.border,borderRadius:10,backgroundColor:theme.surface,alignItems:"center",justifyContent:"center"},
+  codeCellFilled:{borderColor:theme.accentInk},
+  codeDigit:{fontSize:24,color:theme.ink,fontWeight:"700"},
   codeInput:{position:"absolute",top:0,right:0,bottom:0,left:0,opacity:0,color:"transparent",backgroundColor:"transparent",fontSize:18},
-  disabledText:{color:"#596659"},
-  footer:{paddingHorizontal:20,paddingVertical:12,gap:4,width:"100%",maxWidth:540,alignSelf:"center",backgroundColor:"#FFF",borderTopWidth:1,borderColor:"#E0DED5"},button:{minHeight:50,backgroundColor:"#153C32",borderRadius:12,justifyContent:"center",alignItems:"center"},buttonText:{color:"#fff",fontSize:15,fontWeight:"600"},disabled:{backgroundColor:"#DDE2D5"},error:{color:"#A23425",fontSize:14,lineHeight:20},loader:{padding:30},
+  disabledText:{color:theme.secondary},
+  footer:{paddingHorizontal:20,paddingVertical:12,gap:4,width:"100%",maxWidth:540,alignSelf:"center",backgroundColor:theme.surface,borderTopWidth:1,borderColor:theme.border},button:{minHeight:50,backgroundColor:theme.coral,borderRadius:12,justifyContent:"center",alignItems:"center"},buttonText:{color:theme.ink,fontSize:15,fontWeight:"600"},disabled:{backgroundColor:theme.disabled},error:{color:theme.error,fontSize:14,lineHeight:20},loader:{padding:30},
 });

@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { useRef, useState } from "react";
 import * as SecureStore from "./deviceStorage";
 import { Pressable, Text, View } from "react-native";
@@ -105,7 +106,7 @@ export function PlaceCodOrder({
       {orderId ? (
         <Text
           style={{
-            color: "#174B34",
+            color: theme.accentInk,
             fontSize: 16,
             fontWeight: "600",
           }}
@@ -123,10 +124,10 @@ export function PlaceCodOrder({
             borderRadius: 14,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: busy ? "#DDE2D5" : "#07552F",
+            backgroundColor: busy ? theme.disabled : theme.coral,
           }}
         >
-          <Text style={{ color: busy ? "#697267" : "#fff", fontWeight: "600", fontSize: 15 }}>
+          <Text style={{ color: busy ? theme.muted : theme.surface, fontWeight: "600", fontSize: 15 }}>
             {busy
               ? "Placing order…"
               : `Place Order · ₹${total.toLocaleString("en-IN")}`}

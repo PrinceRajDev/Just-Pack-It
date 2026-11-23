@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { BuyerStateCard, BuyerStateSkeleton } from "./BuyerStateCard";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
@@ -270,14 +271,14 @@ export function BuyerShopPage({
             </View>
             <View style={s.search}>
               <View style={{ transform: [{ scale: 0.75 }] }}>
-                <MarketIcon name="search" color="#777D72" />
+                <MarketIcon name="search" color={theme.muted} />
               </View>
               <TextInput
                 accessibilityLabel="Search this shop"
                 value={query}
                 onChangeText={setQuery}
                 placeholder="Search this shop"
-                placeholderTextColor="#737B6D"
+                placeholderTextColor={theme.muted}
                 style={s.input}
                 returnKeyType="search"
                 clearButtonMode="never"
@@ -442,7 +443,7 @@ export function BuyerShopPage({
   );
 }
 const s = StyleSheet.create({
-  clearSearch: { fontSize: 18, color: "#777D72" },
+  clearSearch: { fontSize: 18, color: theme.muted },
   header: {
     height: 60,
     flexDirection: "row",
@@ -450,20 +451,20 @@ const s = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 6,
   },
-  headerTitle: { flex: 1, fontSize: 21, fontWeight: "600", color: "#07552F" },
+  headerTitle: { flex: 1, fontSize: 21, fontWeight: "600", color: theme.accentInk },
   headerButton: {
     minWidth: 28,
     minHeight: 44,
     alignItems: "center",
     justifyContent: "center",
   },
-  address: { fontSize: 12, lineHeight: 17, color: "#777D72", marginTop: 6 },
+  address: { fontSize: 12, lineHeight: 17, color: theme.muted, marginTop: 6 },
   cartShell: {
-    backgroundColor: "#fff",
+    backgroundColor: theme.surface,
     paddingHorizontal: 14,
     paddingVertical: 14,
   },
-  page: { flex: 1, backgroundColor: "#FAF8F1" },
+  page: { flex: 1, backgroundColor: theme.canvas },
   content: {
     paddingBottom: 12,
     width: "100%",
@@ -474,7 +475,7 @@ const s = StyleSheet.create({
     height: 176,
 
     overflow: "hidden",
-    backgroundColor: "#EAF0D9",
+    backgroundColor: theme.lime,
   },
   coverImage: { width: "100%", height: "100%", resizeMode: "cover" },
   coverFallback: { flex: 1, alignItems: "center", justifyContent: "center" },
@@ -484,46 +485,46 @@ const s = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "#fff",
+    backgroundColor: theme.surface,
     alignItems: "center",
     justifyContent: "center",
   },
-  back: { fontSize: 32, lineHeight: 34, color: "#07552F" },
-  heart: { fontSize: 26, lineHeight: 30, color: "#07552F" },
+  back: { fontSize: 32, lineHeight: 34, color: theme.accentInk },
+  heart: { fontSize: 26, lineHeight: 30, color: theme.accentInk },
   info: {
     marginHorizontal: 20,
     marginTop: -32,
     minHeight: 144,
     borderWidth: 1,
-    borderColor: "#E2E4D9",
+    borderColor: theme.border,
     padding: 16,
     paddingTop: 16,
     borderRadius: 16,
-    backgroundColor: "#fff",
+    backgroundColor: theme.surface,
   },
-  eyebrow: { color: "#07552F", fontSize: 7, lineHeight: 10, fontWeight: "600" },
+  eyebrow: { color: theme.accentInk, fontSize: 7, lineHeight: 10, fontWeight: "600" },
   name: {
-    color: "#202820",
+    color: theme.ink,
     fontSize: 24,
     lineHeight: 29,
     fontWeight: "700",
     marginTop: 3,
   },
-  description: { fontSize: 13, lineHeight: 18, color: "#777D72", marginTop: 8 },
+  description: { fontSize: 13, lineHeight: 18, color: theme.muted, marginTop: 8 },
   metadata: {
     fontSize: 12,
     lineHeight: 17,
-    color: "#07552F",
+    color: theme.accentInk,
     marginTop: 8,
     fontWeight: "600",
   },
-  error: { fontSize: 10, color: "#A33B28", marginTop: 4 },
+  error: { fontSize: 10, color: theme.error, marginTop: 4 },
   search: {
     height: 48,
     marginHorizontal: 20,
     marginTop: 58,
     borderRadius: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.surface,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -535,21 +536,21 @@ const s = StyleSheet.create({
     height: "100%",
     padding: 0,
     fontSize: 12,
-    color: "#202820",
+    color: theme.ink,
   },
   filters: { paddingHorizontal: 20, gap: 8, marginTop: 16 },
   pill: {
     height: 36,
     paddingHorizontal: 6,
     borderRadius: 18,
-    backgroundColor: "#EAF0D9",
+    backgroundColor: theme.lime,
     alignItems: "center",
     justifyContent: "center",
   },
-  activePill: { backgroundColor: "#E3EDD1" },
+  activePill: { backgroundColor: theme.lime },
   pillText: {
     fontSize: 12,
-    color: "#07552F",
+    color: theme.accentInk,
     fontWeight: "600",
     textAlign: "center",
   },
@@ -566,9 +567,9 @@ const s = StyleSheet.create({
     fontSize: 18,
     lineHeight: 24,
     fontWeight: "600",
-    color: "#202820",
+    color: theme.ink,
   },
-  sortIcon: { color: "#07552F", fontSize: 12, fontWeight: "600" },
+  sortIcon: { color: theme.accentInk, fontSize: 12, fontWeight: "600" },
   row: {
     marginHorizontal: 20,
     justifyContent: "space-between",
@@ -578,11 +579,11 @@ const s = StyleSheet.create({
     marginHorizontal: 20,
     padding: 20,
     borderRadius: 14,
-    backgroundColor: "#fff",
+    backgroundColor: theme.surface,
   },
-  emptyText: { fontSize: 13, lineHeight: 20, color: "#737B6D" },
+  emptyText: { fontSize: 13, lineHeight: 20, color: theme.muted },
   retry: {
-    color: "#07552F",
+    color: theme.accentInk,
     fontSize: 13,
     fontWeight: "600",
     paddingVertical: 6,
@@ -592,21 +593,21 @@ const s = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 14,
-    backgroundColor: "#07552F",
+    backgroundColor: theme.coral,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
     gap: 12,
   },
-  cartTotal: { fontSize: 14, lineHeight: 18, color: "#fff", fontWeight: "600" },
-  cartCopy: { fontSize: 10, lineHeight: 14, color: "#EAF0D9", marginTop: 2 },
-  cartAction: { fontSize: 14, color: "#fff", fontWeight: "600" },
-  backdrop: { flex: 1, backgroundColor: "#0005", justifyContent: "flex-end" },
+  cartTotal: { fontSize: 14, lineHeight: 18, color: theme.ink, fontWeight: "600" },
+  cartCopy: { fontSize: 10, lineHeight: 14, color: theme.ink, marginTop: 2 },
+  cartAction: { fontSize: 14, color: theme.ink, fontWeight: "600" },
+  backdrop: { flex: 1, backgroundColor: theme.overlay, justifyContent: "flex-end" },
   sheet: {
     padding: 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    backgroundColor: "#FAF8F1",
+    backgroundColor: theme.canvas,
   },
   option: {
     paddingVertical: 14,
@@ -614,13 +615,13 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  optionText: { fontSize: 14, color: "#202820" },
+  optionText: { fontSize: 14, color: theme.ink },
   apply: {
     padding: 14,
     borderRadius: 12,
-    backgroundColor: "#07552F",
+    backgroundColor: theme.coral,
     alignItems: "center",
     marginTop: 12,
   },
-  applyText: { fontSize: 14, color: "#fff", fontWeight: "600" },
+  applyText: { fontSize: 14, color: theme.ink, fontWeight: "600" },
 });

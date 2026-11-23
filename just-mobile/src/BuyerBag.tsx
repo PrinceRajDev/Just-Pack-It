@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useState } from "react";
 import {
@@ -17,8 +18,8 @@ import { OrderSymbol } from "./BuyerOrderDetails";
 import type { BagDelivery } from "./BuyerCheckout";
 
 type Line = Product & { quantity: number };
-const green = "#07552F";
-const sage = "#EAF0D9";
+const green = theme.accentInk;
+const sage = theme.lime;
 const money = (amount: number) => `₹${amount.toLocaleString("en-IN")}`;
 const subtotal = (lines: Line[]) =>
   lines.reduce((sum, line) => sum + line.price * line.quantity, 0);
@@ -266,7 +267,7 @@ export function BuyerBag({
 }
 
 const s = StyleSheet.create({
-  page: { flex: 1, backgroundColor: "#F8F6EE" },
+  page: { flex: 1, backgroundColor: theme.canvas },
   header: {
     minHeight: 64,
     paddingHorizontal: 20,
@@ -284,45 +285,45 @@ const s = StyleSheet.create({
     paddingBottom: 20,
     gap: 16,
   },
-  title: { color: "#252D25", fontSize: 24, lineHeight: 32, fontWeight: "600" },
+  title: { color: theme.ink, fontSize: 24, lineHeight: 32, fontWeight: "600" },
   card: {
     borderWidth: 1,
-    borderColor: "#E0E3D8",
+    borderColor: theme.border,
     borderRadius: 24,
-    backgroundColor: "#fff",
+    backgroundColor: theme.surface,
     padding: 16,
   },
-  signInCard: { backgroundColor: green, borderColor: green, padding: 19 },
-  white: { color: "#fff", fontSize: 18 },
-  signInCopy: { color: "#EAF0D9", marginBottom: 4 },
-  problem: { borderColor: "#AF3927" },
+  signInCard: { backgroundColor:theme.peach, borderColor:theme.border, padding: 19 },
+  white: { color: theme.ink, fontSize: 18 },
+  signInCopy: { color: theme.ink, marginBottom: 4 },
+  problem: { borderColor: theme.error },
   selected: { borderColor: green },
   spaced: { marginTop: 12 },
   checking: { flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: sage, borderRadius: 16, minHeight: 64, padding: 16 },
   addressActions: { flexDirection: "row", gap: 12 },
-  addressButton: { flex: 1, minHeight: 44, backgroundColor: "#fff", borderWidth: 1, borderColor: "#E0E3D8", paddingHorizontal: 4 },
+  addressButton: { flex: 1, minHeight: 44, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, paddingHorizontal: 4 },
   addressSage: { backgroundColor: sage, borderColor: sage },
   addressActionText: { color: green, fontSize: 13, textAlign: "center", fontWeight: "500" },
-  removeShop: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#AF3927", marginTop: 10 },
-  footerDisabled: { backgroundColor: "#DDE2D5" },
+  removeShop: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.error, marginTop: 10 },
+  footerDisabled: { backgroundColor: theme.disabled },
   shopHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
   shopIcon: { width: 36, height: 36, backgroundColor: sage, borderRadius: 11, alignItems: "center", justifyContent: "center" },
   cardTitle: {
-    color: "#252D25",
+    color: theme.ink,
     fontSize: 16,
     lineHeight: 22,
     fontWeight: "600",
   },
-  copy: { color: "#73796E", fontSize: 13, lineHeight: 18, marginTop: 10 },
+  copy: { color: theme.muted, fontSize: 13, lineHeight: 18, marginTop: 10 },
   button: {
     minHeight: 50,
     borderRadius: 14,
-    backgroundColor: green,
+    backgroundColor: theme.coral,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 12,
   },
-  buttonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+  buttonText: { color: theme.ink, fontSize: 15, fontWeight: "600" },
   sageButton: { backgroundColor: sage, marginTop: 10 },
   sageText: { color: green },
   delivery: {
@@ -332,8 +333,8 @@ const s = StyleSheet.create({
     fontWeight: "600",
     marginTop: 2,
   },
-  muted: { color: "#73796E" },
-  row: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderColor: "#DADFD0" },
+  muted: { color: theme.muted },
+  row: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderColor: theme.border },
   thumbnail: {
     width: 72,
     height: 80,
@@ -345,8 +346,8 @@ const s = StyleSheet.create({
   },
   photo: { width: "100%", height: "100%" },
   item: { flex: 1, minWidth: 0 },
-  name: { fontSize: 14, lineHeight: 19, fontWeight: "600", color: "#252D25" },
-  unit: { fontSize: 11, lineHeight: 16, color: "#73796E", marginTop: 2 },
+  name: { fontSize: 14, lineHeight: 19, fontWeight: "600", color: theme.ink },
+  unit: { fontSize: 11, lineHeight: 16, color: theme.muted, marginTop: 2 },
   stepper: {
     flexDirection: "row",
     alignItems: "center",
@@ -366,21 +367,21 @@ const s = StyleSheet.create({
   step: { color: green, fontSize: 14, fontWeight: "700" },
   disabled: { opacity: 0.4 },
   removeButton: { alignSelf: "flex-start", paddingBottom: 2 },
-  remove: { color: "#AF3927", fontSize: 12, lineHeight: 18, fontWeight: "400" },
-  amount: { fontSize: 14, fontWeight: "700", color: "#252D25", alignSelf: "center" },
+  remove: { color: theme.error, fontSize: 12, lineHeight: 18, fontWeight: "400" },
+  amount: { fontSize: 14, fontWeight: "700", color: theme.ink, alignSelf: "center" },
   shopSubtotal: {
     alignSelf: "flex-end",
     marginTop: 10,
     fontSize: 11,
-    color: "#73796E",
+    color: theme.muted,
   },
   total: { flexDirection: "row", justifyContent: "space-between", gap: 12 },
   footer: {
-    backgroundColor: "#fff",
+    backgroundColor: theme.surface,
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderColor: "#DADFD0",
+    borderColor: theme.border,
   },
   empty: {
     padding: 20,

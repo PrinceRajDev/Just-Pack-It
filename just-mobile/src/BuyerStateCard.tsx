@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { MarketIcon, type MarketIconName } from "./MarketIcon";
 import { OrderSymbol } from "./BuyerOrderDetails";
@@ -20,7 +21,7 @@ export function BuyerStateCard({ title, copy, tone = "neutral", icon, compact, a
   return <View accessibilityRole={tone === "error" ? "alert" : undefined} accessibilityLiveRegion="polite" style={[s.card, s[tone]]}>
     <View style={compact && s.inline}>
       <View style={[s.icon, !compact && s.largeIcon, tone === "error" && s.errorIcon, (tone === "info" || busyLabel || loading) && s.whiteIcon]}>
-        {busyLabel || loading ? <ActivityIndicator color="#07552F" size="small" /> : <StateIcon icon={icon ?? (tone === "error" ? "warning" : "check")} red={tone === "error"} />}
+        {busyLabel || loading ? <ActivityIndicator color={theme.accentInk} size="small" /> : <StateIcon icon={icon ?? (tone === "error" ? "warning" : "check")} red={tone === "error"} />}
       </View>
       <Text accessibilityRole="header" style={[s.title, compact ? s.compactTitle : s.stackedTitle, tone === "error" && s.red, light && s.light]}>{title}</Text>
     </View>
@@ -31,7 +32,7 @@ export function BuyerStateCard({ title, copy, tone = "neutral", icon, compact, a
 }
 
 function StateIcon({ icon, red }: { icon: Icon; red: boolean }) {
-  const color = red ? "#AF3927" : "#07552F";
+  const color = red ? theme.error : theme.accentInk;
   if (["home","browse","bag","orders","account","search","bell"].includes(icon))
     return <MarketIcon name={icon as MarketIconName} color={color} />;
   if (icon === "shop" || icon === "wallet" || icon === "clock")
@@ -39,7 +40,7 @@ function StateIcon({ icon, red }: { icon: Icon; red: boolean }) {
   const line = { borderColor: color, borderWidth: 1.5 };
   if (icon === "lock") return <View style={{width:22,height:22,alignItems:"center",justifyContent:"flex-end"}}>
     <View style={[line,{position:"absolute",top:2,width:9,height:10,borderRadius:5}]} />
-    <View style={[line,{width:14,height:13,borderRadius:2,backgroundColor:"#EAF0D9",alignItems:"center",justifyContent:"center"}]}><View style={{width:1.5,height:4,backgroundColor:color}} /></View>
+    <View style={[line,{width:14,height:13,borderRadius:2,backgroundColor:theme.lime,alignItems:"center",justifyContent:"center"}]}><View style={{width:1.5,height:4,backgroundColor:color}} /></View>
   </View>;
   if (icon === "network") return <View style={{width:24,height:22,alignItems:"center",justifyContent:"center"}}>
     {[22,15,7].map((width,index) => <View key={width} style={{position:"absolute",width,height:width/2,borderColor:color,borderTopWidth:1.5,borderRadius:width,top:3+index*4}} />)}
@@ -59,34 +60,34 @@ export function BuyerStateSkeleton() {
 }
 
 const s = StyleSheet.create({
-  card: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#DADFD0", borderRadius: 24, padding: 20, gap: 14 },
+  card: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: 24, padding: 20, gap: 14 },
   neutral: {},
-  warning: { borderColor: "#E8BD38" },
-  error: { borderColor: "#B94A39" },
-  info: { backgroundColor: "#EAF0D9", borderColor: "#E1E7D4" },
-  success: { backgroundColor: "#07552F", borderColor: "#07552F" },
-  icon: { width: 42, height: 42, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: "#EAF0D9" },
+  warning: { borderColor: theme.warningBorder },
+  error: { borderColor: theme.errorBorder },
+  info: { backgroundColor:theme.lime, borderColor: theme.border },
+  success: { backgroundColor:theme.mint, borderColor:theme.mint },
+  icon: { width: 42, height: 42, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: theme.lime },
   largeIcon: { width: 54, height: 54, borderRadius: 16 },
-  errorIcon: { backgroundColor: "#F8F6EE" },
-  whiteIcon: { backgroundColor: "#fff" },
+  errorIcon: { backgroundColor: theme.canvas },
+  whiteIcon: { backgroundColor: theme.surface },
   glyph: { fontSize: 23 },
   inline: { flexDirection: "row", alignItems: "center", gap: 12 },
-  title: { color: "#07552F", fontWeight: "500" },
+  title: { color: theme.accentInk, fontWeight: "500" },
   compactTitle: { fontSize: 18, lineHeight: 24, flex: 1 },
   stackedTitle: { fontSize: 27, lineHeight: 36, marginTop: 14 },
-  copy: { color: "#505B50", fontSize: 14, lineHeight: 20 },
-  red: { color: "#AF3927" },
-  light: { color: "#fff" },
-  lightCopy: { color: "#EAF0D9" },
-  action: { minHeight: 50, paddingHorizontal: 12, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "#07552F" },
-  actionText: { fontSize: 15, color: "#fff", fontWeight: "500", textAlign: "center" },
-  secondary: { backgroundColor: "#EAF0D9" },
-  green: { color: "#07552F" },
-  disabled: { backgroundColor: "#DDE2D5" },
-  disabledText: { color: "#697267", fontSize: 15, textAlign: "center" },
+  copy: { color: theme.secondary, fontSize: 14, lineHeight: 20 },
+  red: { color: theme.error },
+  light: { color: theme.ink },
+  lightCopy: { color:theme.secondary },
+  action: { minHeight: 50, paddingHorizontal: 12, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: theme.coral },
+  actionText: { fontSize: 15, color: theme.ink, fontWeight: "500", textAlign: "center" },
+  secondary: { backgroundColor: theme.lime },
+  green: { color: theme.accentInk },
+  disabled: { backgroundColor: theme.disabled },
+  disabledText: { color: theme.muted, fontSize: 15, textAlign: "center" },
   skeletonList: { gap: 16 },
-  skeletonRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 20, borderWidth: 1, borderColor: "#DADFD0", backgroundColor: "#fff" },
-  skeletonPhoto: { height: 64, width: 64, borderRadius: 12, backgroundColor: "#EAF0D9" },
+  skeletonRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 20, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface },
+  skeletonPhoto: { height: 64, width: 64, borderRadius: 12, backgroundColor: theme.lime },
   skeletonLines: { flex: 1, gap: 8 },
-  skeletonLine: { height: 10, borderRadius: 6, backgroundColor: "#EAF0D9" },
+  skeletonLine: { height: 10, borderRadius: 6, backgroundColor: theme.lime },
 });

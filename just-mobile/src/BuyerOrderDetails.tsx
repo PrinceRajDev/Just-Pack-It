@@ -1,3 +1,4 @@
+import { theme } from "./theme";
 import { useEffect, useRef, useState, type ComponentRef } from "react";
 import {
   ActivityIndicator,
@@ -12,7 +13,7 @@ import { BuyerReceipt } from "./BuyerReceipt";
 import { BuyerCancelOrder } from "./BuyerCancelOrder";
 import { ApiError, buyerApi, type BuyerOrder } from "./api";
 
-const green = "#07552F";
+const green = theme.accentInk;
 export const money = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 const dateTime = (value: string) =>
   new Date(value).toLocaleString("en-IN", {
@@ -88,14 +89,14 @@ export function OrderSymbol({ name, color = green }: { name: string; color?: str
     {name === "out_for_delivery" ? <>
       <View style={[line, { position: "absolute", top: 4, left: 1, width: 12, height: 12, borderRadius: 1 }]} />
       <View style={[line, { position: "absolute", top: 8, left: 12, width: 9, height: 8, borderTopRightRadius: 4 }]} />
-      {[3,15].map(left => <View key={left} style={[line, { position: "absolute", left, bottom: 2, width: 5, height: 5, borderRadius: 3, backgroundColor: "#EAF0D9" }]} />)}
+      {[3,15].map(left => <View key={left} style={[line, { position: "absolute", left, bottom: 2, width: 5, height: 5, borderRadius: 3, backgroundColor: theme.lime }]} />)}
     </> : name === "wallet" ? <>
       <View style={[line, { width: 17, height: 15, borderRadius: 1 }]} />
       <View style={[stroke, { position: "absolute", width: 14, top: 7 }]} />
       <View style={[line, { position: "absolute", right: 0, top: 10, width: 8, height: 6, borderRadius: 1 }]} />
     </> : name === "shop" ? <>
       <View style={[line, { width: 16, height: 14, marginTop: 4, borderRadius: 1 }]} />
-      <View style={[line, { position: "absolute", width: 20, height: 7, top: 3, borderRadius: 2, backgroundColor: "#EAF0D9" }]} />
+      <View style={[line, { position: "absolute", width: 20, height: 7, top: 3, borderRadius: 2, backgroundColor: theme.lime }]} />
       <View style={[line, { position: "absolute", width: 5, height: 8, bottom: 3, borderBottomWidth: 0 }]} />
     </> : name === "delayed" || name === "cancelled" || name === "partially_cancelled" ?
       <View style={[line, { width: 19, height: 19, borderRadius: 10, alignItems: "center", justifyContent: "center" }]}>
@@ -207,7 +208,7 @@ export function BuyerOrderDetails({
         {order && (
           <>
             <View style={s.statusHeading}>
-              <View style={s.statusIcon}><OrderSymbol name={statusKey} color={statusKey === "cancelled" ? "#A23425" : green} /></View>
+              <View style={s.statusIcon}><OrderSymbol name={statusKey} color={statusKey === "cancelled" ? theme.error : green} /></View>
               <View style={s.headingCopy}>
                 <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[s.title, statusKey === "cancelled" && s.error]}>{status}</Text>
                 <Text style={s.muted}>#{order.id} · {dateTime(order.createdAt)}</Text>
@@ -218,7 +219,7 @@ export function BuyerOrderDetails({
               <Text style={s.delayCopy}>{delayedShop.shopName} is still preparing your items. We’ll update you when the status changes.</Text>
             </View>}
             <View style={s.payment}>
-              <View style={s.paymentLabel}><OrderSymbol name="wallet" color="#EAF0D9" /><Text style={s.paymentCopy}>{cod ? "Cash on Delivery" : "Online payment"}</Text></View>
+              <View style={s.paymentLabel}><OrderSymbol name="wallet" color={theme.accentInk} /><Text style={s.paymentCopy}>{cod ? "Cash on Delivery" : "Online payment"}</Text></View>
               <Text style={s.amount}>
                 {cod ? due > 0 ? `${money(due)} due at delivery` : cashPaid > 0 ? `${money(cashPaid)} paid` : "₹0 due"
                   : order.paymentStatus === "paid" ? `${money(order.onlinePaidAmount ?? order.total)} paid` : `${money(order.total)} · ${order.paymentStatus.replaceAll("_", " ")}`}
@@ -331,7 +332,7 @@ function ShopCard({
   return (
     <View style={s.card}>
       <View style={s.statusHeading}>
-        <View style={s.shopIcon}><OrderSymbol name={status === "cancelled" ? "cancelled" : "shop"} color={status === "cancelled" ? "#A23425" : green} /></View>
+        <View style={s.shopIcon}><OrderSymbol name={status === "cancelled" ? "cancelled" : "shop"} color={status === "cancelled" ? theme.error : green} /></View>
         <View style={s.headingCopy}>
           <Text style={s.shopName}>{shop.shopName}</Text>
           <Text style={[s.label, status === "cancelled" && s.error]}>{statusLabel(status)}</Text>
@@ -374,7 +375,7 @@ function ShopCard({
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#F8F6EE" },
+  screen: { flex: 1, backgroundColor: theme.canvas },
   header: {
     minHeight: 64,
     paddingHorizontal: 20,
@@ -393,47 +394,47 @@ const s = StyleSheet.create({
     gap: 20,
   },
   title: { color: green, fontSize: 28, lineHeight: 38, fontWeight: "500" },
-  muted: { color: "#73796E", fontSize: 12, lineHeight: 18 },
+  muted: { color: theme.muted, fontSize: 12, lineHeight: 18 },
   card: {
     padding: 16,
-    backgroundColor: "#fff",
-    borderColor: "#E0E3D8",
+    backgroundColor: theme.surface,
+    borderColor: theme.border,
     borderWidth: 1,
     borderRadius: 24,
     gap: 10,
   },
-  sage: { backgroundColor: "#EAF0D9" },
-  payment: { minHeight: 142, justifyContent: "center", gap: 12, borderRadius: 24, padding: 20, backgroundColor: green },
-  paymentCopy: { fontSize: 12, lineHeight: 18, color: "#EAF0D9" },
+  sage: { backgroundColor: theme.lime },
+  payment: { minHeight: 142, justifyContent: "center", gap: 12, borderRadius: 24, padding: 20, backgroundColor:theme.peach },
+  paymentCopy: { fontSize: 12, lineHeight: 18, color:theme.secondary },
   statusHeading: { flexDirection: "row", gap: 12, alignItems: "flex-start" },
   headingCopy: { flex: 1, gap: 3 },
-  statusIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: "#EAF0D9", alignItems: "center", justifyContent: "center" },
-  shopIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: "#EAF0D9", alignItems: "center", justifyContent: "center" },
+  statusIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: theme.lime, alignItems: "center", justifyContent: "center" },
+  shopIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: theme.lime, alignItems: "center", justifyContent: "center" },
   symbol: { width: 22, height: 22, alignItems: "center", justifyContent: "center" },
   paymentLabel: { flexDirection: "row", alignItems: "center", gap: 10 },
-  delay: { borderLeftWidth: 3, borderColor: "#ECC642", borderRadius: 24, padding: 20, gap: 10 },
-  delayCopy: { fontSize: 14, lineHeight: 20, color: "#73796E" },
-  summary: { backgroundColor: "#F8F6EE", padding: 12, borderRadius: 12, gap: 5 },
+  delay: { borderLeftWidth: 3, borderColor: theme.coral, borderRadius: 24, padding: 20, gap: 10 },
+  delayCopy: { fontSize: 14, lineHeight: 20, color: theme.muted },
+  summary: { backgroundColor: theme.canvas, padding: 12, borderRadius: 12, gap: 5 },
   label: { color: green, fontSize: 13, fontWeight: "600" },
-  amount: { color: "#fff", fontSize: 28, lineHeight: 34, fontWeight: "500" },
+  amount: { color: theme.ink, fontSize: 28, lineHeight: 34, fontWeight: "500" },
   smallGreen: { color: green, fontSize: 13, lineHeight: 18 },
   shopName: {
-    color: "#252D25",
+    color: theme.ink,
     fontSize: 17,
     lineHeight: 24,
     fontWeight: "600",
   },
   timeline: { paddingVertical: 6 },
   stage: { minHeight: 28, flexDirection: "row", alignItems: "center", gap: 14 },
-  stageText: { color: "#252D25", fontSize: 14, lineHeight: 19 },
+  stageText: { color: theme.ink, fontSize: 14, lineHeight: 19 },
   rail: { width: 22, alignSelf: "stretch", alignItems: "center", justifyContent: "center" },
-  connector: { position: "absolute", top: "50%", height: "100%", width: 1, backgroundColor: "#DADFD0" },
-  connectorDone: { backgroundColor: green },
-  dot: { width: 16, height: 16, borderRadius: 8, borderWidth: 1, borderColor: "#DADFD0", backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
-  dotDone: { backgroundColor: green, borderColor: green },
-  dotCurrent: { borderColor: green, borderWidth: 2, width: 20, height: 20, borderRadius: 10, backgroundColor: "#EAF0D9" },
-  dotCenter: { width: 8, height: 8, borderRadius: 4, backgroundColor: green },
-  check: { color: "#fff", fontWeight: "700", fontSize: 11 },
-  error: { color: "#A23425" },
+  connector: { position: "absolute", top: "50%", height: "100%", width: 1, backgroundColor: theme.border },
+  connectorDone: { backgroundColor: theme.coral },
+  dot: { width: 16, height: 16, borderRadius: 8, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, alignItems: "center", justifyContent: "center" },
+  dotDone: { backgroundColor: theme.coral, borderColor: green },
+  dotCurrent: { borderColor: green, borderWidth: 2, width: 20, height: 20, borderRadius: 10, backgroundColor: theme.lime },
+  dotCenter: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.coral },
+  check: { color: theme.ink, fontWeight: "700", fontSize: 11 },
+  error: { color: theme.error },
   refresh: { minHeight: 50, borderRadius: 12, alignItems: "center", justifyContent: "center" },
 });

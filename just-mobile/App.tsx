@@ -1,3 +1,4 @@
+import { theme } from "./src/theme";
 import { BuyerStateCard, BuyerStateSkeleton } from "./src/BuyerStateCard";
 import { StatusBar } from "expo-status-bar";
 import * as SecureStore from "./src/deviceStorage";
@@ -49,16 +50,16 @@ type Screen =
   "home" | "browse" | "bag" | "shop" | "account" | "orders" | "checkout" | "confirmation" | "tracking";
 type BagLine = Product & { quantity: number };
 const c = {
-  paper: "#FAF8F1",
-  card: "#FDFBF7",
-  raised: "#EFE9DF",
-  ink: "#202820",
-  secondary: "#5E554A",
-  muted: "#7B7266",
-  line: "#DDD6C9",
-  green: "#07552F",
-  lime: "#E8C94A",
-  pale: "#EAF0D9",
+  paper: theme.canvas,
+  card: theme.canvas,
+  raised: theme.surfaceSoft,
+  ink: theme.ink,
+  secondary: theme.secondary,
+  muted: theme.muted,
+  line: theme.border,
+  green: theme.accentInk,
+  lime: theme.coral,
+  pale: theme.lime,
 };
 const money = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 const categoryImage = (x: Category) =>
@@ -604,7 +605,7 @@ function Header({
       </View>
       <Pressable onPress={onArea} style={s.location}>
         <View style={s.pin}>
-          <ReferenceArtwork crop={[22, 120, 16, 20]} style={{ width: 16 }} />
+          <MarketIcon name="location" />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={s.locationLabel}>DELIVERING TO</Text>
@@ -658,9 +659,9 @@ function GuestHomeHeader({
           gap: 14,
         }}
       >
-        <ReferenceArtwork crop={[22, 120, 16, 20]} style={{ width: 20 }} />
+        <MarketIcon name="location" />
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 10, color: "#777D72", fontWeight: "600" }}>
+          <Text style={{ fontSize: 10, color: theme.muted, fontWeight: "600" }}>
             DELIVERING IN
           </Text>
           <Text
@@ -681,15 +682,15 @@ function GuestHomeHeader({
           marginTop: 17,
           minHeight: 48,
           borderRadius: 12,
-          backgroundColor: "#fff",
+          backgroundColor: theme.surface,
           flexDirection: "row",
           alignItems: "center",
           paddingHorizontal: 14,
           gap: 10,
         }}
       >
-        <MarketIcon name="search" color="#777D72" />
-        <Text style={{ fontSize: 13, color: "#777D72", flex: 1 }}>
+        <MarketIcon name="search" color={theme.muted} />
+        <Text style={{ fontSize: 13, color: theme.muted, flex: 1 }}>
           Search products, shops &amp; brands
         </Text>
       </Pressable>
@@ -909,7 +910,7 @@ function Home({
       categoryResult.cursor ? (
         <View style={{ padding: 16 }}>
           {moreError === categoryKey ? (
-            <Text style={{ color: "#B3432B", marginBottom: 8 }}>
+            <Text style={{ color: theme.error, marginBottom: 8 }}>
               More products could not load. Try again.
             </Text>
           ) : null}
@@ -983,13 +984,13 @@ function Home({
                   margin: 20,
                   padding: 16,
                   borderRadius: 12,
-                  backgroundColor: c.green,
+                  backgroundColor: theme.coral,
                 }}
               >
                 <Text
                   style={{
                     textAlign: "center",
-                    color: "#fff",
+                    color: theme.ink,
                     fontWeight: "600",
                   }}
                 >
@@ -1100,7 +1101,7 @@ function Home({
               }
               style={{ width: "23%", alignItems: "center" }}
             >
-              <View style={{ width: "100%", maxWidth: 74, height: 54, borderRadius: 12, overflow: "hidden", backgroundColor: "#F0EEE4" }}>
+              <View style={{ width: "100%", maxWidth: 74, height: 54, borderRadius: 12, overflow: "hidden", backgroundColor: theme.surfaceSoft }}>
                 <Image
                   accessible={false}
                   source={entry.photo}
@@ -1185,7 +1186,7 @@ function Home({
                       style={{ width: "100%", height: "100%" }}
                     />
                   ) : (
-                    <MarketIcon name="browse" color="#747D6E" />
+                    <MarketIcon name="browse" color={theme.muted} />
                   )}
                 </View>
                 <Text
@@ -1568,7 +1569,7 @@ function ShopPreview({
         width: "100%",
         borderRadius: 16,
         overflow: "hidden",
-        backgroundColor: "#fff",
+        backgroundColor: theme.surface,
       }}
     >
       {resolveImage(item.coverImage) && !failed ? (
@@ -1710,7 +1711,7 @@ function ProductCard({
           width: "48.3%",
           minHeight: 240,
           padding: 10,
-          backgroundColor: "#FFFFFF",
+          backgroundColor: theme.surface,
         },
         fullWidth && { width: "100%" },
         compact && {
@@ -1991,7 +1992,7 @@ function Thumb({
     >
       {neutralFallback ? (
         <>
-          <MarketIcon name="bag" color="#73796E" />
+          <MarketIcon name="bag" color={theme.muted} />
           <Text style={s.unit}>Photo unavailable</Text>
         </>
       ) : <Text style={s.fallbackText}>{item.name.slice(0, 1)}</Text>}
@@ -2115,7 +2116,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: c.paper,
   },
-  bagTopText: { color: "#FFFDF7", fontSize: 13, fontWeight: "500" },
+  bagTopText: { color: theme.ink, fontSize: 13, fontWeight: "500" },
   bagCount: {
     position: "absolute",
     top: -3,
@@ -2177,7 +2178,7 @@ const s = StyleSheet.create({
     minHeight: 184,
     borderRadius: 18,
     overflow: "hidden",
-    backgroundColor: c.green,
+    backgroundColor:theme.peach,
     flexDirection: "row",
   },
   referenceHeroCopy: {
@@ -2188,7 +2189,7 @@ const s = StyleSheet.create({
     alignItems: "flex-start",
   },
   referenceHeadline: {
-    color: "#FFFFFF",
+    color: theme.ink,
     fontSize: 22,
     lineHeight: 25,
     fontWeight: "700",
@@ -2199,7 +2200,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 12,
     marginTop: 12,
-    backgroundColor: c.lime,
+    backgroundColor:theme.coral,
     borderRadius: 11,
   },
   referenceCtaText: { color: c.green, fontSize: 13, fontWeight: "700" },
@@ -2221,7 +2222,7 @@ const s = StyleSheet.create({
     fontWeight: "600",
   },
   popularSubtitle: {
-    color: "#727A6C",
+    color: theme.muted,
     fontSize: 11,
     lineHeight: 16,
     marginTop: 8,
@@ -2234,12 +2235,12 @@ const s = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     flexDirection: "row",
-    backgroundColor: c.green,
+    backgroundColor:theme.peach,
   },
-  marketLabel: { color: c.lime, fontSize: 12, fontWeight: "500" },
+  marketLabel: { color:theme.accentInk, fontSize: 12, fontWeight: "500" },
   marketTitle: {
     maxWidth: 205,
-    color: "#FFFDF7",
+    color: theme.ink,
     marginTop: 8,
     fontSize: 24,
     lineHeight: 29,
@@ -2247,7 +2248,7 @@ const s = StyleSheet.create({
   },
   marketCopy: {
     maxWidth: 200,
-    color: "#D9E4D6",
+    color:theme.secondary,
     marginTop: 8,
     fontSize: 13,
     lineHeight: 18,
@@ -2282,7 +2283,7 @@ const s = StyleSheet.create({
   sectionAction: { color: c.green, fontSize: 11, fontWeight: "600" },
   rail: { paddingHorizontal: 16, gap: 12 },
   categoryHeader: { width: "100%", maxWidth: 600, alignSelf: "center", minHeight: 68, paddingHorizontal: 20, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  categoryHeading: { fontSize: 24, color: "#07552F", fontWeight: "600", flexShrink: 1 },
+  categoryHeading: { fontSize: 24, color: theme.accentInk, fontWeight: "600", flexShrink: 1 },
   categoryGrid: { width: "100%", maxWidth: 600, alignSelf: "center", paddingHorizontal: 20, paddingTop: 12, paddingBottom: 28, gap: 12, flexDirection: "row", flexWrap: "wrap" },
   category: {
     overflow: "hidden",
@@ -2361,7 +2362,7 @@ const s = StyleSheet.create({
     minHeight: 239,
     padding: 8,
     borderRadius: 16,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.surface,
   },
   productImage: {
     width: "100%",
@@ -2450,10 +2451,10 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: c.green,
+    backgroundColor: theme.coral,
   },
-  bagBarTitle: { color: "#FFFDF7", fontSize: 14, fontWeight: "600" },
-  bagBarCopy: { color: "#D9E4D6", marginTop: 2, fontSize: 11 },
+  bagBarTitle: { color: theme.ink, fontSize: 14, fontWeight: "600" },
+  bagBarCopy: { color: theme.secondary, marginTop: 2, fontSize: 11 },
   bagBarAction: { color: c.lime, fontSize: 13, fontWeight: "600" },
   nav: {
     height: 62,
@@ -2461,7 +2462,7 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.surface,
   },
   navButton: {
     height: 48,
@@ -2473,11 +2474,11 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  packBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(22,34,25,0.76)" },
-  packSheet: { backgroundColor: "#fff", padding: 20, borderTopLeftRadius: 24, borderTopRightRadius: 24, gap: 12 },
+  packBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: theme.overlayStrong },
+  packSheet: { backgroundColor: theme.surface, padding: 20, borderTopLeftRadius: 24, borderTopRightRadius: 24, gap: 12 },
   packTitle: { color: c.green, fontSize: 16, fontWeight: "600" },
   packOption: { minHeight: 44, borderRadius: 12, padding: 10, marginTop: 8, backgroundColor: c.pale, alignItems: "center", justifyContent: "center" },
-  navIcon: { width: 24, height: 24, flexShrink: 0, tintColor: "#687465" },
+  navIcon: { width: 24, height: 24, flexShrink: 0, tintColor: theme.muted },
   navIconActive: { tintColor: c.green },
   navActive: { backgroundColor: c.pale },
   navText: { color: c.secondary, fontSize: 10, fontWeight: "500" },
@@ -2526,7 +2527,7 @@ const s = StyleSheet.create({
   backdrop: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(31,27,22,.42)",
+    backgroundColor: theme.overlay,
   },
   sheet: {
     maxHeight: "82%",
@@ -2535,22 +2536,22 @@ const s = StyleSheet.create({
     alignSelf: "center",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    backgroundColor: "#F8F6EE",
+    backgroundColor: theme.canvas,
   },
   handle: { alignSelf: "center", width: 32, height: 4, borderRadius: 2, backgroundColor: c.line, marginTop: 10, marginBottom: 18 },
   areaHeading: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 20 },
-  areaIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: "#EAF0D9", alignItems: "center", justifyContent: "center" },
-  sheetTitle: { flex: 1, color: "#07552F", fontSize: 21, lineHeight: 28, fontWeight: "600" },
+  areaIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: theme.lime, alignItems: "center", justifyContent: "center" },
+  sheetTitle: { flex: 1, color: theme.accentInk, fontSize: 21, lineHeight: 28, fontWeight: "600" },
   areaClose: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  areaCloseText: { color: "#07552F", fontSize: 27 },
+  areaCloseText: { color: theme.accentInk, fontSize: 27 },
   sheetCopy: { paddingHorizontal: 20, color: c.secondary, marginTop: 8, fontSize: 14, lineHeight: 20 },
   areaOptions: { padding: 20, gap: 10 },
-  areaRow: { minHeight: 72, padding: 14, borderWidth: 1, borderColor: c.line, borderRadius: 16, backgroundColor: "#fff", flexDirection: "row", alignItems: "center", gap: 12 },
-  areaSelected: { borderColor: "#07552F", backgroundColor: "#EAF0D9" },
+  areaRow: { minHeight: 72, padding: 14, borderWidth: 1, borderColor: c.line, borderRadius: 16, backgroundColor: theme.surface, flexDirection: "row", alignItems: "center", gap: 12 },
+  areaSelected: { borderColor: theme.accentInk, backgroundColor: theme.lime },
   areaInfo: { flex: 1, minWidth: 0 },
-  areaRadio: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#7C8C76" },
-  areaRadioChecked: { backgroundColor: "#07552F", borderColor: "#07552F" },
-  areaCheck: { color: "#fff", fontSize: 13 },
+  areaRadio: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: theme.muted },
+  areaRadioChecked: { backgroundColor: theme.coral, borderColor: theme.accentInk },
+  areaCheck: { color: theme.ink, fontSize: 13 },
   areaName: { color: c.ink, fontSize: 16, fontWeight: "600" },
   areaMeta: { color: c.secondary, marginTop: 4, fontSize: 12, lineHeight: 16 },
   selected: { color: c.green, fontSize: 12, fontWeight: "600" },

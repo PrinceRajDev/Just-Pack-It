@@ -1,8 +1,9 @@
+import { theme } from "./theme";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { DeliveryAddressContents } from "./CheckoutPresentation";
 import type { BuyerOrder } from "./api";
 
-const green = "#07552F";
+const green = theme.accentInk;
 const money = (amount: number) => `₹${amount.toLocaleString("en-IN")}`;
 
 export function BuyerOrderConfirmation({
@@ -94,7 +95,7 @@ export function BuyerOrderConfirmation({
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#F8F6EE" },
+  screen: { flex: 1, backgroundColor: theme.canvas },
   header: {
     height: 64,
     paddingHorizontal: 20,
@@ -107,18 +108,18 @@ const s = StyleSheet.create({
   headerTitle: { fontSize: 18, color: green, fontWeight: "500" },
   content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24, gap: 16 },
   card: {
-    backgroundColor: "#fff",
-    borderColor: "#E0E3D8",
+    backgroundColor: theme.surface,
+    borderColor: theme.border,
     borderWidth: 1,
     borderRadius: 24,
     padding: 16,
   },
-  success: { backgroundColor: green, borderColor: green, padding: 19 },
+  success: { backgroundColor:theme.mint, borderColor:theme.mint, padding: 19 },
   selected: { borderColor: green },
-  paymentCard: { borderRadius: 20, padding: 16, gap: 8, backgroundColor: "#EAF0D9" },
-  footer: { borderTopWidth: 1, borderColor: "#DADFD0", backgroundColor: "#fff", paddingHorizontal: 20, paddingVertical: 16, gap: 8 },
+  paymentCard: { borderRadius: 20, padding: 16, gap: 8, backgroundColor: theme.lime },
+  footer: { borderTopWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, paddingHorizontal: 20, paddingVertical: 16, gap: 8 },
   checkArea: {
-    width: 48, height: 48, borderRadius: 16, backgroundColor: "#EAF0D9",
+    width: 48, height: 48, borderRadius: 16, backgroundColor: theme.lime,
     justifyContent: "center", alignItems: "center", marginBottom: 14,
   },
   check: {
@@ -129,16 +130,16 @@ const s = StyleSheet.create({
     borderBottomWidth: 3,
     transform: [{ translateY: -2 }, { rotate: "-45deg" }],
   },
-  title: { color: "#fff", fontSize: 24, lineHeight: 34, fontWeight: "500" },
+  title: { color: theme.ink, fontSize: 24, lineHeight: 34, fontWeight: "500" },
   reference: {
-    color: "#EAF0D9",
+    color: theme.ink,
     fontSize: 14,
     lineHeight: 20,
     fontWeight: "600",
     marginTop: 10,
   },
   description: {
-    color: "#EAF0D9",
+    color: theme.ink,
     fontSize: 14,
     lineHeight: 20,
     marginTop: 10,
@@ -156,13 +157,13 @@ const s = StyleSheet.create({
     fontWeight: "600",
   },
   contact: {
-    color: "#252D25",
+    color: theme.ink,
     fontSize: 13,
     lineHeight: 18,
     fontWeight: "600",
     marginTop: 10,
   },
-  address: { color: "#73796E", fontSize: 13, lineHeight: 18, marginTop: 10 },
+  address: { color: theme.muted, fontSize: 13, lineHeight: 18, marginTop: 10 },
   button: {
     minHeight: 50,
     borderRadius: 14,
@@ -170,9 +171,9 @@ const s = StyleSheet.create({
     justifyContent: "center",
     padding: 10,
   },
-  track: { backgroundColor: green },
-  continue: { backgroundColor: "#EAF0D9" },
+  track: { backgroundColor: theme.coral },
+  continue: { backgroundColor: theme.lime },
   buttonText: { color: green, fontSize: 15, fontWeight: "600" },
-  trackText: { color: "#fff" },
-  note: { color: "#73796E", fontSize: 12, lineHeight: 16 },
+  trackText: { color: theme.ink },
+  note: { color: theme.muted, fontSize: 12, lineHeight: 16 },
 });

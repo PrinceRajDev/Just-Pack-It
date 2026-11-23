@@ -163,6 +163,7 @@ export const styles = StyleSheet.create({
   shopChecked:{backgroundColor:"#153C32",borderColor:"#153C32"},
   shopCheckText:{color:"#FFF",fontSize:14,fontWeight:"700"},
   shopSaved:{color:"#174638",fontSize:13,marginBottom:8},
+  editorIcon:{tintColor:"#F7D46A"},
   orderBack:{minHeight:44,justifyContent:"center",alignSelf:"flex-start",paddingHorizontal:8},
   orderDock:{padding:12,paddingHorizontal:20,borderTopWidth:1,borderColor:"#E0DED5",backgroundColor:"#FFF",width:"100%",maxWidth:640,alignSelf:"center"},
   packingDivider:{borderTopWidth:1,borderColor:"#E0DED5"},

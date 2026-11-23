@@ -20,11 +20,12 @@ export function SellerCatalogue({token,lowStock}:{token:string;lowStock:boolean}
   const [query,setQuery] = useState("");
   const [filter,setFilter] = useState<typeof filters[number]>(lowStock ? "Low stock" : "All");
   const [edit,setEdit] = useState<SellerProduct | "new">();
+  const [editPacks,setEditPacks] = useState(false);
   const [stockProduct,setStockProduct] = useState<SellerProduct>();
   const [notice,setNotice] = useState("");
   const open = useSellerMutation();
-  const leaveEditor = () => setEdit(undefined);
-  if (edit) return <ProductEditor token={token} product={edit==="new" ? undefined : edit} close={leaveEditor} saved={listing.reload} />;
+  const leaveEditor = () => { setEdit(undefined); setEditPacks(false); };
+  if (edit) return <ProductEditor token={token} product={edit==="new" ? undefined : edit} startInPacks={editPacks} close={leaveEditor} saved={listing.reload} />;
   if (stockProduct) return <QuickStock token={token} product={stockProduct} close={() => setStockProduct(undefined)}
     reload={() => sellerApi.product(token,stockProduct.id)} saved={updated => {
       listing.setData(previous => previous && {...previous,items:previous.items.map(item => item.id === updated.id ? updated : item)});
@@ -73,7 +74,7 @@ export function SellerCatalogue({token,lowStock}:{token:string;lowStock:boolean}
       onStock={() => void open.run(async () => {
         setNotice("");
         const current = await sellerApi.product(token,item.id);
-        if (current.variants?.length) setEdit(current);
+        if (current.variants?.length) { setEditPacks(true); setEdit(current); }
         else setStockProduct(current);
       })} />)}
     {listing.data?.next && <SellerButton label={listing.moreBusy?"Loading…":"Load more products"} soft disabled={listing.moreBusy} onPress={listing.more} />}
@@ -138,8 +139,9 @@ function QuickStock({token,product,close,saved,reload}:{token:string;product:Sel
   </SellerScroll>;
 }
 
-function ProductEditor({token,product,close,saved}:{token:string;product?:SellerProduct;close:()=>void;saved:()=>void}) {
+function ProductEditor({token,product,startInPacks,close,saved}:{token:string;product?:SellerProduct;startInPacks:boolean;close:()=>void;saved:()=>void}) {
   const [current,setCurrent] = useState(product);
+  const [section,setSection] = useState<"Details" | "Pack variants">(startInPacks ? "Pack variants" : "Details");
   const [name,setName] = useState(product?.name ?? "");
   const [unit,setUnit] = useState(product?.unit ?? "");
   const [description,setDescription] = useState(product?.description ?? "");
@@ -168,30 +170,59 @@ function ProductEditor({token,product,close,saved}:{token:string;product?:Seller
     },current);
     setCurrent(result); setStock(String(result.stock)); saved(); setNotice("Product saved.");
   });
-  return <SellerScroll>
-    <SellerButton label="Back to catalogue" soft disabled={mutation.busy} onPress={close} />
-    <Text accessibilityRole="header" style={styles.section}>{current ? "Edit product" : "Add product"}</Text>
-    {!!notice && <Text accessibilityLiveRegion="polite" style={styles.link}>{notice}</Text>}
-    <MutationFeedback error={mutation.error} onReload={current ? ()=>void mutation.run(refresh) : undefined} />
+  const feedback = <MutationFeedback error={mutation.error} onReload={current ? ()=>void mutation.run(refresh) : undefined} />;
+  return <>
+  <SellerScroll>
+    <Pressable accessibilityRole="button" onPress={close} disabled={mutation.busy} style={styles.orderBack}><Text style={styles.link}>‹  Back to catalogue</Text></Pressable>
+    <View style={styles.orderHero}>
+      <View style={styles.orderTop}>
+        <Image source={productIcon} resizeMode="contain" style={[styles.sellerIcon,styles.editorIcon]} accessible={false} />
+        {current && <Text style={styles.orderStatus}>{current.active ? "Active listing" : "Inactive listing"}</Text>}
+      </View>
+      <Text accessibilityRole="header" style={styles.heroTitle}>{current?.name || "Add product"}</Text>
+      {current && <Text style={styles.heroKicker}>{[current.unit,rupees(current.price)].filter(Boolean).join(" · ")}</Text>}
+    </View>
+    {current && <View style={styles.shopSections}>{(["Details","Pack variants"] as const).map(value => (
+      <Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:section===value}} disabled={mutation.busy} onPress={() => {
+        setSection(value); setNotice(""); mutation.clear();
+      }} style={[styles.shopSectionTab,section===value && styles.dispatchModeActive]}>
+        <Text style={section===value ? styles.dispatchModeTextActive : styles.dispatchModeText}>{value}</Text>
+      </Pressable>
+    ))}</View>}
+    {section === "Details" && <>
     <SellerCard>
+      <Text accessibilityRole="header" style={styles.section}>Product details</Text>
       <SellerField label="Product name" value={name} onChangeText={setName} maxLength={100} />
       <SellerField label="Unit or pack size" value={unit} onChangeText={setUnit} maxLength={100} />
       <SellerField label="Description" value={description} onChangeText={setDescription} maxLength={2000} multiline />
       <Text style={styles.label}>Category</Text>
       <LoadState error={categories.error} loading={categories.loading&&!categories.data} retry={categories.reload}/>
       <View style={styles.chips}>{categories.data?.map(item => <Pressable accessibilityRole="radio" accessibilityState={{checked:categoryId===item.id}} key={item.id} onPress={() => setCategory(item.id)} style={[styles.chip,categoryId===item.id && styles.sage]}><Text style={styles.link}>{item.name}</Text></Pressable>)}</View>
-      <SellerField label="Price (₹)" value={price} onChangeText={setPrice} keyboardType="decimal-pad" />
-      <SellerField label="MRP (₹), optional" value={mrp} onChangeText={setMrp} keyboardType="decimal-pad" />
+    </SellerCard>
+    <SellerCard>
+      <Text accessibilityRole="header" style={styles.section}>Pricing and stock</Text>
+      <View style={styles.shopTimes}>
+        <View style={styles.grow}><SellerField label="Price (₹)" value={price} onChangeText={setPrice} keyboardType="decimal-pad" /></View>
+        <View style={styles.grow}><SellerField label="MRP (₹), optional" value={mrp} onChangeText={setMrp} keyboardType="decimal-pad" /></View>
+      </View>
       {!hasVariants && <SellerField label="Stock" value={stock} onChangeText={setStock} keyboardType="number-pad" />}
-      <SellerButton label={isActive?"✓ Listing active":"Listing inactive"} soft onPress={() => setIsActive(value=>!value)} />
-      <SellerButton label="Save product" disabled={mutation.busy} onPress={save} />
       {current && !hasVariants && <SellerButton label="Update stock only" soft disabled={mutation.busy} onPress={() => void mutation.run(async () => {
         if (!validStock(stock)) throw new Error("Enter a whole number of units.");
         setCurrent(await sellerApi.inventory(token,current,Number(stock))); saved(); setNotice("Stock updated.");
       })} />}
     </SellerCard>
-    {current && <SellerCard>
-      <Text style={styles.title}>Pack variants</Text>
+    <View style={styles.shopAvailability}>
+      <View style={styles.grow}><Text style={styles.title}>Listing visibility</Text><Text style={styles.copy}>{isActive ? "Active" : "Inactive"} after saving</Text></View>
+      <Pressable accessibilityRole="switch" accessibilityLabel="Listing active" accessibilityState={{checked:isActive}} disabled={mutation.busy} onPress={() => setIsActive(value=>!value)} style={styles.shopSwitch}>
+        <View style={[styles.shopSwitchTrack,isActive && styles.shopSwitchActive]}><View style={styles.shopSwitchKnob} /></View>
+      </Pressable>
+    </View>
+    </>}
+    {section === "Pack variants" && current && <SellerCard>
+      <Text accessibilityRole="header" style={styles.section}>Pack variants</Text>
+      {!!notice && <Text accessibilityLiveRegion="polite" style={styles.catalogueNotice}>{notice}</Text>}
+      {feedback}
+      {!current.variants?.length && !variant && <Text style={styles.copy}>Add a pack when you sell this product in more than one size.</Text>}
       {current.variants?.map(item => <Row key={item.id} title={item.label} detail={`${rupees(item.price)} · ${item.stock}`} onPress={() => setVariant({id:item.id,label:item.label,price:String(item.price),stock:String(item.stock)})} />)}
       {!variant && <SellerButton label="Add variant" soft onPress={() => setVariant({label:"",price:"",stock:""})} />}
       {variant && <>
@@ -206,7 +237,13 @@ function ProductEditor({token,product,close,saved}:{token:string;product?:Seller
         <SellerButton label="Close variant editor" soft disabled={mutation.busy} onPress={() => setVariant(undefined)} />
       </>}
     </SellerCard>}
-  </SellerScroll>;
+  </SellerScroll>
+  {section === "Details" && <View style={styles.orderDock}>
+    {feedback}
+    {!!notice && <Text accessibilityLiveRegion="polite" style={styles.shopSaved}>{notice}</Text>}
+    <SellerButton label="Save product" disabled={mutation.busy} onPress={save} />
+  </View>}
+  </>;
 }
 
 const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];

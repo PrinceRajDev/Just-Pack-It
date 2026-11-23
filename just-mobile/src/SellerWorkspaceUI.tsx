@@ -178,6 +178,7 @@ export const styles = StyleSheet.create({
   shopChecked:{backgroundColor:"#153C32",borderColor:"#153C32"},
   shopCheckText:{color:"#FFF",fontSize:14,fontWeight:"700"},
   shopSaved:{color:"#174638",fontSize:13,marginBottom:8},
+  shopHoursWarning:{color:"#503B1F",backgroundColor:"#F7E8C5",borderRadius:10,padding:10,fontSize:13},
   editorIcon:{tintColor:"#F7D46A"},
   productPhotoPreview:{width:"100%",height:200,borderRadius:12,backgroundColor:"#F5F3EE"},
   orderBack:{minHeight:44,justifyContent:"center",alignSelf:"flex-start",paddingHorizontal:8},

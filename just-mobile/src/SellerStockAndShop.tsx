@@ -296,6 +296,21 @@ const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Satur
 const shopSections = ["Availability","Shop details","Cover photo","Account"] as const;
 const shopCover = require("../assets/seller-storefront.jpg");
 
+function overlappingHours(hours: SellerShop["openingHours"]) {
+  const minutes = (time: string) => Number(time.slice(0,2)) * 60 + Number(time.slice(3));
+  const slots = hours.flatMap(({day,opens,closes}) => {
+    if (!validTime(opens) || !validTime(closes) || opens === closes) return [];
+    const start = minutes(opens);
+    const end = minutes(closes);
+    return start < end ? [{day,start,end}] : [
+      {day,start,end:1440},
+      ...end > 0 ? [{day:(day + 1) % 7,start:0,end}] : [],
+    ];
+  });
+  return slots.some((slot,index) => slots.slice(index + 1).some(other =>
+    slot.day === other.day && slot.start < other.end && other.start < slot.end));
+}
+
 export function SellerShopSettings({token,name,signOut}:{token:string;name:string;signOut:()=>Promise<void>}) {
   const data = useSellerData(() => sellerApi.shop(token),token);
   const session = useSellerMutation();
@@ -382,6 +397,7 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
     <SellerCard>
       <Text accessibilityRole="header" style={styles.section}>Opening hours</Text>
       <Text style={styles.copy}>24-hour time · {shop.timezone || "Asia/Kolkata"}</Text>
+      {overlappingHours(hours) && <Text accessibilityLiveRegion="polite" style={styles.shopHoursWarning}>Some opening hours overlap. Check the time slots below.</Text>}
       {!hours.length && <Text style={styles.copy}>No opening hours set.</Text>}
       {hours.map((row,index) => <View key={index} style={styles.shopInterval}>
         <View style={styles.orderTop}><Text style={styles.label}>{days[row.day]}</Text>

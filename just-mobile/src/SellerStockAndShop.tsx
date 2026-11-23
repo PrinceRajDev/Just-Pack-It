@@ -210,18 +210,24 @@ function ProductEditor({token,product,close,saved}:{token:string;product?:Seller
 }
 
 const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const shopSections = ["Availability","Shop details","Account"] as const;
+const shopCover = require("../assets/seller-storefront.jpg");
+const shopApproval = {approved:"Approved",pending:"Under review",rejected:"Changes requested",suspended:"Suspended"};
 
 export function SellerShopSettings({token,name,signOut}:{token:string;name:string;signOut:()=>Promise<void>}) {
   const data = useSellerData(() => sellerApi.shop(token),token);
-  const mutation = useSellerMutation();
+  const session = useSellerMutation();
+  if (data.data) return <ShopEditor key={data.data.id} token={token} shop={data.data} accountName={name} signOut={signOut} onSaved={data.setData} reload={data.reload} />;
   return <SellerScroll>
-    <LoadState error={data.error} loading={data.loading&&!data.data} retry={data.reload}/>
-    {data.data && <ShopEditor key={`${data.data.id}:${data.data.version}`} token={token} shop={data.data} onSaved={data.setData} reload={data.reload} />}
-    <SellerCard><Text style={styles.title}>{name}</Text><MutationFeedback error={mutation.error} /><SellerButton label="Sign out of seller account" soft disabled={mutation.busy} onPress={()=>void mutation.run(signOut)} /></SellerCard>
+    <LoadState error={data.error} loading={data.loading} retry={data.reload}/>
+    {!!data.error && <SellerCard><Text style={styles.title}>{name}</Text><MutationFeedback error={session.error} /><SellerButton label="Sign out of seller account" soft disabled={session.busy} onPress={()=>void session.run(signOut)} /></SellerCard>}
   </SellerScroll>;
 }
 
-function ShopEditor({token,shop,onSaved,reload}:{token:string;shop:SellerShop;onSaved:(value:SellerShop)=>void;reload:()=>void}) {
+function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:string;shop:SellerShop;accountName:string;signOut:()=>Promise<void>;onSaved:(value:SellerShop)=>void;reload:()=>void}) {
+  const [section,setSection] = useState<typeof shopSections[number]>("Availability");
+  const [notice,setNotice] = useState("");
+  const [failedCover,setFailedCover] = useState("");
   const [name,setName] = useState(shop.name);
   const [address,setAddress] = useState(shop.address ?? "");
   const [description,setDescription] = useState(shop.description ?? "");
@@ -230,41 +236,102 @@ function ShopEditor({token,shop,onSaved,reload}:{token:string;shop:SellerShop;on
   const [methods,setMethods] = useState(shop.fulfilment ?? []);
   const [pickupNote,setPickupNote] = useState(shop.pickupNote ?? "");
   const mutation = useSellerMutation();
+  const cover = resolveImage(shop.coverImage);
+  const pauseChanged = closed !== !!shop.temporarilyClosed;
   return <>
-    <MutationFeedback error={mutation.error} onReload={reload} />
-    <SellerCard>
-      <Text style={styles.eyebrow}>SHOP PROFILE</Text>
-      <Text style={styles.copy}>Approval status · {shop.status}</Text>
+    <SellerScroll>
+    <View style={styles.hero}>
+      <Image accessible={false} testID="seller-shop-cover" source={cover && cover !== failedCover ? {uri:cover} : shopCover}
+        onError={() => { if (cover) setFailedCover(cover); }} style={styles.shopCover} resizeMode="cover" />
+      <View style={styles.heroTop}>
+        <View style={styles.grow}>
+          <Text accessibilityRole="header" style={styles.heroTitle}>{shop.name}</Text>
+          <Text style={styles.heroKicker}>{shop.locality || shop.address || "Shop settings"}</Text>
+        </View>
+        <View style={styles.heroBadge}><Text style={styles.heroBadgeText}>{shopApproval[shop.status]}</Text></View>
+      </View>
+    </View>
+    <View style={styles.shopSections}>{shopSections.map(value => {
+      const selected = section === value;
+      return <Pressable key={value} accessibilityRole="tab" accessibilityState={{selected}} disabled={mutation.busy} onPress={() => {
+        setSection(value); setNotice(""); mutation.clear();
+      }} style={[styles.shopSectionTab,selected && styles.dispatchModeActive]}>
+        <Text style={selected ? styles.dispatchModeTextActive : styles.dispatchModeText}>{value}</Text>
+      </Pressable>;
+    })}</View>
+    {section !== "Availability" && <MutationFeedback error={mutation.error} onReload={reload} />}
+    {!!notice && section !== "Availability" && <Text accessibilityLiveRegion="polite" style={styles.catalogueNotice}>{notice}</Text>}
+    {section === "Shop details" && <SellerCard>
+      <Text accessibilityRole="header" style={styles.section}>Shop profile</Text>
       {shop.review?.reason && <Text style={styles.copy}>{shop.review.reason}</Text>}
       <SellerField label="Shop name" value={name} onChangeText={setName} maxLength={100} />
       <SellerField label="Street address" value={address} onChangeText={setAddress} maxLength={500} />
       <SellerField label="Shop description" value={description} onChangeText={setDescription} maxLength={1000} multiline />
       <SellerButton label="Save shop details" disabled={mutation.busy} onPress={() => void mutation.run(async () => {
         if (name.trim().length<2 || address.trim().length<2) throw new Error("Enter the shop name and street address.");
-        onSaved(await sellerApi.saveProfile(token,shop,{name:name.trim(),address:address.trim(),description:description.trim()}));
+        const updated = await sellerApi.saveProfile(token,shop,{name:name.trim(),address:address.trim(),description:description.trim()});
+        onSaved(updated);
+        setName(updated.name); setAddress(updated.address ?? ""); setDescription(updated.description ?? "");
+        setNotice("Shop details saved.");
       })} />
+    </SellerCard>}
+    {section === "Availability" && <>
+    <View style={styles.shopAvailability}>
+      <View style={styles.grow}><Text style={styles.title}>{shop.temporarilyClosed ? "Shop paused" : "Shop not paused"}</Text>
+        <Text style={styles.copy}>{pauseChanged ? "Save availability to apply this change." : shop.temporarilyClosed ? "Resume to remove the temporary closure." : "Pause temporarily when you need a break."}</Text>
+      </View>
+      <Pressable accessibilityRole="switch" accessibilityLabel="Pause shop temporarily" accessibilityState={{checked:closed}} disabled={mutation.busy}
+        onPress={() => {setClosed(value=>!value);setNotice("");}} style={styles.shopSwitch}>
+        <View style={[styles.shopSwitchTrack,closed && styles.shopSwitchActive]}><View style={styles.shopSwitchKnob} /></View>
+      </Pressable>
+    </View>
+    <SellerCard>
+      <Text accessibilityRole="header" style={styles.section}>Opening hours</Text>
+      <Text style={styles.copy}>24-hour time · {shop.timezone || "Asia/Kolkata"}</Text>
+      {!hours.length && <Text style={styles.copy}>No opening hours set.</Text>}
+      {hours.map((row,index) => <View key={index} style={styles.shopInterval}>
+        <View style={styles.orderTop}><Text style={styles.label}>{days[row.day]}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Remove interval for ${days[row.day]}`} disabled={mutation.busy} onPress={()=>setHours(old=>old.filter((_,i)=>i!==index))} style={styles.orderBack}><Text style={styles.link}>Remove</Text></Pressable>
+        </View>
+        <View style={styles.shopDays}>{days.map((day,dayIndex) => <Pressable key={day} accessibilityRole="radio" accessibilityLabel={day} accessibilityState={{checked:row.day===dayIndex}} disabled={mutation.busy} style={[styles.shopDay,row.day===dayIndex&&styles.sage]} onPress={()=>setHours(old=>old.map((item,i)=>i===index?{...item,day:dayIndex}:item))}><Text style={styles.eyebrow}>{day.slice(0,2)}</Text></Pressable>)}</View>
+        <View style={styles.shopTimes}>
+          <View style={styles.grow}><SellerField label="Opens (HH:MM)" editable={!mutation.busy} value={row.opens} onChangeText={opens=>setHours(old=>old.map((item,i)=>i===index?{...item,opens}:item))} maxLength={5}/></View>
+          <View style={styles.grow}><SellerField label="Closes (HH:MM)" editable={!mutation.busy} value={row.closes} onChangeText={closes=>setHours(old=>old.map((item,i)=>i===index?{...item,closes}:item))} maxLength={5}/></View>
+        </View>
+      </View>)}
+      <SellerButton label="Add opening interval" soft disabled={mutation.busy || hours.length>=28} onPress={()=>setHours(old=>{
+        const nextDay = [1,2,3,4,5,6,0].find(day=>!old.some(row=>row.day===day));
+        return [...old,{day:nextDay ?? 1,opens:"09:00",closes:"18:00"}];
+      })}/>
     </SellerCard>
     <SellerCard>
-      <Text style={styles.title}>Opening hours</Text>
-      <Text style={styles.copy}>{shop.timezone || "Asia/Kolkata"} · Use 24-hour time.</Text>
-      <SellerButton label={closed ? "✓ Temporarily closed" : "Temporarily close shop"} soft onPress={()=>setClosed(value=>!value)} />
-      {hours.map((row,index) => <View key={index} style={{gap:8}}>
-        <Text style={styles.label}>{days[row.day]}</Text>
-        <View style={styles.chips}>{days.map((day,dayIndex) => <Pressable key={day} style={[styles.chip,row.day===dayIndex&&styles.sage]} onPress={()=>setHours(old=>old.map((item,i)=>i===index?{...item,day:dayIndex}:item))}><Text style={styles.link}>{day.slice(0,3)}</Text></Pressable>)}</View>
-        <SellerField label="Opens (HH:MM)" value={row.opens} onChangeText={opens=>setHours(old=>old.map((item,i)=>i===index?{...item,opens}:item))} maxLength={5}/>
-        <SellerField label="Closes (HH:MM)" value={row.closes} onChangeText={closes=>setHours(old=>old.map((item,i)=>i===index?{...item,closes}:item))} maxLength={5}/>
-        <SellerButton label="Remove interval" soft onPress={()=>setHours(old=>old.filter((_,i)=>i!==index))}/>
-      </View>)}
-      <SellerButton label="Add opening interval" soft disabled={hours.length>=28} onPress={()=>setHours(old=>[...old,{day:1,opens:"09:00",closes:"18:00"}])}/>
-      <Text style={styles.title}>Fulfilment methods</Text>
-      {(Object.keys(fulfilmentNames) as Fulfilment[]).map(key=><SellerButton key={key} label={(methods.includes(key)?"✓ ":"")+fulfilmentNames[key]} soft onPress={()=>setMethods(old=>old.includes(key)?old.filter(item=>item!==key):[...old,key])}/>)}
-      {methods.includes("pickup") && <SellerField label="Pickup instructions" value={pickupNote} onChangeText={setPickupNote} maxLength={400} multiline />}
+      <Text accessibilityRole="header" style={styles.section}>Fulfilment</Text>
+      {(Object.keys(fulfilmentNames) as Fulfilment[]).map(key=>{
+        const checked = methods.includes(key);
+        return <Pressable key={key} accessibilityRole="checkbox" accessibilityState={{checked}} disabled={mutation.busy}
+          onPress={()=>setMethods(old=>old.includes(key)?old.filter(item=>item!==key):[...old,key])} style={styles.shopMethod}>
+          <Text style={[styles.label,styles.grow]}>{fulfilmentNames[key]}</Text><View style={[styles.shopCheck,checked && styles.shopChecked]}>{checked && <Text style={styles.shopCheckText}>✓</Text>}</View>
+        </Pressable>;
+      })}
+      {methods.includes("pickup") && <SellerField label="Pickup instructions" editable={!mutation.busy} value={pickupNote} onChangeText={setPickupNote} maxLength={400} multiline />}
+    </SellerCard>
+    </>}
+    {section === "Account" && <SellerCard><Text style={styles.title}>{accountName}</Text><SellerButton label="Sign out of seller account" soft disabled={mutation.busy} onPress={()=>void mutation.run(signOut)} /></SellerCard>}
+    </SellerScroll>
+    {section === "Availability" && <View style={styles.orderDock}>
+      <MutationFeedback error={mutation.error} onReload={reload} />
+      {!!notice && <Text accessibilityLiveRegion="polite" style={styles.shopSaved}>{notice}</Text>}
+      {pauseChanged && !notice && <Text style={styles.shopSaved}>Save to {closed ? "pause" : "resume"} your shop.</Text>}
       <SellerButton label="Save availability" disabled={mutation.busy} onPress={() => void mutation.run(async () => {
+        setNotice("");
         if (!methods.length) throw new Error("Choose at least one fulfilment method.");
         if (hours.some(row=>!validTime(row.opens)||!validTime(row.closes)||row.opens===row.closes)) throw new Error("Enter different opening and closing times in HH:MM format.");
-        onSaved(await sellerApi.saveAvailability(token,shop,{temporarilyClosed:closed,openingHours:hours,fulfilment:methods,pickupNote:pickupNote.trim()}));
+        const updated = await sellerApi.saveAvailability(token,shop,{temporarilyClosed:closed,openingHours:hours,fulfilment:methods,pickupNote:pickupNote.trim()});
+        onSaved(updated);
+        setClosed(!!updated.temporarilyClosed); setHours(updated.openingHours ?? []); setMethods(updated.fulfilment ?? []); setPickupNote(updated.pickupNote ?? "");
+        setNotice("Availability saved.");
       })} />
-    </SellerCard>
+    </View>}
   </>;
 }
 const validMoney = (value:string) => /^\d+(?:\.\d{1,2})?$/.test(value) && Number(value)>0 && Number.isFinite(Number(value));

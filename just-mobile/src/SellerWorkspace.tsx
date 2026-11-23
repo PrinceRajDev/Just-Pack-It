@@ -391,6 +391,9 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
             <Text style={styles.copy}>{fulfilmentNames[order.fulfilment]} · {order.testMode ? "Test order" : sellerPaymentLabel(order)}</Text>
             {!!riderStatus && <Text style={styles.label}>{riderStatus}</Text>}
             {!!packingProgressLabel && <Text style={styles.label}>{packingProgressLabel}</Text>}
+            {order.status === "cancelled" && !!order.cancelReason?.trim() && (
+              <Text style={styles.copy} numberOfLines={2}>Reason · {order.cancelReason.trim()}</Text>
+            )}
           </View>
         </View>
         <View style={styles.dispatchTicketFooter}>

@@ -138,6 +138,8 @@ export const styles = StyleSheet.create({
   catalogueSearch:{flexDirection:"row",alignItems:"center",gap:4,borderWidth:1,borderColor:"#E0DED5",backgroundColor:"#F5F3EE",borderRadius:12,paddingRight:4},
   catalogueSearchInput:{flex:1,minWidth:0,minHeight:48,paddingHorizontal:12,color:"#192922",fontSize:15},
   catalogueAction:{minHeight:44,justifyContent:"center",paddingHorizontal:12,borderRadius:10,backgroundColor:"#E8EFE4"},
+  catalogueCardActions:{flexDirection:"row",flexWrap:"wrap",gap:4},
+  cataloguePhotoAction:{minHeight:44,justifyContent:"center",paddingHorizontal:8,borderRadius:10},
   catalogueNotice:{color:"#174638",backgroundColor:"#E8EFE4",borderRadius:12,padding:12,fontWeight:"600"},
   catalogueChip:{backgroundColor:"#F1EFE9",paddingHorizontal:10},
   catalogueProductBody:{padding:12,flexDirection:"row",alignItems:"center",gap:12},

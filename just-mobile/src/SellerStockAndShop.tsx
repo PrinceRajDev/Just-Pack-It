@@ -22,12 +22,12 @@ export function SellerCatalogue({token,lowStock}:{token:string;lowStock:boolean}
   const [query,setQuery] = useState("");
   const [filter,setFilter] = useState<typeof filters[number]>(lowStock ? "Low stock" : "All");
   const [edit,setEdit] = useState<SellerProduct | "new">();
-  const [editPacks,setEditPacks] = useState(false);
+  const [editorSection,setEditorSection] = useState<typeof productSections[number]>("Details");
   const [stockProduct,setStockProduct] = useState<SellerProduct>();
   const [notice,setNotice] = useState("");
   const open = useSellerMutation();
-  const leaveEditor = () => { setEdit(undefined); setEditPacks(false); };
-  if (edit) return <ProductEditor token={token} product={edit==="new" ? undefined : edit} startInPacks={editPacks} close={leaveEditor} saved={listing.reload} />;
+  const leaveEditor = () => { setEdit(undefined); setEditorSection("Details"); };
+  if (edit) return <ProductEditor token={token} product={edit==="new" ? undefined : edit} initialSection={editorSection} close={leaveEditor} saved={listing.reload} />;
   if (stockProduct) return <QuickStock token={token} product={stockProduct} close={() => setStockProduct(undefined)}
     reload={() => sellerApi.product(token,stockProduct.id)} saved={updated => {
       listing.setData(previous => previous && {...previous,items:previous.items.map(item => item.id === updated.id ? updated : item)});
@@ -73,17 +73,21 @@ export function SellerCatalogue({token,lowStock}:{token:string;lowStock:boolean}
     {!listing.loading && !listing.error && !rows?.length && <BuyerStateCard title="No products in this view" copy="Add a product or try a different search or filter." icon="bag" />}
     {rows?.map(item => <CatalogueProduct key={item.id} item={item} disabled={open.busy}
       onPress={() => void open.run(async () => { setNotice(""); setEdit(await sellerApi.product(token,item.id)); })}
+      onPhoto={() => void open.run(async () => {
+        const current = await sellerApi.product(token,item.id);
+        setNotice(""); setEditorSection("Photo"); setEdit(current);
+      })}
       onStock={() => void open.run(async () => {
         setNotice("");
         const current = await sellerApi.product(token,item.id);
-        if (current.variants?.length) { setEditPacks(true); setEdit(current); }
+        if (current.variants?.length) { setEditorSection("Pack variants"); setEdit(current); }
         else setStockProduct(current);
       })} />)}
     {listing.data?.next && <SellerButton label={listing.moreBusy?"Loading…":"Load more products"} soft disabled={listing.moreBusy} onPress={listing.more} />}
   </SellerScroll>;
 }
 
-function CatalogueProduct({item,disabled,onPress,onStock}:{item:SellerProduct;disabled:boolean;onPress:()=>void;onStock:()=>void}) {
+function CatalogueProduct({item,disabled,onPress,onStock,onPhoto}:{item:SellerProduct;disabled:boolean;onPress:()=>void;onStock:()=>void;onPhoto:()=>void}) {
   const [failedImage,setFailedImage] = useState("");
   const image = resolveImage(item.image);
   const stocks = stockLevels(item);
@@ -108,9 +112,14 @@ function CatalogueProduct({item,disabled,onPress,onStock}:{item:SellerProduct;di
     </Pressable>
     <View style={styles.catalogueProductFooter}>
       <Text style={[styles.orderStatus,!item.active && styles.catalogueInactive,(empty > 0 || low) && item.active && styles.workCountActive]}>{status}</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Manage stock for ${item.name}`} disabled={disabled} onPress={onStock} style={styles.catalogueAction}>
-        <Text style={styles.link}>{item.variants?.length ? "Manage packs" : "Update stock"}</Text>
-      </Pressable>
+      <View style={styles.catalogueCardActions}>
+        <Pressable accessibilityRole="button" accessibilityLabel={`${item.image ? "Change" : "Add"} photo for ${item.name}`} disabled={disabled} onPress={onPhoto} style={styles.cataloguePhotoAction}>
+          <Text style={styles.link}>{item.image ? "Photo" : "Add photo"}</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={`Manage stock for ${item.name}`} disabled={disabled} onPress={onStock} style={styles.catalogueAction}>
+          <Text style={styles.link}>{item.variants?.length ? "Manage packs" : "Update stock"}</Text>
+        </Pressable>
+      </View>
     </View>
   </View>;
 }
@@ -141,9 +150,9 @@ function QuickStock({token,product,close,saved,reload}:{token:string;product:Sel
   </SellerScroll>;
 }
 
-function ProductEditor({token,product,startInPacks,close,saved}:{token:string;product?:SellerProduct;startInPacks:boolean;close:()=>void;saved:()=>void}) {
+function ProductEditor({token,product,initialSection,close,saved}:{token:string;product?:SellerProduct;initialSection:typeof productSections[number];close:()=>void;saved:()=>void}) {
   const [current,setCurrent] = useState(product);
-  const [section,setSection] = useState<typeof productSections[number]>(startInPacks ? "Pack variants" : "Details");
+  const [section,setSection] = useState(initialSection);
   const [photoBusy,setPhotoBusy] = useState(false);
   const [name,setName] = useState(product?.name ?? "");
   const [unit,setUnit] = useState(product?.unit ?? "");

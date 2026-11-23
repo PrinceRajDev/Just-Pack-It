@@ -165,6 +165,8 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
   const activeOrderCount = listing.data?.items.filter(order => (orderGroups.Active as OrderStatus[]).includes(order.status)).length;
   if (selected) {
     const order = selected;
+    const packingUnits = order.lines.reduce((total,item) => total + item.qty,0);
+    const packingLines = order.lines.length;
     const move = ({placed:"accepted",accepted:"preparing",preparing:"ready",ready:order.fulfilment==="seller_delivery" ? "out_for_delivery" : undefined} as Partial<Record<OrderStatus,OrderStatus>>)[order.status];
     const actionLabel = {placed:"Accept order",accepted:"Start packing",preparing:"Mark ready",ready:"Start delivery"}[order.status as "placed"|"accepted"|"preparing"|"ready"];
     const allowReceipt = order.fulfilment === "pickup" ? order.status === "ready" : order.fulfilment === "seller_delivery" && order.status === "out_for_delivery";
@@ -198,7 +200,11 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
         </View>}
       </View>
       {order.testMode && <BuyerStateCard title="Test order" copy="Skip physical fulfilment and cash collection." tone="warning" compact />}
-      <Text style={styles.section}>Packing list</Text>
+      <View style={styles.orderTop}>
+        <Text accessibilityRole="header" style={[styles.section,styles.grow]}>Packing list</Text>
+        <Text style={styles.orderStatus}>{packingUnits} {packingUnits === 1 ? "unit" : "units"}</Text>
+      </View>
+      <Text style={styles.copy}>{packingLines} {packingLines === 1 ? "line item" : "line items"} to check</Text>
       <SellerCard>{order.lines.map((item,index) => <View key={index} style={[styles.row,index > 0 && styles.packingDivider]}><View style={styles.grow}><Text style={styles.label}>{item.name}</Text>{!!(item.variantLabel || item.unit) && <Text style={styles.copy}>{item.variantLabel || item.unit}</Text>}</View><Text style={styles.workCount}>×{item.qty}</Text></View>)}</SellerCard>
       <View style={styles.paymentTicket}>
         <View style={styles.orderTop}><Text style={styles.title}>{order.paymentMethod === "razorpay" ? "Paid online" : order.cashCollection ? "Cash recorded" : "Cash on delivery"}</Text><Text style={styles.orderAmount}>{rupees(order.total)}</Text></View>

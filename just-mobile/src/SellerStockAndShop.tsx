@@ -6,7 +6,7 @@ import { resolveImage } from "./images";
 import { fulfilmentNames, sellerApi, type Fulfilment, type SellerProduct, type SellerShop } from "./sellerApi";
 import { rupees, styles, LoadState, MutationFeedback, Row, SellerButton, SellerCard, SellerField, SellerScroll, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
 import { useAndroidBack } from "./useAndroidBack";
-import { SellerProductPhoto } from "./SellerProductPhoto";
+import { SellerPhotoEditor } from "./SellerPhotoEditor";
 
 const filters = ["All","Active","Inactive","Low stock","Out of stock"] as const;
 const shelfPhoto = require("../assets/browse-categories/grocery.webp");
@@ -202,8 +202,8 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
       </Pressable>
     ))}</View>}
     {!current && <Text style={styles.copy}>Save the product to add a photo or pack variants.</Text>}
-    {section === "Photo" && current && <SellerProductPhoto token={token} product={current} onBusy={setPhotoBusy} onRefresh={refresh} onSaved={updated => {
-      setCurrent(updated); saved();
+    {section === "Photo" && current && <SellerPhotoEditor token={token} image={current.image} onBusy={setPhotoBusy} onRefresh={refresh} onUpload={async (body,type) => {
+      setCurrent(await sellerApi.uploadProductPhoto(token,current,body,type)); saved();
     }} />}
     {section === "Details" && <>
     <SellerCard>
@@ -263,7 +263,7 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
 }
 
 const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-const shopSections = ["Availability","Shop details","Account"] as const;
+const shopSections = ["Availability","Shop details","Cover photo","Account"] as const;
 const shopCover = require("../assets/seller-storefront.jpg");
 const shopApproval = {approved:"Approved",pending:"Under review",rejected:"Changes requested",suspended:"Suspended"};
 
@@ -281,6 +281,7 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
   const [section,setSection] = useState<typeof shopSections[number]>("Availability");
   const [notice,setNotice] = useState("");
   const [failedCover,setFailedCover] = useState("");
+  const [coverBusy,setCoverBusy] = useState(false);
   const [name,setName] = useState(shop.name);
   const [address,setAddress] = useState(shop.address ?? "");
   const [description,setDescription] = useState(shop.description ?? "");
@@ -306,7 +307,7 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
     </View>
     <View style={styles.shopSections}>{shopSections.map(value => {
       const selected = section === value;
-      return <Pressable key={value} accessibilityRole="tab" accessibilityState={{selected}} disabled={mutation.busy} onPress={() => {
+      return <Pressable key={value} accessibilityRole="tab" accessibilityState={{selected}} disabled={mutation.busy || coverBusy} onPress={() => {
         setSection(value); setNotice(""); mutation.clear();
       }} style={[styles.shopSectionTab,selected && styles.dispatchModeActive]}>
         <Text style={selected ? styles.dispatchModeTextActive : styles.dispatchModeText}>{value}</Text>
@@ -328,6 +329,11 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
         setNotice("Shop details saved.");
       })} />
     </SellerCard>}
+    {section === "Cover photo" && <SellerPhotoEditor token={token} image={shop.coverImage} shopCover onBusy={setCoverBusy}
+      onRefresh={async () => onSaved(await sellerApi.shop(token))} onUpload={async (body,type) => {
+        const uploaded = await sellerApi.uploadShopCover(token,shop,body,type);
+        onSaved({...shop,coverImage:uploaded.coverImage,status:uploaded.status,version:uploaded.version});
+      }} />}
     {section === "Availability" && <>
     <View style={styles.shopAvailability}>
       <View style={styles.grow}><Text style={styles.title}>{shop.temporarilyClosed ? "Shop paused" : "Shop not paused"}</Text>

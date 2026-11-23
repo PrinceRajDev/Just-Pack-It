@@ -3,7 +3,7 @@ import { Image, Text } from "react-native";
 import { launchImageLibraryAsync, type ImagePickerAsset } from "expo-image-picker";
 import { byteLength, toByteArray } from "base64-js";
 import { resolveImage } from "./images";
-import { sellerApi, type ImageUploadCapability, type SellerProduct } from "./sellerApi";
+import { sellerApi, type ImageUploadCapability } from "./sellerApi";
 import { LoadState, MutationFeedback, SellerButton, SellerCard, styles, useSellerData, useSellerMutation } from "./SellerWorkspaceUI";
 
 function photoBody(asset:ImagePickerAsset, limits:ImageUploadCapability) {
@@ -20,15 +20,15 @@ function photoBody(asset:ImagePickerAsset, limits:ImageUploadCapability) {
   return {buffer:bytes.buffer as ArrayBuffer,type};
 }
 
-export function SellerProductPhoto({token,product,onSaved,onRefresh,onBusy}:{token:string;product:SellerProduct;
-  onSaved:(value:SellerProduct)=>void;onRefresh:()=>Promise<void>;onBusy:(active:boolean)=>void}) {
+export function SellerPhotoEditor({token,image,shopCover,onUpload,onRefresh,onBusy}:{token:string;image?:string;shopCover?:boolean;
+  onUpload:(body:ArrayBuffer,type:string)=>Promise<void>;onRefresh:()=>Promise<void>;onBusy:(active:boolean)=>void}) {
   const capability = useSellerData(() => sellerApi.photoCapability(token),token);
   const mutation = useSellerMutation();
   const picking = useRef(false);
   const [asset,setAsset] = useState<ImagePickerAsset>();
   const [pickError,setPickError] = useState("");
   const [uploaded,setUploaded] = useState(false);
-  const preview = asset?.uri || resolveImage(product.image);
+  const preview = asset?.uri || resolveImage(image);
   const choose = async () => {
     if (picking.current || !capability.data?.enabled) return;
     picking.current = true;
@@ -53,15 +53,14 @@ export function SellerProductPhoto({token,product,onSaved,onRefresh,onBusy}:{tok
     onBusy(true);
     try {
       const {buffer,type} = photoBody(asset,capability.data);
-      const updated = await sellerApi.uploadProductPhoto(token,product,buffer,type);
-      onSaved(updated);
+      await onUpload(buffer,type);
       setUploaded(true);
       setAsset(undefined);
     } finally { onBusy(false); }
   });
   return <SellerCard>
-    <Text accessibilityRole="header" style={styles.section}>Product photo</Text>
-    {preview && <Image accessibilityLabel={asset ? "Selected photo preview" : "Current product photo"}
+    <Text accessibilityRole="header" style={styles.section}>{shopCover ? "Shop cover photo" : "Product photo"}</Text>
+    {preview && <Image accessibilityLabel={asset ? "Selected photo preview" : shopCover ? "Current shop cover photo" : "Current product photo"}
       source={{uri:preview}} style={styles.productPhotoPreview} resizeMode="contain" />}
     <LoadState loading={capability.loading && !capability.data} error={capability.error} retry={capability.reload} />
     {capability.data?.enabled === false && <Text style={styles.copy}>Photo uploads are unavailable right now.</Text>}
@@ -70,12 +69,13 @@ export function SellerProductPhoto({token,product,onSaved,onRefresh,onBusy}:{tok
       onBusy(true);
       try { await onRefresh(); } finally { onBusy(false); }
     })} />
-    {uploaded && <Text accessibilityLiveRegion="polite" style={styles.catalogueNotice}>Product photo saved.</Text>}
+    {uploaded && <Text accessibilityLiveRegion="polite" style={styles.catalogueNotice}>{shopCover ? "Cover photo submitted for review." : "Product photo saved."}</Text>}
     {capability.data?.enabled && <>
       <Text style={styles.copy}>JPEG, PNG or WebP · Up to {Math.floor(capability.data.maxBytes / (1024 * 1024))} MB</Text>
-      <SellerButton label={asset ? "Choose another photo" : product.image ? "Replace photo" : "Choose photo"} soft disabled={mutation.busy} onPress={() => void choose()} />
+      {shopCover && <Text style={styles.copy}>Uploading a new cover sends your shop back for approval. It may temporarily disappear from the marketplace during review.</Text>}
+      <SellerButton label={asset ? "Choose another photo" : image ? "Replace photo" : "Choose photo"} soft disabled={mutation.busy} onPress={() => void choose()} />
       {asset && <>
-        <SellerButton label="Upload photo" disabled={mutation.busy} onPress={upload} />
+        <SellerButton label={shopCover ? "Submit cover for review" : "Upload photo"} disabled={mutation.busy} onPress={upload} />
         <SellerButton label="Discard selected photo" soft disabled={mutation.busy} onPress={() => { setAsset(undefined); setPickError(""); mutation.clear(); }} />
       </>}
     </>}

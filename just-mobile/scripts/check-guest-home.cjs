@@ -221,6 +221,14 @@ const assert = require("node:assert/strict");
         sellerShop={...sellerShop,...input,version:sellerShop.version+1};
         json=sellerShop;
       }
+      if(pathname==="/seller/shop/image"){
+        assert.equal(method,"POST");
+        assert.equal(route.request().headers()["content-type"],"image/png");
+        assert.equal(route.request().headers()["x-shop-version"],String(sellerShop.version));
+        assert.equal(route.request().postDataBuffer().subarray(0,8).toString("hex"),"89504e470d0a1a0a");
+        sellerShop={...sellerShop,coverImage:"https://images.example.test/fixture-shop.webp",status:"pending",version:sellerShop.version+1};
+        json={coverImage:sellerShop.coverImage,status:sellerShop.status,version:sellerShop.version};
+      }
       assert.ok(json,"Unexpected seller route "+pathname);
       return route.fulfill({json,headers:sellerHeaders});
     });
@@ -296,6 +304,15 @@ const assert = require("node:assert/strict");
     await workspace.getByRole("button",{name:"Save availability",exact:true}).click();
     await workspace.getByText("Availability saved.",{exact:true}).waitFor();
     await page.waitForFunction(() => document.querySelectorAll('[aria-label="Opens (HH:MM)"]').length===1);
+    await workspace.getByRole("tab",{name:"Cover photo",exact:true}).click();
+    const coverChooserPromise=page.waitForEvent("filechooser");
+    await workspace.getByRole("button",{name:"Choose photo",exact:true}).click();
+    const coverChooser=await coverChooserPromise;
+    await coverChooser.setFiles({name:"shop.png",mimeType:"image/png",buffer:Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lWQAAAAASUVORK5CYII=","base64")});
+    await workspace.getByLabel("Selected photo preview",{exact:true}).waitFor();
+    await workspace.getByRole("button",{name:"Submit cover for review",exact:true}).click();
+    await workspace.getByText("Cover photo submitted for review.",{exact:true}).waitFor();
+    await workspace.getByText("Under review",{exact:true}).waitFor();
     await workspace.getByRole("button",{name:"Close",exact:true}).click();
     await page.getByRole("button",{name:"Close",exact:true}).click();
     await page.getByRole("button",{name:"Back from sign in"}).click();

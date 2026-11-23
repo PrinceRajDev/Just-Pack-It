@@ -76,6 +76,10 @@ export const sellerApi = {
   products: (token: string, cursor?: string) => page<SellerProduct>(token, "/seller/products", cursor),
   product: (token: string, id: string) => request<SellerProduct>("/seller/products/" + encode(id), token),
   photoCapability: (token: string) => request<ImageUploadCapability>("/seller/image-upload", token),
+  uploadShopCover: (token: string, shop: SellerShop, body: ArrayBuffer, mimeType: string) =>
+    request<Pick<SellerShop,"coverImage"|"status"|"version">>("/seller/shop/image", token, {
+      method:"POST", body, headers:{"Content-Type":mimeType,"X-Shop-Version":String(shop.version)},
+    }),
   uploadProductPhoto: (token: string, product: SellerProduct, body: ArrayBuffer, mimeType: string) =>
     request<SellerProduct>(productPath(product) + "/image", token, {
       method: "POST", body, headers: {"Content-Type":mimeType,"X-Product-Version":String(product.version)},

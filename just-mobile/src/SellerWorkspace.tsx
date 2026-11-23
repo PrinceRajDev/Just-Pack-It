@@ -179,6 +179,10 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
       <View style={styles.orderHero}>
         <View style={styles.orderTop}><SellerIcon name="orders" color="#F7D46A" /><Text style={styles.orderStatus}>{orderStatusNames[order.status]}</Text></View>
         <Text style={styles.heroTitle}>Order #{order.orderId.slice(-8).toUpperCase()}</Text>
+        <View style={styles.orderReference}>
+          <Text style={styles.heroKicker}>Full order ID</Text>
+          <Text selectable style={styles.orderReferenceValue}>{order.orderId}</Text>
+        </View>
         <Text style={styles.heroKicker}>{[fulfilmentNames[order.fulfilment],orderTime(order.createdAt)].filter(Boolean).join(" · ")}</Text>
         {order.delivery && <Text style={styles.heroKicker}>Rider status · {order.delivery.state.replaceAll("_"," ")}</Text>}
         {order.status !== "cancelled" && <View style={styles.stageTray}>

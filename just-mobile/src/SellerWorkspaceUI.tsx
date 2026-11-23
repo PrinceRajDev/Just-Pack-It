@@ -90,6 +90,8 @@ export const styles = StyleSheet.create({
   pressed:{opacity:0.72},
   orderTop:{flexDirection:"row",flexWrap:"wrap",alignItems:"center",justifyContent:"space-between",gap:8},
   orderHero:{backgroundColor:"#153C32",padding:20,borderRadius:20,gap:8},
+  orderReference:{backgroundColor:"#254E42",padding:12,borderRadius:10,gap:4},
+  orderReferenceValue:{fontSize:14,lineHeight:20,color:"#FFF9EE",fontWeight:"600"},
   dispatchBanner:{minHeight:156,borderRadius:22,overflow:"hidden",backgroundColor:"#153C32",justifyContent:"center",padding:20},
   dispatchBannerImage:{position:"absolute",width:"100%",height:"100%",left:0,top:0},
   dispatchBannerCopy:{width:"48%",gap:8},

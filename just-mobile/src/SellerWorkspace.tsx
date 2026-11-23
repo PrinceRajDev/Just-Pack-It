@@ -1,15 +1,22 @@
 import { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Image, Pressable, Text, View } from "react-native";
 import { onSessionExpired, type Session } from "./api";
 import { BuyerStateCard } from "./BuyerStateCard";
-import { MarketIcon, type MarketIconName } from "./MarketIcon";
 import { useAndroidBack } from "./useAndroidBack";
 import { fulfilmentNames, orderStatusNames, sellerApi, type SellerOrder, type OrderStatus } from "./sellerApi";
 import { rupees, styles, LoadState, MutationFeedback, Row, SellerButton, SellerCard, SellerField, SellerScroll, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
 import { SellerCatalogue, SellerShopSettings } from "./SellerStockAndShop";
 
 type Tab = "Home" | "Orders" | "Catalogue" | "Settlements" | "Shop";
-const tabs: {name: Tab; icon: MarketIconName}[] = [
+const sellerIcons = {
+  home: require("../assets/nav-icons/home.png"),
+  orders: require("../assets/nav-icons/orders.png"),
+  browse: require("../assets/nav-icons/browse.png"),
+  bag: require("../assets/nav-icons/bag.png"),
+  account: require("../assets/nav-icons/account.png"),
+};
+type SellerIconName = keyof typeof sellerIcons;
+const tabs: {name: Tab; icon: SellerIconName}[] = [
   {name:"Home",icon:"home"},{name:"Orders",icon:"orders"},{name:"Catalogue",icon:"browse"},
   {name:"Settlements",icon:"bag"},{name:"Shop",icon:"account"},
 ];
@@ -19,6 +26,11 @@ const orderGroups = {
 } satisfies Record<string, OrderStatus[]>;
 type OrderGroup = keyof typeof orderGroups;
 const statusLabels = { pending:"Under review", approved:"Approved", rejected:"Changes requested", suspended:"Suspended" };
+const counterPhoto = require("../assets/seller-kirana-counter.jpg");
+
+function SellerIcon({name,color}: {name:SellerIconName;color:string}) {
+  return <Image source={sellerIcons[name]} resizeMode="contain" accessible={false} style={[styles.sellerIcon,{tintColor:color}]} />;
+}
 
 export function SellerWorkspace({ session, back, signOut, expired }: { session: Session; back: () => void; signOut: () => Promise<void>; expired: () => void }) {
   const [tab, setTab] = useState<Tab>("Home");
@@ -47,7 +59,7 @@ export function SellerWorkspace({ session, back, signOut, expired }: { session: 
     <View style={styles.nav}>{tabs.map(item => {
       const selected = tab === item.name;
       return <Pressable key={item.name} accessibilityRole="tab" accessibilityState={{selected}} onPress={() => { if (!selected) goTab(item.name); }} style={styles.navItem}>
-        <View style={[styles.navIcon, selected && styles.sage]}><MarketIcon name={item.icon} color={selected ? "#174638" : "#5A655E"} /></View>
+        <View style={[styles.navIcon, selected && styles.sage]}><SellerIcon name={item.icon} color={selected ? "#174638" : "#5A655E"} /></View>
         <Text style={[styles.navLabel, selected && styles.link, styles.navText]}>{item.name}</Text>
       </Pressable>;
     })}</View>
@@ -57,30 +69,58 @@ export function SellerWorkspace({ session, back, signOut, expired }: { session: 
 function SellerHome({token,orders,open,openLowStock}: {token:string;orders:(group:OrderGroup)=>void;open:(tab:Tab)=>void;openLowStock:()=>void}) {
   const shop = useSellerData(() => sellerApi.shop(token), token);
   const dashboard = useSellerData(() => sellerApi.dashboard(token), token);
-  return <SellerScroll>
+  const counts = dashboard.data?.counts;
+  const work = [
+    {title:"New orders", count:counts?.placed ?? 0, action:"Review new orders", open:() => orders("New"), icon:"orders", tint:"#FBE8AE"},
+    {title:"To prepare", count:(counts?.accepted ?? 0) + (counts?.preparing ?? 0), action:"Open packing queue", open:() => orders("Preparing"), icon:"bag", tint:"#E6E0F6"},
+    {title:"Ready for handoff", count:counts?.ready ?? 0, action:"Review handoffs", open:() => orders("Ready"), icon:"home", tint:"#DAEDDE"},
+    {title:"Low stock", count:dashboard.data?.lowStock?.count ?? 0, action:"Review low stock", open:openLowStock, icon:"browse", tint:"#F5E0D4"},
+  ] satisfies {title:string;count:number;action:string;open:()=>void;icon:SellerIconName;tint:string}[];
+  const next = dashboard.error ? undefined : work.find(item => item.count > 0);
+  const refresh = () => { shop.reload(); dashboard.reload(); };
+  return <SellerScroll refreshing={shop.loading || dashboard.loading} onRefresh={refresh}>
     {shop.data && <View style={styles.hero}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Shop settings" onPress={() => open("Shop")} style={styles.heroTop}>
-        <View style={styles.heroBadge}><View style={styles.statusDot} /><Text style={styles.heroBadgeText}>{shop.data.temporarilyClosed ? "Temporarily closed" : statusLabels[shop.data.status]}</Text></View>
-        <Text style={styles.heroArrow}>↗</Text>
-      </Pressable>
-      <Text style={styles.heroTitle}>{shop.data.name}</Text>
-      {!!shop.data.locality && <Text style={styles.heroKicker}>{shop.data.locality}</Text>}
-      {dashboard.data && <View style={styles.heroMetrics}>
-        <View style={styles.grow}><Text style={styles.heroNumber}>{dashboard.data.todayOrders}</Text><Text style={styles.heroKicker}>Orders today</Text></View>
-        <View style={styles.metricDivider} />
-        <View style={styles.grow}><Text style={styles.heroNumber}>{dashboard.data.pendingPayment}</Text><Text style={styles.heroKicker}>Awaiting payment</Text></View>
-      </View>}
+      <View style={styles.heroTop}>
+        <View style={styles.grow}>
+          <Text style={styles.heroTitle}>{shop.data.name}</Text>
+          {!!shop.data.locality && <Text style={styles.heroKicker}>{shop.data.locality}</Text>}
+        </View>
+        <Pressable accessibilityRole="button" accessibilityLabel="Shop settings" onPress={() => open("Shop")} style={styles.heroBadge}>
+          <View style={styles.statusDot} />
+          <Text style={styles.heroBadgeText}>{shop.data.temporarilyClosed ? "Paused" : statusLabels[shop.data.status]}</Text>
+        </Pressable>
+      </View>
+      <Image source={counterPhoto} style={styles.heroPhoto} resizeMode="cover" accessible={false} />
+      <View style={styles.heroFooter}>
+        <Pressable accessibilityRole="button" onPress={next?.open ?? (() => orders("Active"))} style={({pressed}) => [styles.heroAction, pressed && styles.pressed]}>
+          <Text style={[styles.label, styles.grow]}>{next?.action ?? "View active orders"}</Text>
+          <Text style={styles.label}>{next ? `${next.count}  ›` : "›"}</Text>
+        </Pressable>
+      </View>
     </View>}
     <LoadState loading={shop.loading && !shop.data} error={shop.error} retry={shop.reload} />
     {shop.data && shop.data.status !== "approved" && <BuyerStateCard title={statusLabels[shop.data.status]} copy={shop.data.review?.reason || "You can prepare your catalogue and shop details while your shop status is reviewed."} tone="warning" compact icon="shop" action="Shop settings" onAction={() => open("Shop")} />}
     <LoadState loading={dashboard.loading && !dashboard.data} error={dashboard.error} retry={dashboard.reload} />
     {dashboard.data && <>
-      <Text accessibilityRole="header" style={styles.section}>Work queue</Text>
-      <View style={styles.queue}>
-        <QueueTile title="New orders" count={dashboard.data.counts?.placed ?? 0} onPress={() => orders("New")} />
-        <QueueTile title="To prepare" count={(dashboard.data.counts?.accepted ?? 0) + (dashboard.data.counts?.preparing ?? 0)} onPress={() => orders("Preparing")} />
-        <QueueTile title="Ready for handoff" count={dashboard.data.counts?.ready ?? 0} onPress={() => orders("Ready")} />
-        <QueueTile title="Low stock" count={dashboard.data.lowStock?.count ?? 0} onPress={openLowStock} />
+      <View style={styles.queueTop}>
+        <Text accessibilityRole="header" style={styles.section}>Work queue</Text>
+        <Pressable accessibilityRole="button" disabled={shop.loading || dashboard.loading} onPress={refresh} style={styles.tap}><Text style={styles.link}>{dashboard.loading ? "Refreshing…" : "Refresh"}</Text></Pressable>
+      </View>
+      <View style={styles.workList}>
+        {work.map(item => <Pressable key={item.title} accessibilityRole="button" accessibilityLabel={`${item.title}, ${item.count}`} onPress={item.open}
+          style={({pressed}) => [styles.workTile, pressed && styles.pressed]}>
+          <View style={styles.queueTop}>
+            <View style={[styles.workIcon,{backgroundColor:item.tint}]}><SellerIcon name={item.icon} color="#183B31" /></View>
+            <Text style={[styles.workCount, item.count > 0 && styles.workCountActive]}>{item.count}</Text>
+          </View>
+          <View style={styles.queueTop}><Text style={[styles.label,styles.grow]}>{item.title}</Text><Text style={styles.link}>›</Text></View>
+        </Pressable>)}
+      </View>
+      <Text accessibilityRole="header" style={styles.section}>Today at a glance</Text>
+      <View style={styles.todayStrip}>
+        <View style={styles.grow}><Text style={styles.todayNumber}>{dashboard.data.todayOrders}</Text><Text style={styles.copy}>Orders today</Text></View>
+        <View style={styles.metricDivider} />
+        <View style={styles.grow}><Text style={styles.todayNumber}>{dashboard.data.pendingPayment}</Text><Text style={styles.copy}>Awaiting payment</Text></View>
       </View>
     </>}
     <Text accessibilityRole="header" style={styles.section}>Shop tools</Text>
@@ -89,14 +129,6 @@ function SellerHome({token,orders,open,openLowStock}: {token:string;orders:(grou
       <Row title="Opening hours and shop settings" onPress={() => open("Shop")} />
     </SellerCard>
   </SellerScroll>;
-}
-
-function QueueTile({title,count,onPress}: {title:string;count:number;onPress:()=>void}) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={`${title}, ${count}`} onPress={onPress}
-    style={({pressed}) => [styles.queueTile, count > 0 && styles.queueActive, pressed && styles.pressed]}>
-    <View style={styles.queueTop}><Text style={styles.queueNumber}>{count}</Text><Text style={styles.link}>↗</Text></View>
-    <Text style={styles.label}>{title}</Text>
-  </Pressable>;
 }
 
 function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;setGroup:(value:OrderGroup)=>void}) {

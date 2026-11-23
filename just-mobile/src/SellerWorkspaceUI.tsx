@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
 import { ApiError } from "./api";
 import { BuyerStateCard, BuyerStateSkeleton } from "./BuyerStateCard";
 export const rupees = (value: number) => `₹${value.toLocaleString("en-IN")}`;
@@ -50,7 +50,10 @@ export function useSellerMutation() {
   };
   return {busy,error,run,clear:()=>setError("")};
 }
-export function SellerScroll({children}:{children:ReactNode}) { return <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>{children}</ScrollView>; }
+export function SellerScroll({children,refreshing=false,onRefresh}:{children:ReactNode;refreshing?:boolean;onRefresh?:()=>void}) {
+  return <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}
+    refreshControl={onRefresh && <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>{children}</ScrollView>;
+}
 export function SellerCard({children}:{children:ReactNode}) { return <View style={styles.card}>{children}</View>; }
 export function SellerButton({label,onPress,soft,disabled}:{label:string;onPress:()=>void;soft?:boolean;disabled?:boolean}) { return <Pressable accessibilityRole="button" onPress={onPress} disabled={disabled} style={[styles.button,soft&&styles.sage,disabled&&styles.disabled]}><Text style={[styles.buttonText,soft&&styles.link]}>{label}</Text></Pressable>; }
 export function SellerField({label,...props}:TextInputProps & {label:string}) { return <View style={{gap:6}}><Text style={styles.label}>{label}</Text><TextInput {...props} accessibilityLabel={label} placeholderTextColor="#73796E" style={styles.input} /></View>; }
@@ -65,22 +68,25 @@ export const styles = StyleSheet.create({
   heading:{fontSize:28,letterSpacing:-0.8,fontWeight:"700",color:"#192922"}, eyebrow:{fontSize:12,color:"#34584B",fontWeight:"700"},
   section:{fontSize:20,color:"#192922",fontWeight:"700",letterSpacing:-0.3},
   content:{padding:20,paddingTop:8,paddingBottom:28,gap:16,width:"100%",maxWidth:640,alignSelf:"center"},
-  hero:{backgroundColor:"#153C32",padding:20,borderRadius:20,gap:8},
-  heroTop:{flexDirection:"row",alignItems:"center",justifyContent:"space-between",minHeight:44,marginTop:-8},
-  heroBadge:{flexDirection:"row",alignItems:"center",gap:8,backgroundColor:"#254E42",paddingVertical:8,paddingHorizontal:12,borderRadius:8},
+  hero:{backgroundColor:"#153C32",borderRadius:24,overflow:"hidden"},
+  heroTop:{flexDirection:"row",alignItems:"flex-start",justifyContent:"space-between",gap:8,padding:16},
+  heroBadge:{flexDirection:"row",alignItems:"center",gap:6,backgroundColor:"#254E42",minHeight:44,paddingHorizontal:8,borderRadius:12,maxWidth:"40%"},
   statusDot:{width:7,height:7,borderRadius:4,backgroundColor:"#F1CB83"},
-  heroBadgeText:{color:"#FFF5DC",fontWeight:"700",fontSize:12},
-  heroArrow:{fontSize:20,color:"#FFF5DC"},
+  heroBadgeText:{color:"#FFF5DC",fontWeight:"700",fontSize:11,flexShrink:1},
   heroKicker:{fontSize:13,lineHeight:18,color:"#D6E2D7"},
-  heroTitle:{fontSize:32,lineHeight:38,letterSpacing:-0.8,color:"#FFF9EE",fontWeight:"700"},
-  heroMetrics:{borderTopWidth:1,borderColor:"#527065",marginTop:8,paddingTop:12,flexDirection:"row",gap:16},
-  heroNumber:{fontSize:28,fontWeight:"700",fontVariant:["tabular-nums"],color:"#F1CB83"},
-  metricDivider:{width:1,backgroundColor:"#527065"},
-  queue:{flexDirection:"row",flexWrap:"wrap",gap:12},
-  queueTile:{width:"47%",flexGrow:1,minHeight:104,padding:16,justifyContent:"space-between",gap:8,borderRadius:16,borderWidth:1,borderColor:"#E0DED5",backgroundColor:"#FFFFFF"},
-  queueActive:{backgroundColor:"#F8EDDA",borderColor:"#E6D5B5"},
+  heroTitle:{fontSize:27,lineHeight:32,letterSpacing:-0.6,color:"#FFF9EE",fontWeight:"700"},
+  heroPhoto:{width:"100%",height:116,backgroundColor:"#153C32"},
+  heroFooter:{padding:12},
+  heroAction:{flexDirection:"row",alignItems:"center",gap:12,minHeight:48,borderRadius:12,backgroundColor:"#F7D46A",paddingHorizontal:16,paddingVertical:8},
+  metricDivider:{width:1,backgroundColor:"#D8CCB8"},
   queueTop:{flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8},
-  queueNumber:{fontSize:28,fontWeight:"700",fontVariant:["tabular-nums"],color:"#192922"},
+  workList:{flexDirection:"row",flexWrap:"wrap",gap:12},
+  workTile:{width:"46%",flexGrow:1,minHeight:96,borderRadius:16,borderWidth:1,borderColor:"#E0DED5",backgroundColor:"#FFFFFF",padding:12,gap:8,justifyContent:"space-between"},
+  workIcon:{width:36,height:36,borderRadius:10,alignItems:"center",justifyContent:"center"},
+  workCount:{minWidth:32,textAlign:"center",paddingHorizontal:8,paddingVertical:4,borderRadius:8,backgroundColor:"#F0EEE9",color:"#56635B",fontWeight:"700",fontVariant:["tabular-nums"]},
+  workCountActive:{backgroundColor:"#F7E7C8",color:"#503B1F"},
+  todayStrip:{flexDirection:"row",gap:16,padding:16,borderRadius:16,backgroundColor:"#EEE8DD"},
+  todayNumber:{fontSize:25,fontWeight:"700",fontVariant:["tabular-nums"],color:"#192922"},
   pressed:{opacity:0.72},
   orderTop:{flexDirection:"row",flexWrap:"wrap",alignItems:"center",justifyContent:"space-between",gap:8},
   orderStatus:{color:"#174638",backgroundColor:"#E8EFE4",paddingHorizontal:8,paddingVertical:4,borderRadius:8,fontSize:12,fontWeight:"700"},
@@ -94,6 +100,7 @@ export const styles = StyleSheet.create({
   nav:{backgroundColor:"#fff",borderTopWidth:1,borderColor:"#E0DED5",flexDirection:"row",padding:8,gap:2},
   navItem:{flex:1,minWidth:0,borderRadius:12,minHeight:56,alignItems:"center",justifyContent:"center",gap:4},
   navIcon:{alignItems:"center",justifyContent:"center",width:44,height:32,borderRadius:10},
+  sellerIcon:{width:22,height:22,flexShrink:0},
   navLabel:{color:"#5A655E",fontWeight:"600",textAlign:"center"},
   navText:{fontSize:10},
 });

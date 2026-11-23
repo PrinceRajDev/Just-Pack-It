@@ -322,6 +322,12 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
   const mutation = useSellerMutation();
   const cover = resolveImage(shop.coverImage);
   const pauseChanged = closed !== !!shop.temporarilyClosed;
+  const savedMethods = shop.fulfilment ?? [];
+  const availabilityChanged = pauseChanged
+    || JSON.stringify(hours) !== JSON.stringify(shop.openingHours ?? [])
+    || methods.length !== savedMethods.length
+    || methods.some(method => !savedMethods.includes(method))
+    || pickupNote.trim() !== (shop.pickupNote ?? "").trim();
   return <>
     <SellerScroll>
     <View style={styles.hero}>
@@ -414,9 +420,10 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
     </SellerScroll>
     {section === "Availability" && <View style={styles.orderDock}>
       <MutationFeedback error={mutation.error} onReload={reload} />
-      {!!notice && <Text accessibilityLiveRegion="polite" style={styles.shopSaved}>{notice}</Text>}
-      {pauseChanged && !notice && <Text style={styles.shopSaved}>Save to {closed ? "pause" : "resume"} your shop.</Text>}
-      <SellerButton label="Save availability" disabled={mutation.busy} onPress={() => void mutation.run(async () => {
+      {(availabilityChanged || !!notice) && <Text accessibilityLiveRegion="polite" style={styles.shopSaved}>
+        {pauseChanged ? `Save to ${closed ? "pause" : "resume"} your shop.` : availabilityChanged ? "Unsaved availability changes." : notice}
+      </Text>}
+      <SellerButton label="Save availability" disabled={mutation.busy || !availabilityChanged} onPress={() => void mutation.run(async () => {
         setNotice("");
         if (!methods.length) throw new Error("Choose at least one fulfilment method.");
         if (hours.some(row=>!validTime(row.opens)||!validTime(row.closes)||row.opens===row.closes)) throw new Error("Enter different opening and closing times in HH:MM format.");

@@ -22,7 +22,8 @@ const tabs: {name: Tab; icon: SellerIconName}[] = [
 ];
 const orderGroups = {
   Active: ["placed","accepted","preparing","ready","out_for_delivery"],
-  New: ["placed"], Preparing: ["accepted","preparing"], Ready: ["ready"], Completed: ["delivered","cancelled"],
+  New: ["placed"], Preparing: ["accepted","preparing"], Ready: ["ready"],
+  "Out for delivery": ["out_for_delivery"], Completed: ["delivered","cancelled"],
 } satisfies Record<string, OrderStatus[]>;
 type OrderGroup = keyof typeof orderGroups;
 const statusLabels = { pending:"Under review", approved:"Approved", rejected:"Changes requested", suspended:"Suspended" };
@@ -260,19 +261,19 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
       </View>
       {group !== "Completed" && <>
       <View style={styles.dispatchCounters}>
-        {(["New","Preparing","Ready"] as const).map(queue => {
+        {(["New","Preparing","Ready","Out for delivery"] as const).map(queue => {
           const count = listing.data?.items.filter(order => (orderGroups[queue] as OrderStatus[]).includes(order.status)).length;
           const selected = group === queue;
           return <Pressable key={queue} accessibilityRole="tab" accessibilityLabel={queue} accessibilityState={{selected}} accessibilityHint={count === undefined ? undefined : `${count} orders loaded`} onPress={() => setGroup(queue)} style={[styles.dispatchCounter,selected && styles.dispatchSelected]}>
-            <Text style={[styles.dispatchNumber,selected && styles.dispatchInk]}>{count ?? "–"}</Text><Text style={[styles.dispatchModeText,selected && styles.dispatchInk]}>{queue}</Text>
+            <Text style={[styles.dispatchNumber,selected && styles.dispatchInk]}>{count ?? "–"}</Text><Text style={[styles.dispatchModeText,selected && styles.dispatchInk]}>{queue === "Out for delivery" ? "On the way" : queue}</Text>
           </Pressable>;
         })}
       </View>
-      {listing.data?.next && <Text style={styles.heroKicker}>Counts reflect loaded orders</Text>}
+      {listing.data?.next && <Text style={styles.copy}>Counts reflect loaded orders</Text>}
       </>}
     </View>}
     <View style={styles.orderTop}>
-      <Text accessibilityRole="header" style={[styles.section,styles.grow]}>{term ? "Search results" : group === "Active" ? "Active orders" : group === "Completed" ? "Past orders" : `${group} orders`}</Text>
+      <Text accessibilityRole="header" style={[styles.section,styles.grow]}>{term ? "Search results" : group === "Completed" ? "Past orders" : group === "Out for delivery" ? group : `${group} orders`}</Text>
       <Pressable accessibilityRole="button" accessibilityLabel="Refresh orders" disabled={listing.loading} onPress={listing.reload} style={styles.dispatchRefresh}><Text style={styles.link}>{listing.loading ? "Refreshing…" : "Refresh"}</Text></Pressable>
     </View>
     <LoadState loading={listing.loading && !listing.data} error={listing.error} retry={listing.reload} />

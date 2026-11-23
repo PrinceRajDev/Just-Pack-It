@@ -48,7 +48,14 @@ export function SellerCatalogue({token,stockFilter}:{token:string;stockFilter?:S
       listing.reload();
     }} />;
   const term = query.trim().toLowerCase();
-  const matching = listing.data?.items.filter(item => item.name.toLowerCase().includes(term));
+  const words = term.split(/\s+/);
+  const matching = listing.data?.items.filter(item => {
+    const packs = [item.unit,...(item.variants ?? []).map(variant => variant.label)];
+    return packs.some(pack => {
+      const label = `${item.name} ${pack ?? ""}`.toLowerCase();
+      return words.every(word => label.includes(word));
+    });
+  });
   const rows = matching?.filter(item => matchesCatalogueFilter(item,filter));
   return <SellerScroll refreshing={listing.loading} onRefresh={listing.reload}>
     <View style={styles.catalogueHero}>
@@ -63,7 +70,7 @@ export function SellerCatalogue({token,stockFilter}:{token:string;stockFilter?:S
     </View>
     <View style={styles.catalogueFilters}>
       <View style={styles.catalogueSearch}>
-        <TextInput accessibilityLabel="Search products" placeholder="Search products" placeholderTextColor="#57665E" value={query} onChangeText={setQuery} returnKeyType="search" style={styles.catalogueSearchInput} />
+        <TextInput accessibilityLabel="Search products" placeholder="Search by name or pack size" placeholderTextColor="#57665E" value={query} onChangeText={setQuery} returnKeyType="search" style={styles.catalogueSearchInput} />
         {!!query && <Pressable accessibilityRole="button" accessibilityLabel="Clear product search" onPress={() => setQuery("")} style={styles.catalogueAction}><Text style={styles.link}>Clear</Text></Pressable>}
       </View>
       <View style={styles.chips}>{filters.map(value => {

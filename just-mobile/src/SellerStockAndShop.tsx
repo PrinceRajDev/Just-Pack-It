@@ -184,6 +184,7 @@ function QuickStock({token,product,close,saved,reload}:{token:string;product:Sel
 function ProductEditor({token,product,initialSection,close,saved}:{token:string;product?:SellerProduct;initialSection:typeof productSections[number];close:()=>void;saved:()=>void}) {
   const [current,setCurrent] = useState(product);
   const [section,setSection] = useState(initialSection);
+  const [offerPhoto,setOfferPhoto] = useState(false);
   const [photoBusy,setPhotoBusy] = useState(false);
   const [name,setName] = useState(product?.name ?? "");
   const [unit,setUnit] = useState(product?.unit ?? "");
@@ -211,6 +212,7 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
       mrp:mrp ? Number(mrp) : null,stock:hasVariants ? current!.stock : Number(stock),active:isActive,
       ...(current && current.categoryId!==categoryId ? {subcategoryId:null} : {}),
     },current);
+    if (!current && !result.image) setOfferPhoto(true);
     setCurrent(result); setStock(String(result.stock)); saved(); setNotice("Product saved.");
   });
   const feedback = <MutationFeedback error={mutation.error} onReload={current ? ()=>void mutation.run(refresh) : undefined} />;
@@ -234,7 +236,7 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
     ))}</View>}
     {!current && <Text style={styles.copy}>Save the product to add a photo or pack variants.</Text>}
     {section === "Photo" && current && <SellerPhotoEditor token={token} image={current.image} onBusy={setPhotoBusy} onRefresh={refresh} onUpload={async (body,type) => {
-      setCurrent(await sellerApi.uploadProductPhoto(token,current,body,type)); saved();
+      setCurrent(await sellerApi.uploadProductPhoto(token,current,body,type)); setOfferPhoto(false); saved();
     }} />}
     {section === "Details" && <>
     <SellerCard>
@@ -288,7 +290,12 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
   {section === "Details" && <View style={styles.orderDock}>
     {feedback}
     {!!notice && <Text accessibilityLiveRegion="polite" style={styles.shopSaved}>{notice}</Text>}
-    <SellerButton label="Save product" disabled={mutation.busy} onPress={save} />
+    <View style={styles.shopTimes}>
+      {offerPhoto && <View style={styles.grow}><SellerButton label="Add photo" soft disabled={mutation.busy} onPress={() => {
+        setSection("Photo"); setNotice(""); mutation.clear();
+      }} /></View>}
+      <View style={styles.grow}><SellerButton label="Save product" disabled={mutation.busy} onPress={save} /></View>
+    </View>
   </View>}
   </>;
 }

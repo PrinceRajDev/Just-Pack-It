@@ -198,6 +198,11 @@ const assert = require("node:assert/strict");
         json=sellerOrder;
       }
       if(pathname==="/seller/products") json=[sellerProduct];
+      if(pathname==="/seller/products" && method==="POST"){
+        const input=route.request().postDataJSON();
+        assert.equal(input.name,"Fixture rice");
+        json={...input,id:"new-fixture-product",version:1,shopId:"shop-qa"};
+      }
       if(pathname==="/seller/products/seller-product") json=sellerProduct;
       if(pathname==="/seller/image-upload") json={enabled:true,maxBytes:5242880,types:["image/jpeg","image/png","image/webp"]};
       if(pathname==="/seller/products/seller-product/image"){
@@ -336,6 +341,15 @@ const assert = require("node:assert/strict");
     await workspace.getByText("No products in this view",{exact:true}).waitFor();
     await workspace.getByRole("tab",{name:"All",exact:true}).click();
     await workspace.getByRole("button",{name:"Change photo for Tomatoes",exact:true}).waitFor();
+    await workspace.getByRole("button",{name:"Add product",exact:true}).click();
+    await workspace.getByLabel("Product name",{exact:true}).fill("Fixture rice");
+    await workspace.getByLabel("Unit or pack size",{exact:true}).fill("1 kg");
+    await workspace.getByRole("radio",{name:"Grocery & Kirana",exact:true}).click();
+    await workspace.getByLabel("Price (₹)",{exact:true}).fill("50");
+    await workspace.getByLabel("Stock",{exact:true}).fill("5");
+    await workspace.getByRole("button",{name:"Save product",exact:true}).click();
+    await workspace.getByRole("button",{name:"Add photo",exact:true}).click();
+    await workspace.getByRole("button",{name:"Choose photo",exact:true}).waitFor();
     await workspace.getByRole("tab",{name:"Settlements",exact:true}).click();
     await workspace.getByText("Payout recorded",{exact:true}).waitFor();
     await workspace.getByText("Recorded 21 Nov 2026",{exact:true}).waitFor();

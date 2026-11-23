@@ -37,6 +37,7 @@ const orderNextStep: Partial<Record<OrderStatus,string>> = {
   placed:"Review order", accepted:"Start packing", preparing:"Continue packing", ready:"View handoff", out_for_delivery:"View delivery",
 };
 const statementFilters = ["All", "Recorded payouts", "Pending review"] as const;
+const payoutDate = new Intl.DateTimeFormat("en-IN", {day:"numeric",month:"short",year:"numeric",timeZone:"Asia/Kolkata"});
 
 function orderTime(createdAt:string) {
   const time = Date.parse(createdAt);
@@ -339,6 +340,8 @@ function SellerSettlements({token}:{token:string}) {
     {listing.data && !listing.loading && !listing.error && !visible.length && <BuyerStateCard title={filter === "All" ? "No settlements yet" : "No matching statements"} copy={listing.data.next ? "Load more settlements to check earlier statements." : filter === "All" ? "Settlements will appear here as the platform records them." : "Choose All to see your other statements."} icon="wallet" />}
     {visible.map(row => {
       const isOpen = expanded === row.id;
+      const recordedAt = row.payout?.state === "recorded" && row.payout.recordedAt
+        ? Date.parse(row.payout.recordedAt) : NaN;
       const breakdown = [
         {label:"Gross order amount",value:row.grossAmount},
         {label:"Seller entitlement",value:row.sellerEntitlement},
@@ -354,6 +357,7 @@ function SellerSettlements({token}:{token:string}) {
           <View style={styles.statementAmount}>
             <Text style={styles.copy}>Payout amount</Text>
             <Text style={styles.statementValue}>{typeof row.payoutAmount === "number" ? rupees(row.payoutAmount) : "—"}</Text>
+            {Number.isFinite(recordedAt) && <Text style={styles.copy}>Recorded {payoutDate.format(recordedAt)}</Text>}
           </View>
           {!!row.holdReason && <Text style={styles.copy}>{row.holdReason}</Text>}
           {isOpen && <>

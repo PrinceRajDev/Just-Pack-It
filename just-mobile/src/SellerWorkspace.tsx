@@ -312,9 +312,16 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
 function SellerSettlements({token}:{token:string}) {
   const listing = useSellerPages(sellerApi.settlements, token);
   const [filter,setFilter] = useState<typeof statementFilters[number]>("All");
+  const [search,setSearch] = useState("");
   const [expanded,setExpanded] = useState<string>();
   const rows = listing.data?.items ?? [];
-  const visible = rows.filter(row => filter === "All" || (filter === "Recorded payouts" ? row.payout?.state === "recorded" : statementStatus(row) === "Pending review"));
+  const term = search.trim().replace(/^(?:order\s*#\s*|#\s*)/i, "").toLowerCase();
+  const visible = rows.filter(row => {
+    const matchesFilter = filter === "All" || (filter === "Recorded payouts"
+      ? row.payout?.state === "recorded" : statementStatus(row) === "Pending review");
+    return matchesFilter && (!term || row.orderId.toLowerCase().includes(term)
+      || row.payout?.reference?.toLowerCase().includes(term));
+  });
   const recorded = rows.filter(row => row.payout?.state === "recorded").length;
   const pending = rows.filter(row => statementStatus(row) === "Pending review").length;
   return <SellerScroll refreshing={listing.loading} onRefresh={listing.reload}>
@@ -334,10 +341,18 @@ function SellerSettlements({token}:{token:string}) {
       <Text accessibilityRole="header" style={[styles.section,styles.grow]}>Statements</Text>
       <Pressable accessibilityRole="button" accessibilityLabel="Refresh statement" disabled={listing.loading} onPress={listing.reload} style={styles.dispatchRefresh}><Text style={styles.link}>{listing.loading ? "Refreshing…" : "Refresh"}</Text></Pressable>
     </View>
+    {rows.length > 0 && <View style={styles.catalogueSearch}>
+      <TextInput accessibilityLabel="Search statements" placeholder="Order ID or payout reference" placeholderTextColor="#57665E"
+        value={search} onChangeText={setSearch} autoCapitalize="none" autoCorrect={false} returnKeyType="search" style={styles.catalogueSearchInput} />
+      {!!search && <Pressable accessibilityRole="button" accessibilityLabel="Clear statement search" onPress={() => setSearch("")} style={styles.catalogueAction}><Text style={styles.link}>Clear</Text></Pressable>}
+    </View>}
     {rows.length > 0 && <View style={styles.chips}>{statementFilters.map(value => <Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:value === filter}} onPress={() => setFilter(value)}
       style={[styles.chip,styles.catalogueChip,value === filter && styles.dispatchModeActive]}><Text style={value === filter ? styles.dispatchModeTextActive : styles.link}>{value}</Text></Pressable>)}</View>}
     <LoadState loading={listing.loading && !listing.data} error={listing.error} retry={listing.reload} />
-    {listing.data && !listing.loading && !listing.error && !visible.length && <BuyerStateCard title={filter === "All" ? "No settlements yet" : "No matching statements"} copy={listing.data.next ? "Load more settlements to check earlier statements." : filter === "All" ? "Settlements will appear here as the platform records them." : "Choose All to see your other statements."} icon="wallet" />}
+    {listing.data && !listing.loading && !listing.error && !visible.length && <BuyerStateCard
+      title={rows.length ? "No matching statements" : "No settlements yet"}
+      copy={listing.data.next ? "Load more settlements to check earlier statements." : rows.length ? "Try a different search or filter." : "Settlements will appear here as the platform records them."}
+      icon="wallet" action={rows.length ? "Reset filters" : undefined} onAction={() => {setSearch("");setFilter("All");}} />}
     {visible.map(row => {
       const isOpen = expanded === row.id;
       const recordedAt = row.payout?.state === "recorded" && row.payout.recordedAt

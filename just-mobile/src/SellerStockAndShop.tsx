@@ -8,7 +8,7 @@ import { sellerShopApproval, sellerShopAvailability, rupees, styles, LoadState, 
 import { useAndroidBack } from "./useAndroidBack";
 import { SellerPhotoEditor } from "./SellerPhotoEditor";
 
-const filters = ["All","Active","Inactive","Low stock","Out of stock"] as const;
+const filters = ["All","Active","Inactive","Low stock","Out of stock","No photo"] as const;
 const shelfPhoto = require("../assets/browse-categories/grocery.webp");
 const productIcon = require("../assets/nav-icons/bag.png");
 const productSections = ["Details","Pack variants","Photo"] as const;
@@ -24,6 +24,7 @@ function matchesCatalogueFilter(item: SellerProduct, filter: typeof filters[numb
     case "Inactive": return !item.active;
     case "Low stock": return item.active && stockLevels(item).some(stock => stock > 0 && stock <= 5);
     case "Out of stock": return item.active && stockLevels(item).some(stock => stock === 0);
+    case "No photo": return !item.image?.trim();
   }
 }
 
@@ -75,7 +76,7 @@ export function SellerCatalogue({token,stockFilter}:{token:string;stockFilter?:S
       </View>
       <View style={styles.chips}>{filters.map(value => {
         const selected = value === filter;
-        const count = value === "Low stock" || value === "Out of stock"
+        const count = value === "Low stock" || value === "Out of stock" || value === "No photo"
           ? matching?.filter(item => matchesCatalogueFilter(item,value)).length : undefined;
         return <Pressable key={value} accessibilityRole="tab" accessibilityLabel={value}
           accessibilityHint={count === undefined ? undefined : `${count} matching products loaded`}

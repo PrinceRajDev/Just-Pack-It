@@ -38,6 +38,12 @@ const orderNextStep: Partial<Record<OrderStatus,string>> = {
   placed:"Review order", accepted:"Start packing", preparing:"Continue packing", ready:"View handoff", out_for_delivery:"View delivery",
 };
 const statementFilters = ["All", "Recorded payouts", "Pending review"] as const;
+function sellerPaymentLabel(order: SellerOrder) {
+  if (order.paymentMethod === "razorpay") {
+    return order.paymentStatus === "paid" ? "Paid online" : "Online payment pending";
+  }
+  return order.cashCollection ? "Cash recorded" : "Cash on delivery";
+}
 const payoutDate = new Intl.DateTimeFormat("en-IN", {day:"numeric",month:"short",year:"numeric",timeZone:"Asia/Kolkata"});
 
 function orderTime(createdAt:string) {
@@ -209,7 +215,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
       <Text style={styles.copy}>{packingLines} {packingLines === 1 ? "line item" : "line items"} to check</Text>
       <SellerCard>{order.lines.map((item,index) => <View key={index} style={[styles.row,index > 0 && styles.packingDivider]}><View style={styles.grow}><Text style={styles.label}>{item.name}</Text>{!!(item.variantLabel || item.unit) && <Text style={styles.copy}>{item.variantLabel || item.unit}</Text>}</View><Text style={styles.workCount}>×{item.qty}</Text></View>)}</SellerCard>
       <View style={styles.paymentTicket}>
-        <View style={styles.orderTop}><Text style={styles.title}>{order.paymentMethod === "razorpay" ? "Paid online" : order.cashCollection ? "Cash recorded" : "Cash on delivery"}</Text><Text style={styles.orderAmount}>{rupees(order.total)}</Text></View>
+        <View style={styles.orderTop}><Text style={[styles.title,styles.grow]}>{sellerPaymentLabel(order)}</Text><Text style={styles.orderAmount}>{rupees(order.total)}</Text></View>
         <Text style={styles.copy}>Items {rupees(order.itemsSubtotal)} · Delivery {rupees(order.deliveryFee)}</Text>
         {order.paymentMethod === "cod" && !order.cashCollection && <Text style={styles.label}>{rupees(order.amountDue)} due</Text>}
         {order.refund && <Text style={styles.copy}>Refund {order.refund.state} · {rupees(order.refund.amount)}</Text>}
@@ -297,7 +303,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
           </View>
           <View style={styles.dispatchRoute}>
             <Text style={styles.label}>{units} {units === 1 ? "unit" : "units"}{order.lines[0] ? ` · ${order.lines[0].name}` : ""}{order.lines.length > 1 ? ` +${order.lines.length - 1} more` : ""}</Text>
-            <Text style={styles.copy}>{fulfilmentNames[order.fulfilment]} · {order.testMode ? "Test order" : order.paymentMethod === "razorpay" ? "Online payment" : order.cashCollection ? "Cash recorded" : "Cash on delivery"}</Text>
+            <Text style={styles.copy}>{fulfilmentNames[order.fulfilment]} · {order.testMode ? "Test order" : sellerPaymentLabel(order)}</Text>
           </View>
         </View>
         <View style={styles.dispatchTicketFooter}>

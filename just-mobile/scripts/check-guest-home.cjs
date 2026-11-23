@@ -228,6 +228,12 @@ const assert = require("node:assert/strict");
     await workspace.getByRole("button",{name:/^Order #/}).waitFor();
     await workspace.getByTestId("seller-dispatch-art").locator("img").evaluate(image => image.decode());
     await page.screenshot({path:path.join(output,"seller-orders-390.png"),animations:"disabled"});
+    await workspace.getByLabel("Search order ID",{exact:true}).fill("#RDER-ONE");
+    await workspace.getByRole("heading",{name:"Search results",exact:true}).waitFor();
+    await workspace.getByRole("button",{name:/^Order #RDER-ONE/}).waitFor();
+    await workspace.getByLabel("Search order ID",{exact:true}).fill("missing-order");
+    await workspace.getByText("No matching order ID",{exact:true}).waitFor();
+    await workspace.getByRole("button",{name:"Clear order search",exact:true}).click();
     for (const [label, tab] of [["Accept order","Preparing"],["Start packing","Preparing"],["Mark ready","Ready"]]) {
       await workspace.getByRole("button",{name:/^Order #/}).click();
       if (label === "Accept order") await page.screenshot({path:path.join(output,"seller-order-detail-390.png"),animations:"disabled"});

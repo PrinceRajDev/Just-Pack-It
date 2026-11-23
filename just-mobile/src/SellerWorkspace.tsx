@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Image, Pressable, Text, View } from "react-native";
+import { Image, Pressable, Text, TextInput, View } from "react-native";
 import { onSessionExpired, type Session } from "./api";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useAndroidBack } from "./useAndroidBack";
@@ -148,6 +148,7 @@ function SellerHome({token,orders,open,openLowStock}: {token:string;orders:(grou
 
 function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;setGroup:(value:OrderGroup)=>void}) {
   const listing = useSellerPages(sellerApi.orders, token);
+  const [search,setSearch] = useState("");
   const [selected, setSelected] = useState<SellerOrder>();
   const [action, setAction] = useState<"cancel" | "cash" | "return" | "pickup">();
   const [reason, setReason] = useState("");
@@ -156,7 +157,10 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
   const mutation = useSellerMutation();
   const close = () => { setSelected(undefined); setAction(undefined); mutation.clear(); };
   useAndroidBack(() => { if (!selected) return false; if (!mutation.busy) close(); return true; }, 25);
-  const rows = listing.data?.items.filter(row => (orderGroups[group] as OrderStatus[]).includes(row.status));
+  const term = search.trim().replace(/^(?:order\s*#\s*|#\s*)/i, "").toLowerCase();
+  const rows = listing.data?.items.filter(row => term
+    ? row.orderId.toLowerCase().includes(term)
+    : (orderGroups[group] as OrderStatus[]).includes(row.status));
   const activeOrderCount = listing.data?.items.filter(order => (orderGroups.Active as OrderStatus[]).includes(order.status)).length;
   if (selected) {
     const order = selected;
@@ -228,7 +232,12 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
         {activeOrderCount !== undefined && !listing.error && <Text style={styles.dispatchBannerStatus}>{activeOrderCount}{listing.data?.next ? "+" : ""} active {activeOrderCount === 1 && !listing.data?.next ? "order" : "orders"}</Text>}
       </View>
     </View>
-    <View style={styles.dispatchPanel}>
+    <View style={styles.catalogueSearch}>
+      <TextInput accessibilityLabel="Search order ID" placeholder="Search order ID" placeholderTextColor="#57665E" value={search}
+        onChangeText={setSearch} autoCapitalize="none" autoCorrect={false} returnKeyType="search" style={styles.catalogueSearchInput} />
+      {!!search && <Pressable accessibilityRole="button" accessibilityLabel="Clear order search" onPress={() => setSearch("")} style={styles.catalogueAction}><Text style={styles.link}>Clear</Text></Pressable>}
+    </View>
+    {!term && <View style={styles.dispatchPanel}>
       <View style={styles.dispatchModes}>
         {(["Active","Completed"] as const).map(mode => {
           const selected = mode === "Completed" ? group === mode : group !== "Completed";
@@ -249,13 +258,15 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
       </View>
       {listing.data?.next && <Text style={styles.heroKicker}>Counts reflect loaded orders</Text>}
       </>}
-    </View>
+    </View>}
     <View style={styles.orderTop}>
-      <Text accessibilityRole="header" style={[styles.section,styles.grow]}>{group === "Active" ? "Active orders" : group === "Completed" ? "Past orders" : `${group} orders`}</Text>
+      <Text accessibilityRole="header" style={[styles.section,styles.grow]}>{term ? "Search results" : group === "Active" ? "Active orders" : group === "Completed" ? "Past orders" : `${group} orders`}</Text>
       <Pressable accessibilityRole="button" accessibilityLabel="Refresh orders" disabled={listing.loading} onPress={listing.reload} style={styles.dispatchRefresh}><Text style={styles.link}>{listing.loading ? "Refreshing…" : "Refresh"}</Text></Pressable>
     </View>
     <LoadState loading={listing.loading && !listing.data} error={listing.error} retry={listing.reload} />
-    {!listing.loading && !listing.error && !rows?.length && <BuyerStateCard title="No orders in this view" copy={listing.data?.next ? "Load more orders to check earlier activity." : "Matching orders will appear here."} icon="orders" />}
+    {!listing.loading && !listing.error && !rows?.length && <BuyerStateCard
+      title={term ? "No matching order ID" : "No orders in this view"}
+      copy={listing.data?.next ? "Load more orders to search earlier activity." : term ? "Check the order ID and try again." : "Matching orders will appear here."} icon="orders" />}
     {rows?.map(order => {
       const reference = `Order #${order.orderId.slice(-8).toUpperCase()}`;
       const status = orderStatusNames[order.status];

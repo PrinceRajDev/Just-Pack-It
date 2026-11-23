@@ -114,6 +114,7 @@ const assert = require("node:assert/strict");
     await page.route("**/seller/shop", route => route.request().method() === "OPTIONS" ? route.fulfill({status:204,headers:sellerHeaders}) : route.fulfill({json:{name:"Fixture Kirana",status:"pending"},headers:sellerHeaders}));
     await page.getByRole("button",{name:"Seller access",exact:true}).click();
     await page.getByRole("heading",{name:"Welcome back"}).waitFor();
+    await page.getByTestId("seller-access-cover").locator("img").evaluate(image => image.decode());
     await page.screenshot({path:path.join(output,"seller-signin-390.png"),animations:"disabled"});
     await page.getByLabel("Mobile number",{exact:true}).fill("91 98765 43210");
     await page.getByLabel("Password",{exact:true}).fill("fixture-password");

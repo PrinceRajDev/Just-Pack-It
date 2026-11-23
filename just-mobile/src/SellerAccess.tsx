@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
+import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { ApiError, buyerApi, marketApi, type Category, type ServiceArea, type Session } from "./api";
 import { StatusBar } from "expo-status-bar";
@@ -12,6 +12,7 @@ const pendingRequests = new WeakSet<object>();
 const clockNow = () => Date.now();
 
 const sessionKey = "jpi.seller.session";
+const storefront = require("../assets/seller-storefront.jpg");
 const methods = [["pickup", "Customer pickup"], ["seller_delivery", "Shop delivery"], ["platform_delivery", "Platform rider"]] as const;
 type Step = "login" | "account" | "email" | "shop" | "delivery" | "review" | "status" | "recovery";
 const backSteps: Partial<Record<Step, Step>> = { account:"login", email:"account", delivery:"shop", review:"delivery", recovery:"login" };
@@ -162,6 +163,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   if (step === "recovery") return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><BuyerRecovery back={() => go("login")} /></SafeAreaView></SafeAreaProvider></Modal>;
   const title = picker === "area" ? "Choose service area" : picker === "category" ? "Choose category" :
     {login:"Welcome back", account:"Create seller account", email:"Check your email", shop:"Tell us about your shop", delivery:"Address & fulfilment", review:"Review your shop", status:"Your seller workspace"}[step];
+  const hasCover = !picker && (step === "login" || step === "status");
   const button = (label:string, action:()=>void, disabled = false) => <Pressable accessibilityRole="button" disabled={disabled || busy} onPress={action} style={[s.button, (disabled || busy) && s.disabled]}><Text style={[s.buttonText,(disabled || busy) && s.disabledText]}>{busy ? "Please wait…" : label}</Text></Pressable>;
   const link = (label:string, action:()=>void) => <Pressable accessibilityRole="button" disabled={busy} onPress={action} style={s.link}><Text style={s.linkText}>{label}</Text></Pressable>;
   const passwordField = <Field label="Password" placeholder="Enter your password" value={password} onChangeText={setPassword} secureTextEntry={!visible} maxLength={128} autoCapitalize="none" autoCorrect={false} autoComplete={step === "login" ? "current-password" : "new-password"} suffix={link(visible ? "Hide" : "Show", () => setVisible(value => !value))} />;
@@ -209,35 +211,39 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
       throw reason;
     }
   }));
+  if (!picker && step === "status") action = button("Open seller workspace", () => setWorkspaceOpen(true));
 
   return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style="dark" />
     <View style={s.header}><Text style={s.brand}>JustPackIt</Text><Text style={s.kicker}>SELLER</Text>{link(step === "login" || step === "status" ? "Close" : "Back", back)}</View>
     {restoring ? <ActivityIndicator style={s.loader} color="#07552F" /> : <>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
-        {!picker && step === "login" && <Text style={s.kicker}>YOUR NEIGHBOURHOOD. YOUR SHOP.</Text>}
-        {!picker && step === "email" && <Text style={s.kicker}>STEP 1 OF 4 · VERIFY EMAIL</Text>}
-        <Text accessibilityRole="header" style={s.title}>{title}</Text>
+        {hasCover ? <View style={s.cover}>
+          <Image source={storefront} resizeMode="cover" style={s.coverPhoto} accessible={false} testID="seller-access-cover" />
+          <View style={s.coverCopy}>
+            <Text accessibilityRole="header" style={s.coverTitle}>{title}</Text>
+            <Text style={s.coverCaption}>{step === "login" ? "Sign in with your registered mobile number." : shop?.name ?? session?.name ?? "Seller account"}</Text>
+          </View>
+        </View> : <View style={s.stepHeading}>
+          {!picker && step === "email" && <Text style={s.kicker}>Verify email</Text>}
+          <Text accessibilityRole="header" style={s.title}>{title}</Text>
+        </View>}
         {!!error && <View style={s.field}><Text accessibilityRole="alert" style={s.error}>{error}</Text>{requestId && <Text selectable style={s.copy}>Support reference: {requestId}</Text>}</View>}
         {picker && (picker === "area" ? catalogue?.areas : catalogue?.categories)?.map(item => <Pressable accessibilityRole="button" key={item.id} style={s.panel} onPress={() => {
           if (picker === "area") setArea(item as ServiceArea); else setCategory(item as Category);
           setPicker(null);
         }}><Text style={s.label}>{item.name}</Text>{"city" in item && <Text style={s.copy}>{item.city}</Text>}</Pressable>)}
         {picker && !(picker === "area" ? catalogue?.areas.length : catalogue?.categories.length) && <BuyerStateCard title="No options available" copy="Try again to refresh available choices." action="Refresh options" onAction={() => void run(loadCatalogue)} />}
-        {!picker && step === "login" && <>
-          <Text style={s.copy}>Sign in to your JustPackIt seller account.</Text>
-          <View style={s.sage}><Text style={s.label}>Local business. More possibilities.</Text><Text style={s.copy}>Take your shop to customers nearby.</Text></View>
+        {!picker && step === "login" && <View style={s.panel}>
           <Field label="Mobile number" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholder="+91  Enter 10-digit number" />
-          <Text style={s.copy}>Registered Indian mobile number</Text>
           {passwordField}
           {link("Forgot password?", () => { setPassword(""); go("recovery"); })}
-        </>}
-        {!picker && step === "account" && <>
-          <Text style={s.copy}>Your account details</Text>
+        </View>}
+        {!picker && step === "account" && <View style={s.panel}>
           <Field label="Full name" value={name} onChangeText={setName} maxLength={100} />
           <Field label="Mobile number" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholder="+91" />
           {verify && <Field label="Email address" value={email} onChangeText={value => { setEmail(value); setChallenge(undefined); setOtp(""); }} autoCapitalize="none" keyboardType="email-address" />}
           {passwordField}<Text style={s.copy}>Use at least 12 characters.</Text>
-        </>}
+        </View>}
         {!picker && step === "email" && <>
           <Text style={s.copy}>Enter the 6-digit code sent to</Text>
           <Text style={s.label}>{challenge?.address ?? email}</Text>
@@ -254,23 +260,22 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           {expires && <Text style={s.error}>This code has expired.</Text>}
           <View style={s.sage}><Text style={s.copy}>The email code is checked when you submit your shop. Shop approval is a separate step.</Text></View>
         </>}
-        {!picker && step === "shop" && <>
+        {!picker && step === "shop" && <View style={s.panel}>
           <Field label="Shop name" value={shopName} onChangeText={setShopName} maxLength={100} />
           {link(category?.name ?? "Choose shop category", () => setPicker("category"))}
           <Field label="Year opened" value={since} onChangeText={setSince} keyboardType="number-pad" maxLength={4} />
-        </>}
-        {!picker && step === "delivery" && <>
+        </View>}
+        {!picker && step === "delivery" && <View style={s.panel}>
           <Field label="Street address" value={address} onChangeText={setAddress} maxLength={500} multiline />
           {link(area ? area.name + ", " + area.city : "Choose service area", () => setPicker("area"))}
           <Text style={s.label}>Fulfilment methods</Text>
           {methods.map(([key, label]) => <Pressable accessibilityRole="checkbox" accessibilityState={{checked:fulfilment.includes(key)}} key={key} style={[s.panel, fulfilment.includes(key) && s.sage]} onPress={() => setFulfilment(old => old.includes(key) ? old.filter(item => item !== key) : [...old,key])}><Text style={s.label}>{label}</Text></Pressable>)}
-        </>}
+        </View>}
         {!picker && step === "review" && <View style={s.panel}><Text style={s.label}>{shopName}</Text><Text style={s.copy}>{category?.name} · Opened {since}</Text><Text style={s.copy}>{address}</Text><Text style={s.copy}>{area?.name}, {area?.city}</Text><Text style={s.copy}>{methods.filter(([key]) => fulfilment.includes(key)).map(([,label]) => label).join(" · ")}</Text><Text style={s.copy}>Submitting creates your seller account and sends your shop for review.</Text></View>}
         {!picker && step === "status" && <>
           {shop ? <BuyerStateCard title={shop.status === "pending" ? "Your shop is under review" : shop.status === "approved" ? "Your shop is approved" : shop.status === "rejected" ? "Changes requested" : "Shop suspended"} copy={shop.review?.reason || shop.name} tone={shop.status === "approved" ? "success" : "warning"} /> :
             shopError ? <BuyerStateCard title="Shop status unavailable" copy={shopError} tone="error" action="Retry status" onAction={() => setRefresh(value => value + 1)} /> : <ActivityIndicator color="#07552F" />}
-          <Text style={s.copy}>Signed in as {session?.name}. Manage your shop, orders and catalogue in the app.</Text>
-          {button("Open seller workspace", () => setWorkspaceOpen(true))}
+          <Text style={s.copy}>Signed in as {session?.name}.</Text>
           {link("Sign out of seller account", () => void run(signOut))}
         </>}
       </ScrollView>
@@ -284,9 +289,15 @@ function Field({label,suffix,...props}:TextInputProps & {label:string; suffix?:R
 }
 
 const s = StyleSheet.create({
-  screen:{flex:1,backgroundColor:"#F8F6EE"}, header:{minHeight:64,paddingHorizontal:20,flexDirection:"row",alignItems:"center",gap:16},
+  screen:{flex:1,backgroundColor:"#F5F3EE"}, header:{minHeight:64,paddingHorizontal:20,flexDirection:"row",alignItems:"center",gap:16,width:"100%",maxWidth:540,alignSelf:"center"},
   brand:{color:"#07552F",fontSize:22,fontWeight:"700",flex:1}, kicker:{fontSize:11,color:"#07552F",fontWeight:"700"},
   content:{padding:20,paddingTop:20,gap:16,width:"100%",maxWidth:540,alignSelf:"center"}, title:{fontSize:29,lineHeight:38,color:"#252D25",fontWeight:"700"},
+  cover:{borderRadius:22,overflow:"hidden",backgroundColor:"#153C32"},
+  coverPhoto:{width:"100%",height:120},
+  coverCopy:{padding:16,gap:4},
+  coverTitle:{color:"#FFF9EE",fontSize:29,lineHeight:34,letterSpacing:-0.7,fontWeight:"700"},
+  coverCaption:{color:"#D6E2D7",fontSize:14,lineHeight:20},
+  stepHeading:{gap:4,paddingHorizontal:12,paddingVertical:8,borderLeftWidth:4,borderColor:"#D8A83D"},
   copy:{fontSize:14,lineHeight:20,color:"#596659"}, sage:{backgroundColor:"#EAF0D9",borderRadius:16,padding:14,gap:6}, panel:{backgroundColor:"#fff",borderRadius:16,borderWidth:1,borderColor:"#DADFD0",padding:16,gap:8},
   field:{gap:8},label:{fontSize:15,fontWeight:"600",color:"#252D25"},inputRow:{flexDirection:"row",alignItems:"center",backgroundColor:"#fff",borderWidth:1,borderColor:"#DADFD0",borderRadius:12},
   input:{flex:1,minHeight:50,padding:12,color:"#252D25",fontSize:15},link:{minHeight:44,justifyContent:"center",alignItems:"center",paddingHorizontal:10},linkText:{color:"#07552F",textAlign:"center",fontWeight:"600"},
@@ -296,5 +307,5 @@ const s = StyleSheet.create({
   codeDigit:{fontSize:24,color:"#252D25",fontWeight:"700"},
   codeInput:{position:"absolute",top:0,right:0,bottom:0,left:0,opacity:0,color:"transparent",backgroundColor:"transparent",fontSize:18},
   disabledText:{color:"#596659"},
-  footer:{paddingHorizontal:20,paddingVertical:12,gap:4},button:{minHeight:50,backgroundColor:"#07552F",borderRadius:12,justifyContent:"center",alignItems:"center"},buttonText:{color:"#fff",fontSize:15,fontWeight:"600"},disabled:{backgroundColor:"#DDE2D5"},error:{color:"#A23425",fontSize:14,lineHeight:20},loader:{padding:30},
+  footer:{paddingHorizontal:20,paddingVertical:12,gap:4,width:"100%",maxWidth:540,alignSelf:"center",backgroundColor:"#FFF",borderTopWidth:1,borderColor:"#E0DED5"},button:{minHeight:50,backgroundColor:"#153C32",borderRadius:12,justifyContent:"center",alignItems:"center"},buttonText:{color:"#fff",fontSize:15,fontWeight:"600"},disabled:{backgroundColor:"#DDE2D5"},error:{color:"#A23425",fontSize:14,lineHeight:20},loader:{padding:30},
 });

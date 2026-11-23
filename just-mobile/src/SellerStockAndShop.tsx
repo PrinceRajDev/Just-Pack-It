@@ -345,11 +345,10 @@ function overlappingHours(hours: SellerShop["openingHours"]) {
 
 export function SellerShopSettings({token,name,signOut}:{token:string;name:string;signOut:()=>Promise<void>}) {
   const data = useSellerData(() => sellerApi.shop(token),token);
-  const session = useSellerMutation();
   if (data.data) return <ShopEditor key={data.data.id} token={token} shop={data.data} accountName={name} signOut={signOut} onSaved={data.setData} reload={data.reload} />;
   return <SellerScroll>
     <LoadState error={data.error} loading={data.loading} retry={data.reload}/>
-    {!!data.error && <SellerCard><Text style={styles.title}>{name}</Text><MutationFeedback error={session.error} /><SellerButton label="Sign out of seller account" soft disabled={session.busy} onPress={()=>void session.run(signOut)} /></SellerCard>}
+    {!!data.error && <SellerAccountCard name={name} signOut={signOut} />}
   </SellerScroll>;
 }
 
@@ -472,7 +471,7 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
       {methods.includes("pickup") && <SellerField label="Pickup instructions" editable={!mutation.busy} value={pickupNote} onChangeText={setPickupNote} maxLength={400} multiline />}
     </SellerCard>
     </>}
-    {section === "Account" && <SellerCard><Text style={styles.title}>{accountName}</Text><SellerButton label="Sign out of seller account" soft disabled={mutation.busy} onPress={()=>void mutation.run(signOut)} /></SellerCard>}
+    {section === "Account" && <SellerAccountCard name={accountName} signOut={signOut} />}
     </SellerScroll>
     {section === "Availability" && <View style={styles.orderDock}>
       <MutationFeedback error={mutation.error} onReload={reload} />
@@ -500,6 +499,23 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
       </View>
     </View>}
   </>;
+}
+
+function SellerAccountCard({name,signOut}:{name:string;signOut:()=>Promise<void>}) {
+  const [confirm,setConfirm] = useState(false);
+  const mutation = useSellerMutation();
+  return <SellerCard>
+    <Text style={styles.title}>{name}</Text>
+    {confirm ? <>
+      <Text accessibilityRole="header" style={styles.section}>Sign out of Seller?</Text>
+      <Text style={styles.copy}>You’ll need to sign in again to manage your shop and orders.</Text>
+      <MutationFeedback error={mutation.error} />
+      <SellerButton label="Keep working" soft disabled={mutation.busy} onPress={() => {
+        setConfirm(false); mutation.clear();
+      }} />
+      <SellerButton label={mutation.busy ? "Signing out…" : "Confirm sign out"} disabled={mutation.busy} onPress={() => void mutation.run(signOut)} />
+    </> : <SellerButton label="Sign out of seller account" soft onPress={() => setConfirm(true)} />}
+  </SellerCard>;
 }
 const validMoney = (value:string) => /^\d+(?:\.\d{1,2})?$/.test(value) && Number(value)>0 && Number.isFinite(Number(value));
 const validStock = (value:string) => /^\d+$/.test(value) && Number.isSafeInteger(Number(value));

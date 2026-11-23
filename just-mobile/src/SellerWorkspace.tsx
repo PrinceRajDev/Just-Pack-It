@@ -61,6 +61,12 @@ function sellerCashDue(order: SellerOrder) {
   return !order.testMode && order.paymentMethod === "cod" && !order.cashCollection
     && order.status !== "cancelled" && order.status !== "delivered" && order.amountDue > 0;
 }
+
+function sellerRefundLabel(order: SellerOrder) {
+  if (!order.refund) return undefined;
+  const state = order.refund.state.replaceAll("_"," ").trim();
+  return `${state ? `Refund ${state}` : "Refund"} · ${rupees(order.refund.amount)}`;
+}
 const payoutDate = new Intl.DateTimeFormat("en-IN", {day:"numeric",month:"short",year:"numeric",timeZone:indiaTimeZone});
 
 function orderTime(createdAt:string) {
@@ -299,7 +305,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
         <Text style={styles.copy}>Items {rupees(order.itemsSubtotal)} · Delivery {rupees(order.deliveryFee)}</Text>
         {sellerCashDue(order) && <Text style={styles.label}>{rupees(order.amountDue)} due</Text>}
         {order.status === "cancelled" && <Text style={styles.copy}>Original order total · {rupees(order.total)}</Text>}
-        {order.refund && <Text style={styles.copy}>Refund {order.refund.state} · {rupees(order.refund.amount)}</Text>}
+        {order.refund && <Text style={styles.copy}>{sellerRefundLabel(order)}</Text>}
         {order.cancelReason && <Text style={styles.copy}>Cancellation · {order.cancelReason}</Text>}
       </View>
       {order.deliveryAddress && <SellerCard><Text style={styles.label}>Delivery address</Text><Text style={styles.copy}>{[order.deliveryAddress.line1,order.deliveryAddress.locality,order.deliveryAddress.city,order.deliveryAddress.pincode].filter(Boolean).join(", ")}</Text></SellerCard>}
@@ -382,8 +388,9 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
       const nextStep = order.status === "ready" && order.fulfilment === "platform_delivery" && order.delivery?.state !== "claimed"
         ? "View order" : orderNextStep[order.status] ?? "View details";
       const riderStatus = readyRiderLabel(order);
+      const refundLabel = order.status === "cancelled" && !order.testMode ? sellerRefundLabel(order) : undefined;
       const cashDue = sellerCashDue(order) ? `Cash due ${rupees(order.amountDue)}` : undefined;
-      return <Pressable key={order.id} accessibilityRole="button" accessibilityLabel={[reference,status,riderStatus,packingProgressLabel,cashDue].filter(Boolean).join(", ")} accessibilityHint={nextStep} onPress={() => setSelected(order)}
+      return <Pressable key={order.id} accessibilityRole="button" accessibilityLabel={[reference,status,riderStatus,packingProgressLabel,cashDue,refundLabel].filter(Boolean).join(", ")} accessibilityHint={nextStep} onPress={() => setSelected(order)}
         style={({pressed}) => [styles.dispatchTicket, pressed && styles.pressed]}>
         <View style={styles.dispatchTicketBody}>
           <View style={styles.orderTop}>
@@ -398,6 +405,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
             <Text style={styles.label}>{units} {units === 1 ? "unit" : "units"}{order.lines[0] ? ` · ${order.lines[0].name}` : ""}{order.lines.length > 1 ? ` +${order.lines.length - 1} more` : ""}</Text>
             <Text style={styles.copy}>{fulfilmentNames[order.fulfilment]} · {order.testMode ? "Test order" : sellerPaymentLabel(order)}</Text>
             {!!riderStatus && <Text style={styles.label}>{riderStatus}</Text>}
+            {!!refundLabel && <Text style={styles.label}>{refundLabel}</Text>}
             {!!packingProgressLabel && <Text style={styles.label}>{packingProgressLabel}</Text>}
             {order.status === "cancelled" && !!order.cancelReason?.trim() && (
               <Text style={styles.copy} numberOfLines={2}>Reason · {order.cancelReason.trim()}</Text>

@@ -30,7 +30,10 @@ type OrderGroup = keyof typeof orderGroups;
 const fulfilmentFilters = ["all","pickup","seller_delivery","platform_delivery"] as const;
 const counterPhoto = require("../assets/seller-kirana-counter.jpg");
 const dispatchPhoto = require("../assets/seller-dispatch-parcel.jpg");
-const orderDate = new Intl.DateTimeFormat("en-IN", {day:"numeric",month:"short",hour:"numeric",minute:"2-digit"});
+const indiaTimeZone = "Asia/Kolkata";
+const orderDate = new Intl.DateTimeFormat("en-IN", {
+  day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit",timeZone:indiaTimeZone,
+});
 const packingStages = ["Accept", "Pack", "Handoff", "Complete"];
 const packingProgress: Record<OrderStatus, number> = {
   placed:0, accepted:1, preparing:1, ready:2, out_for_delivery:2, delivered:3, cancelled:-1,
@@ -58,11 +61,11 @@ function sellerCashDue(order: SellerOrder) {
   return !order.testMode && order.paymentMethod === "cod" && !order.cashCollection
     && order.status !== "cancelled" && order.status !== "delivered" && order.amountDue > 0;
 }
-const payoutDate = new Intl.DateTimeFormat("en-IN", {day:"numeric",month:"short",year:"numeric",timeZone:"Asia/Kolkata"});
+const payoutDate = new Intl.DateTimeFormat("en-IN", {day:"numeric",month:"short",year:"numeric",timeZone:indiaTimeZone});
 
 function orderTime(createdAt:string) {
   const time = Date.parse(createdAt);
-  return Number.isNaN(time) ? "" : orderDate.format(time);
+  return Number.isNaN(time) ? "" : `${orderDate.format(time)} IST`;
 }
 
 function SellerIcon({name,color}: {name:SellerIconName;color:string}) {

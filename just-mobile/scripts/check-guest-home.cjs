@@ -247,6 +247,7 @@ const assert = require("node:assert/strict");
     await page.screenshot({path:path.join(output,"seller-workspace-390.png"),animations:"disabled"});
     await workspace.getByRole("button",{name:/^New orders/}).click();
     await workspace.getByText("Cash due ₹119",{exact:true}).waitFor();
+    await workspace.getByText(/20 Nov 2026.*2:00\s*pm IST/i).waitFor();
     await workspace.getByRole("button",{name:/^Order #/}).waitFor();
     await workspace.getByTestId("seller-dispatch-art").locator("img").evaluate(image => image.decode());
     await page.screenshot({path:path.join(output,"seller-orders-390.png"),animations:"disabled"});

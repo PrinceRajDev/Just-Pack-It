@@ -263,6 +263,7 @@ const assert = require("node:assert/strict");
         await workspace.getByRole("checkbox",{name:/^Tomatoes,/}).click();
         await workspace.getByText("1 of 1 checked",{exact:true}).waitFor();
         await workspace.getByRole("button",{name:/Back to orders/}).click();
+        await workspace.getByRole("button",{name:/^Order #.*1 of 1 checked/}).waitFor();
         await workspace.getByRole("button",{name:/^Order #/}).click();
         await workspace.getByText("1 of 1 checked",{exact:true}).waitFor();
       }

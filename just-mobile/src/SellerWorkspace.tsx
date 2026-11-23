@@ -353,10 +353,12 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
       const reference = `Order #${order.orderId.slice(-8).toUpperCase()}`;
       const status = orderStatusNames[order.status];
       const units = order.lines.reduce((sum,item) => sum + item.qty,0);
+      const checkedCount = packingChecks[`${order.id}:${order.version}`]?.length ?? 0;
+      const packingProgressLabel = checkedCount > 0 ? `${checkedCount} of ${order.lines.length} checked` : undefined;
       const nextStep = order.status === "ready" && order.fulfilment === "platform_delivery" && order.delivery?.state !== "claimed"
         ? "View order" : orderNextStep[order.status] ?? "View details";
       const riderStatus = readyRiderLabel(order);
-      return <Pressable key={order.id} accessibilityRole="button" accessibilityLabel={[reference,status,riderStatus].filter(Boolean).join(", ")} accessibilityHint={nextStep} onPress={() => setSelected(order)}
+      return <Pressable key={order.id} accessibilityRole="button" accessibilityLabel={[reference,status,riderStatus,packingProgressLabel].filter(Boolean).join(", ")} accessibilityHint={nextStep} onPress={() => setSelected(order)}
         style={({pressed}) => [styles.dispatchTicket, pressed && styles.pressed]}>
         <View style={styles.dispatchTicketBody}>
           <View style={styles.orderTop}>
@@ -371,6 +373,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
             <Text style={styles.label}>{units} {units === 1 ? "unit" : "units"}{order.lines[0] ? ` · ${order.lines[0].name}` : ""}{order.lines.length > 1 ? ` +${order.lines.length - 1} more` : ""}</Text>
             <Text style={styles.copy}>{fulfilmentNames[order.fulfilment]} · {order.testMode ? "Test order" : sellerPaymentLabel(order)}</Text>
             {!!riderStatus && <Text style={styles.label}>{riderStatus}</Text>}
+            {!!packingProgressLabel && <Text style={styles.label}>{packingProgressLabel}</Text>}
           </View>
         </View>
         <View style={styles.dispatchTicketFooter}>

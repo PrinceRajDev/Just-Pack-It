@@ -220,7 +220,19 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
       : allowReceipt ? {label:"Verify buyer receipt code",press:() => openAction("cash")} : undefined;
     return <>
     <SellerScroll>
-      <Pressable accessibilityRole="button" onPress={close} disabled={mutation.busy} style={styles.orderBack}><Text style={styles.link}>‹  Back to orders</Text></Pressable>
+      <View style={styles.orderTop}>
+        <Pressable accessibilityRole="button" onPress={close} disabled={mutation.busy} style={styles.orderBack}><Text style={styles.link}>‹  Back to orders</Text></Pressable>
+        {!action && readyRiderLabel(order) === "Waiting for a rider" && <Pressable accessibilityRole="button" disabled={mutation.busy} style={styles.dispatchRefresh}
+          onPress={() => void mutation.run(async () => {
+            const latest = await sellerApi.orders(token);
+            const updated = latest.items.find(item => item.orderId === order.orderId && item.id === order.id);
+            if (!updated) throw new Error("This order isn’t in the latest results. Go back to Orders to find its current status.");
+            listing.setData(previous => previous && {...previous,items:previous.items.map(item => item.id === updated.id ? updated : item)});
+            setSelected(updated);
+          })}>
+          <Text style={styles.link}>{mutation.busy ? "Refreshing…" : "Refresh rider status"}</Text>
+        </Pressable>}
+      </View>
       <View style={styles.orderHero}>
         <View style={styles.orderTop}><SellerIcon name="orders" color="#F7D46A" /><Text style={styles.orderStatus}>{orderStatusNames[order.status]}</Text></View>
         <Text style={styles.heroTitle}>Order #{order.orderId.slice(-8).toUpperCase()}</Text>

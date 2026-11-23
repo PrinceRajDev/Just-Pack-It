@@ -190,7 +190,6 @@ const assert = require("node:assert/strict");
         const input=route.request().postDataJSON();
         assert.equal(input.version,sellerOrder.version);
         sellerOrder={...sellerOrder,status:input.status,version:sellerOrder.version+1};
-        if(input.status==="ready") sellerOrder.delivery={state:"claimed",partnerId:"rider-qa"};
         json=sellerOrder;
       }
       if(pathname.endsWith("/pickup")&&method==="POST"){
@@ -274,6 +273,9 @@ const assert = require("node:assert/strict");
       await workspace.getByText(sellerOrder.status==="accepted"?"Accepted":sellerOrder.status==="preparing"?"Preparing":"Ready",{exact:true}).last().waitFor();
     }
     await workspace.getByRole("button",{name:/^Order #/}).click();
+    await workspace.getByText("Waiting for a platform rider to claim this order.",{exact:true}).waitFor();
+    sellerOrder={...sellerOrder,version:sellerOrder.version+1,delivery:{state:"claimed",partnerId:"rider-qa"}};
+    await workspace.getByRole("button",{name:"Refresh rider status",exact:true}).click();
     await workspace.getByRole("button",{name:"Review rider handoff"}).click();
     await workspace.getByRole("button",{name:"Confirm handoff",exact:true}).click();
     await workspace.getByText("Picked up by rider",{exact:true}).waitFor();

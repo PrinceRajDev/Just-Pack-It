@@ -153,6 +153,7 @@ function QuickStock({token,product,close,saved,reload}:{token:string;product:Sel
   const [current,setCurrent] = useState(product);
   const [stock,setStock] = useState(String(product.stock));
   const mutation = useSellerMutation();
+  const quantity = validStock(stock) ? Number(stock) : current.stock;
   useAndroidBack(() => { if (!mutation.busy) close(); return true; }, 25);
   return <SellerScroll>
     <Pressable accessibilityRole="button" disabled={mutation.busy} onPress={close} style={styles.orderBack}><Text style={styles.link}>‹  Back to catalogue</Text></Pressable>
@@ -163,6 +164,10 @@ function QuickStock({token,product,close,saved,reload}:{token:string;product:Sel
     </View>
     <SellerCard>
       <SellerField label="Available units" value={stock} onChangeText={setStock} keyboardType="number-pad" selectTextOnFocus editable={!mutation.busy} />
+      {!current.variants?.length && <View style={styles.shopTimes}>
+        <View style={styles.grow}><SellerButton label="− 1 unit" soft disabled={mutation.busy || quantity <= 0} onPress={() => setStock(String(quantity - 1))} /></View>
+        <View style={styles.grow}><SellerButton label="+ 1 unit" soft disabled={mutation.busy || quantity >= Number.MAX_SAFE_INTEGER} onPress={() => setStock(String(quantity + 1))} /></View>
+      </View>}
       <MutationFeedback error={mutation.error} onReload={() => void mutation.run(async () => {
         const fresh = await reload();
         setCurrent(fresh);

@@ -4,7 +4,7 @@ import { marketApi } from "./api";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { resolveImage } from "./images";
 import { fulfilmentNames, sellerApi, type Fulfilment, type SellerProduct, type SellerShop } from "./sellerApi";
-import { rupees, styles, LoadState, MutationFeedback, Row, SellerButton, SellerCard, SellerField, SellerScroll, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
+import { sellerShopApproval, sellerShopAvailability, rupees, styles, LoadState, MutationFeedback, Row, SellerButton, SellerCard, SellerField, SellerScroll, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
 import { useAndroidBack } from "./useAndroidBack";
 import { SellerPhotoEditor } from "./SellerPhotoEditor";
 
@@ -295,7 +295,6 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
 const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const shopSections = ["Availability","Shop details","Cover photo","Account"] as const;
 const shopCover = require("../assets/seller-storefront.jpg");
-const shopApproval = {approved:"Approved",pending:"Under review",rejected:"Changes requested",suspended:"Suspended"};
 
 export function SellerShopSettings({token,name,signOut}:{token:string;name:string;signOut:()=>Promise<void>}) {
   const data = useSellerData(() => sellerApi.shop(token),token);
@@ -322,9 +321,6 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
   const mutation = useSellerMutation();
   const cover = resolveImage(shop.coverImage);
   const pauseChanged = closed !== !!shop.temporarilyClosed;
-  const availabilityLabel = shop.temporarilyClosed ? "Temporarily paused"
-    : shop.status !== "approved" ? shopApproval[shop.status]
-    : shop.isOpen === true ? "Open now" : shop.isOpen === false ? "Closed now" : "Availability unknown";
   const savedMethods = shop.fulfilment ?? [];
   const availabilityChanged = pauseChanged
     || JSON.stringify(hours) !== JSON.stringify(shop.openingHours ?? [])
@@ -341,7 +337,7 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
           <Text accessibilityRole="header" style={styles.heroTitle}>{shop.name}</Text>
           <Text style={styles.heroKicker}>{shop.locality || shop.address || "Shop settings"}</Text>
         </View>
-        <View style={styles.heroBadge}><Text style={styles.heroBadgeText}>{shopApproval[shop.status]}</Text></View>
+        <View style={styles.heroBadge}><Text style={styles.heroBadgeText}>{sellerShopApproval[shop.status]}</Text></View>
       </View>
     </View>
     <View style={styles.shopSections}>{shopSections.map(value => {
@@ -375,7 +371,7 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
       }} />}
     {section === "Availability" && <>
     <View style={styles.shopAvailability}>
-      <View style={styles.grow}><Text style={styles.title}>{availabilityLabel}</Text>
+      <View style={styles.grow}><Text style={styles.title}>{sellerShopAvailability(shop)}</Text>
         <Text style={styles.copy}>{pauseChanged ? "Save availability to apply this change." : shop.temporarilyClosed ? "Resume to remove the temporary closure." : "Pause temporarily when you need a break."}</Text>
       </View>
       <Pressable accessibilityRole="switch" accessibilityLabel="Pause shop temporarily" accessibilityState={{checked:closed}} disabled={mutation.busy}

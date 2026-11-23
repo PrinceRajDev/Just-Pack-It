@@ -2,6 +2,17 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
 import { ApiError } from "./api";
 import { BuyerStateCard, BuyerStateSkeleton } from "./BuyerStateCard";
+import type { SellerShop } from "./sellerApi";
+
+export const sellerShopApproval = {pending:"Under review",approved:"Approved",rejected:"Changes requested",suspended:"Suspended"};
+
+export function sellerShopAvailability(shop: SellerShop) {
+  if (shop.status !== "approved") return sellerShopApproval[shop.status];
+  if (shop.temporarilyClosed) return "Temporarily paused";
+  if (shop.isOpen === true) return "Open now";
+  if (shop.isOpen === false) return "Closed now";
+  return "Availability unknown";
+}
 export const rupees = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 export function useSellerData<T>(load: () => Promise<T>, scope: string) {
   const [data,setData] = useState<T>();

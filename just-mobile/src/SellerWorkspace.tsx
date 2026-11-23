@@ -4,7 +4,7 @@ import { onSessionExpired, type Session } from "./api";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useAndroidBack } from "./useAndroidBack";
 import { fulfilmentNames, orderStatusNames, sellerApi, type SellerOrder, type OrderStatus, type Settlement } from "./sellerApi";
-import { rupees, styles, LoadState, MutationFeedback, Row, SellerButton, SellerCard, SellerField, SellerScroll, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
+import { sellerShopApproval, sellerShopAvailability, rupees, styles, LoadState, MutationFeedback, Row, SellerButton, SellerCard, SellerField, SellerScroll, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
 import { SellerCatalogue, SellerShopSettings, type StockFilter } from "./SellerStockAndShop";
 
 type Tab = "Home" | "Orders" | "Catalogue" | "Settlements" | "Shop";
@@ -27,7 +27,6 @@ const orderGroups = {
 } satisfies Record<string, OrderStatus[]>;
 type OrderGroup = keyof typeof orderGroups;
 const fulfilmentFilters = ["all","pickup","seller_delivery","platform_delivery"] as const;
-const statusLabels = { pending:"Under review", approved:"Approved", rejected:"Changes requested", suspended:"Suspended" };
 const counterPhoto = require("../assets/seller-kirana-counter.jpg");
 const dispatchPhoto = require("../assets/seller-dispatch-parcel.jpg");
 const orderDate = new Intl.DateTimeFormat("en-IN", {day:"numeric",month:"short",hour:"numeric",minute:"2-digit"});
@@ -112,7 +111,7 @@ function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:O
         </View>
         <Pressable accessibilityRole="button" accessibilityLabel="Shop settings" onPress={() => open("Shop")} style={styles.heroBadge}>
           <View style={styles.statusDot} />
-          <Text style={styles.heroBadgeText}>{shop.data.temporarilyClosed ? "Paused" : statusLabels[shop.data.status]}</Text>
+          <Text style={styles.heroBadgeText}>{sellerShopAvailability(shop.data)}</Text>
         </Pressable>
       </View>
       <Image source={counterPhoto} style={styles.heroPhoto} resizeMode="cover" accessible={false} />
@@ -124,7 +123,7 @@ function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:O
       </View>
     </View>}
     <LoadState loading={shop.loading && !shop.data} error={shop.error} retry={shop.reload} />
-    {shop.data && shop.data.status !== "approved" && <BuyerStateCard title={statusLabels[shop.data.status]} copy={shop.data.review?.reason || "You can prepare your catalogue and shop details while your shop status is reviewed."} tone="warning" compact icon="shop" action="Shop settings" onAction={() => open("Shop")} />}
+    {shop.data && shop.data.status !== "approved" && <BuyerStateCard title={sellerShopApproval[shop.data.status]} copy={shop.data.review?.reason || "You can prepare your catalogue and shop details while your shop status is reviewed."} tone="warning" compact icon="shop" action="Shop settings" onAction={() => open("Shop")} />}
     <LoadState loading={dashboard.loading && !dashboard.data} error={dashboard.error} retry={dashboard.reload} />
     {dashboard.data && <>
       <View style={styles.queueTop}>

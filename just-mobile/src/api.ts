@@ -41,12 +41,13 @@ async function get<T>(path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-async function request<T>(path: string, token?: string, options: RequestInit = {}): Promise<T> {
+export async function request<T>(path: string, token?: string, options: RequestInit = {}, onHeaders?: (headers: Headers) => void): Promise<T> {
   if (!apiUrl) throw new Error("The marketplace connection is missing. Please install the latest app build.");
   let response: Response;
   try {
     response = await fetchWithTimeout(`${apiUrl}${path}`, { ...options, headers: { Accept: "application/json", ...(options.body ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers ?? {}) } });
   } catch (reason) { throw reason instanceof Error ? reason : new Error("Check your internet and try again."); }
+  onHeaders?.(response.headers);
   if (response.status === 204) return undefined as T;
   const payload = await response.json().catch(() => ({})) as { message?: string; code?: string; requestId?: string };
   if (!response.ok) {

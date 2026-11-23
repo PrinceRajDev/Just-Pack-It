@@ -173,6 +173,75 @@ const assert = require("node:assert/strict");
     assert.equal(sellerAttempts,attemptsBeforeHandoff+1);
     await page.waitForFunction(() => JSON.parse(sessionStorage.getItem("jpi.seller.session"))?.role === "seller");
     assert.equal(await page.evaluate(() => sessionStorage.getItem("jpi.buyer.session")),null);
+    let sellerShop = {id:"shop-qa",version:1,name:"Fixture Kirana",locality:"Raiyam",status:"approved",address:"Shop 2, Main Road",fulfilment:["platform_delivery"],timezone:"Asia/Kolkata",openingHours:[],categoryIds:["grocery"],serviceAreaIds:["raiyam"]};
+    let sellerOrder = {id:"order-line",orderId:"seller-order-one",version:1,status:"placed",createdAt:"2026-11-20T08:30:00Z",fulfilment:"platform_delivery",paymentMethod:"cod",paymentStatus:"unpaid",amountDue:119,total:119,itemsSubtotal:89,deliveryFee:30,lines:[{name:"Tomatoes",qty:1,variantLabel:"1 kg",price:89}]};
+    let sellerProduct = {id:"seller-product",name:"Tomatoes",unit:"1 kg",stock:9,price:89,active:true,categoryId:"cb9f993a-4595-476c-8ead-f22410a0b007",version:1,shopId:"shop-qa"};
+    await page.route("**/seller/**", async route => {
+      const pathname = new URL(route.request().url()).pathname;
+      const method = route.request().method();
+      if(method==="OPTIONS") return route.fulfill({status:204,headers:{...sellerHeaders,"access-control-allow-methods":"GET, POST, PATCH, OPTIONS"}});
+      assert.equal(route.request().headers().authorization,"Bearer seller-fixture-token");
+      let json;
+      if(pathname==="/seller/shop") json=sellerShop;
+      if(pathname==="/seller/dashboard") json={todayOrders:1,pendingPayment:1,counts:{[sellerOrder.status]:1},lowStock:{count:0,outOfStock:0,items:[]}};
+      if(pathname==="/seller/orders") json=[sellerOrder];
+      if(pathname.startsWith("/seller/orders/")&&method==="PATCH"){
+        const input=route.request().postDataJSON();
+        assert.equal(input.version,sellerOrder.version);
+        sellerOrder={...sellerOrder,status:input.status,version:sellerOrder.version+1};
+        if(input.status==="ready") sellerOrder.delivery={state:"claimed",partnerId:"rider-qa"};
+        json=sellerOrder;
+      }
+      if(pathname.endsWith("/pickup")&&method==="POST"){
+        assert.deepEqual(route.request().postDataJSON(),{version:sellerOrder.version,partnerId:"rider-qa",confirmHandoff:true});
+        sellerOrder={...sellerOrder,version:sellerOrder.version+1,delivery:{state:"picked_up",partnerId:"rider-qa"}};
+        json=sellerOrder;
+      }
+      if(pathname==="/seller/products") json=[sellerProduct];
+      if(pathname==="/seller/products/seller-product") json=sellerProduct;
+      if(pathname.endsWith("/inventory")&&method==="PATCH"){
+        assert.deepEqual(route.request().postDataJSON(),{stock:7,version:sellerProduct.version});
+        sellerProduct={...sellerProduct,stock:7,version:sellerProduct.version+1};
+        json=sellerProduct;
+      }
+      if(pathname==="/seller/shop/availability"){
+        const input=route.request().postDataJSON();
+        assert.deepEqual(input.openingHours,[{day:1,opens:"09:00",closes:"18:00"}]);
+        assert.equal(input.version,sellerShop.version);
+        sellerShop={...sellerShop,...input,version:sellerShop.version+1};
+        json=sellerShop;
+      }
+      assert.ok(json,"Unexpected seller route "+pathname);
+      return route.fulfill({json,headers:sellerHeaders});
+    });
+    await page.route("**/settlements?*",route => route.fulfill({json:{items:[{id:"payout-qa",orderId:"seller-order-one",posted:true,payoutAmount:99,payout:{state:"recorded",reference:"fixture-bank-reference"}}]},headers:sellerHeaders}));
+    await page.getByRole("button",{name:"Open seller workspace",exact:true}).click();
+    const workspace=page.getByTestId("native-seller-workspace");
+    await workspace.getByText("Fixture Kirana",{exact:true}).waitFor();
+    await workspace.getByRole("button",{name:/^New orders/}).click();
+    for (const [label, tab] of [["Accept order","Preparing"],["Start packing","Preparing"],["Mark ready","Ready"]]) {
+      await workspace.getByRole("button",{name:/^Order #/}).click();
+      await workspace.getByRole("button",{name:label,exact:true}).click();
+      await workspace.getByRole("tab",{name:tab,exact:true}).click();
+      await workspace.getByText(sellerOrder.status==="accepted"?"Accepted":sellerOrder.status==="preparing"?"Preparing":"Ready",{exact:true}).last().waitFor();
+    }
+    await workspace.getByRole("button",{name:/^Order #/}).click();
+    await workspace.getByRole("button",{name:"Review rider handoff"}).click();
+    await workspace.getByRole("button",{name:"Confirm handoff",exact:true}).click();
+    await workspace.getByRole("button",{name:/^Order #/}).click();
+    await workspace.getByText("Rider status · picked up",{exact:true}).waitFor();
+    await workspace.getByRole("tab",{name:"Catalogue",exact:true}).click();
+    await workspace.getByRole("button",{name:"Edit Tomatoes",exact:true}).click();
+    await workspace.getByLabel("Stock",{exact:true}).fill("7");
+    await workspace.getByRole("button",{name:"Update stock only",exact:true}).click();
+    await workspace.getByText("Stock updated.",{exact:true}).waitFor();
+    await workspace.getByRole("tab",{name:"Settlements",exact:true}).click();
+    await workspace.getByText("Payout recorded",{exact:true}).waitFor();
+    await workspace.getByRole("tab",{name:"Shop",exact:true}).click();
+    await workspace.getByRole("button",{name:"Add opening interval",exact:true}).click();
+    await workspace.getByRole("button",{name:"Save availability",exact:true}).click();
+    await page.waitForFunction(() => document.querySelectorAll('[aria-label="Opens (HH:MM)"]').length===1);
+    await workspace.getByRole("button",{name:"Close",exact:true}).click();
     await page.getByRole("button",{name:"Close",exact:true}).click();
     await page.getByRole("button",{name:"Back from sign in"}).click();
     await page.getByText("Home",{exact:true}).last().click();

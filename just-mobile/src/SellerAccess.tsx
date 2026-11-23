@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { ApiError, buyerApi, marketApi, type Category, type ServiceArea, type Session } from "./api";
+import { StatusBar } from "expo-status-bar";
+import { SellerWorkspace } from "./SellerWorkspace";
 import { BuyerRecovery } from "./BuyerRecovery";
 import { BuyerStateCard } from "./BuyerStateCard";
 import * as storage from "./deviceStorage";
@@ -15,6 +17,7 @@ type Step = "login" | "account" | "email" | "shop" | "delivery" | "review" | "st
 const backSteps: Partial<Record<Step, Step>> = { account:"login", email:"account", delivery:"shop", review:"delivery", recovery:"login" };
 
 export function SellerAccess({ close, initialSession }: { close: () => void; initialSession?: Session }) {
+  const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [step, setStep] = useState<Step>(() => initialSession ? "status" : "login");
   const [session, setSession] = useState<Session | null>(() => initialSession ?? null);
   const [shop, setShop] = useState<Awaited<ReturnType<typeof buyerApi.sellerShop>>>();
@@ -128,14 +131,34 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     setChallenge({ address, id: reply.challengeId, expires: Date.parse(reply.expiresAt), retryAt: time + reply.resendAfterSeconds * 1000 });
     go("email");
   };
+  const clearSeller = () => {
+    setWorkspaceOpen(false);
+    setSession(null);
+    setShop(undefined);
+    setShopError("");
+    go("login");
+  };
+  const signOut = async () => {
+    if (!session) return;
+    await buyerApi.logout(session.token);
+    await storage.deleteItemAsync(sessionKey);
+    clearSeller();
+  };
+  const expire = () => {
+    void storage.deleteItemAsync(sessionKey).catch(() => undefined);
+    clearSeller();
+    setError("Your seller session expired. Sign in again.");
+  };
   const back = () => {
     if (busy) return;
+    if (workspaceOpen) { setWorkspaceOpen(false); setRefresh(value => value+1); return; }
     if (picker) { setPicker(null); return; }
     if (step === "shop") go(verify ? "email" : "account");
     else if (backSteps[step]) go(backSteps[step]!);
     else close();
   };
 
+  if (workspaceOpen && session) return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style="dark" /><SellerWorkspace session={session} back={back} signOut={signOut} expired={expire} /></SafeAreaView></SafeAreaProvider></Modal>;
   if (step === "recovery") return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><BuyerRecovery back={() => go("login")} /></SafeAreaView></SafeAreaProvider></Modal>;
   const title = picker === "area" ? "Choose service area" : picker === "category" ? "Choose category" :
     {login:"Welcome back", account:"Create seller account", email:"Check your email", shop:"Tell us about your shop", delivery:"Address & fulfilment", review:"Review your shop", status:"Your seller workspace"}[step];
@@ -187,7 +210,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     }
   }));
 
-  return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}>
+  return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style="dark" />
     <View style={s.header}><Text style={s.brand}>JustPackIt</Text><Text style={s.kicker}>SELLER</Text>{link(step === "login" || step === "status" ? "Close" : "Back", back)}</View>
     {restoring ? <ActivityIndicator style={s.loader} color="#07552F" /> : <>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
@@ -246,12 +269,9 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
         {!picker && step === "status" && <>
           {shop ? <BuyerStateCard title={shop.status === "pending" ? "Your shop is under review" : shop.status === "approved" ? "Your shop is approved" : shop.status === "rejected" ? "Changes requested" : "Shop suspended"} copy={shop.review?.reason || shop.name} tone={shop.status === "approved" ? "success" : "warning"} /> :
             shopError ? <BuyerStateCard title="Shop status unavailable" copy={shopError} tone="error" action="Retry status" onAction={() => setRefresh(value => value + 1)} /> : <ActivityIndicator color="#07552F" />}
-          <Text style={s.copy}>Signed in as {session?.name}. Manage opening hours and products in the seller workspace on the website.</Text>
-          {link("Open seller workspace", () => void run(() => Linking.openURL("https://justpackit.vercel.app/seller")))}
-          {link("Sign out of seller account", () => void run(async () => {
-            if (session) await buyerApi.logout(session.token);
-            await storage.deleteItemAsync(sessionKey); setSession(null); setShop(undefined); setShopError(""); go("login");
-          }))}
+          <Text style={s.copy}>Signed in as {session?.name}. Manage your shop, orders and catalogue in the app.</Text>
+          {button("Open seller workspace", () => setWorkspaceOpen(true))}
+          {link("Sign out of seller account", () => void run(signOut))}
         </>}
       </ScrollView>
       {action && <View style={s.footer}>{action}{step === "login" && link("New to JustPackIt? Create account", () => void run(async () => { const options = await buyerApi.registrationOptions(); setVerify(options.emailOtpRequired); go("account"); }))}{step === "account" && link("Already have an account? Sign in", () => go("login"))}</View>}

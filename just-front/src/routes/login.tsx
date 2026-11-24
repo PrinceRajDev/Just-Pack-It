@@ -284,14 +284,16 @@ function Login() {
           </div>
         </div>
         <aside className="auth-market-feature" aria-label="Just Pack It">
-          <img
-            src={imageUrl("/brand/login-market-editorial.jpg")}
-            alt=""
-            width={1024}
-            height={1536}
-            fetchPriority="high"
-            className="auth-market-photo"
-          />
+          <div className="auth-market-visual">
+            <img
+              src={imageUrl("/brand/login-market-editorial.jpg")}
+              alt=""
+              width={1024}
+              height={1536}
+              fetchPriority="high"
+              className="auth-market-photo"
+            />
+          </div>
           <div className="auth-market-caption">
             <p>
               <UiText>Your neighbourhood, delivered</UiText>

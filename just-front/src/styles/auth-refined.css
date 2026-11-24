@@ -41,44 +41,56 @@
 
 .auth-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
   align-items: start;
-  gap: clamp(28px, 5vw, 84px);
+  gap: clamp(24px, 4vw, 60px);
   width: min(100%, 1280px);
   margin-inline: auto;
   padding: clamp(28px, 6vh, 72px) clamp(24px, 4vw, 56px) max(24px, env(safe-area-inset-bottom));
 }
 
 .auth-market-feature {
-  display: grid;
-  grid-template-rows: minmax(300px, 1fr) auto;
-  min-height: 568px;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-end;
+  min-height: clamp(510px, 72vh, 660px);
   overflow: hidden;
-  border-radius: 22px;
+  border-radius: 28px;
   background: #153f2e;
-  color: #fffcf2;
+  color: #fffdf8;
 }
 
 .auth-market-photo {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
   display: block;
   width: 100%;
   height: 100%;
-  min-height: 300px;
   object-fit: cover;
   object-position: 78% center;
 }
 
+.auth-market-feature::after {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(0deg, #0d261c 0%, #0d261ce8 26%, #0d261c00 65%);
+  content: "";
+}
+
 .auth-market-caption {
-  padding: clamp(24px, 3vw, 44px);
+  padding: clamp(24px, 3.5vw, 50px);
 }
 
 .auth-market-caption p {
-  max-inline-size: 14ch;
+  max-inline-size: 13ch;
   font-family: Georgia, "Nirmala UI", serif;
-  font-size: clamp(36px, 4.1vw, 64px);
-  line-height: 1.02;
-  letter-spacing: -0.035em;
-  text-wrap: balance;
+  font-size: clamp(38px, 4.6vw, 68px);
+  line-height: 1.03;
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
 }
 
 .auth-refined.market-login .login-form-panel {
@@ -86,6 +98,7 @@
   width: min(100%, 520px);
   min-width: 0;
   margin-inline: auto;
+  align-self: center;
   padding: 0;
   background: transparent;
 }
@@ -158,7 +171,7 @@
   padding-inline: 12px;
   border-color: #a99f8c;
   border-radius: 8px;
-  background: #fffdf8;
+  background: #fff;
   font-size: 16px;
   box-shadow: none;
 }
@@ -208,6 +221,7 @@
 
 .auth-refined .auth-live-form button[type="submit"] {
   margin-top: 0;
+  min-height: 48px;
   background: #103b2b;
 }
 
@@ -246,11 +260,15 @@
 .auth-refined.market-login .auth-mode-switch {
   width: 100%;
   margin-top: 16px;
-  border: 0;
-  border-top: 1px solid #e2dfd4;
-  border-radius: 0;
-  background: transparent;
+  border: 1px solid #c8d4c6;
+  border-radius: 8px;
+  background: #f0f4ec;
   text-align: center;
+  text-decoration: none;
+}
+
+.auth-refined.market-login .auth-mode-switch:not(:disabled):hover {
+  background: #e6eee1;
 }
 
 .auth-refined .auth-live-form > div.mt-5 {
@@ -331,8 +349,37 @@
   .auth-layout {
     grid-template-columns: minmax(0, 1fr);
     padding: 24px 16px max(24px, env(safe-area-inset-bottom));
+    gap: 16px;
+    max-width: 552px;
   }
 
+  .auth-market-feature {
+    min-height: 148px;
+    border-radius: 18px;
+  }
+
+  .auth-market-photo {
+    object-position: right 46%;
+  }
+
+  .auth-market-feature::after {
+    background: linear-gradient(90deg, #0d261c 0%, #0d261cdb 38%, #0d261c00 78%);
+  }
+
+  .auth-market-caption {
+    padding: 16px;
+  }
+
+  .auth-market-caption p {
+    font-size: 25px;
+  }
+
+  .auth-layout:not([data-mode="signin"]) .auth-market-feature {
+    display: none;
+  }
+}
+
+@media (max-width: 359px), (max-width: 767px) and (max-height: 720px) {
   .auth-market-feature {
     display: none;
   }

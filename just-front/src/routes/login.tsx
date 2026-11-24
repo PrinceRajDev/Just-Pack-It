@@ -81,7 +81,7 @@ function Login() {
         <Logo />
         <LanguageSwitcher />
       </header>
-      <div className="auth-layout">
+      <div className="auth-layout" data-mode={mode}>
         <aside className="auth-market-feature" aria-label="Just Pack It">
           <img
             src={imageUrl("/market-hero-v2.webp")}

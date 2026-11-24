@@ -41,7 +41,8 @@
 
 .auth-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.04fr);
+  grid-template-columns: minmax(0, 1.04fr) minmax(0, 1fr);
+  grid-template-areas: "art form";
   align-items: stretch;
   width: min(calc(100% - 64px), 1176px);
   margin: clamp(28px, 5vh, 62px) auto max(24px, env(safe-area-inset-bottom));
@@ -53,6 +54,7 @@
 }
 
 .auth-market-feature {
+  grid-area: art;
   position: relative;
   isolation: isolate;
   display: flex;
@@ -96,6 +98,7 @@
 }
 
 .auth-refined.market-login .login-form-panel {
+  grid-area: form;
   display: block;
   width: 100%;
   min-width: 0;

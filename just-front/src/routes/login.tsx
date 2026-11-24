@@ -5,7 +5,15 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, ShoppingBasket, Store, Bike, ShieldCheck, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ShoppingBasket,
+  Store,
+  Bike,
+  ShieldCheck,
+  Loader2,
+  LockKeyhole,
+} from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,25 +89,13 @@ function Login() {
         <Logo />
         <LanguageSwitcher />
       </header>
-      <div className="auth-layout" data-mode={mode}>
-        <aside className="auth-market-feature" aria-label="Just Pack It">
-          <img
-            src={imageUrl("/market-hero-v2.webp")}
-            alt=""
-            width={2164}
-            height={727}
-            fetchPriority="high"
-            className="auth-market-photo"
-          />
-          <div className="auth-market-caption">
-            <p>
-              <UiText>Your neighbourhood, delivered</UiText>
-            </p>
-          </div>
-        </aside>
+      <div className="auth-layout">
         <div className="login-form-panel">
           <div className="auth-packing-label" aria-labelledby="auth-title">
-            <h1 id="auth-title" ref={heading} tabIndex={-1} className="font-display">
+            <span className="auth-entry-icon" aria-hidden="true">
+              <LockKeyhole size={22} strokeWidth={1.75} />
+            </span>
+            <h1 id="auth-title" ref={heading} tabIndex={-1}>
               <UiText>
                 {session
                   ? "Your account"
@@ -115,7 +111,9 @@ function Login() {
                 <UiText>
                   {registering
                     ? "Shop, sell or deliver in your neighbourhood"
-                    : "Find your local shops and keep track of your orders"}
+                    : isDemoMode
+                      ? "Find your local shops and keep track of your orders"
+                      : "Use your mobile number and password to sign in"}
                 </UiText>
               </p>
             )}
@@ -285,6 +283,21 @@ function Login() {
             />
           </div>
         </div>
+        <aside className="auth-market-feature" aria-label="Just Pack It">
+          <img
+            src={imageUrl("/brand/login-market-editorial.jpg")}
+            alt=""
+            width={1024}
+            height={1536}
+            fetchPriority="high"
+            className="auth-market-photo"
+          />
+          <div className="auth-market-caption">
+            <p>
+              <UiText>Your neighbourhood, delivered</UiText>
+            </p>
+          </div>
+        </aside>
       </div>
     </main>
   );

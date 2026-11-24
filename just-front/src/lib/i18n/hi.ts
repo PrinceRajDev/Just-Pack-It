@@ -5,6 +5,8 @@ export const hindi: Record<string, string> = {
   "Your neighbourhood, delivered": "मोहल्ले की खरीदारी, आपके दरवाज़े पर",
   "Reset your password": "अपना पासवर्ड रीसेट करें",
   "Shop, sell or deliver in your neighbourhood": "अपने मोहल्ले में खरीदें, बेचें या डिलीवरी करें",
+  "Use your mobile number and password to sign in":
+    "साइन इन करने के लिए अपना मोबाइल नंबर और पासवर्ड डालें",
   "Find your local shops and keep track of your orders":
     "अपने मोहल्ले की दुकानें खोजें और अपने ऑर्डर देखें",
   "Sign out": "साइन आउट",

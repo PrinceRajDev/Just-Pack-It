@@ -207,7 +207,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     if (busy) return;
     if (workspaceOpen) { setWorkspaceOpen(false); refreshShop(); return; }
     if (picker) { setPicker(null); return; }
-    if (editingReview && (step === "shop" || step === "delivery")) {
+    if (editingReview && (step === "account" || step === "shop" || step === "delivery")) {
       setEditingReview(false);
       go("review");
       return;
@@ -271,14 +271,24 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     if (options.emailOtpRequired) {
       if (!options.emailOtpAvailable) throw new Error("Email verification is unavailable right now. Try again later.");
       if (emailError) return;
+      if (editingReview && challenge?.address === email.trim().toLowerCase() && clockNow() < challenge.expires && /^\d{6}$/.test(otp)) {
+        setEditingReview(false);
+        go("review");
+        return;
+      }
       await send();
-    } else { if (!catalogue) await loadCatalogue(); go("shop"); }
+    } else {
+      if (!catalogue) await loadCatalogue();
+      go(editingReview ? "review" : "shop");
+      setEditingReview(false);
+    }
   }));
   if (!picker && step === "email" && expires) action = button("Send a new code", () => void run(send), cooldown > 0);
   if (!picker && step === "email" && !expires) action = button("Continue with code", () => void run(async () => {
     if (!challenge || expires || !/^\d{6}$/.test(otp)) throw new Error("Enter a valid six-digit email code.");
     if (!catalogue) await loadCatalogue();
-    go("shop");
+    go(editingReview ? "review" : "shop");
+    setEditingReview(false);
   }), !challenge || expires || otp.length !== 6);
   if (!picker && step === "shop") action = button(editingReview ? "Back to review" : "Continue", () => {
     setShopSubmitted(true);
@@ -295,6 +305,12 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     go("review");
   });
   if (!picker && step === "review") action = button("Submit shop for approval", () => void run(async () => {
+    if (nameError || phoneError || passwordError || (verify && emailError)) {
+      setEditingReview(true);
+      setAccountSubmitted(true);
+      go("account");
+      return;
+    }
     if (shopNameError || categoryError || yearError) {
       setEditingReview(true);
       setShopSubmitted(true);
@@ -307,7 +323,11 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
       go("delivery");
       return;
     }
-    if (verify && (!challenge || clockNow() >= challenge.expires)) { go("email"); throw new Error("Your email code has expired. Send a new code."); }
+    if (verify && (!challenge || clockNow() >= challenge.expires)) {
+      setEditingReview(true);
+      go(challenge ? "email" : "account");
+      throw new Error("Request a new email code to submit your application.");
+    }
     try {
       const result = await buyerApi.registerSeller({
         name:name.trim(), phone:normalizedPhone, password,
@@ -324,7 +344,10 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
         }
       }
     } catch (reason) {
-      if (reason instanceof ApiError && /EMAIL|OTP/.test(reason.code ?? "")) go("email");
+      if (reason instanceof ApiError && /EMAIL|OTP/.test(reason.code ?? "")) {
+        setEditingReview(true);
+        go("email");
+      }
       throw reason;
     }
   }));
@@ -467,7 +490,10 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
         </>}
         {!picker && step === "review" && <>
           <View style={[s.panel, s.setupPanel]}>
-            <Text accessibilityRole="header" style={s.reviewTitle}>Seller account</Text>
+            <View style={s.reviewHeader}>
+              <Text accessibilityRole="header" style={s.reviewTitle}>Seller account</Text>
+              {link("Edit account details", () => { setEditingReview(true); go("account"); })}
+            </View>
             <ReviewField label="Full name" value={name.trim()} />
             <ReviewField label="Sign-in mobile number" value={normalizedPhone} />
             {verify && <ReviewField label="Verification email" value={challenge?.address ?? email.trim().toLowerCase()} />}

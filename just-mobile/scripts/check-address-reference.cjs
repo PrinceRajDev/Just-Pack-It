@@ -530,6 +530,31 @@ const assert = require("node:assert/strict");
     await page.screenshot({path:path.join(output,"bag-price-changed-390.png")});
     await page.getByRole("button",{name:"Accept updated price",exact:true}).click();
     await page.getByText(/₹48 each/).waitFor();
+    let removalRequests = 0;
+    await page.route("**/addresses/work", async route => {
+      if (route.request().method() !== "DELETE") return route.fallback();
+      const index = addresses.findIndex(address => address.id === "work");
+      assert.notEqual(index, -1);
+      addresses.splice(index, 1);
+      removalRequests++;
+      await route.fulfill({ status: 204, headers: notificationHeaders });
+    });
+    await page.getByRole("button", { name: "Account", exact: true }).click();
+    await page.getByRole("button", { name: "Saved Addresses", exact: true }).click();
+    const removeWork = page.getByRole("button", { name: "Remove Work address", exact: true });
+    await removeWork.waitFor();
+    const setWorkDefault = page.getByRole("button", { name: "Set Work as default", exact: true });
+    if (await setWorkDefault.count()) await setWorkDefault.click();
+    const defaultKey = "jpi.address.default." + buyer.userId;
+    await page.waitForFunction(key => sessionStorage.getItem(key) === "work", defaultKey);
+    await removeWork.click();
+    await page.getByRole("button", { name: "Keep address", exact: true }).click();
+    assert.equal(removalRequests, 0);
+    await removeWork.click();
+    await page.getByRole("button", { name: "Confirm removal", exact: true }).click();
+    await removeWork.waitFor({ state: "hidden" });
+    await page.waitForFunction(key => sessionStorage.getItem(key) === null, defaultKey);
+    assert.equal(removalRequests, 1);
     assert.deepEqual(errors, []);
     console.log(
       "PASS: address management, four viewports, shop fees, delivery and stock blockers, COD payload, duplicate prevention and confirmed navigation",

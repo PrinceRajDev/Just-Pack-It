@@ -80,9 +80,10 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     : /^91[6-9]\d{9}$/.test(enteredPhone) ? "+" + enteredPhone
     : enteredPhone;
   const validPhone = /^\+[1-9]\d{9,14}$/.test(normalizedPhone);
-  const expires = challenge ? now >= challenge.expires : false;
-  const cooldown = challenge ? Math.max(0, Math.ceil((challenge.retryAt - now) / 1000)) : 0;
-  const codeSecondsLeft = challenge ? Math.max(0, Math.ceil((challenge.expires - now) / 1000)) : 0;
+  const codeClock = Math.max(now, clockNow());
+  const expires = challenge ? codeClock >= challenge.expires : false;
+  const cooldown = challenge ? Math.max(0, Math.ceil((challenge.retryAt - codeClock) / 1000)) : 0;
+  const codeSecondsLeft = challenge ? Math.max(0, Math.ceil((challenge.expires - codeClock) / 1000)) : 0;
   const codeTimeLeft = `${Math.floor(codeSecondsLeft / 60)}:${String(codeSecondsLeft % 60).padStart(2, "0")}`;
 
   useEffect(() => {
@@ -326,6 +327,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     }
     if (verify && (!challenge || clockNow() >= challenge.expires)) {
       setEditingReview(true);
+      setOtp("");
       go(challenge ? "email" : "account");
       throw new Error("Request a new email code to submit your application.");
     }
@@ -347,6 +349,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     } catch (reason) {
       if (reason instanceof ApiError && /EMAIL|OTP/.test(reason.code ?? "")) {
         setEditingReview(true);
+        setOtp("");
         go("email");
       }
       throw reason;
@@ -423,7 +426,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
             <Text style={s.label}>6-digit verification code</Text>
             <View style={s.codeRow}>
               {Array.from({length:6}, (_, index) => <View key={index} style={[s.codeCell, (index === otp.length || !!otp[index]) && s.codeCellFilled]}><Text style={s.codeDigit}>{otp[index] ?? ""}</Text></View>)}
-              <TextInput accessibilityLabel="6-digit verification code" value={otp} editable={!expires && !busy} onChangeText={value => setOtp(value.replace(/\D/g, ""))} keyboardType="number-pad" maxLength={6} autoComplete="one-time-code" caretHidden style={s.codeInput} />
+              <TextInput accessibilityLabel="6-digit verification code" value={otp} editable={!expires && !busy} onChangeText={value => { setOtp(value.replace(/\D/g, "")); setError(""); }} keyboardType="number-pad" maxLength={6} autoComplete="one-time-code" caretHidden style={s.codeInput} />
             </View>
             {!expires && <Text style={s.copy}>Paste the full code from your email. Expires in {codeTimeLeft}.</Text>}
           </View>

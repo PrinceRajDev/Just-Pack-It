@@ -875,8 +875,12 @@ function Home({
   const [allShops, setAllShops] = useState<Shop[]>([]);
   const [shopsBusy, setShopsBusy] = useState(false);
   const [shopsError, setShopsError] = useState<string | null>(null);
-  const openShops = async () => {
+  const shopsRequestPending = useRef(false);
+  const openShops = async (refresh = false) => {
     setShowShops(true);
+    if (shopsRequestPending.current) return;
+    shopsRequestPending.current = true;
+    if (!refresh) setAllShops([]);
     setShopsBusy(true);
     setShopsError(null);
     try {
@@ -886,6 +890,7 @@ function Home({
         error instanceof Error ? error.message : "Shops could not load",
       );
     } finally {
+      shopsRequestPending.current = false;
       setShopsBusy(false);
     }
   };
@@ -1264,12 +1269,12 @@ function Home({
             copy="Choose a shop to browse its products"
             onBack={() => setShowShops(false)}
           />
-          {shopsBusy ? (
+          {shopsBusy && !allShops.length ? (
             <ScrollView contentContainerStyle={s.shopPanelStatus}>
               <BuyerStateCard title="Loading shops…" copy="Checking your selected area" tone="info" compact loading />
               <BuyerStateSkeleton />
             </ScrollView>
-          ) : shopsError ? (
+          ) : shopsError && !allShops.length ? (
             <ScrollView contentContainerStyle={s.shopPanelStatus}>
               <BuyerStateCard title="Shops could not load" copy={shopsError} tone="error" icon="network"
                 action="Try again" onAction={() => void openShops()} />
@@ -1277,6 +1282,12 @@ function Home({
           ) : (
             <FlatList
               data={allShops}
+              refreshing={shopsBusy}
+              onRefresh={() => void openShops(true)}
+              ListHeaderComponent={shopsError ? (
+                <BuyerStateCard title="Couldn’t refresh shops" copy={shopsError} tone="error" compact
+                  action="Try again" onAction={() => void openShops(true)} />
+              ) : undefined}
               keyExtractor={(item) => item.id}
               contentContainerStyle={{ padding: 16, gap: 12 }}
               ListEmptyComponent={

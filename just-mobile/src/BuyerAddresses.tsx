@@ -29,6 +29,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
   const [loading, setLoading] = useState(true);
   const [savedLabel, setSavedLabel] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof Draft, string>>>({});
   const [draft, setDraft] = useState<Draft | null>(() => checkout ? (checkout.address ? { label: checkout.address.label, line1: checkout.address.line1, locality: checkout.address.locality, city: checkout.address.city, pincode: checkout.address.pincode } : { ...blank }) : null);
   const [editing, setEditing] = useState<Address | null>(checkout?.address ?? null)
   const [makeDefault, setMakeDefault] = useState(checkout?.isDefault ?? false);
@@ -40,7 +41,15 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
   const save = async () => {
     if (!draft || lock.current) return;
     const input = Object.fromEntries(Object.entries(draft).map(([key, value]) => [key, value.trim()])) as Draft;
-    if (!input.label || input.line1.length < 3 || !input.locality || !input.city || !/^[1-9][0-9]{5}$/.test(input.pincode)) { setError("Complete every field and enter a valid 6-digit PIN code"); return; }
+    const errors: Partial<Record<keyof Draft, string>> = {};
+    if (!input.label) errors.label = "Enter a label, such as Home or Work.";
+    if (input.line1.length < 3) errors.line1 = "Enter your house or building and street.";
+    if (!input.locality) errors.locality = "Enter your locality.";
+    if (!input.city) errors.city = "Enter your city.";
+    if (!/^[1-9][0-9]{5}$/.test(input.pincode)) errors.pincode = "Enter a valid 6-digit PIN code.";
+    setFieldErrors(errors);
+    setError(null);
+    if (Object.keys(errors).length) return;
     lock.current = true; setBusy(true); setError(null);
     try { const saved = editing ? await buyerApi.updateAddress(token, editing.id, { ...input, version: editing.version }) : await buyerApi.createAddress(token, input); if (checkout) { checkout.onSaved(saved, makeDefault); return; } setRows((old) => editing ? old.map((row) => row.id === saved.id ? saved : row) : [...old, saved]); setSavedLabel(saved.label); setDraft(null); setEditing(null); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Address could not save"); }
@@ -53,16 +62,21 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
       setDraft(null);
       setEditing(null);
       setError(null);
+      setFieldErrors({});
     };
     const field = (key: keyof Draft) => {
       const label = fields.find(row => row.key === key)!.label;
       return <View key={key} style={s.editorField}>
         <Text style={s.editorLabel}>{key === "line1" ? "Flat, building and street" : key === "label" ? "Label" : label}</Text>
         <TextInput editable={!busy} accessibilityLabel={label} value={draft[key]}
-          onChangeText={value => setDraft(old => old ? {...old, [key]: value} : old)}
+          onChangeText={value => {
+            setDraft(old => old ? {...old, [key]: value} : old);
+            setFieldErrors(old => ({...old, [key]: undefined}));
+          }}
           placeholder={key === "line1" ? "Flat / house, building, street" : undefined}
           keyboardType={key === "pincode" ? "number-pad" : "default"} maxLength={key === "pincode" ? 6 : key === "line1" ? 300 : key === "label" ? 60 : 120}
-          style={s.editorInput} />
+          style={[s.editorInput, fieldErrors[key] && s.invalidInput]} />
+        {!!fieldErrors[key] && <Text accessibilityRole="alert" style={s.fieldError}>{fieldErrors[key]}</Text>}
       </View>;
     };
     return <View style={s.screen} testID={checkout ? "checkout-address-editor" : "account-address-editor"}>
@@ -72,7 +86,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
       </View>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.editorContent}>
         <CheckoutHeading title="Make it easy to find you." icon="home" />
-        {error && <BuyerStateCard title={error.includes("PIN code") ? "Check your PIN code" : "Couldn't save this address"} copy={error} tone="error" icon="location" compact action={error.includes("PIN code") ? undefined : "Retry saving address"} onAction={() => void save()} />}
+        {error && <BuyerStateCard title="Couldn't save this address" copy={error} tone="error" icon="location" compact action="Retry saving address" onAction={() => void save()} />}
         <View style={s.editorCard}>
           {field("label")}
           {checkout?.profile && <>
@@ -146,6 +160,8 @@ const s = themedStyles(() => StyleSheet.create({
   editorFooter: { backgroundColor: theme.surface, borderTopWidth: 1, borderColor: theme.border, paddingHorizontal: 20, paddingVertical: 16 },
   primary: { minHeight: 50, borderRadius: 12, backgroundColor: theme.primary, justifyContent: "center", alignItems: "center" },
   saving: { opacity: 0.65 },
+  invalidInput: { borderColor: theme.errorBorder },
+  fieldError: { color: theme.error, fontSize: 13, lineHeight: 18 },
   copy: { fontSize: 14, lineHeight: 21, color: theme.secondary },
   link: { color: theme.accentInk, fontSize: 14, fontWeight: "600", paddingVertical: 8 },
   error: { color: theme.error, fontSize: 14, paddingVertical: 8 },

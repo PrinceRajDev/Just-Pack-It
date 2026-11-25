@@ -169,28 +169,47 @@ function QuickStock({token,product,close,saved,reload}:{token:string;product:Sel
   const [current,setCurrent] = useState(product);
   const [stock,setStock] = useState(String(product.stock));
   const mutation = useSellerMutation();
-  const quantity = validStock(stock) ? Number(stock) : current.stock;
+  const stockIsValid = validStock(stock);
+  const quantity = stockIsValid ? Number(stock) : current.stock;
+  const difference = quantity - current.stock;
   useAndroidBack(() => { if (!mutation.busy) close(); return true; }, 25);
   return <SellerScroll>
     <Pressable accessibilityRole="button" disabled={mutation.busy} onPress={close} style={styles.orderBack}><Text style={styles.link}>‹  Back to catalogue</Text></Pressable>
     <View style={styles.orderHero}>
       <Text style={styles.heroKicker}>Update stock</Text>
       <Text accessibilityRole="header" style={styles.heroTitle}>{current.name}</Text>
-      <Text style={styles.heroKicker}>{current.stock} currently available</Text>
+      {!current.variants?.length && <View style={styles.statementMetrics}>
+        <View style={styles.grow}>
+          <Text style={styles.statementMetric}>{current.stock}</Text>
+          <Text style={styles.heroKicker}>Saved stock</Text>
+        </View>
+        <View style={styles.statementRule} />
+        <View style={styles.grow}>
+          <Text style={styles.statementMetric}>{stockIsValid ? quantity : "—"}</Text>
+          <Text style={styles.heroKicker}>After saving</Text>
+        </View>
+      </View>}
     </View>
     <SellerCard>
-      <SellerField label="Available units" value={stock} onChangeText={setStock} keyboardType="number-pad" selectTextOnFocus editable={!mutation.busy} />
-      {!current.variants?.length && <View style={styles.shopTimes}>
+      {!current.variants?.length && <>
+        <SellerField label="Available units" value={stock} onChangeText={setStock} keyboardType="number-pad" selectTextOnFocus editable={!mutation.busy} />
+        {!stockIsValid ? (
+          <Text style={styles.shopHoursWarning}>Enter a whole number of units, including 0.</Text>
+        ) : difference !== 0 ? (
+          <Text style={styles.copy}>{difference > 0 ? "+" : "−"}{Math.abs(difference)} {Math.abs(difference) === 1 ? "unit" : "units"} after saving</Text>
+        ) : null}
+        <View style={styles.shopTimes}>
         <View style={styles.grow}><SellerButton label="− 1 unit" soft disabled={mutation.busy || quantity <= 0} onPress={() => setStock(String(quantity - 1))} /></View>
         <View style={styles.grow}><SellerButton label="+ 1 unit" soft disabled={mutation.busy || quantity >= Number.MAX_SAFE_INTEGER} onPress={() => setStock(String(quantity + 1))} /></View>
-      </View>}
+        </View>
+      </>}
       <MutationFeedback error={mutation.error} onReload={() => void mutation.run(async () => {
         const fresh = await reload();
         setCurrent(fresh);
         setStock(String(fresh.stock));
       })} />
       {current.variants?.length ? <Text style={styles.copy}>This product now has packs. Go back and choose Manage packs.</Text>
-        : <SellerButton label={mutation.busy ? "Saving…" : "Save stock"} disabled={mutation.busy || !validStock(stock) || Number(stock) === current.stock}
+        : <SellerButton label={mutation.busy ? "Saving…" : "Save stock"} disabled={mutation.busy || !stockIsValid || difference === 0}
           onPress={() => void mutation.run(async () => saved(await sellerApi.inventory(token,current,Number(stock))))} />}
     </SellerCard>
   </SellerScroll>;

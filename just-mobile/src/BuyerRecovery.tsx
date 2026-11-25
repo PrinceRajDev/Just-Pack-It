@@ -1,6 +1,8 @@
 import { theme, themedStyles } from "./theme";
 import { useEffect, useRef, useState } from "react";
-import { StyleSheet,
+import {
+  ActivityIndicator,
+  StyleSheet,
   Pressable,
   ScrollView,
   Text,
@@ -149,16 +151,31 @@ export function BuyerRecovery({ back }: { back: () => void }) {
   const primaryAction = sendsCode ? () => void send() : step === "code" ? next : () => void reset();
   const primaryLabel = busy ? (sendsCode ? "Sending…" : "Saving…") : step === "email" ? "Send verification code" : expired ? "Resend code" : step === "code" ? "Verify code" : "Save password";
   const primaryDisabled = busy || (sendsCode && resendWait > 0);
+  const stage = step === "email" ? 1 : step === "code" || expired ? 2 : 3;
   return (
-    <View style={s.screen}>
+    <View style={s.screen} testID="buyer-recovery">
+      <View style={s.header}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Back from password recovery" hitSlop={10} disabled={busy} onPress={back} style={s.headerBack}>
+          <Text style={s.chevron}>‹</Text>
+        </Pressable>
+        <Text style={s.headerTitle}>Reset password</Text>
+      </View>
     <ScrollView style={s.scroll}
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={s.page}
     >
-      <Pressable accessibilityRole="button" disabled={busy} onPress={back}>
-        <Text style={s.header}>‹ Sign in</Text>
-      </Pressable>
-      <BuyerAuthNotice title={title} copy={copy} tone={expired ? "warning" : "success"} icon={expired ? "clock" : step === "done" ? "check" : step === "code" ? "mail" : "lock"} action={step === "done" ? "Back to sign in" : undefined} onAction={back} />
+      {step === "done" || expired ? (
+        <BuyerAuthNotice title={title} copy={copy} tone={expired ? "warning" : "success"} icon={expired ? "clock" : "check"} action={step === "done" ? "Back to sign in" : undefined} onAction={back} />
+      ) : (
+        <View style={s.intro}>
+          <Text style={s.stepLabel}>Step {stage} of 3</Text>
+          <View style={s.progress} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+            {[1, 2, 3].map(index => <View key={index} style={[s.segment, index <= stage && s.segmentActive]} />)}
+          </View>
+          <Text accessibilityRole="header" style={s.title}>{title}</Text>
+          <Text style={s.description}>{copy}</Text>
+        </View>
+      )}
       {error ? (
         <BuyerAuthNotice title="Check your details" copy={error} warning />
       ) : null}
@@ -173,6 +190,9 @@ export function BuyerRecovery({ back }: { back: () => void }) {
               autoCapitalize="none"
               autoComplete="email"
               keyboardType="email-address"
+              autoCorrect={false}
+              placeholder="you@example.com"
+              placeholderTextColor={theme.muted}
               value={email}
               onChangeText={setEmail}
             />
@@ -183,14 +203,17 @@ export function BuyerRecovery({ back }: { back: () => void }) {
             <Text style={s.label}>Verification code</Text>
             <TextInput
               accessibilityLabel="Recovery code"
-              editable={!busy}
-              style={s.input}
+              editable={!busy && !expired}
+              autoComplete="one-time-code"
+              placeholder="000000"
+              placeholderTextColor={theme.muted}
+              style={[s.input, s.codeInput, expired && s.disabled]}
               keyboardType="number-pad"
               maxLength={6}
               value={code}
               onChangeText={(value) => setCode(value.replace(/\D/g, ""))}
             />
-            <Text style={s.label}>
+            <Text style={[s.label, expired && s.expiredText]}>
               {expired ? "Expired · 00:00" : `Expires in ${countdown(Date.parse(challenge!.expiresAt) - now)}`}
             </Text>
           </>
@@ -242,7 +265,7 @@ export function BuyerRecovery({ back }: { back: () => void }) {
         )}
         {step === "code" && !expired && (
           <Pressable accessibilityRole="button" disabled={busy || resendWait > 0} onPress={() => void send()} style={[s.backAction, s.resend, (busy || resendWait > 0) && s.disabled]}>
-            <Text style={s.link}>{resendWait > 0 ? `Resend in ${countdown(resendWait)}` : "Resend code"}</Text>
+            <Text style={[s.link, (busy || resendWait > 0) && s.disabledText]}>{resendWait > 0 ? `Resend in ${countdown(resendWait)}` : "Resend code"}</Text>
           </Pressable>
         )}
         <Pressable
@@ -257,7 +280,7 @@ export function BuyerRecovery({ back }: { back: () => void }) {
         </Pressable>
       </View>}
     </ScrollView>
-    {step !== "done" && <View style={s.footer}><Pressable accessibilityRole="button" disabled={primaryDisabled} onPress={primaryAction} style={[s.button, primaryDisabled && s.disabled]}><Text style={s.buttonText}>{primaryLabel}</Text></Pressable></View>}
+    {step !== "done" && <View style={s.footer}><Pressable accessibilityRole="button" disabled={primaryDisabled} onPress={primaryAction} style={[s.button, primaryDisabled && s.disabled]}>{busy && <ActivityIndicator size="small" color={theme.secondary} />}<Text style={[s.buttonText, primaryDisabled && s.disabledText]}>{primaryLabel}</Text></Pressable></View>}
     </View>
   );
 }
@@ -268,6 +291,7 @@ const s = themedStyles(() => StyleSheet.create({
   footer: { padding: 16, paddingHorizontal: 20, backgroundColor: theme.surface, borderTopWidth: 1, borderColor: theme.border },
   resend: { backgroundColor: theme.selected },
   page: {
+    paddingTop: 16,
     paddingHorizontal: 20,
     paddingBottom: 24,
     gap: 16,
@@ -275,14 +299,21 @@ const s = themedStyles(() => StyleSheet.create({
     maxWidth: 520,
     alignSelf: "center",
   },
-  header: {
-    color: theme.accentInk,
-    fontSize: 21,
-    fontWeight: "600",
-    paddingVertical: 18,
-  },
+  header: { minHeight: 64, paddingHorizontal: 20, gap: 14, flexDirection: "row", alignItems: "center" },
+  headerBack: { minHeight: 44, justifyContent: "center" },
+  chevron: { color: theme.accentInk, fontSize: 27, lineHeight: 30 },
+  headerTitle: { color: theme.accentInk, fontSize: 21, fontWeight: "600" },
+  intro: { gap: 8 },
+  stepLabel: { color: theme.accentInk, fontSize: 13, fontWeight: "600" },
+  progress: { flexDirection: "row", gap: 5, maxWidth: 160, marginBottom: 6 },
+  segment: { flex: 1, height: 3, borderRadius: 2, backgroundColor: theme.border },
+  segmentActive: { backgroundColor: theme.primary },
+  title: { color: theme.ink, fontSize: 32, lineHeight: 38, fontWeight: "700" },
+  description: { color: theme.secondary, fontSize: 14, lineHeight: 20 },
+  codeInput: { letterSpacing: 6, fontSize: 20, fontVariant: ["tabular-nums"] },
+  expiredText: { color: theme.error },
   backAction: { borderWidth: 1, borderColor: theme.border, borderRadius: 12, minHeight: 50, justifyContent: "center", alignItems: "center" },
-  form: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: 24, padding: 20, gap: 10 },
+  form: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: 20, padding: 16, gap: 10 },
   label: { fontSize: 13, color: theme.secondary },
   input: {
     minHeight: 52,
@@ -290,18 +321,21 @@ const s = themedStyles(() => StyleSheet.create({
     borderColor: theme.controlBorder,
     borderRadius: 12,
     paddingHorizontal: 12,
-    backgroundColor: theme.canvas,
+    backgroundColor: theme.surface,
     color: theme.ink,
   },
   button: {
     backgroundColor: theme.primary,
     borderRadius: 12,
-    minHeight: 48,
+    minHeight: 50,
+    flexDirection: "row",
+    gap: 8,
     alignItems: "center",
     justifyContent: "center",
     padding: 10,
   },
-  disabled: { backgroundColor: theme.muted },
+  disabled: { backgroundColor: theme.disabled },
+  disabledText: { color: theme.secondary },
   buttonText: { color: theme.onPrimary, fontWeight: "600", textAlign: "center" },
   link: {
     color: theme.accentInk,

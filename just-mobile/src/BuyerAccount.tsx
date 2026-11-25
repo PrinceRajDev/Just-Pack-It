@@ -166,13 +166,26 @@ export function BuyerAccount({
         </Pressable>
         <Text accessibilityRole="header" style={login.headerText}>Sign in</Text>
       </View>
-      <ScrollView style={login.scroll} contentContainerStyle={login.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        {signInError ? <BuyerAuthNotice title={signInServerError ? "Couldn’t sign you in" : "Check your details"} copy={signInError} warning /> : busy ? <BuyerAuthNotice title="Signing you in…" copy="Your bag is saved. Please wait." busyLabel="Signing in…" /> : passwordVisible ? <BuyerAuthNotice title="Password is visible" copy="Use Hide to keep your password private." tone="info" /> : null}
-        <Text accessibilityRole="header" style={login.welcome}>Welcome to{"\n"}JustPackIt</Text>
-        <Text style={login.tagline}>Your Neighbourhood, Delivered.</Text>
-        <View style={login.card}>
-          <Text accessibilityRole="header" style={login.cardTitle}>{fromBag ? "Sign in to checkout" : "Sign in to shop"}</Text>
-          <Text style={login.description}>{fromBag ? "We'll bring you back to your bag." : "View orders and save delivery addresses."}</Text>
+      <ScrollView style={login.scroll} contentContainerStyle={[login.content, login.signInContent]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <View style={login.signInHeading}>
+          <View style={login.signInIcon}>
+            <MarketIcon name={fromBag ? "bag" : "account"} />
+          </View>
+          <Text accessibilityRole="header" style={login.signInTitle}>
+            {fromBag ? "Sign in to checkout" : "Sign in to shop"}
+          </Text>
+          <Text style={login.description}>
+            {fromBag ? "We'll bring you back to your bag." : "View orders and save delivery addresses."}
+          </Text>
+        </View>
+        {signInError ? (
+          <BuyerAuthNotice
+            title={signInServerError ? "Couldn’t sign you in" : "Check your details"}
+            copy={signInError}
+            warning
+          />
+        ) : null}
+        <View style={[login.card, login.signInCard]}>
           <Text style={login.label}>Mobile number</Text>
           <TextInput
             accessibilityLabel="Mobile number"
@@ -181,7 +194,7 @@ export function BuyerAccount({
             value={phone}
             onChangeText={value => { setPhone(value); setSignInError(""); }}
             placeholder="+91 98765 43210"
-            placeholderTextColor={login.label.color}
+            placeholderTextColor={theme.muted}
             keyboardType="phone-pad"
             autoComplete="tel"
             style={[login.field, login.phone]}
@@ -198,7 +211,7 @@ export function BuyerAccount({
               value={password}
               onChangeText={value => { setPassword(value); setSignInError(""); }}
               placeholder="••••••••"
-              placeholderTextColor={login.label.color}
+              placeholderTextColor={theme.muted}
               secureTextEntry={!passwordVisible}
               onSubmitEditing={() => void submit()}
               style={login.password}
@@ -208,88 +221,107 @@ export function BuyerAccount({
             </Pressable>
           </View>
           <Pressable accessibilityRole="button" disabled={busy} onPress={() => void submit()} style={[login.button, login.primary]}>
-            {busy && <ActivityIndicator size="small" color={theme.ink} />}
+            {busy && <ActivityIndicator size="small" color={theme.onPrimary} />}
             <Text style={[login.buttonText, login.primaryText]}>{busy ? "Signing in…" : "Sign in"}</Text>
           </Pressable>
           <Pressable accessibilityRole="button" disabled={busy} onPress={() => { setPasswordVisible(false); setSignInError(""); setRecoveryOpen(true); }} style={login.recovery}>
             <Text style={login.buttonText}>Forgot password?</Text>
           </Pressable>
         </View>
-        {!fromBag && <Pressable accessibilityRole="button" onPress={() => setSellerOpen(true)} style={[login.button, login.create]}><Text style={login.buttonText}>Seller access</Text></Pressable>}
-        <Text style={login.newAccount}>New to the neighbourhood?</Text>
-        <Pressable accessibilityRole="button" disabled={busy} onPress={() => { setRegister(true); setSignInError(""); }} style={[login.button, login.create]}>
-          <Text style={login.buttonText}>Create account</Text>
-        </Pressable>
-        <Pressable accessibilityRole="button" disabled={busy} onPress={browseAsGuest} style={[login.button, login.guest]}>
-          <Text style={login.buttonText}>Continue browsing as guest</Text>
-        </Pressable>
+        <View style={login.signInOptions}>
+          <Text style={login.newAccount}>New to the neighbourhood?</Text>
+          <Pressable accessibilityRole="button" disabled={busy} onPress={() => { setRegister(true); setSignInError(""); }} style={[login.button, login.create]}>
+            <Text style={login.buttonText}>Create account</Text>
+          </Pressable>
+          {!fromBag && (
+            <Pressable accessibilityRole="button" disabled={busy} onPress={() => setSellerOpen(true)} style={login.button}>
+              <Text style={login.buttonText}>Seller access</Text>
+            </Pressable>
+          )}
+          <Pressable accessibilityRole="button" disabled={busy} onPress={browseAsGuest} style={login.button}>
+            <Text style={login.guestText}>Continue browsing as guest</Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </View>
   );
   const canCreate = !busy && !!options && (!options.emailOtpRequired || (options.emailOtpAvailable && !!challenge && !signupExpired && /^\d{6}$/.test(otp)));
-  return (
-    <View style={login.screen}>
-    <ScrollView style={login.scroll} contentContainerStyle={login.content} keyboardShouldPersistTaps="handled">
-      <Pressable accessibilityRole="button" accessibilityLabel="Back to sign in" disabled={busy} onPress={() => { setSignInError(""); setPasswordVisible(false); setRegister(false); }} style={login.backButton}><Text style={login.headerText}>‹  Sign in</Text></Pressable>
-      <BuyerAuthNotice title="Join your neighbourhood." tone="success" icon="account" copy="Create an account to order from independent shops." />
-      {signInError ? <BuyerAuthNotice title="Check your details" copy={signInError} warning /> : null}
-      <View style={login.card}>
-      {register ? (
-        <View><Text style={s.copy}>Your name</Text>
-        <TextInput
-          accessibilityLabel="Your name"
-          editable={!busy}
-          maxLength={100}
-          value={name}
-          onChangeText={setName}
-          placeholder="Your name"
-          placeholderTextColor={theme.muted}
-          style={s.input}
-        />
-        </View>
-      ) : null}
-      <Text style={s.copy}>Mobile number</Text>
-      <TextInput
-        accessibilityLabel="Mobile number"
-        editable={!busy}
-        maxLength={16}
-        value={phone}
-        onChangeText={setPhone}
-        placeholder="Mobile number with +91"
-        placeholderTextColor={theme.muted}
-        keyboardType="phone-pad"
-        style={s.input}
-      />
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}><Text style={s.copy}>Password</Text><Pressable accessibilityRole="button" accessibilityLabel={passwordVisible ? "Hide password" : "Show password"} disabled={busy} onPress={() => setPasswordVisible((value) => !value)} style={{ padding: 12 }}><Text style={{ color: theme.accentInk, fontWeight: "600" }}>{passwordVisible ? "Hide" : "Show"}</Text></Pressable></View>
-      <TextInput
-        accessibilityLabel="Password"
-        editable={!busy}
-        autoCapitalize="none"
-        autoCorrect={false}
-        maxLength={128}
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Password"
-        placeholderTextColor={theme.muted}
-        secureTextEntry={!passwordVisible}
-        style={s.input}
-      />
-      <Text style={s.copy}>Confirm password</Text>
-      <TextInput accessibilityLabel="Confirm password" editable={!busy} maxLength={128} value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!passwordVisible} autoCapitalize="none" style={s.input} />
-      {challenge ? <BuyerAuthNotice title={signupExpired ? "This code has expired." : "Check your email."} tone={signupExpired ? "warning" : "success"} icon={signupExpired ? "clock" : "mail"} copy={signupExpired ? "Request a new code to continue." : "Enter the six-digit code sent to your inbox."} /> : null}
-      {register && optionsError ? <Text style={s.copy}>Registration settings could not load. Reopen Account to retry.</Text> : null}
-      {register && options?.emailOtpRequired ? <View><Text style={s.copy}>Verify your email to create an account</Text><TextInput editable={!busy} accessibilityLabel="Email" value={email} onChangeText={(value) => { setEmail(value); setChallenge(null); setOtp(""); }} autoCapitalize="none" keyboardType="email-address" placeholder="Email address" style={s.input} /><Pressable disabled={busy || !options.emailOtpAvailable || signupCooldown > 0} onPress={() => void sendCode()} style={s.signout}><Text style={s.signoutText}>{signupCooldown > 0 ? `Resend in ${signupCooldown}s` : challenge ? "Resend email code" : "Send email code"}</Text></Pressable>{challenge && !signupExpired ? <TextInput editable={!busy} accessibilityLabel="Email verification code" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} placeholder="6-digit email code" style={s.input} /> : null}{!options.emailOtpAvailable ? <Text style={s.copy}>Email verification is temporarily unavailable</Text> : null}</View> : null}
+  const codeDisabled = busy || !options?.emailOtpAvailable || signupCooldown > 0;
+  const returnToSignIn = () => {
+    setSignInError("");
+    setPasswordVisible(false);
+    setRegister(false);
+  };
 
-      <Pressable disabled={busy} onPress={() => { setSignInError(""); setPasswordVisible(false); setRegister(false); }}>
-        <Text style={s.switch}>
-          {register
-            ? "Already have an account? Sign in"
-            : "New here? Create an account"}
-        </Text>
-      </Pressable>
+  return (
+    <View style={login.screen} testID="buyer-sign-up">
+      <View style={login.header}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Back to sign in" hitSlop={10} disabled={busy} onPress={returnToSignIn} style={login.backButton}>
+          <Text style={login.chevron}>‹</Text>
+        </Pressable>
+        <Text accessibilityRole="header" style={login.headerText}>Create account</Text>
       </View>
-    </ScrollView>
-    <View style={login.stickyFooter}><Pressable accessibilityRole="button" disabled={!canCreate} onPress={() => void submit()} style={[login.button, login.primary, !canCreate && login.disabledAction]}><Text style={[login.buttonText, canCreate ? login.primaryText : login.disabledLabel]}>{busy ? "Please wait…" : "Create account"}</Text></Pressable></View>
+      <ScrollView style={login.scroll} contentContainerStyle={[login.content, login.signInContent]} keyboardShouldPersistTaps="handled">
+        <View style={login.signInHeading}>
+          <View style={login.signInIcon}><MarketIcon name="account" /></View>
+          <Text accessibilityRole="header" style={login.signInTitle}>Join your neighbourhood.</Text>
+          <Text style={login.description}>Create an account to order from independent shops.</Text>
+        </View>
+        {signInError ? <BuyerAuthNotice title="Check your details" copy={signInError} warning /> : null}
+        <View style={[login.card, login.signInCard]}>
+          <Text style={login.label}>Your name</Text>
+          <TextInput accessibilityLabel="Your name" editable={!busy} autoComplete="name" maxLength={100} value={name} onChangeText={setName} placeholder="Full name" placeholderTextColor={theme.muted} style={[login.field, login.phone]} />
+
+          <Text style={login.label}>Mobile number</Text>
+          <TextInput accessibilityLabel="Mobile number" editable={!busy} autoComplete="tel" maxLength={16} value={phone} onChangeText={setPhone} placeholder="+91 98765 43210" placeholderTextColor={theme.muted} keyboardType="phone-pad" style={[login.field, login.phone]} />
+
+          <Text style={login.label}>Password</Text>
+          <View style={login.field}>
+            <TextInput accessibilityLabel="Password" editable={!busy} autoComplete="new-password" autoCapitalize="none" autoCorrect={false} maxLength={128} value={password} onChangeText={setPassword} placeholder="Choose a password" placeholderTextColor={theme.muted} secureTextEntry={!passwordVisible} style={login.password} />
+            <Pressable accessibilityRole="button" accessibilityLabel={passwordVisible ? "Hide password" : "Show password"} disabled={busy} onPress={() => setPasswordVisible(value => !value)} style={login.visibility}>
+              <Text style={login.visibilityText}>{passwordVisible ? "Hide" : "Show"}</Text>
+            </Pressable>
+          </View>
+
+          <Text style={login.label}>Confirm password</Text>
+          <TextInput accessibilityLabel="Confirm password" editable={!busy} autoComplete="new-password" autoCapitalize="none" autoCorrect={false} maxLength={128} value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Re-enter password" placeholderTextColor={theme.muted} secureTextEntry={!passwordVisible} style={[login.field, login.phone]} />
+        </View>
+
+        {optionsError ? <BuyerAuthNotice title="Couldn’t load registration settings" copy="Reopen Account to retry." warning /> : null}
+        {options?.emailOtpRequired ? (
+          <View style={[login.card, login.signInCard]}>
+            <Text accessibilityRole="header" style={login.verificationTitle}>Verify your email</Text>
+            <Text style={login.description}>We’ll send a six-digit code to your email address.</Text>
+            <Text style={login.label}>Email address</Text>
+            <TextInput editable={!busy} accessibilityLabel="Email" value={email} onChangeText={value => { setEmail(value); setChallenge(null); setOtp(""); }} autoComplete="email" autoCapitalize="none" autoCorrect={false} keyboardType="email-address" placeholder="you@example.com" placeholderTextColor={theme.muted} style={[login.field, login.phone]} />
+            <Pressable accessibilityRole="button" disabled={codeDisabled} onPress={() => void sendCode()} style={[login.button, login.create, login.codeAction, codeDisabled && login.disabledAction]}>
+              <Text style={[login.buttonText, codeDisabled && login.disabledLabel]}>
+                {signupCooldown > 0 ? `Resend in ${signupCooldown}s` : challenge ? "Resend email code" : "Send email code"}
+              </Text>
+            </Pressable>
+            {challenge ? (
+              <View style={login.codeStatus}>
+                <BuyerAuthNotice title={signupExpired ? "This code has expired." : "Check your email."} tone={signupExpired ? "warning" : "success"} icon={signupExpired ? "clock" : "mail"} copy={signupExpired ? "Request a new code to continue." : "Enter the six-digit code sent to your inbox."} />
+                {!signupExpired ? (
+                  <>
+                    <Text style={login.label}>Email verification code</Text>
+                    <TextInput editable={!busy} accessibilityLabel="Email verification code" autoComplete="one-time-code" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} placeholder="6-digit email code" placeholderTextColor={theme.muted} style={[login.field, login.phone]} />
+                  </>
+                ) : null}
+              </View>
+            ) : null}
+            {!options.emailOtpAvailable ? <Text style={login.description}>Email verification is temporarily unavailable.</Text> : null}
+          </View>
+        ) : null}
+        <Pressable accessibilityRole="button" disabled={busy} onPress={returnToSignIn} style={login.button}>
+          <Text style={login.buttonText}>Already have an account? Sign in</Text>
+        </Pressable>
+      </ScrollView>
+      <View style={login.stickyFooter}>
+        <Pressable accessibilityRole="button" disabled={!canCreate} onPress={() => void submit()} style={[login.button, login.primary, !canCreate && login.disabledAction]}>
+          <Text style={[login.buttonText, canCreate ? login.primaryText : login.disabledLabel]}>{busy ? "Please wait…" : "Create account"}</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -461,66 +493,6 @@ const ordersUI = themedStyles(() => StyleSheet.create({
   feedback: { padding: 20, gap: 10 },
   footer: { gap: 8 },
 }));
-const s = themedStyles(() => StyleSheet.create({
-  page: {
-    flexGrow: 1,
-    padding: 24,
-    paddingBottom: 96,
-    backgroundColor: theme.canvas,
-  },
-  kicker: { color: theme.accentInk, fontSize: 13, fontWeight: "600" },
-  title: { color: theme.ink, marginTop: 8, fontSize: 28, fontWeight: "500" },
-  copy: { color: theme.secondary, marginTop: 8, fontSize: 14, lineHeight: 20 },
-  input: {
-    height: 48,
-    paddingHorizontal: 14,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: theme.controlBorder,
-    borderRadius: 10,
-    backgroundColor: theme.canvas,
-    color: theme.ink,
-    fontSize: 15,
-  },
-  primary: {
-    height: 48,
-    paddingHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: theme.primary,
-  },
-  primaryText: { color: theme.onPrimary, fontSize: 14, fontWeight: "600" },
-  switch: {
-    color: theme.accentInk,
-    marginTop: 20,
-    textAlign: "center",
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  row: {
-    padding: 16,
-    marginTop: 24,
-    borderWidth: 1,
-    borderColor: theme.border,
-    borderRadius: 12,
-    backgroundColor: theme.canvas,
-  },
-  rowTitle: { color: theme.ink, fontSize: 16, fontWeight: "600" },
-  rowCopy: { color: theme.secondary, marginTop: 5, fontSize: 13 },
-  signout: {
-    height: 44,
-    marginTop: 20,
-    borderWidth: 1,
-    borderColor: theme.border,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  signoutText: { color: theme.secondary, fontSize: 14, fontWeight: "600" },
-}));
-
 const login = themedStyles(() => StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.canvas },
   header: { height: 64, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", gap: 14 },
@@ -532,28 +504,30 @@ const login = themedStyles(() => StyleSheet.create({
   stickyFooter: { paddingHorizontal: 20, paddingBottom: 16, paddingTop: 6, borderTopWidth: 1, borderColor: theme.border, backgroundColor: theme.surface },
   disabledAction: { backgroundColor: theme.disabled },
   disabledLabel: {color:theme.muted},
-  checkoutIntro: { backgroundColor:theme.hero, borderRadius: 24, padding: 20 },
-  checkoutWelcome: { color: theme.ink, fontSize: 28, lineHeight: 39, fontWeight: "500" },
-  checkoutTagline: { color: theme.ink, marginTop: 8 },
-  checkoutCard: { borderRadius: 24, marginTop: 16, padding: 20 },
-  welcome: { color: theme.accentInk, fontSize: 32, lineHeight: 45, fontWeight: "700" },
-  tagline: { color: theme.muted, fontSize: 14, lineHeight: 20, marginTop: 20 },
+  signInContent: { gap: 16, paddingBottom: 24 },
+  signInHeading: { gap: 8 },
+  signInIcon: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: theme.selected },
+  signInTitle: { color: theme.ink, fontSize: 32, lineHeight: 38, fontWeight: "700" },
   card: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: 16, marginTop: 20, padding: 16 },
-  cardTitle: { color: theme.ink, fontSize: 20, lineHeight: 28, fontWeight: "600" },
-  description: { color: theme.muted, fontSize: 13, lineHeight: 18, marginTop: 10 },
+  signInCard: { marginTop: 0, borderRadius: 20, padding: 16 },
+  description: { color: theme.secondary, fontSize: 14, lineHeight: 20 },
+  verificationTitle: { color: theme.ink, fontWeight: "700", fontSize: 18, lineHeight: 24, marginBottom: 4 },
+  codeAction: { marginTop: 10, marginBottom: 4 },
+  codeStatus: { marginTop: 8 },
   label: { color: theme.muted, fontSize: 12, lineHeight: 16, fontWeight: "600", marginTop: 10 },
-  field: { flexDirection: "row", minHeight: 52, borderWidth: 1, borderColor: theme.border, borderRadius: 12, backgroundColor: theme.surface, marginTop: 11 },
+  field: { flexDirection: "row", minHeight: 52, borderWidth: 1, borderColor: theme.controlBorder, borderRadius: 12, backgroundColor: theme.surface, marginTop: 6 },
   phone: { paddingHorizontal: 16, fontSize: 14, color: theme.ink },
   password: { flex: 1, minWidth: 0, paddingHorizontal: 16, fontSize: 14, color: theme.ink },
-  visibility: { minWidth: "46%", justifyContent: "center", alignItems: "flex-start", paddingHorizontal: 8 },
+  visibility: { minWidth: 56, justifyContent: "center", alignItems: "center", paddingHorizontal: 12 },
   visibilityText: { color: theme.muted, fontSize: 14 },
   error: { color: theme.error, marginTop: 10, fontSize: 13, lineHeight: 18 },
   button: { minHeight: 50, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 12, gap: 8 },
   buttonText: { color: theme.accentInk, fontSize: 15, fontWeight: "600", textAlign: "center" },
   primary: { backgroundColor: theme.primary, marginTop: 10 },
   primaryText: { color: theme.onPrimary },
-  recovery: { minHeight: 50, marginTop: 10, alignItems: "center", justifyContent: "center" },
-  newAccount: { color: theme.muted, fontSize: 14, lineHeight: 20, marginTop: 20 },
-  create: { backgroundColor: theme.selected, marginTop: 20 },
-  guest: { backgroundColor: theme.surface, marginTop: 20 },
+  recovery: { minHeight: 44, marginTop: 2, alignItems: "center", justifyContent: "center" },
+  signInOptions: { gap: 4 },
+  newAccount: { color: theme.muted, fontSize: 14, lineHeight: 20, textAlign: "center" },
+  create: { backgroundColor: theme.selected, borderWidth: 1, borderColor: theme.border, marginTop: 4 },
+  guestText: { color: theme.secondary, fontSize: 14, fontWeight: "600", textAlign: "center" },
 }));

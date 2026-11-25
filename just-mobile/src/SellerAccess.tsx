@@ -68,7 +68,11 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const [fulfilment, setFulfilment] = useState<string[]>([]);
   const [catalogue, setCatalogue] = useState<{categories:Category[]; areas:ServiceArea[]}>();
   const [picker, setPicker] = useState<"category" | "area" | null>(null);
-  const [categorySearch, setCategorySearch] = useState("");
+  const [pickerSearch, setPickerSearch] = useState("");
+  const openPicker = (next: "area" | "category") => {
+    setPickerSearch("");
+    setPicker(next);
+  };
   const enteredPhone = phone.replace(/[\s()-]/g, "");
   const normalizedPhone = /^[6-9]\d{9}$/.test(enteredPhone) ? "+91" + enteredPhone
     : /^91[6-9]\d{9}$/.test(enteredPhone) ? "+" + enteredPhone
@@ -224,10 +228,11 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     : ["account", "shop", "delivery", "review"];
   const setupStep = setupSteps.indexOf(step) + 1;
   const pickerOptions = picker === "area" ? catalogue?.areas : catalogue?.categories;
-  const categoryQuery = categorySearch.trim().toLowerCase();
-  const visibleOptions = picker === "category" && categoryQuery
-    ? pickerOptions?.filter(item => item.name.toLowerCase().includes(categoryQuery))
-    : pickerOptions;
+  const searchTerms = pickerSearch.trim().toLowerCase().split(/[\s,]+/).filter(Boolean);
+  const visibleOptions = pickerOptions?.filter(item => {
+    const searchable = ("city" in item ? [item.name, item.city, ...item.pincodes].join(" ") : item.name).toLowerCase();
+    return searchTerms.every(term => searchable.includes(term));
+  });
   const currentYear = new Date().getFullYear();
   const shopNameError = shopName.trim().length < 2 ? "Enter at least 2 characters for your shop name." : "";
   const categoryError = category ? "" : "Select a category for your shop.";
@@ -336,17 +341,17 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           {!picker && setupStep > 0 && <Text style={s.setupDescription}>{setupCopy[step as keyof typeof setupCopy][1]}</Text>}
         </View>}
         {!!error && <View style={s.field}><Text accessibilityRole="alert" style={s.error}>{error}</Text>{requestId && <Text selectable style={s.copy}>Support reference: {requestId}</Text>}</View>}
-        {picker === "category" && !!pickerOptions?.length && (
-          <Field label="Search categories" placeholder="e.g. Grocery" value={categorySearch} onChangeText={setCategorySearch} autoCorrect={false} returnKeyType="search"
-            suffix={categorySearch ? link("Clear", () => setCategorySearch("")) : undefined} />
+        {picker && !!pickerOptions?.length && (
+          <Field label={picker === "area" ? "Search service areas" : "Search categories"} placeholder={picker === "area" ? "Locality, city or PIN code" : "e.g. Grocery"} value={pickerSearch} onChangeText={setPickerSearch} autoCorrect={false} returnKeyType="search"
+            suffix={pickerSearch ? link("Clear", () => setPickerSearch("")) : undefined} />
         )}
         {picker && visibleOptions?.map(item => <Pressable accessibilityRole="button" accessibilityState={{ selected: item.id === (picker === "area" ? area?.id : category?.id) }} key={item.id} style={[s.panel, item.id === (picker === "area" ? area?.id : category?.id) && s.selectedOption]} onPress={() => {
           if (picker === "area") setArea(item as ServiceArea); else setCategory(item as Category);
           setPicker(null);
-        }}><Text style={s.label}>{item.name}</Text>{"city" in item && <Text style={s.copy}>{item.city}</Text>}</Pressable>)}
+        }}><Text style={s.label}>{item.name}</Text>{"city" in item && <Text style={s.copy}>{[item.city, item.pincodes.join(", ")].filter(Boolean).join(" · ")}</Text>}</Pressable>)}
         {picker && !pickerOptions?.length && <BuyerStateCard title="No options available" copy="Try again to refresh available choices." action="Refresh options" onAction={() => void run(loadCatalogue)} />}
-        {picker === "category" && !!pickerOptions?.length && !visibleOptions?.length && (
-          <BuyerStateCard title="No matching categories" copy="Try a shorter search or clear it to see all categories." action="Clear search" onAction={() => setCategorySearch("")} />
+        {picker && !!pickerOptions?.length && !visibleOptions?.length && (
+          <BuyerStateCard title={picker === "area" ? "No matching service areas" : "No matching categories"} copy="Try a shorter search or clear it to see all options." action="Clear search" onAction={() => setPickerSearch("")} />
         )}
         {!picker && step === "login" && <>
           <View style={[s.panel, s.loginPanel]}>
@@ -390,7 +395,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           <Field label="Shop name" placeholder="Name customers know your shop by" value={shopName} onChangeText={setShopName} maxLength={100} error={shopSubmitted ? shopNameError : undefined} />
           <View style={s.field}>
             <Text style={s.label}>Shop category</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel={category ? `Shop category, ${category.name}` : "Choose shop category"} onPress={() => { setCategorySearch(""); setPicker("category"); }} style={[s.inputRow, s.categoryField, category && s.selectedOption, shopSubmitted && categoryError ? s.invalidField : null]}>
+            <Pressable accessibilityRole="button" accessibilityLabel={category ? `Shop category, ${category.name}` : "Choose shop category"} onPress={() => openPicker("category")} style={[s.inputRow, s.categoryField, category && s.selectedOption, shopSubmitted && categoryError ? s.invalidField : null]}>
               <Text style={s.categoryText}>{category?.name ?? "Choose shop category"}</Text>
               <Text style={s.categoryText} accessible={false}>›</Text>
             </Pressable>
@@ -423,7 +428,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
             <Field label="Shop address" placeholder="Shop number, building and street" value={address} onChangeText={setAddress} maxLength={500} multiline error={deliverySubmitted ? addressError : undefined} />
             <View style={s.field}>
               <Text style={s.label}>Service area</Text>
-              <Pressable accessibilityRole="button" onPress={() => setPicker("area")} style={[s.inputRow, s.categoryField, area && s.selectedOption, deliverySubmitted && !!areaError && s.invalidField]}>
+              <Pressable accessibilityRole="button" onPress={() => openPicker("area")} style={[s.inputRow, s.categoryField, area && s.selectedOption, deliverySubmitted && !!areaError && s.invalidField]}>
                 <Text style={s.categoryText}>{area ? `${area.name}, ${area.city}` : "Choose service area"}</Text>
                 <Text accessible={false} style={s.categoryText}>›</Text>
               </Pressable>

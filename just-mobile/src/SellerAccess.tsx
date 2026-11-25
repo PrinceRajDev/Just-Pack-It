@@ -266,6 +266,11 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const phoneError = !validPhone ? "Enter a valid mobile number with its country code." : "";
   const passwordError = password.length < 12 ? "Use at least 12 characters." : "";
   const emailError = !/^\S+@\S+\.\S+$/.test(email.trim()) ? "Enter a valid email address." : "";
+  const canReuseEmailCode = !!challenge && challenge.address === email.trim().toLowerCase()
+    && !expires && /^\d{6}$/.test(otp);
+  const accountActionLabel = editingReview && (!verify || canReuseEmailCode)
+    ? "Back to review"
+    : verify ? "Send email code" : "Continue";
   const loginPasswordError = !password.trim() ? "Enter your password." : "";
   const visiblePasswordError = step === "account" && accountSubmitted ? passwordError
     : step === "login" && loginSubmitted ? loginPasswordError : undefined;
@@ -278,7 +283,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const passwordField = <Field label="Password" placeholder="Enter your password" value={password} onChangeText={value => { setPassword(value); if (step === "login") setError(""); }} secureTextEntry={!visible} maxLength={128} autoCapitalize="none" autoCorrect={false} autoComplete={step === "login" ? "current-password" : "new-password"} returnKeyType={step === "login" ? "go" : undefined} onSubmitEditing={step === "login" ? submitLogin : undefined} editable={!busy} hint={step === "account" ? "Use at least 12 characters." : undefined} error={visiblePasswordError} suffix={link(visible ? "Hide" : "Show", () => setVisible(value => !value))} />;
   let action;
   if (!picker && step === "login") action = button("Sign in", submitLogin);
-  if (!picker && step === "account") action = button("Continue", () => void run(async () => {
+  if (!picker && step === "account") action = button(accountActionLabel, () => void run(async () => {
     setAccountSubmitted(true);
     if (nameError || phoneError || passwordError || (verify && emailError)) return;
     const options = await buyerApi.registrationOptions();
@@ -299,7 +304,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     }
   }));
   if (!picker && step === "email" && expires) action = button("Send a new code", () => void run(send), cooldown > 0);
-  if (!picker && step === "email" && !expires) action = button("Continue with code", () => void run(async () => {
+  if (!picker && step === "email" && !expires) action = button(editingReview ? "Back to review" : "Continue with code", () => void run(async () => {
     if (!challenge || expires || !/^\d{6}$/.test(otp)) throw new Error("Enter a valid six-digit email code.");
     if (!catalogue) await loadCatalogue();
     go(editingReview ? "review" : "shop");
@@ -600,7 +605,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
       {action && step !== "login" && (
         <View style={s.footer}>
           {action}
-          {step === "account" && link("Already have an account? Sign in", () => go("login"))}
+          {step === "account" && !editingReview && link("Already have an account? Sign in", () => go("login"))}
         </View>
       )}
     </>}

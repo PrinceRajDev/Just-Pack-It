@@ -50,6 +50,7 @@ const assert = require("node:assert/strict");
     token: "fixture-token",
     role: "buyer",
     isDemo: false,
+    version: 1,
   };
   const output = path.resolve(__dirname, "../qa/address-reference");
   fs.mkdirSync(output, { recursive: true });
@@ -113,7 +114,11 @@ const assert = require("node:assert/strict");
         if (method === "OPTIONS")
           return route.fulfill({ status: 204, headers });
         let data = [];
-        if (resource === "addresses" && method === "POST") {
+        if (resource === "auth/profile" && method === "PATCH") {
+          const input = route.request().postDataJSON();
+          assert.equal(input.version, buyer.version);
+          data = Object.assign(buyer, { name: input.name, version: input.version + 1 });
+        } else if (resource === "addresses" && method === "POST") {
           data = { ...route.request().postDataJSON(), id: "other", version: 0 };
           addresses.push(data);
         } else if (resource === "addresses/home" && method === "PATCH") {
@@ -220,6 +225,7 @@ const assert = require("node:assert/strict");
     await page.getByRole("button", { name: "Profile", exact: true }).click();
     const profileName = page.getByLabel("Full name", { exact: true });
     const saveProfile = page.getByRole("button", { name: "Save changes", exact: true });
+    const originalName = buyer.name;
     await profileName.waitFor();
     assert.equal(await profileName.inputValue(), buyer.name);
     await profileName.fill("A");
@@ -227,7 +233,15 @@ const assert = require("node:assert/strict");
     assert.equal(await saveProfile.isDisabled(), true);
     await profileName.fill("Aditi Test");
     assert.equal(await saveProfile.isEnabled(), true);
-    await page.getByRole("button", { name: "Back to Account", exact: true }).click();
+    await saveProfile.click();
+    await page.getByText("Profile updated", { exact: true }).waitFor();
+    await page.getByRole("button", { name: "Back to Account", exact: true }).last().click();
+    await page.getByTestId("buyer-account-hub").getByText("Aditi Test", { exact: true }).waitFor();
+    await page.getByRole("button", { name: "Profile", exact: true }).click();
+    await profileName.fill(originalName);
+    await saveProfile.click();
+    await page.getByText("Profile updated", { exact: true }).waitFor();
+    await page.getByRole("button", { name: "Back to Account", exact: true }).last().click();
     await page.getByRole("button", { name: "Saved Addresses", exact: true }).click();
     await page.getByRole("button", { name: "Set Work as default", exact: true }).click();
     await page.getByText("Default", { exact: true }).waitFor();

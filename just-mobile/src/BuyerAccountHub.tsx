@@ -1,6 +1,6 @@
 import { cardShadow, theme, themedStyles } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { StyleSheet, ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { buyerApi, type Product, type Session, type Shop } from "./api";
@@ -31,6 +31,9 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
   const [tab, setTab] = useState<"products" | "shops">("products");
   const [favourites, setFavourites] = useState<Favourite[]>([]);
   const [updates, setUpdates] = useState<Awaited<ReturnType<typeof buyerApi.notifications>>>([]);
+  const readLock = useRef(false);
+  const [markingRead, setMarkingRead] = useState<string>();
+  const [readFailed, setReadFailed] = useState<string>();
   useEffect(() => {
     let active = true;
     void storage.getItemAsync(languageKey).then(value => { if (active) setHindi(value === "hi"); }).catch(() => undefined);
@@ -77,6 +80,21 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
     finally { setBusy(false); }
   };
   const t = (english: string, translated: string) => hindi ? translated : english;
+  const markRead = async (id: string) => {
+    if (!session || readLock.current) return;
+    readLock.current = true;
+    setMarkingRead(id);
+    setReadFailed(undefined);
+    try {
+      await buyerApi.markNotificationRead(session.token, id);
+      setUpdates(items => items.map(item => item.id === id ? {...item, read: true} : item));
+    } catch {
+      setReadFailed(id);
+    } finally {
+      readLock.current = false;
+      setMarkingRead(undefined);
+    }
+  };
   const title = t("Account", "खाता");
   const panels = {language:t("Language","भाषा"), notifications:t("Notifications","सूचनाएँ"), favourites:t("Favourites","पसंदीदा"), signout:t("Sign out","साइन आउट")};
   const guarded = (action: () => void) => session ? action : signIn;
@@ -154,6 +172,8 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
                     <Text style={s.rowTitle}>{item.title}</Text>
                     <Text style={s.copy}>{item.body}</Text>
                     {Number.isFinite(timestamp) && <Text style={s.copy}>{new Date(timestamp).toLocaleString(hindi ? "hi-IN" : "en-IN", { dateStyle: "medium", timeStyle: "short" })}</Text>}
+                    {readFailed === item.id && !item.read && <Text accessibilityRole="alert" style={s.dangerText}>{t("Couldn’t mark as read. Try again.", "पढ़ा हुआ मार्क नहीं कर सके। फिर से कोशिश करें।")}</Text>}
+                    {!item.read && <Action soft disabled={!!markingRead} label={markingRead === item.id ? t("Marking as read…", "पढ़ा हुआ मार्क कर रहे हैं…") : t("Mark as read", "पढ़ा हुआ मार्क करें")} onPress={() => void markRead(item.id)} />}
                   </View>
                   </View>;
                 })}

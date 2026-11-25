@@ -388,10 +388,21 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           <Field label={picker === "area" ? "Search service areas" : "Search categories"} placeholder={picker === "area" ? "Locality, city or PIN code" : "e.g. Grocery"} value={pickerSearch} onChangeText={setPickerSearch} autoCorrect={false} returnKeyType="search"
             suffix={pickerSearch ? link("Clear", () => setPickerSearch("")) : undefined} />
         )}
-        {picker && visibleOptions?.map(item => <Pressable accessibilityRole="button" accessibilityState={{ selected: item.id === (picker === "area" ? area?.id : category?.id) }} key={item.id} style={[s.panel, item.id === (picker === "area" ? area?.id : category?.id) && s.selectedOption]} onPress={() => {
-          if (picker === "area") setArea(item as ServiceArea); else setCategory(item as Category);
-          setPicker(null);
-        }}><Text style={s.label}>{item.name}</Text>{"city" in item && <Text style={s.copy}>{[item.city, item.pincodes.join(", ")].filter(Boolean).join(" · ")}</Text>}</Pressable>)}
+        {picker && visibleOptions?.map(item => {
+          const selected = item.id === (picker === "area" ? area?.id : category?.id);
+          return (
+            <Pressable accessibilityRole="button" accessibilityState={{ selected }} key={item.id} style={[s.panel, s.pickerOption, selected && s.selectedOption]} onPress={() => {
+              if ("city" in item) setArea(item); else setCategory(item);
+              setPicker(null);
+            }}>
+              <View style={s.methodCopy}>
+                <Text style={s.label}>{item.name}</Text>
+                {"city" in item && <Text style={s.copy}>{[item.city, item.pincodes.join(", ")].filter(Boolean).join(" · ")}</Text>}
+              </View>
+              {selected && <Text accessible={false} style={s.categoryText}>✓ Selected</Text>}
+            </Pressable>
+          );
+        })}
         {picker && !pickerOptions?.length && <BuyerStateCard title="No options available" copy="Try again to refresh available choices." action="Refresh options" onAction={() => void run(loadCatalogue)} />}
         {picker && !!pickerOptions?.length && !visibleOptions?.length && (
           <BuyerStateCard title={picker === "area" ? "No matching service areas" : "No matching categories"} copy="Try a shorter search or clear it to see all options." action="Clear search" onAction={() => setPickerSearch("")} />
@@ -614,6 +625,7 @@ const s = themedStyles(() => StyleSheet.create({
   categoryField:{minHeight:52,paddingHorizontal:12,justifyContent:"space-between",gap:12},
   categoryText:{color:theme.accentInk,fontSize:15,fontWeight:"600",flexShrink:1},
   selectedOption:{backgroundColor:theme.selected,borderColor:theme.accentInk},
+  pickerOption:{flexDirection:"row",alignItems:"center",flexWrap:"wrap",gap:12},
   methodRow:{padding:12,gap:12},
   methodCopy:{flex:1,gap:4},
   methodCheck:{height:22,width:22,borderWidth:1,borderColor:theme.secondary,borderRadius:6,alignItems:"center",justifyContent:"center"},

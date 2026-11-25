@@ -72,7 +72,14 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
     void load();
     return () => { active = false; };
   }, [panel, products, shops, session, revision]);
-  const open = (next: Panel) => { setError(""); setBusy(false); setDraftHindi(hindi); setPanel(next); };
+  const open = (next: Panel) => { setError(""); setBusy(next === "notifications" || next === "favourites"); setDraftHindi(hindi); setPanel(next); };
+  const refreshNotifications = () => {
+    if (markingRead) return;
+    setError("");
+    setReadFailed(undefined);
+    setBusy(true);
+    setRevision(value => value + 1);
+  };
   const close = () => { if (!busy || panel === "notifications" || panel === "favourites") setPanel(null); };
   const run = async (action: () => Promise<void>, failure: string) => {
     if (busy) return;
@@ -176,11 +183,16 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
               <Action label={busy ? t("Saving…", "सहेज रहे हैं…") : draftHindi ? t("Apply Hindi", "हिन्दी लागू करें") : t("Apply English", "अंग्रेज़ी लागू करें")} disabled={busy || draftHindi === hindi} onPress={() => void run(async () => { await storage.setItemAsync(languageKey,draftHindi ? "hi" : "en"); setHindi(draftHindi); }, "Couldn’t save the language preference.")} />
             </>}
             {panel === "notifications" && <>
+              {session && <View style={s.notificationToolbar}>
+                <Text accessibilityRole="header" style={s.section}>{t("Order updates", "ऑर्डर के अपडेट")}</Text>
+                <Pressable accessibilityRole="button" disabled={busy || !!markingRead} onPress={refreshNotifications} style={({pressed}) => [s.refreshButton, (pressed || busy || !!markingRead) && s.pressed]}>
+                  <Text style={s.softText}>{t("Refresh", "रीफ़्रेश करें")}</Text>
+                </Pressable>
+              </View>}
               {busy ? <View style={[s.card,s.inlineCard]} accessibilityLiveRegion="polite">
                 <ActivityIndicator color={theme.accentInk} />
                 <Text style={s.rowTitle}>{t("Loading order updates…", "ऑर्डर अपडेट लोड हो रहे हैं…")}</Text>
-              </View> : error ? <BuyerStateCard title="Couldn’t load notifications" copy={error} tone="error" icon="network" action="Retry notifications" onAction={() => { setError(""); setRevision(value => value+1); }} /> : updates.length ? <>
-                <Text accessibilityRole="header" style={s.section}>{t("Order updates", "ऑर्डर के अपडेट")}</Text>
+              </View> : error ? <BuyerStateCard title="Couldn’t load notifications" copy={error} tone="error" icon="network" action="Retry notifications" onAction={refreshNotifications} /> : updates.length ? <>
                 {updates.map(item => {
                   const timestamp = item.createdAt ? Date.parse(item.createdAt) : NaN;
                   return <View key={item.id} style={[s.card,s.notification,!item.read && s.unread]}>
@@ -284,6 +296,8 @@ const s = themedStyles(() => StyleSheet.create({
   menu:{backgroundColor:theme.surface,borderWidth:1,borderColor:theme.border,borderRadius:20,padding:4,...cardShadow},
   inlineCard:{flexDirection:"row",alignItems:"center",minHeight:72},
   notification:{flexDirection:"row",alignItems:"flex-start"},
+  notificationToolbar:{flexDirection:"row",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8},
+  refreshButton:{minHeight:44,paddingHorizontal:12,borderRadius:12,borderWidth:1,borderColor:theme.border,backgroundColor:theme.surface,justifyContent:"center"},
   notificationBadge:{alignSelf:"flex-start",color:theme.accentInk,backgroundColor:theme.selected,borderRadius:8,paddingHorizontal:8,paddingVertical:4,fontSize:12,fontWeight:"700"},
   languageSelected:{borderColor:theme.accentInk,backgroundColor:theme.selected},
   radio:{width:20,height:20,borderRadius:10,borderWidth:1.5,borderColor:theme.secondary,alignItems:"center",justifyContent:"center"},

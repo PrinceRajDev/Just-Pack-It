@@ -221,7 +221,46 @@ const assert = require("node:assert/strict");
       await picker.waitFor();
     };
     await page.goto(process.env.PREVIEW_URL || "http://localhost:8113");
+    // Metro's development error toast covers the bottom tabs after the intentional HTTP 503.
+    await page.addStyleTag({ content: "#error-toast { pointer-events: none !important; }" });
     await page.getByRole("button", { name: "Account", exact: true }).click();
+    const notificationId = "a9386f03-3fe5-4985-8a9c-dd20c2eb6d55";
+    let notificationRead = false;
+    let readAttempts = 0;
+    const notificationHeaders = {
+      "access-control-allow-origin": "*",
+      "access-control-allow-headers": "*",
+      "access-control-allow-methods": "GET, POST, OPTIONS",
+    };
+    await page.route("**/notifications?limit=20", route => route.fulfill({
+      headers: notificationHeaders,
+      json: [{ id: notificationId, title: "Order accepted", body: "Your shop is preparing your order.", createdAt: "2026-11-20T08:30:00Z", read: notificationRead }],
+    }));
+    await page.route(`**/notifications/${notificationId}/read`, route => {
+      if (route.request().method() === "OPTIONS") return route.fulfill({ status: 204, headers: notificationHeaders });
+      assert.equal(route.request().method(), "POST");
+      assert.deepEqual(route.request().postDataJSON(), {});
+      if (++readAttempts === 1) return route.fulfill({ status: 503, headers: notificationHeaders, json: { message: "Retry shortly" } });
+      notificationRead = true;
+      return route.fulfill({ status: 204, headers: notificationHeaders });
+    });
+    const notifications = page.getByRole("button", { name: "Notifications", exact: true });
+    await notifications.click();
+    await page.getByText("Order accepted", { exact: true }).waitFor();
+    await page.getByText(/20 Nov 2026/).waitFor();
+    await page.getByText("Unread", { exact: true }).waitFor();
+    const markRead = page.getByRole("button", { name: "Mark as read", exact: true });
+    await markRead.click();
+    await page.getByRole("alert").filter({ hasText: "Couldn’t mark as read. Try again." }).waitFor();
+    await markRead.click();
+    await markRead.waitFor({ state: "hidden" });
+    await page.getByText("Unread", { exact: true }).waitFor({ state: "hidden" });
+    await page.getByRole("button", { name: "Go back", exact: true }).last().click();
+    await notifications.click();
+    await page.getByText("Order accepted", { exact: true }).waitFor();
+    assert.equal(await markRead.count(), 0);
+    assert.equal(readAttempts, 2);
+    await page.getByRole("button", { name: "Go back", exact: true }).last().click();
     await page.getByRole("button", { name: "Profile", exact: true }).click();
     const profileName = page.getByLabel("Full name", { exact: true });
     const saveProfile = page.getByRole("button", { name: "Save changes", exact: true });

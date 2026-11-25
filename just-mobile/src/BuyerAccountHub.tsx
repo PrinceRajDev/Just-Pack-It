@@ -160,7 +160,7 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
         <SafeAreaView style={s.screen}>
           <Header title={panels[panel]} back={close} />
           <ScrollView contentContainerStyle={s.content}>
-            {error && panel !== "notifications" && (panel === "signout" ? <BuyerStateCard title="Couldn’t sign you out" copy={error} tone="error" compact icon="network" /> : <BuyerAuthNotice title="Try again" copy={error} warning />)}
+            {error && (panel === "signout" ? <BuyerStateCard title="Couldn’t sign you out" copy={error} tone="error" compact icon="network" /> : panel === "language" && <BuyerAuthNotice title={t("Try again", "फिर से कोशिश करें")} copy={error} warning />)}
             {panel === "language" && <>
               <View style={[s.hero,s.heroTop]}>
                 <View style={s.avatar}><MarketIcon name="globe" /></View>
@@ -218,7 +218,7 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
                 </View>
               </View>
               <View accessibilityRole="tablist" style={s.favouriteTabs}>{(["products","shops"] as const).map(value => <Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:tab === value}} onPress={() => setTab(value)} style={[s.favouriteTab,tab === value && s.selected]}><Text style={tab === value ? s.softText : s.rowTitle}>{value === "products" ? t("Products", "उत्पाद") : t("Shops", "दुकानें")}</Text></Pressable>)}</View>
-              {busy ? <View style={[s.card,s.inlineCard]} accessibilityLiveRegion="polite"><ActivityIndicator color={theme.accentInk} /><Text style={s.rowTitle}>{t("Loading favourites…", "पसंदीदा लोड हो रहे हैं…")}</Text></View> : error ? <Action label={t("Retry favourites", "पसंदीदा फिर से लोड करें")} onPress={() => { setError(""); setBusy(true); setRevision(value => value+1); }} /> : <>
+              {busy ? <View style={[s.card,s.inlineCard]} accessibilityLiveRegion="polite"><ActivityIndicator color={theme.accentInk} /><Text style={s.rowTitle}>{t("Loading favourites…", "पसंदीदा लोड हो रहे हैं…")}</Text></View> : error ? <BuyerStateCard title={t("Couldn’t load favourites", "पसंदीदा लोड नहीं हो सके")} copy={error} tone="error" icon="network" action={t("Retry favourites", "पसंदीदा फिर से लोड करें")} onAction={() => { setError(""); setBusy(true); setRevision(value => value+1); }} /> : <>
                 {favourites.filter(row => tab === "products" ? row.product : row.shop).map(row => {
                   const photo = resolveImage(row.product?.image ?? row.shop?.coverImage);
                   return <View key={row.key} style={s.card}>
@@ -229,9 +229,9 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
                   </View>
                   {favouriteRemovalFailed === row.key && <Text accessibilityRole="alert" style={s.dangerText}>{t("Couldn’t remove this favourite. Try again.", "पसंदीदा हटा नहीं सके। फिर से कोशिश करें।")}</Text>}
                   {row.product && <Text style={s.copy}>{row.product.unit}</Text>}
-                  {row.shop && <Text style={s.copy}>{[row.shop.isOpen ? "Open" : "Closed", row.shop.distanceKm != null ? `${row.shop.distanceKm} km` : "", row.shop.rating != null ? `★ ${row.shop.rating}` : ""].filter(Boolean).join(" · ")}</Text>}
-                  {row.shop && <Action label="View shop" soft onPress={() => { setPanel(null); openShop(row.shop!); }} />}
-                  {row.product && !row.product.variants?.length && <Action label={row.product.stock > 0 ? `+ Add · ₹${row.product.price}` : "Unavailable"} disabled={row.product.stock <= 0} soft onPress={() => add(row.product!)} />}
+                  {row.shop && <Text style={s.copy}>{[row.shop.isOpen ? t("Open", "खुली है") : t("Closed", "बंद है"), row.shop.distanceKm != null ? `${row.shop.distanceKm} ${t("km", "किमी")}` : "", row.shop.rating != null ? `★ ${row.shop.rating}` : ""].filter(Boolean).join(" · ")}</Text>}
+                  {row.shop && <Action label={t("View shop", "दुकान देखें")} soft onPress={() => { setPanel(null); openShop(row.shop!); }} />}
+                  {row.product && !row.product.variants?.length && <Action label={row.product.stock > 0 ? `${t("+ Add", "+ जोड़ें")} · ₹${row.product.price}` : t("Unavailable", "उपलब्ध नहीं")} disabled={row.product.stock <= 0} soft onPress={() => add(row.product!)} />}
                 </View>;
                 })}
                 {!favourites.some(row => tab === "products" ? row.product : row.shop) && <BuyerStateCard title={t("Keep your favourites close.", "अपने पसंदीदा सहेजें")} copy={t("Tap the heart on a product or shop to save it on this device.", "उत्पाद या दुकान को इस डिवाइस पर सहेजने के लिए दिल के आइकन पर टैप करें।")} icon="heart" action={t("Discover favourites", "खरीदारी देखें")} onAction={() => { setPanel(null); browse(); }} />}

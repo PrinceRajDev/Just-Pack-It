@@ -118,13 +118,13 @@ function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:O
   const dashboard = useSellerData(() => sellerApi.dashboard(token), token);
   const counts = dashboard.data?.counts;
   const work = [
-    {title:"New orders", count:counts?.placed ?? 0, action:"Review new orders", open:() => orders("New"), icon:"orders", tint:theme.selected},
-    {title:"To prepare", count:(counts?.accepted ?? 0) + (counts?.preparing ?? 0), action:"Open packing queue", open:() => orders("Preparing"), icon:"bag", tint:theme.hero},
-    {title:"Ready for handoff", count:counts?.ready ?? 0, action:"Review handoffs", open:() => orders("Ready"), icon:"home", tint:theme.success},
-    {title:"Out of stock", count:dashboard.data?.lowStock?.outOfStock ?? 0, action:"Review sold-out products", open:() => openStock("Out of stock"), icon:"browse", tint:theme.hero},
-    {title:"Low stock", count:dashboard.data?.lowStock?.count ?? 0, action:"Review low stock", open:() => openStock("Low stock"), icon:"browse", tint:theme.selected},
-    {title:"On the way", count:counts?.out_for_delivery ?? 0, action:"View active deliveries", open:() => orders("Out for delivery"), icon:"orders", tint:theme.hero},
-  ] satisfies {title:string;count:number;action:string;open:()=>void;icon:SellerIconName;tint:string}[];
+    {group:"Orders", title:"New orders", count:counts?.placed ?? 0, action:"Review new orders", open:() => orders("New"), icon:"orders", tint:theme.selected},
+    {group:"Orders", title:"To prepare", count:(counts?.accepted ?? 0) + (counts?.preparing ?? 0), action:"Open packing queue", open:() => orders("Preparing"), icon:"bag", tint:theme.hero},
+    {group:"Orders", title:"Ready for handoff", count:counts?.ready ?? 0, action:"Review handoffs", open:() => orders("Ready"), icon:"home", tint:theme.success},
+    {group:"Inventory", title:"Out of stock", count:dashboard.data?.lowStock?.outOfStock ?? 0, action:"Review sold-out products", open:() => openStock("Out of stock"), icon:"browse", tint:theme.hero},
+    {group:"Inventory", title:"Low stock", count:dashboard.data?.lowStock?.count ?? 0, action:"Review low stock", open:() => openStock("Low stock"), icon:"browse", tint:theme.selected},
+    {group:"Orders", title:"On the way", count:counts?.out_for_delivery ?? 0, action:"View active deliveries", open:() => orders("Out for delivery"), icon:"orders", tint:theme.hero},
+  ] satisfies {group:"Orders" | "Inventory";title:string;count:number;action:string;open:()=>void;icon:SellerIconName;tint:string}[];
   const next = dashboard.error ? undefined : work.find(item => item.count > 0);
   const refresh = () => { shop.reload(); dashboard.reload(); };
   return <SellerScroll refreshing={shop.loading || dashboard.loading} onRefresh={refresh}>
@@ -155,16 +155,26 @@ function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:O
         <Text accessibilityRole="header" style={styles.section}>Work queue</Text>
         <Pressable accessibilityRole="button" disabled={shop.loading || dashboard.loading} onPress={refresh} style={styles.tap}><Text style={styles.link}>{dashboard.loading ? "Refreshing…" : "Refresh"}</Text></Pressable>
       </View>
-      <View style={styles.workList}>
-        {work.map(item => <Pressable key={item.title} accessibilityRole="button" accessibilityLabel={`${item.title}, ${item.count}`} onPress={item.open}
-          style={({pressed}) => [styles.workTile, pressed && styles.pressed]}>
-          <View style={styles.queueTop}>
-            <View style={[styles.workIcon,{backgroundColor:item.tint}]}><SellerIcon name={item.icon} color={theme.accentInk} /></View>
-            <Text style={[styles.workCount, item.count > 0 && styles.workCountActive]}>{item.count}</Text>
+      {(["Orders", "Inventory"] as const).map(group => (
+        <View key={group} style={styles.workGroup}>
+          <Text accessibilityRole="header" style={styles.workGroupTitle}>{group}</Text>
+          <View style={styles.workList}>
+            {work.filter(item => item.group === group).map(item => (
+              <Pressable key={item.title} accessibilityRole="button" accessibilityLabel={`${item.title}, ${item.count}`} onPress={item.open}
+                style={({pressed}) => [styles.workTile, item === next && styles.workTilePriority, pressed && styles.pressed]}>
+                <View style={styles.queueTop}>
+                  <View style={[styles.workIcon, {backgroundColor:item.tint}]}><SellerIcon name={item.icon} color={theme.accentInk} /></View>
+                  <Text style={[styles.workCount, item.count > 0 && styles.workCountActive]}>{item.count}</Text>
+                </View>
+                <View style={styles.queueTop}>
+                  <Text style={[styles.label, styles.grow]}>{item.title}</Text>
+                  <Text style={styles.link}>›</Text>
+                </View>
+              </Pressable>
+            ))}
           </View>
-          <View style={styles.queueTop}><Text style={[styles.label,styles.grow]}>{item.title}</Text><Text style={styles.link}>›</Text></View>
-        </Pressable>)}
-      </View>
+        </View>
+      ))}
       <Text accessibilityRole="header" style={styles.section}>Today at a glance</Text>
       <View style={styles.todayStrip}>
         <View style={styles.grow}><Text style={styles.todayNumber}>{dashboard.data.todayOrders}</Text><Text style={styles.copy}>Orders today</Text></View>

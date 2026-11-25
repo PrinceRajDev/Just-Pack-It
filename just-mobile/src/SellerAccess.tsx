@@ -7,6 +7,9 @@ import { StatusBar } from "expo-status-bar";
 import { SellerWorkspace } from "./SellerWorkspace";
 import { BuyerRecovery } from "./BuyerRecovery";
 import { BuyerStateCard } from "./BuyerStateCard";
+import { launchImageLibraryAsync, type ImagePickerAsset } from "expo-image-picker";
+import { photoBody } from "./SellerPhotoEditor";
+import { sellerApi } from "./sellerApi";
 import * as storage from "./deviceStorage";
 
 const pendingRequests = new WeakSet<object>();
@@ -21,6 +24,13 @@ const methods = [
 ] as const;
 type Step = "login" | "account" | "email" | "shop" | "delivery" | "review" | "status" | "recovery";
 const backSteps: Partial<Record<Step, Step>> = { account:"login", email:"account", delivery:"shop", review:"delivery", recovery:"login" };
+const setupCopy = {
+  account: ["Account details", "Use a mobile number you can sign in with later."],
+  email: ["Email verification", "Have your email code ready to finish setting up your shop."],
+  shop: ["Shop profile", "Add the details customers will use to recognise your shop."],
+  delivery: ["Order handover", "Choose where your shop operates and how customers get their orders."],
+  review: ["Review & submit", "Double-check your details before sending your application."],
+} as const;
 
 export function SellerAccess({ close, initialSession }: { close: () => void; initialSession?: Session }) {
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
@@ -48,6 +58,8 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const [address, setAddress] = useState("");
   const [since, setSince] = useState("");
   const [shopSubmitted, setShopSubmitted] = useState(false);
+  const [coverAsset, setCoverAsset] = useState<ImagePickerAsset>();
+  const [coverSaved, setCoverSaved] = useState(false);
   const [deliverySubmitted, setDeliverySubmitted] = useState(false);
   const [category, setCategory] = useState<Category>();
   const [area, setArea] = useState<ServiceArea>();
@@ -145,6 +157,8 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const clearSeller = () => {
     setWorkspaceOpen(false);
     setSession(null);
+    setCoverAsset(undefined);
+    setCoverSaved(false);
     setShop(undefined);
     setCheckingShop(false);
     setShopError("");
@@ -165,6 +179,16 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     setCheckingShop(true);
     setShopError("");
     setRefresh(value => value + 1);
+  };
+  const uploadCover = async (token: string, asset: ImagePickerAsset) => {
+    const limits = await sellerApi.photoCapability(token);
+    if (!limits.enabled) throw new Error("Shop photo uploads are unavailable right now.");
+    const { buffer, type } = photoBody(asset, limits);
+    const currentShop = await sellerApi.shop(token);
+    await sellerApi.uploadShopCover(token, currentShop, buffer, type);
+    setCoverAsset(undefined);
+    setCoverSaved(true);
+    refreshShop();
   };
   const back = () => {
     if (busy) return;
@@ -242,6 +266,14 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
         shop:{name:shopName.trim(),address:address.trim(),since:Number(since),categoryIds:[category!.id],serviceAreaIds:[area!.id],fulfilment},
       });
       await acceptSession(result);
+      if (coverAsset) {
+        try { await uploadCover(result.token, coverAsset); }
+        catch (reason) {
+          throw new Error(reason instanceof Error
+            ? `Your shop application was submitted. Photo upload failed: ${reason.message}`
+            : "Your shop application was submitted. Retry the photo upload below.");
+        }
+      }
     } catch (reason) {
       if (reason instanceof ApiError && /EMAIL|OTP/.test(reason.code ?? "")) go("email");
       throw reason;
@@ -264,7 +296,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           </View>
         </View> : <View style={s.stepHeading}>
           {!picker && setupStep > 0 && <>
-            <Text style={s.progressLabel}>Step {setupStep} of {setupSteps.length}</Text>
+            <Text style={s.progressLabel}>Step {setupStep} of {setupSteps.length} · {setupCopy[step as keyof typeof setupCopy][0]}</Text>
             <View style={s.progress} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
               {setupSteps.map((name, index) => (
                 <View key={name} style={[s.progressSegment, index < setupStep && s.progressFilled]} />
@@ -273,7 +305,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           </>}
           <Text accessibilityRole="header" style={s.title}>{title}</Text>
           {picker === "category" && <Text style={s.copy}>Pick the category that best describes what your shop sells.</Text>}
-          {!picker && step === "account" && <Text style={s.copy}>Start with your account details. You’ll add your shop next.</Text>}
+          {!picker && setupStep > 0 && <Text style={s.setupDescription}>{setupCopy[step as keyof typeof setupCopy][1]}</Text>}
         </View>}
         {!!error && <View style={s.field}><Text accessibilityRole="alert" style={s.error}>{error}</Text>{requestId && <Text selectable style={s.copy}>Support reference: {requestId}</Text>}</View>}
         {picker && (picker === "area" ? catalogue?.areas : catalogue?.categories)?.map(item => <Pressable accessibilityRole="button" accessibilityState={{ selected: item.id === (picker === "area" ? area?.id : category?.id) }} key={item.id} style={[s.panel, item.id === (picker === "area" ? area?.id : category?.id) && s.selectedOption]} onPress={() => {
@@ -318,7 +350,8 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           {expires && <Text style={s.error}>This code has expired.</Text>}
           <View style={s.sage}><Text style={s.copy}>The email code is checked when you submit your shop for approval.</Text></View>
         </View>}
-        {!picker && step === "shop" && <View style={[s.panel, s.shopPanel]}>
+        {!picker && step === "shop" && <>
+        <View style={[s.panel, s.shopPanel]}>
           <Field label="Shop name" placeholder="Name customers know your shop by" value={shopName} onChangeText={setShopName} maxLength={100} error={shopSubmitted ? shopNameError : undefined} />
           <View style={s.field}>
             <Text style={s.label}>Shop category</Text>
@@ -329,7 +362,18 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
             {shopSubmitted && !!categoryError && <Text accessibilityRole="alert" style={s.error}>{categoryError}</Text>}
           </View>
           <Field label="Year opened" placeholder="YYYY" hint="The year your shop started operating." value={since} onChangeText={value => setSince(value.replace(/\D/g, ""))} keyboardType="number-pad" maxLength={4} error={shopSubmitted ? yearError : undefined} />
-        </View>}
+        </View>
+        <View style={[s.panel, s.setupPanel]}>
+          <Text accessibilityRole="header" style={s.label}>Shop cover photo · Optional</Text>
+          <Text style={s.copy}>Choose a clear photo of your storefront or shop interior. We’ll upload it when you submit.</Text>
+          {coverAsset && <Image accessibilityLabel="Selected shop cover" source={{ uri: coverAsset.uri }} style={s.coverPreview} />}
+          {link(coverAsset ? "Change shop photo" : "Choose shop photo", () => void run(async () => {
+            const result = await launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.85, base64: true });
+            if (!result.canceled) setCoverAsset(result.assets[0]);
+          }))}
+          {coverAsset && link("Remove selected photo", () => setCoverAsset(undefined))}
+        </View>
+        </>}
         {!picker && step === "delivery" && <>
           <View style={[s.panel, s.shopPanel]}>
             <Field label="Shop address" placeholder="Shop number, building and street" value={address} onChangeText={setAddress} maxLength={500} multiline error={deliverySubmitted ? addressError : undefined} />
@@ -364,6 +408,8 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
             <ReviewField label="Shop name" value={shopName.trim()} />
             <ReviewField label="Shop category" value={category?.name ?? ""} />
             <ReviewField label="Year opened" value={since} />
+            <ReviewField label="Shop cover photo" value={coverAsset ? "Ready to upload" : "No photo selected"} />
+            {coverAsset && <Image accessibilityLabel="Shop cover preview" source={{ uri: coverAsset.uri }} style={s.coverPreview} />}
           </View>
           <View style={[s.panel, s.setupPanel]}>
             <View style={s.reviewHeader}>
@@ -381,6 +427,13 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
         </>}
         {!picker && step === "status" && (
           <View style={s.statusBody}>
+            {session && coverAsset && <View style={[s.panel, s.setupPanel]}>
+              <Text style={s.label}>Shop photo still needs to upload</Text>
+              <Image accessibilityLabel="Pending shop cover preview" source={{ uri: coverAsset.uri }} style={s.coverPreview} />
+              {button("Retry shop photo upload", () => void run(() => uploadCover(session.token, coverAsset)))}
+              {link("Discard selected photo", () => { setCoverAsset(undefined); setError(""); })}
+            </View>}
+            {coverSaved && <Text accessibilityLiveRegion="polite" style={s.copy}>Shop cover photo submitted for review.</Text>}
             {approval && (
               <BuyerStateCard title={approval.title} copy={approval.copy} tone={approval.tone} icon={approval.icon} />
             )}
@@ -448,6 +501,8 @@ const s = themedStyles(() => StyleSheet.create({
   coverTitle:{color:theme.ink,fontSize:29,lineHeight:34,letterSpacing:-0.7,fontWeight:"700"},
   coverCaption:{color:theme.secondary,fontSize:14,lineHeight:20},
   stepHeading:{gap:8},
+  setupDescription:{color:theme.ink,fontSize:14,lineHeight:20},
+  coverPreview:{width:"100%",aspectRatio:2,borderRadius:12,backgroundColor:theme.selected},
   progressLabel:{color:theme.accentInk,fontSize:13,fontWeight:"600"},
   progress:{flexDirection:"row",gap:5,maxWidth:180,marginBottom:4},
   progressSegment:{flex:1,height:3,borderRadius:2,backgroundColor:theme.border},

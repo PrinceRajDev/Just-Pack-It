@@ -6,7 +6,7 @@ import { resolveImage } from "./images";
 import { sellerApi, type ImageUploadCapability } from "./sellerApi";
 import { LoadState, MutationFeedback, SellerButton, SellerCard, styles, useSellerData, useSellerMutation } from "./SellerWorkspaceUI";
 
-function photoBody(asset:ImagePickerAsset, limits:ImageUploadCapability) {
+export function photoBody(asset:ImagePickerAsset, limits:ImageUploadCapability) {
   const encoded = asset.base64;
   if (!encoded) throw new Error("Could not read this photo. Choose another image.");
   const maxMb = Math.floor(limits.maxBytes / (1024 * 1024));

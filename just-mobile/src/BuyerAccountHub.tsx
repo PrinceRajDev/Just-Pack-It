@@ -1,4 +1,4 @@
-import { theme, themedStyles } from "./theme";
+import { cardShadow, theme, themedStyles } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useState } from "react";
 import { StyleSheet, ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, View } from "react-native";
@@ -84,23 +84,32 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
       <Header title={title} back={back} />
       <ScrollView contentContainerStyle={s.content}>
         <View style={s.hero}>
-          <Text style={s.eyebrow}>{t(session ? "YOUR NEIGHBOURHOOD" : "WELCOME TO JUSTPACKIT", "आपका पड़ोस")}</Text>
-          <Text style={s.heroTitle}>{session ? `${t("Hello", "नमस्ते")}, ${session.name}.` : t("Your neighbourhood starts here.", "आपका पड़ोस यहीं से शुरू होता है।")}</Text>
-          <Text style={s.heroCopy}>{session ? [phone, area].filter(Boolean).join(" · ") : t("Browse freely. Sign in when you're ready to order.", "खरीदारी देखें। ऑर्डर देने के लिए साइन इन करें।")}</Text>
-          {!session && <Action label={t("Sign in / Create account", "साइन इन / खाता बनाएँ")} onPress={signIn} soft />}
+          <View style={s.heroTop}>
+            <View style={s.rowText}>
+              <Text style={s.eyebrow}>{session ? t("Your account", "आपका खाता") : "JustPackIt"}</Text>
+              <Text style={s.heroTitle}>{session ? session.name : t("Your neighbourhood starts here.", "आपका पड़ोस यहीं से शुरू होता है।")}</Text>
+              {(!session || phone || area) && <Text style={s.heroCopy}>{session ? [phone, area].filter(Boolean).join(" · ") : t("Sign in to track orders and save delivery addresses.", "ऑर्डर ट्रैक करने और पते सहेजने के लिए साइन इन करें।")}</Text>}
+            </View>
+            {session ? <View style={s.avatar}><MarketIcon name="account" /></View> : (
+              <Image source={require("../assets/startup-parcel.jpg")} style={s.heroArt} accessible={false} />
+            )}
+          </View>
+          {!session && <Action label={t("Sign in / Create account", "साइन इन / खाता बनाएँ")} onPress={signIn} />}
         </View>
         <View style={s.grid}>
-          <Tile icon="home" title={t("Saved Addresses", "सहेजे गए पते")} copy={session ? t("Manage delivery addresses", "डिलीवरी पते प्रबंधित करें") : t("Sign in to save delivery addresses", "पते सहेजने के लिए साइन इन करें")} onPress={() => guarded(addresses)} />
+          <Tile icon="location" title={t("Saved Addresses", "सहेजे गए पते")} copy={session ? t("Manage delivery addresses", "डिलीवरी पते प्रबंधित करें") : t("Sign in to save delivery addresses", "पते सहेजने के लिए साइन इन करें")} onPress={() => guarded(addresses)} />
           <Tile icon="orders" title={t("Orders", "ऑर्डर")} copy={session ? t("Track your orders", "ऑर्डर ट्रैक करें") : t("Sign in to view your orders", "ऑर्डर देखने के लिए साइन इन करें")} onPress={orders} />
         </View>
-        <Text style={s.section}>{t("ACCOUNT & PREFERENCES", "आपकी सेटिंग्स")}</Text>
-        <View style={s.card}>
+        <Text accessibilityRole="header" style={s.section}>{t("Account & preferences", "आपकी सेटिंग्स")}</Text>
+        <View style={s.menu}>
           <Row icon="account" title={t("Profile", "प्रोफ़ाइल")} copy={session ? t("Your personal details", "आपकी निजी जानकारी") : t("Sign in to manage your profile", "प्रोफ़ाइल के लिए साइन इन करें")} onPress={() => guarded(profile)} />
           <Row icon="heart" title={panels.favourites} copy={t("Saved on this device", "इस डिवाइस पर सहेजे गए")} onPress={() => open("favourites")} />
           <Row icon="language" title={panels.language} copy={hindi ? "हिन्दी" : "English"} onPress={() => open("language")} />
           <Row icon="bell" title={panels.notifications} copy={t("Order updates", "ऑर्डर के अपडेट")} onPress={() => open("notifications")} />
         </View>
-        <Action label={t("Seller access", "विक्रेता खाता")} onPress={seller} soft />
+        <View style={s.menu}>
+          <Row icon="store" title={t("Seller access", "विक्रेता खाता")} copy={t("Sign in or set up your shop", "साइन इन करें या अपनी दुकान जोड़ें")} onPress={seller} />
+        </View>
         {session && <Action label={panels.signout} onPress={() => open("signout")} soft />}
       </ScrollView>
       {panel && <Modal visible animationType="slide" onRequestClose={close}>
@@ -150,25 +159,39 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
 }
 
 function Header({title,back}:{title:string;back:()=>void}) {
-  return <View style={s.header}><Pressable accessibilityRole="button" accessibilityLabel="Go back" hitSlop={10} onPress={back}><Text style={s.chevron}>‹</Text></Pressable><Text accessibilityRole="header" style={s.panelTitle}>{title}</Text></View>;
+  return <View style={s.header}><Pressable style={s.backButton} accessibilityRole="button" accessibilityLabel="Go back" onPress={back}><MarketIcon name="chevron-left" /></Pressable><Text accessibilityRole="header" style={s.headerTitle}>{title}</Text></View>;
 }
 function Action({label,onPress,soft,disabled}:{label:string;onPress:()=>void;soft?:boolean;disabled?:boolean}) {
-  return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={[s.button,soft && s.selected,disabled && {opacity:.5}]}><Text style={[s.buttonText,soft && s.softText]}>{label}</Text></Pressable>;
+  return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [s.button,soft && s.selected,(pressed || disabled) && s.pressed]}><Text style={[s.buttonText,soft && s.softText]}>{label}</Text></Pressable>;
 }
 function Tile({icon,title,copy,onPress}:{icon:MarketIconName;title:string;copy:string;onPress:()=>void}) {
-  return <Pressable accessibilityRole="button" onPress={onPress} style={s.tile}><View style={s.icon}><MarketIcon name={icon} /></View><Text style={s.rowTitle}>{title}</Text><Text style={s.copy}>{copy}</Text></Pressable>;
+  return <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityHint={copy} onPress={onPress} style={({ pressed }) => [s.tile, pressed && s.selected]}><View style={s.tileTop}><View style={s.icon}><MarketIcon name={icon} /></View><MarketIcon name="chevron-right" /></View><Text style={s.rowTitle}>{title}</Text><Text style={s.copy}>{copy}</Text></Pressable>;
 }
-function Row({icon,title,copy,onPress}:{icon:MarketIconName | "heart" | "language";title:string;copy:string;onPress:()=>void}) {
-  return <Pressable accessibilityRole="button" onPress={onPress} style={s.row}><View style={s.icon}>{icon === "heart" || icon === "language" ? <Text style={s.panelTitle}>{icon === "heart" ? "♡" : "Aa"}</Text> : <MarketIcon name={icon} />}</View><View style={s.rowText}><Text style={s.rowTitle}>{title}</Text><Text style={s.copy}>{copy}</Text></View><Text style={s.panelTitle}>›</Text></Pressable>;
+function Row({icon,title,copy,onPress}:{icon:MarketIconName | "language";title:string;copy:string;onPress:()=>void}) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityHint={copy} onPress={onPress} style={({ pressed }) => [s.row, pressed && s.selected]}>
+    <View style={s.icon}><MarketIcon name={icon === "language" ? "globe" : icon} /></View>
+    <View style={s.rowText}><Text style={s.rowTitle}>{title}</Text><Text style={s.copy}>{copy}</Text></View>
+    <MarketIcon name="chevron-right" />
+  </Pressable>;
 }
 const s = themedStyles(() => StyleSheet.create({
-  screen:{flex:1,backgroundColor:theme.canvas}, header:{height:64,paddingHorizontal:20,flexDirection:"row",alignItems:"center",gap:16}, chevron:{fontSize:29,color:theme.accentInk},
-  content:{padding:20,gap:16,width:"100%",maxWidth:600,alignSelf:"center"},
-  hero:{backgroundColor:theme.hero,borderRadius:24,padding:20,gap:10}, eyebrow:{color:theme.accentInk,fontSize:11}, heroTitle:{color:theme.ink,fontSize:28,lineHeight:36,fontWeight:"600"}, heroCopy:{color:theme.secondary,fontSize:14,lineHeight:20},
-  grid:{flexDirection:"row",gap:12}, tile:{flex:1,minWidth:0,borderWidth:1,borderColor:theme.border,backgroundColor:theme.surface,borderRadius:20,padding:16,gap:10},
-  section:{color:theme.accentInk,fontSize:11}, card:{backgroundColor:theme.surface,borderWidth:1,borderColor:theme.border,borderRadius:20,padding:16,gap:12}, selected:{backgroundColor:theme.selected}, unread:{borderColor:theme.accentInk},
+  screen:{flex:1,backgroundColor:theme.canvas},
+  header:{minHeight:64,paddingHorizontal:20,flexDirection:"row",alignItems:"center",gap:12,width:"100%",maxWidth:600,alignSelf:"center"},
+  headerTitle:{color:theme.ink,fontSize:22,fontWeight:"700",flex:1},
+  backButton:{width:44,height:44,borderRadius:12,backgroundColor:theme.surface,borderWidth:1,borderColor:theme.border,alignItems:"center",justifyContent:"center"},
+  content:{padding:20,paddingTop:8,gap:16,width:"100%",maxWidth:600,alignSelf:"center"},
+  hero:{backgroundColor:theme.hero,borderRadius:24,padding:16,gap:16},
+  heroTop:{flexDirection:"row",alignItems:"center",gap:12},
+  heroArt:{width:96,height:96,borderRadius:16},
+  avatar:{width:48,height:48,borderRadius:16,backgroundColor:theme.surface,alignItems:"center",justifyContent:"center"},
+  eyebrow:{color:theme.accentInk,fontSize:13,fontWeight:"700"},
+  heroTitle:{color:theme.ink,fontSize:24,lineHeight:30,fontWeight:"700"}, heroCopy:{color:theme.ink,fontSize:14,lineHeight:20},
+  grid:{flexDirection:"row",gap:12}, tile:{flex:1,minWidth:0,borderWidth:1,borderColor:theme.border,backgroundColor:theme.surface,borderRadius:20,padding:12,gap:8,...cardShadow},
+  tileTop:{flexDirection:"row",alignItems:"center",justifyContent:"space-between"},
+  section:{color:theme.ink,fontSize:16,fontWeight:"700"}, card:{backgroundColor:theme.surface,borderWidth:1,borderColor:theme.border,borderRadius:20,padding:16,gap:12}, selected:{backgroundColor:theme.selected}, unread:{borderColor:theme.accentInk},
+  menu:{backgroundColor:theme.surface,borderWidth:1,borderColor:theme.border,borderRadius:20,padding:4,...cardShadow},
   favouritePhoto:{width:"100%",aspectRatio:2.6,borderRadius:12,backgroundColor:theme.selected},
-  row:{flexDirection:"row",minHeight:54,alignItems:"center",gap:12}, rowText:{flex:1,gap:3}, icon:{backgroundColor:theme.selected,width:40,height:40,borderRadius:11,alignItems:"center",justifyContent:"center"},
+  row:{flexDirection:"row",minHeight:60,alignItems:"center",gap:12,padding:8,borderRadius:16}, rowText:{flex:1,minWidth:0,gap:4}, icon:{backgroundColor:theme.selected,width:40,height:40,borderRadius:12,alignItems:"center",justifyContent:"center"},
   rowTitle:{color:theme.ink,fontSize:15,fontWeight:"600"}, panelTitle:{color:theme.accentInk,fontSize:18,fontWeight:"600"}, copy:{color:theme.muted,fontSize:13,lineHeight:18},
-  button:{backgroundColor:theme.primary,borderRadius:12,minHeight:48,alignItems:"center",justifyContent:"center",padding:12}, buttonText:{color:theme.onPrimary,fontWeight:"600",textAlign:"center"}, softText:{color:theme.accentInk},
+  button:{backgroundColor:theme.accentInk,borderRadius:12,minHeight:48,alignItems:"center",justifyContent:"center",padding:12}, buttonText:{color:theme.onPrimary,fontWeight:"700",textAlign:"center"}, softText:{color:theme.accentInk}, pressed:{opacity:0.75},
 }));

@@ -25,6 +25,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const [session, setSession] = useState<Session | null>(() => initialSession ?? null);
   const [shop, setShop] = useState<Awaited<ReturnType<typeof buyerApi.sellerShop>>>();
   const [shopError, setShopError] = useState("");
+  const [checkingShop, setCheckingShop] = useState(false);
   const [refresh, setRefresh] = useState(0);
   const [restoring, setRestoring] = useState(!initialSession);
   const [error, setError] = useState("");
@@ -87,6 +88,8 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
       if (active) { setShop(value); setShopError(""); }
     }).catch(reason => {
       if (active) setShopError(reason instanceof Error ? reason.message : "Could not load shop status.");
+    }).finally(() => {
+      if (active) setCheckingShop(false);
     });
     return () => { active = false; };
   }, [session, refresh]);
@@ -138,6 +141,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     setWorkspaceOpen(false);
     setSession(null);
     setShop(undefined);
+    setCheckingShop(false);
     setShopError("");
     go("login");
   };
@@ -152,9 +156,14 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     clearSeller();
     setError("Your seller session expired. Sign in again.");
   };
+  const refreshShop = () => {
+    setCheckingShop(true);
+    setShopError("");
+    setRefresh(value => value + 1);
+  };
   const back = () => {
     if (busy) return;
-    if (workspaceOpen) { setWorkspaceOpen(false); setRefresh(value => value+1); return; }
+    if (workspaceOpen) { setWorkspaceOpen(false); refreshShop(); return; }
     if (picker) { setPicker(null); return; }
     if (step === "shop") go(verify ? "email" : "account");
     else if (backSteps[step]) go(backSteps[step]!);
@@ -166,6 +175,12 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const title = picker === "area" ? "Choose service area" : picker === "category" ? "Choose category" :
     {login:"Welcome back", account:"Create seller account", email:"Check your email", shop:"Tell us about your shop", delivery:"Address & fulfilment", review:"Review your shop", status:"Your seller workspace"}[step];
   const hasCover = !picker && (step === "login" || step === "status");
+  const approval = shop ? ({
+    pending: { title: "Your shop is under review", copy: "We’re checking your application. Check back here for the latest status.", tone: "info", icon: "clock" },
+    approved: { title: "Your shop is approved", copy: "Open your workspace to manage your catalogue, opening hours and orders.", tone: "success", icon: "check" },
+    rejected: { title: "Changes requested", copy: "Review the feedback on your shop application.", tone: "warning", icon: "warning" },
+    suspended: { title: "Shop suspended", copy: "Your shop is currently suspended. Check the latest status here.", tone: "error", icon: "warning" },
+  } as const)[shop.status] : undefined;
   const setupSteps = verify
     ? ["account", "email", "shop", "delivery", "review"]
     : ["account", "shop", "delivery", "review"];
@@ -313,12 +328,35 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           </View>
           <Text style={s.copy}>Submitting creates your seller account and sends your shop for review.</Text>
         </>}
-        {!picker && step === "status" && <>
-          {shop ? <BuyerStateCard title={shop.status === "pending" ? "Your shop is under review" : shop.status === "approved" ? "Your shop is approved" : shop.status === "rejected" ? "Changes requested" : "Shop suspended"} copy={shop.review?.reason || shop.name} tone={shop.status === "approved" ? "success" : "warning"} /> :
-            shopError ? <BuyerStateCard title="Shop status unavailable" copy={shopError} tone="error" action="Retry status" onAction={() => setRefresh(value => value + 1)} /> : <ActivityIndicator color={theme.accentInk} />}
-          <Text style={s.copy}>Signed in as {session?.name}.</Text>
-          {link("Sign out of seller account", () => void run(signOut))}
-        </>}
+        {!picker && step === "status" && (
+          <View style={s.statusBody}>
+            {approval && (
+              <BuyerStateCard title={approval.title} copy={approval.copy} tone={approval.tone} icon={approval.icon} />
+            )}
+            {shop?.review?.reason ? (
+              <View style={s.panel}>
+                <Text style={s.summaryHeading}>Review feedback</Text>
+                <Text selectable style={s.copy}>{shop.review.reason}</Text>
+              </View>
+            ) : null}
+            {shopError ? (
+              <BuyerStateCard title="Shop status unavailable" copy={shopError} tone="error" action="Retry status" onAction={refreshShop} />
+            ) : checkingShop || !approval ? (
+              <View style={s.statusLoading} accessibilityLiveRegion="polite">
+                <ActivityIndicator color={theme.accentInk} />
+                <Text style={s.copy}>Checking shop status…</Text>
+              </View>
+            ) : (
+              <Pressable accessibilityRole="button" style={[s.link, s.applyAction]} onPress={refreshShop}>
+                <Text style={s.linkText}>Refresh shop status</Text>
+              </Pressable>
+            )}
+            <View style={s.sessionRow}>
+              <Text style={s.copy}>Signed in as {session?.name}.</Text>
+              {link("Sign out of seller account", () => void run(signOut))}
+            </View>
+          </View>
+        )}
       </ScrollView>
       {action && step !== "login" && (
         <View style={s.footer}>
@@ -353,6 +391,9 @@ const s = themedStyles(() => StyleSheet.create({
   progressSegment:{flex:1,height:3,borderRadius:2,backgroundColor:theme.border},
   progressFilled:{backgroundColor:theme.primary},
   setupPanel:{borderRadius:20,gap:10},
+  statusBody:{gap:12},
+  statusLoading:{flexDirection:"row",alignItems:"center",gap:8,paddingVertical:10},
+  sessionRow:{alignItems:"center",paddingTop:8,borderTopWidth:1,borderColor:theme.border},
   summaryHeading:{color:theme.accentInk,fontSize:14,fontWeight:"700"},
   copy:{fontSize:14,lineHeight:20,color:theme.secondary}, sage:{backgroundColor:theme.selected,borderRadius:16,padding:14,gap:6}, panel:{backgroundColor:theme.surface,borderRadius:16,borderWidth:1,borderColor:theme.border,padding:16,gap:8},
   field:{gap:8},label:{fontSize:15,fontWeight:"600",color:theme.ink},inputRow:{flexDirection:"row",alignItems:"center",backgroundColor:theme.surface,borderWidth:1,borderColor:theme.controlBorder,borderRadius:12},

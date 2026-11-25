@@ -112,7 +112,7 @@ export const marketApi = {
 };
 
 export const buyerApi = {
-  notifications: (token: string) => request<{ id: string; title: string; body: string; read: boolean }[]>("/notifications?limit=20", token),
+  notifications: (token: string) => request<{ id: string; title: string; body: string; read: boolean; createdAt?: string }[]>("/notifications?limit=20", token),
   cancelSuborder: (token: string, orderId: string, subId: string, version: number, reason: string) => request<void>(`/orders/${encodeURIComponent(orderId)}/suborders/${encodeURIComponent(subId)}/cancel`, token, { method: "POST", body: JSON.stringify({ version, reason }) }),
   async ordersPage(token: string, cursor?: string) {
     if (!apiUrl) throw new Error("Marketplace connection is missing");

@@ -145,14 +145,18 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
                 <Text style={s.rowTitle}>{t("Loading order updates…", "ऑर्डर अपडेट लोड हो रहे हैं…")}</Text>
               </View> : error ? <BuyerStateCard title="Couldn’t load notifications" copy={error} tone="error" icon="network" action="Retry notifications" onAction={() => { setError(""); setRevision(value => value+1); }} /> : updates.length ? <>
                 <Text accessibilityRole="header" style={s.section}>{t("Order updates", "ऑर्डर के अपडेट")}</Text>
-                {updates.map(item => <View key={item.id} style={[s.card,s.notification,!item.read && s.unread]}>
+                {updates.map(item => {
+                  const timestamp = item.createdAt ? Date.parse(item.createdAt) : NaN;
+                  return <View key={item.id} style={[s.card,s.notification,!item.read && s.unread]}>
                   <View style={s.icon}><MarketIcon name="bell" /></View>
                   <View style={s.rowText}>
                     {!item.read && <Text style={s.notificationBadge}>{t("Unread", "अपठित")}</Text>}
                     <Text style={s.rowTitle}>{item.title}</Text>
                     <Text style={s.copy}>{item.body}</Text>
+                    {Number.isFinite(timestamp) && <Text style={s.copy}>{new Date(timestamp).toLocaleString(hindi ? "hi-IN" : "en-IN", { dateStyle: "medium", timeStyle: "short" })}</Text>}
                   </View>
-                </View>)}
+                  </View>;
+                })}
               </> : <BuyerStateCard title={session ? "You’re all caught up." : "No updates yet."} copy={session ? "Order updates will appear here, from accepted to delivered." : "Sign in to see your order updates."} icon="bell" action={session ? "Continue shopping" : "Sign in"} onAction={() => { setPanel(null); if (session) browse(); else signIn(); }} />}
             </>}
             {panel === "favourites" && <>

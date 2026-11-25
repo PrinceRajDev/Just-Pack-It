@@ -297,16 +297,12 @@ export default function App() {
       action="Try again"
       onAction={() => void load(area)}
     />
-  ) : screen === "home" && !shops.length && !products.length ? (
-    <View style={{ flex: 1 }}>
-      <View style={[s.top, { paddingHorizontal: 20 }]}><Text style={s.brand}>JustPackIt</Text><HomeNotifications session={session} /></View>
-      <ScrollView contentContainerStyle={{ padding:20, paddingTop:36 }}>
-        <BuyerStateCard title={hindi ? "यहाँ अभी कोई दुकान नहीं है।" : "A little quiet around here."} copy={hindi ? "इस इलाके में अभी दुकानें उपलब्ध नहीं हैं। पास का कोई और इलाका चुनें।" : "There are no shops in this area yet. Try a nearby service area."} icon="shop" action={hindi ? "खरीदारी का क्षेत्र बदलें" : "Change browsing area"} onAction={() => setPicker(true)} />
-      </ScrollView>
-    </View>
   ) : screen === "home" ? (
     <Home
       onArea={() => setPicker(true)}
+      onRefreshMarket={() => void load(area)}
+      canChooseArea={areas.some(item => item.active && item.id !== area?.id) || !area}
+      hindi={hindi}
       key={homeVisit}
       header={
         !session ? (
@@ -732,6 +728,9 @@ function Home({
   onBag,
   onQuickSearch,
   onArea,
+  onRefreshMarket,
+  canChooseArea,
+  hindi,
   session,
   onAccount,
   area,
@@ -749,6 +748,9 @@ function Home({
   onBag: () => void;
   onQuickSearch: (query: string) => void;
   onArea: () => void;
+  onRefreshMarket: () => void;
+  canChooseArea: boolean;
+  hindi: boolean;
   session: Session | null;
   onAccount: () => void;
   area: ServiceArea | null;
@@ -763,6 +765,15 @@ function Home({
   onAdd: (x: Product) => void;
   onClear: () => void;
 }) {
+  const emptyShops = (
+    <BuyerStateCard
+      title={hindi ? "यहाँ अभी कोई दुकान नहीं है।" : "No shops available in this area yet"}
+      copy={hindi ? "दुकानें उपलब्ध होने पर यहाँ दिखेंगी।" : "Shops will appear here when they become available."}
+      icon="shop"
+      action={canChooseArea ? (hindi ? "खरीदारी का क्षेत्र बदलें" : "Change browsing area") : (hindi ? "फिर से देखें" : "Refresh shops")}
+      onAction={canChooseArea ? onArea : onRefreshMarket}
+    />
+  );
   const [categoryResult, setCategoryResult] = useState<{
     key: string;
     items: Product[];
@@ -1242,7 +1253,7 @@ function Home({
               keyExtractor={(item) => item.id}
               contentContainerStyle={{ padding: 16, gap: 12 }}
               ListEmptyComponent={
-                <BuyerStateCard title="A little quiet around here." copy="There are no shops in this area yet. Try a nearby service area." icon="shop" action="Change browsing area" onAction={onArea} />
+                emptyShops
               }
               renderItem={({ item }) => (
                 <ShopRow
@@ -1274,7 +1285,7 @@ function Home({
           ))}
         </View>
       ) : (
-        <BuyerStateCard title="A little quiet around here." copy="There are no shops in this area yet. Try a nearby service area." icon="shop" action="Change browsing area" onAction={onArea} />
+        <View style={{ paddingHorizontal: 20 }}>{emptyShops}</View>
       )}
 
       {session && (

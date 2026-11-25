@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { StyleSheet,
   ActivityIndicator,
   FlatList,
+  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -167,16 +168,17 @@ export function BuyerAccount({
         <Text accessibilityRole="header" style={login.headerText}>Sign in</Text>
       </View>
       <ScrollView style={login.scroll} contentContainerStyle={[login.content, login.signInContent]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <View style={login.signInHeading}>
-          <View style={login.signInIcon}>
-            <MarketIcon name={fromBag ? "bag" : "account"} />
+        <View style={login.signInHero}>
+          <View style={login.signInIntro}>
+            <Text style={login.signInBrand}>JustPackIt</Text>
+            <Text accessibilityRole="header" style={login.signInTitle}>
+              {fromBag ? "Sign in to checkout" : "Welcome back."}
+            </Text>
+            <Text style={login.signInDescription}>
+              {fromBag ? "We'll bring you back to your bag." : "View orders and save delivery addresses."}
+            </Text>
           </View>
-          <Text accessibilityRole="header" style={login.signInTitle}>
-            {fromBag ? "Sign in to checkout" : "Sign in to shop"}
-          </Text>
-          <Text style={login.description}>
-            {fromBag ? "We'll bring you back to your bag." : "View orders and save delivery addresses."}
-          </Text>
+          <Image source={require("../assets/startup-parcel.jpg")} style={login.signInArt} accessible={false} />
         </View>
         {signInError ? (
           <BuyerAuthNotice
@@ -186,7 +188,7 @@ export function BuyerAccount({
           />
         ) : null}
         <View style={[login.card, login.signInCard]}>
-          <Text style={login.label}>Mobile number</Text>
+          <Text style={[login.label, login.signInLabel]}>Mobile number</Text>
           <TextInput
             accessibilityLabel="Mobile number"
             editable={!busy}
@@ -197,10 +199,10 @@ export function BuyerAccount({
             placeholderTextColor={theme.muted}
             keyboardType="phone-pad"
             autoComplete="tel"
-            style={[login.field, login.phone]}
+            style={[login.field, login.signInField, login.phone]}
           />
-          <Text style={login.label}>Password</Text>
-          <View style={login.field}>
+          <Text style={[login.label, login.signInLabel, login.signInPasswordLabel]}>Password</Text>
+          <View style={[login.field, login.signInField]}>
             <TextInput
               accessibilityLabel="Password"
               editable={!busy}
@@ -220,7 +222,7 @@ export function BuyerAccount({
               <Text style={login.visibilityText}>{passwordVisible ? "Hide" : "Show"}</Text>
             </Pressable>
           </View>
-          <Pressable accessibilityRole="button" disabled={busy} onPress={() => void submit()} style={[login.button, login.primary]}>
+          <Pressable accessibilityRole="button" accessibilityState={{ busy }} disabled={busy} onPress={() => void submit()} style={[login.button, login.signInPrimary]}>
             {busy && <ActivityIndicator size="small" color={theme.onPrimary} />}
             <Text style={[login.buttonText, login.primaryText]}>{busy ? "Signing in…" : "Sign in"}</Text>
           </Pressable>
@@ -507,7 +509,12 @@ const login = themedStyles(() => StyleSheet.create({
   signInContent: { gap: 16, paddingBottom: 24 },
   signInHeading: { gap: 8 },
   signInIcon: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: theme.selected },
-  signInTitle: { color: theme.ink, fontSize: 32, lineHeight: 38, fontWeight: "700" },
+  signInHero: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 12, padding: 16, borderRadius: 24, backgroundColor: theme.hero },
+  signInIntro: { flexGrow: 1, flexShrink: 1, flexBasis: 144, gap: 6 },
+  signInBrand: { color: theme.accentInk, fontSize: 14, fontWeight: "800" },
+  signInTitle: { color: theme.ink, fontSize: 28, lineHeight: 32, fontWeight: "800" },
+  signInDescription: { color: theme.ink, fontSize: 14, lineHeight: 20 },
+  signInArt: { width: 100, height: 100, borderRadius: 16 },
   card: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: 16, marginTop: 20, padding: 16 },
   signInCard: { marginTop: 0, borderRadius: 20, padding: 16 },
   description: { color: theme.secondary, fontSize: 14, lineHeight: 20 },
@@ -515,7 +522,10 @@ const login = themedStyles(() => StyleSheet.create({
   codeAction: { marginTop: 10, marginBottom: 4 },
   codeStatus: { marginTop: 8 },
   label: { color: theme.muted, fontSize: 12, lineHeight: 16, fontWeight: "600", marginTop: 10 },
+  signInLabel: { color: theme.ink, fontSize: 14, marginTop: 0 },
+  signInPasswordLabel: { marginTop: 16 },
   field: { flexDirection: "row", minHeight: 52, borderWidth: 1, borderColor: theme.controlBorder, borderRadius: 12, backgroundColor: theme.surface, marginTop: 6 },
+  signInField: { backgroundColor: theme.surfaceSoft },
   phone: { paddingHorizontal: 16, fontSize: 14, color: theme.ink },
   password: { flex: 1, minWidth: 0, paddingHorizontal: 16, fontSize: 14, color: theme.ink },
   visibility: { minWidth: 56, justifyContent: "center", alignItems: "center", paddingHorizontal: 12 },
@@ -524,6 +534,7 @@ const login = themedStyles(() => StyleSheet.create({
   button: { minHeight: 50, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 12, gap: 8 },
   buttonText: { color: theme.accentInk, fontSize: 15, fontWeight: "600", textAlign: "center" },
   primary: { backgroundColor: theme.primary, marginTop: 10 },
+  signInPrimary: { backgroundColor: theme.accentInk, marginTop: 16 },
   primaryText: { color: theme.onPrimary },
   recovery: { minHeight: 44, marginTop: 2, alignItems: "center", justifyContent: "center" },
   signInOptions: { gap: 4 },

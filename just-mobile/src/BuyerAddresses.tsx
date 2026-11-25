@@ -72,7 +72,29 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
     catch (reason) { setError(reason instanceof Error ? reason.message : "Address could not save"); }
     finally { lock.current = false; setBusy(false); }
   };
-  const remove = (row: Address) => Alert.alert("Delete address?", `${row.label}: ${row.line1}`, [{ text: "Keep", style: "cancel" }, { text: "Delete", style: "destructive", onPress: () => { if (lock.current) return; lock.current = true; setBusy(true); void buyerApi.deleteAddress(token, row.id, row.version).then(() => setRows((old) => old.filter((item) => item.id !== row.id))).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Address could not delete")).finally(() => { lock.current = false; setBusy(false); }); } }]);
+  const deleteAddress = async (row: Address) => {
+    if (lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    setError(null);
+    try {
+      await buyerApi.deleteAddress(token, row.id, row.version);
+      setRows(items => items.filter(item => item.id !== row.id));
+      if (row.id === defaultId && defaultKey) {
+        setDefaultId(null);
+        await storage.deleteItemAsync(defaultKey).catch(() => undefined);
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Address could not delete");
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  };
+  const remove = (row: Address) => Alert.alert("Delete address?", `${row.label}: ${row.line1}`, [
+    { text: "Keep", style: "cancel" },
+    { text: "Delete", style: "destructive", onPress: () => void deleteAddress(row) },
+  ]);
   if (draft) {
     const closeEditor = () => {
       if (checkout) { back(); return; }
@@ -138,7 +160,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
           <View style={s.savedActions}>
             {defaultKey && !isDefault && <Pressable accessibilityRole="button" accessibilityLabel={`Set ${row.label} as default`} style={s.savedAction} disabled={busy || !defaultReady} onPress={() => void setDefaultAddress(row)}><Text style={s.link}>Set as default</Text></Pressable>}
             <Pressable accessibilityRole="button" accessibilityLabel={`Edit ${row.label} address`} style={s.savedAction} disabled={busy} onPress={() => { setEditing(row); setDraft({ label: row.label, line1: row.line1, locality: row.locality, city: row.city, pincode: row.pincode }); setError(null); }}><Text style={s.link}>Edit</Text></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${row.label} address`} style={s.savedAction} disabled={busy} onPress={() => remove(row)}><Text style={s.error}>Remove</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${row.label} address`} style={s.savedAction} disabled={busy || (!!defaultKey && !defaultReady)} onPress={() => remove(row)}><Text style={s.error}>Remove</Text></Pressable>
           </View>
         </View>;
       })}

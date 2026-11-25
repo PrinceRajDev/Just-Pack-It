@@ -30,6 +30,9 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
   const [revision, setRevision] = useState(0);
   const [tab, setTab] = useState<"products" | "shops">("products");
   const [favourites, setFavourites] = useState<Favourite[]>([]);
+  const favouriteRemovalLock = useRef(false);
+  const [removingFavourite, setRemovingFavourite] = useState<string>();
+  const [favouriteRemovalFailed, setFavouriteRemovalFailed] = useState<string>();
   const [updates, setUpdates] = useState<Awaited<ReturnType<typeof buyerApi.notifications>>>([]);
   const readLock = useRef(false);
   const [markingRead, setMarkingRead] = useState<string>();
@@ -80,6 +83,21 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
     finally { setBusy(false); }
   };
   const t = (english: string, translated: string) => hindi ? translated : english;
+  const removeFavourite = async (key: string) => {
+    if (favouriteRemovalLock.current) return;
+    favouriteRemovalLock.current = true;
+    setRemovingFavourite(key);
+    setFavouriteRemovalFailed(undefined);
+    try {
+      await storage.deleteItemAsync(key);
+      setFavourites(rows => rows.filter(item => item.key !== key));
+    } catch {
+      setFavouriteRemovalFailed(key);
+    } finally {
+      favouriteRemovalLock.current = false;
+      setRemovingFavourite(undefined);
+    }
+  };
   const markRead = async (id: string) => {
     if (!session || readLock.current) return;
     readLock.current = true;
@@ -195,8 +213,9 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
                   <FavouritePhoto uri={photo} icon={row.shop ? "store" : "bag"} />
                   <View style={s.favouriteHeading}>
                     <Text style={[s.rowTitle,s.rowText]}>{row.name}</Text>
-                    <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${row.name} from favourites`} style={s.removeFavourite} onPress={() => void storage.deleteItemAsync(row.key).then(() => setFavourites(rows => rows.filter(item => item.key !== row.key))).catch(() => setError("Couldn’t remove this favourite."))}><Text style={s.softText}>{t("Remove", "हटाएँ")}</Text></Pressable>
+                    <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${row.name} from favourites`} accessibilityState={{busy: removingFavourite === row.key}} disabled={!!removingFavourite} style={s.removeFavourite} onPress={() => void removeFavourite(row.key)}><Text style={s.softText}>{removingFavourite === row.key ? t("Removing…", "हटा रहे हैं…") : t("Remove", "हटाएँ")}</Text></Pressable>
                   </View>
+                  {favouriteRemovalFailed === row.key && <Text accessibilityRole="alert" style={s.dangerText}>{t("Couldn’t remove this favourite. Try again.", "पसंदीदा हटा नहीं सके। फिर से कोशिश करें।")}</Text>}
                   {row.product && <Text style={s.copy}>{row.product.unit}</Text>}
                   {row.shop && <Text style={s.copy}>{[row.shop.isOpen ? "Open" : "Closed", row.shop.distanceKm != null ? `${row.shop.distanceKm} km` : "", row.shop.rating != null ? `★ ${row.shop.rating}` : ""].filter(Boolean).join(" · ")}</Text>}
                   {row.shop && <Action label="View shop" soft onPress={() => { setPanel(null); openShop(row.shop!); }} />}

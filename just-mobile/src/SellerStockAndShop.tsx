@@ -408,6 +408,7 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
     || description.trim() !== (shop.description ?? "").trim();
   const pauseChanged = closed !== !!shop.temporarilyClosed;
   const savedMethods = shop.fulfilment ?? [];
+  const scheduledDays = new Set(hours.map(row => row.day)).size;
   const availabilityChanged = pauseChanged
     || JSON.stringify(hours) !== JSON.stringify(shop.openingHours ?? [])
     || methods.length !== savedMethods.length
@@ -462,18 +463,28 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
         onSaved({...shop,coverImage:uploaded.coverImage,status:uploaded.status,version:uploaded.version});
       }} />}
     {section === "Availability" && <>
-    <View style={styles.shopAvailability}>
-      <View style={styles.grow}><Text style={styles.title}>{sellerShopAvailability(shop)}</Text>
-        <Text style={styles.copy}>{pauseChanged ? "Save availability to apply this change." : shop.temporarilyClosed ? "Resume to remove the temporary closure." : "Pause temporarily when you need a break."}</Text>
+    <SellerCard>
+      <View style={styles.orderTop}>
+        <Text accessibilityRole="header" style={[styles.section, styles.grow]}>Shop availability</Text>
+        <Text style={styles.orderStatus}>{sellerShopAvailability(shop)}</Text>
       </View>
-      <Pressable accessibilityRole="switch" accessibilityLabel="Pause shop temporarily" accessibilityState={{checked:closed}} disabled={mutation.busy}
-        onPress={() => {setClosed(value=>!value);setNotice("");}} style={styles.shopSwitch}>
-        <View style={[styles.shopSwitchTrack,closed && styles.shopSwitchActive]}><View style={styles.shopSwitchKnob} /></View>
-      </Pressable>
-    </View>
+      <View style={[styles.shopAvailability, closed && styles.shopPauseActive]}>
+        <View style={styles.grow}>
+          <Text style={styles.title}>Pause shop temporarily</Text>
+          <Text style={styles.copy}>
+            {pauseChanged ? `Save availability to ${closed ? "pause" : "resume"} your shop.` : closed ? "Turn off the pause to follow your opening hours again." : "Pause the shop without changing your regular hours."}
+          </Text>
+        </View>
+        <Pressable accessibilityRole="switch" accessibilityLabel="Pause shop temporarily" aria-checked={closed} accessibilityState={{checked:closed}} disabled={mutation.busy}
+          onPress={() => {setClosed(value=>!value);setNotice("");}} style={styles.shopSwitch}>
+          <View style={[styles.shopSwitchTrack,closed && styles.shopSwitchActive]}><View style={styles.shopSwitchKnob} /></View>
+        </Pressable>
+      </View>
+    </SellerCard>
     <SellerCard>
       <Text accessibilityRole="header" style={styles.section}>Opening hours</Text>
       <Text style={styles.copy}>24-hour time · {shop.timezone || "Asia/Kolkata"}</Text>
+      {scheduledDays > 0 && <Text style={styles.copy}>Scheduled on {scheduledDays} {scheduledDays === 1 ? "day" : "days"} per week</Text>}
       {overlappingHours(hours) && <Text accessibilityLiveRegion="polite" style={styles.shopHoursWarning}>Some opening hours overlap. Check the time slots below.</Text>}
       {!hours.length && <Text style={styles.copy}>No opening hours set.</Text>}
       {hours.map((row,index) => <View key={index} style={styles.shopInterval}>

@@ -98,12 +98,12 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
           {!session && <Action label={t("Sign in / Create account", "साइन इन / खाता बनाएँ")} onPress={signIn} />}
         </View>
         <View style={s.grid}>
-          <Tile icon="location" title={t("Saved Addresses", "सहेजे गए पते")} copy={session ? t("Manage delivery addresses", "डिलीवरी पते प्रबंधित करें") : t("Sign in to save delivery addresses", "पते सहेजने के लिए साइन इन करें")} onPress={() => guarded(addresses)} />
+          <Tile icon="location" title={t("Saved Addresses", "सहेजे गए पते")} copy={session ? t("Manage delivery addresses", "डिलीवरी पते प्रबंधित करें") : t("Sign in to save delivery addresses", "पते सहेजने के लिए साइन इन करें")} onPress={guarded(addresses)} />
           <Tile icon="orders" title={t("Orders", "ऑर्डर")} copy={session ? t("Track your orders", "ऑर्डर ट्रैक करें") : t("Sign in to view your orders", "ऑर्डर देखने के लिए साइन इन करें")} onPress={orders} />
         </View>
         <Text accessibilityRole="header" style={s.section}>{t("Account & preferences", "आपकी सेटिंग्स")}</Text>
         <View style={s.menu}>
-          <Row icon="account" title={t("Profile", "प्रोफ़ाइल")} copy={session ? t("Your personal details", "आपकी निजी जानकारी") : t("Sign in to manage your profile", "प्रोफ़ाइल के लिए साइन इन करें")} onPress={() => guarded(profile)} />
+          <Row icon="account" title={t("Profile", "प्रोफ़ाइल")} copy={session ? t("Your personal details", "आपकी निजी जानकारी") : t("Sign in to manage your profile", "प्रोफ़ाइल के लिए साइन इन करें")} onPress={guarded(profile)} />
           <Row icon="heart" title={panels.favourites} copy={t("Saved on this device", "इस डिवाइस पर सहेजे गए")} onPress={() => open("favourites")} />
           <Row icon="language" title={panels.language} copy={hindi ? "हिन्दी" : "English"} onPress={() => open("language")} />
           <Row icon="bell" title={panels.notifications} copy={t("Order updates", "ऑर्डर के अपडेट")} onPress={() => open("notifications")} />

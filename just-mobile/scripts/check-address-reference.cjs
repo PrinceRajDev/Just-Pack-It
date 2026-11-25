@@ -216,6 +216,11 @@ const assert = require("node:assert/strict");
       await picker.waitFor();
     };
     await page.goto(process.env.PREVIEW_URL || "http://localhost:8113");
+    await page.getByRole("button", { name: "Account", exact: true }).click();
+    await page.getByRole("button", { name: "Saved Addresses", exact: true }).click();
+    await page.getByRole("button", { name: "Set Work as default", exact: true }).click();
+    await page.getByText("Default", { exact: true }).waitFor();
+    await page.getByRole("button", { name: "Back to Account", exact: true }).click();
     await enter();
     await page.addStyleTag({
       content:
@@ -229,7 +234,8 @@ const assert = require("node:assert/strict");
     await picker
       .getByText("Aditi Sharma · 98765 43210", { exact: true })
       .waitFor();
-    assert.equal(await home.getAttribute("aria-checked"), "true");
+    assert.equal(await work.getAttribute("aria-checked"), "true");
+    await home.click();
     for (const [width, height] of [
       [390, 844],
       [360, 800],

@@ -81,6 +81,8 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const validPhone = /^\+[1-9]\d{9,14}$/.test(normalizedPhone);
   const expires = challenge ? now >= challenge.expires : false;
   const cooldown = challenge ? Math.max(0, Math.ceil((challenge.retryAt - now) / 1000)) : 0;
+  const codeSecondsLeft = challenge ? Math.max(0, Math.ceil((challenge.expires - now) / 1000)) : 0;
+  const codeTimeLeft = `${Math.floor(codeSecondsLeft / 60)}:${String(codeSecondsLeft % 60).padStart(2, "0")}`;
 
   useEffect(() => {
     if (initialSession) {
@@ -266,7 +268,8 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
       await send();
     } else { if (!catalogue) await loadCatalogue(); go("shop"); }
   }));
-  if (!picker && step === "email") action = button("Continue with code", () => void run(async () => {
+  if (!picker && step === "email" && expires) action = button("Send a new code", () => void run(send), cooldown > 0);
+  if (!picker && step === "email" && !expires) action = button("Continue with code", () => void run(async () => {
     if (!challenge || expires || !/^\d{6}$/.test(otp)) throw new Error("Enter a valid six-digit email code.");
     if (!catalogue) await loadCatalogue();
     go("shop");
@@ -390,12 +393,12 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
             <Text style={s.label}>6-digit verification code</Text>
             <View style={s.codeRow}>
               {Array.from({length:6}, (_, index) => <View key={index} style={[s.codeCell, (index === otp.length || !!otp[index]) && s.codeCellFilled]}><Text style={s.codeDigit}>{otp[index] ?? ""}</Text></View>)}
-              <TextInput accessibilityLabel="6-digit verification code" value={otp} onChangeText={value => setOtp(value.replace(/\D/g, ""))} keyboardType="number-pad" maxLength={6} autoComplete="one-time-code" caretHidden style={s.codeInput} />
+              <TextInput accessibilityLabel="6-digit verification code" value={otp} editable={!expires && !busy} onChangeText={value => setOtp(value.replace(/\D/g, ""))} keyboardType="number-pad" maxLength={6} autoComplete="one-time-code" caretHidden style={s.codeInput} />
             </View>
-            <Text style={s.copy}>Paste the full code from your email.</Text>
+            {!expires && <Text style={s.copy}>Paste the full code from your email. Expires in {codeTimeLeft}.</Text>}
           </View>
-          {cooldown ? <Text style={s.copy}>Resend in {cooldown}s</Text> : link("Send a new code", () => void run(send))}
-          {expires && <Text style={s.error}>This code has expired.</Text>}
+          {cooldown > 0 ? <Text style={s.copy}>Resend available in {cooldown}s</Text> : !expires && link("Send a new code", () => void run(send))}
+          {expires && <Text accessibilityRole="alert" style={s.error}>This code has expired. Request a new code to continue.</Text>}
           <View style={s.sage}><Text style={s.copy}>The email code is checked when you submit your shop for approval.</Text></View>
         </View>}
         {!picker && step === "shop" && <>

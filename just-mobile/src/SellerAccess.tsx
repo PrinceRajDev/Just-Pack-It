@@ -255,14 +255,15 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const loginPasswordError = !password.trim() ? "Enter your password." : "";
   const visiblePasswordError = step === "account" && accountSubmitted ? passwordError
     : step === "login" && loginSubmitted ? loginPasswordError : undefined;
-  const passwordField = <Field label="Password" placeholder="Enter your password" value={password} onChangeText={value => { setPassword(value); if (step === "login") setError(""); }} secureTextEntry={!visible} maxLength={128} autoCapitalize="none" autoCorrect={false} autoComplete={step === "login" ? "current-password" : "new-password"} hint={step === "account" ? "Use at least 12 characters." : undefined} error={visiblePasswordError} suffix={link(visible ? "Hide" : "Show", () => setVisible(value => !value))} />;
-  let action;
-  if (!picker && step === "login") action = button("Sign in", () => void run(async () => {
+  const submitLogin = () => void run(async () => {
     setLoginSubmitted(true);
     if (phoneError || loginPasswordError) return;
     await acceptSession(await buyerApi.login(normalizedPhone, password));
     setLoginSubmitted(false);
-  }));
+  });
+  const passwordField = <Field label="Password" placeholder="Enter your password" value={password} onChangeText={value => { setPassword(value); if (step === "login") setError(""); }} secureTextEntry={!visible} maxLength={128} autoCapitalize="none" autoCorrect={false} autoComplete={step === "login" ? "current-password" : "new-password"} returnKeyType={step === "login" ? "go" : undefined} onSubmitEditing={step === "login" ? submitLogin : undefined} editable={!busy} hint={step === "account" ? "Use at least 12 characters." : undefined} error={visiblePasswordError} suffix={link(visible ? "Hide" : "Show", () => setVisible(value => !value))} />;
+  let action;
+  if (!picker && step === "login") action = button("Sign in", submitLogin);
   if (!picker && step === "account") action = button("Continue", () => void run(async () => {
     setAccountSubmitted(true);
     if (nameError || phoneError || passwordError || (verify && emailError)) return;
@@ -394,7 +395,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
         )}
         {!picker && step === "login" && <>
           <View style={[s.panel, s.loginPanel]}>
-            <Field label="Mobile number" value={phone} onChangeText={value => { setPhone(value); setError(""); }} autoComplete="tel" keyboardType="phone-pad" placeholder="+91 98765 43210" error={loginSubmitted ? phoneError : undefined} />
+            <Field label="Mobile number" value={phone} onChangeText={value => { setPhone(value); setError(""); }} autoComplete="tel" keyboardType="phone-pad" placeholder="+91 98765 43210" editable={!busy} error={loginSubmitted ? phoneError : undefined} />
             {passwordField}
             {action}
             {link("Forgot password?", () => { setPassword(""); go("recovery"); })}

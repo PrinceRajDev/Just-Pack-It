@@ -9,22 +9,25 @@ import { MarketIcon } from "./MarketIcon";
 export function BuyerProfile({ token, back, onSaved }: { token: string; back: () => void; onSaved: (name: string) => Promise<void> }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [name, setName] = useState("");
+  const [nameTouched, setNameTouched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [busy, setBusy] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const lock = useRef(false);
   useEffect(() => { let active = true; void buyerApi.profile(token).then((data) => { if (active) { setProfile(data); setName(data.name); setError(null); } }).catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "Profile could not load"); }); return () => { active = false; }; }, [token, attempt]);
+  const trimmedName = name.trim();
+  const invalidName = trimmedName.length < 2 || trimmedName.length > 100;
+  const showNameError = nameTouched && invalidName && trimmedName !== profile?.name;
   const save = async () => {
     if (!profile || lock.current) return;
-    const value = name.trim();
-    if (value.length < 2 || value.length > 100) { setError("Enter a name between 2 and 100 characters"); return; }
+    if (invalidName || trimmedName === profile.name) return;
     lock.current = true; setBusy(true); setError(null); setSuccess(false);
-    try { const updated = await buyerApi.updateProfile(token, value, profile.version); setProfile(updated); setName(updated.name); await onSaved(updated.name); setSuccess(true); }
+    try { const updated = await buyerApi.updateProfile(token, trimmedName, profile.version); setProfile(updated); setName(updated.name); setNameTouched(false); await onSaved(updated.name); setSuccess(true); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Profile could not save"); }
     finally { lock.current = false; setBusy(false); }
   };
-  const disabled = busy || !profile || name.trim() === profile.name;
+  const disabled = busy || !profile || invalidName || trimmedName === profile.name;
   return <View style={s.screen}>
     <View style={s.header}>
       <Pressable accessibilityRole="button" accessibilityLabel="Back to Account" onPress={back} style={s.backButton}><MarketIcon name="chevron-left" /></Pressable>
@@ -44,7 +47,8 @@ export function BuyerProfile({ token, back, onSaved }: { token: string; back: ()
       {!profile && error ? <Pressable accessibilityRole="button" style={s.backButton} onPress={() => { setError(null); setAttempt(value => value + 1); }}><Text style={s.retryText}>Retry profile</Text></Pressable> : null}
       {profile ? <View style={s.card}>
         <Text style={s.label}>Full name</Text>
-        <TextInput accessibilityLabel="Full name" autoComplete="name" value={name} onChangeText={(value) => { setName(value); setSuccess(false); setError(null); }} editable={!busy} maxLength={100} style={s.input} />
+        <TextInput accessibilityLabel="Full name" autoComplete="name" value={name} onChangeText={(value) => { setName(value); setNameTouched(true); setSuccess(false); setError(null); }} editable={!busy} maxLength={100} style={[s.input, showNameError && s.invalidInput]} />
+        {showNameError && <Text accessibilityRole="alert" style={s.error}>Enter a name between 2 and 100 characters.</Text>}
         <View style={s.contacts}>
           <Text accessibilityRole="header" style={s.label}>Contact details</Text>
           <Text style={s.copy}>Mobile number</Text>
@@ -73,6 +77,7 @@ const s = themedStyles(() => StyleSheet.create({
   card: { padding: 16, borderRadius: 20, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, gap: 8, ...cardShadow },
   label: { color: theme.ink, fontSize: 15, lineHeight: 20, fontWeight: "700" },
   input: { minHeight: 52, borderRadius: 12, paddingHorizontal: 16, borderWidth: 1, borderColor: theme.accentInk, backgroundColor: theme.canvas, color: theme.ink, fontSize: 16 },
+  invalidInput: { borderColor: theme.errorBorder },
   contacts: { borderTopWidth: 1, borderColor: theme.border, paddingTop: 16, marginTop: 8, gap: 8 },
   contactValue: { color: theme.ink, fontSize: 15, lineHeight: 20 },
   copy: { color: theme.ink, fontSize: 13, lineHeight: 18 },

@@ -19,12 +19,14 @@ type CheckoutEditor = {
 };
 export function BuyerAddresses({ token, back, checkout, userId, area }: { token: string; userId?: string; area?: string; back: () => void; checkout?: CheckoutEditor }) {
   const [defaultId, setDefaultId] = useState<string | null>(null);
+  const [defaultReady, setDefaultReady] = useState(false);
+  const defaultKey = userId ? `jpi.address.default.${userId}` : undefined;
   useEffect(() => {
-    if (!userId) return;
+    if (!defaultKey) return;
     let active = true;
-    void storage.getItemAsync(`jpi.address.default.${userId}`).then(value => { if (active) setDefaultId(value); }).catch(() => undefined);
+    void storage.getItemAsync(defaultKey).then(value => { if (active) setDefaultId(value); }).catch(() => undefined).finally(() => { if (active) setDefaultReady(true); });
     return () => { active = false; };
-  }, [userId]);
+  }, [defaultKey]);
   const [rows, setRows] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [savedLabel, setSavedLabel] = useState("");
@@ -36,6 +38,21 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
   const checkoutMode = !!checkout;;
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
+  const setDefaultAddress = async (row: Address) => {
+    if (!defaultKey || !defaultReady || lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    setError(null);
+    try {
+      await storage.setItemAsync(defaultKey, row.id);
+      setDefaultId(row.id);
+    } catch {
+      setError("Couldn’t set the default address. Please try again.");
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  };
   const reload = async () => { setLoading(true); setError(null); try { setRows(await buyerApi.addresses(token)); } catch (reason) { setError(reason instanceof Error ? reason.message : "Addresses could not load"); } finally { setLoading(false); } };
   useEffect(() => { if (checkoutMode) return; let active = true; void buyerApi.addresses(token).then((data) => { if (active) setRows(data); }).catch(() => { if (active) setError("Addresses could not load"); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [token, checkoutMode]);
   const save = async () => {
@@ -119,6 +136,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
           <View style={s.addressHeading}><View style={s.icon}><MarketIcon name="location" /></View><Text style={s.addressLabel}>{row.label}</Text>{isDefault && <Text style={s.defaultBadge}>Default</Text>}</View>
           <Text style={s.copy}>{row.line1}{"\n"}{row.locality}, {row.city} · {row.pincode}</Text>
           <View style={s.savedActions}>
+            {defaultKey && !isDefault && <Pressable accessibilityRole="button" accessibilityLabel={`Set ${row.label} as default`} style={s.savedAction} disabled={busy || !defaultReady} onPress={() => void setDefaultAddress(row)}><Text style={s.link}>Set as default</Text></Pressable>}
             <Pressable accessibilityRole="button" accessibilityLabel={`Edit ${row.label} address`} style={s.savedAction} disabled={busy} onPress={() => { setEditing(row); setDraft({ label: row.label, line1: row.line1, locality: row.locality, city: row.city, pincode: row.pincode }); setError(null); }}><Text style={s.link}>Edit</Text></Pressable>
             <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${row.label} address`} style={s.savedAction} disabled={busy} onPress={() => remove(row)}><Text style={s.error}>Remove</Text></Pressable>
           </View>
@@ -146,7 +164,7 @@ const s = themedStyles(() => StyleSheet.create({
   addressHeading: { flexDirection: "row", alignItems: "center", gap: 12 },
   addressLabel: { flex: 1, color: theme.ink, fontSize: 16, fontWeight: "700" },
   defaultBadge: { backgroundColor: theme.selected, color: theme.accentInk, borderRadius: 8, paddingVertical: 4, paddingHorizontal: 8, fontSize: 12, fontWeight: "700" },
-  savedActions: { flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, borderColor: theme.border },
+  savedActions: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", borderTopWidth: 1, borderColor: theme.border },
   savedAction: { minHeight: 44, paddingHorizontal: 8, justifyContent: "center" },
   footer: { padding: 16, backgroundColor: theme.surface, borderTopWidth: 1, borderColor: theme.border },
   savedAdd: { backgroundColor: theme.accentInk, width: "100%", maxWidth: 560, alignSelf: "center" },

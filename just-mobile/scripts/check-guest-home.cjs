@@ -17,6 +17,7 @@ const assert = require("node:assert/strict");
     page.on("pageerror", error => errors.push(error.message));
     let emptyMarket = false;
     let areaRequests = 0;
+    let categoryRequests = 0;
     let releaseStartup;
     const startup = new Promise(resolve => { releaseStartup = resolve; });
     await page.route("https://just-pack-it-bq64.onrender.com/**", async route => {
@@ -30,6 +31,7 @@ const assert = require("node:assert/strict");
       let records = JSON.parse(fs.readFileSync(path.join(snapshot, resource + ".json"), "utf8"));
       if (emptyMarket && (resource === "shops" || resource === "products")) records = [];
       const category = url.searchParams.get("category");
+      if (resource === "products" && category) categoryRequests++;
       const query = url.searchParams.get("q")?.toLowerCase();
       if (category) records = records.filter(item => item.categorySlug === category);
       if (query) records = records.filter(item => item.name.toLowerCase().includes(query));
@@ -82,6 +84,12 @@ const assert = require("node:assert/strict");
     for (const name of ["Groceries","Vegetables","Fruits","Dairy","Bakery","Personal care","Home care","Snacks"]) {
       await page.getByRole("button",{name,exact:true}).click();
       await page.getByText("No active products are available in this category",{exact:true}).waitFor();
+      if (name === "Groceries") {
+        const beforeRefresh = categoryRequests;
+        await page.getByRole("button", { name: "Refresh products", exact: true }).click();
+        await page.getByText("No active products are available in this category", { exact: true }).waitFor();
+        assert.equal(categoryRequests, beforeRefresh + 1);
+      }
       await page.getByRole("button",{name:"Back to Home"}).click();
     }
     await page.getByRole("button",{name:"More →",exact:true}).click();

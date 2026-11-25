@@ -889,6 +889,12 @@ function Home({
       setShopsBusy(false);
     }
   };
+  const retryCategory = () => {
+    setCategoryFailure(null);
+    setCategoryResult(null);
+    setMoreError(null);
+    setCategoryAttempt(value => value + 1);
+  };
   const productResults = (
     <>
       {picked && categoryFailure?.key === categoryKey ? (
@@ -896,12 +902,9 @@ function Home({
           title="Category could not load"
           copy={categoryFailure.message}
           action="Try again"
-          onAction={() => {
-            setCategoryFailure(null);
-            setCategoryAttempt((value) => value + 1);
-          }}
+          onAction={retryCategory}
         />
-      ) : picked && categoryResult?.key !== categoryKey ? (
+      ) : picked && area && categoryResult?.key !== categoryKey ? (
         <ActivityIndicator color={theme.accentInk} />
       ) : categoryProducts.length ? (
         <View style={s.grid}>
@@ -916,14 +919,15 @@ function Home({
             />
           ))}
         </View>
-      ) : (
-        <Empty
-          copy={
-            picked
-              ? "No active products are available in this category"
-              : "No products are available in this area yet. Try another delivery area."
-          }
+      ) : picked && area ? (
+        <BuyerStateCard
+          title="No active products are available in this category"
+          icon="bag"
+          action="Refresh products"
+          onAction={retryCategory}
         />
+      ) : (
+        <Empty copy={picked ? "Choose a delivery area to see products." : "No products are available in this area yet."} />
       )}
       {picked &&
       categoryResult?.key === categoryKey &&

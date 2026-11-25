@@ -501,7 +501,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
             <Field label="Shop address" placeholder="Shop number, building and street" value={address} onChangeText={setAddress} maxLength={500} multiline error={deliverySubmitted ? addressError : undefined} />
             <View style={s.field}>
               <Text style={s.label}>Service area</Text>
-              <Pressable accessibilityRole="button" onPress={() => openPicker("area")} style={[s.inputRow, s.categoryField, area && s.selectedOption, deliverySubmitted && !!areaError && s.invalidField]}>
+              <Pressable accessibilityRole="button" accessibilityLabel={area ? `Service area, ${area.name}, ${area.city}` : "Choose service area"} onPress={() => openPicker("area")} style={[s.inputRow, s.categoryField, area && s.selectedOption, deliverySubmitted && !!areaError && s.invalidField]}>
                 <Text style={s.categoryText}>{area ? `${area.name}, ${area.city}` : "Choose service area"}</Text>
                 <Text accessible={false} style={s.categoryText}>›</Text>
               </Pressable>

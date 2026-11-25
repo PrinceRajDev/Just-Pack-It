@@ -287,7 +287,7 @@ const assert = require("node:assert/strict");
       return route.fulfill({json,headers:sellerHeaders});
     });
     await page.route("**/settlements?*",route => route.fulfill({json:{items:[{id:"payout-qa",orderId:"seller-order-one",posted:true,payoutAmount:99,payout:{state:"recorded",reference:"fixture-bank-reference",recordedAt:"2026-11-20T20:00:00Z"}}]},headers:sellerHeaders}));
-    await page.getByRole("button",{name:"Open seller workspace",exact:true}).click();
+    await page.getByRole("button",{name:"Set up your shop",exact:true}).click();
     const workspace=page.getByTestId("native-seller-workspace");
     await workspace.getByText("Fixture Kirana",{exact:true}).waitFor();
     await workspace.getByRole("button",{name:/^Low stock/}).click();

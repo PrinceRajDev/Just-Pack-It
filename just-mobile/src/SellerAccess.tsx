@@ -467,6 +467,12 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
         </>}
         {!picker && step === "review" && <>
           <View style={[s.panel, s.setupPanel]}>
+            <Text accessibilityRole="header" style={s.reviewTitle}>Seller account</Text>
+            <ReviewField label="Full name" value={name.trim()} />
+            <ReviewField label="Sign-in mobile number" value={normalizedPhone} />
+            {verify && <ReviewField label="Verification email" value={challenge?.address ?? email.trim().toLowerCase()} />}
+          </View>
+          <View style={[s.panel, s.setupPanel]}>
             <View style={s.reviewHeader}>
               <Text accessibilityRole="header" style={s.reviewTitle}>Shop details</Text>
               {link("Edit shop details", () => { setEditingReview(true); go("shop"); })}

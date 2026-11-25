@@ -166,6 +166,10 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const title = picker === "area" ? "Choose service area" : picker === "category" ? "Choose category" :
     {login:"Welcome back", account:"Create seller account", email:"Check your email", shop:"Tell us about your shop", delivery:"Address & fulfilment", review:"Review your shop", status:"Your seller workspace"}[step];
   const hasCover = !picker && (step === "login" || step === "status");
+  const setupSteps = verify
+    ? ["account", "email", "shop", "delivery", "review"]
+    : ["account", "shop", "delivery", "review"];
+  const setupStep = setupSteps.indexOf(step) + 1;
   const button = (label:string, action:()=>void, disabled = false) => <Pressable accessibilityRole="button" disabled={disabled || busy} onPress={action} style={[s.button, (disabled || busy) && s.disabled]}><Text style={[s.buttonText,(disabled || busy) && s.disabledText]}>{busy ? "Please wait…" : label}</Text></Pressable>;
   const link = (label:string, action:()=>void) => <Pressable accessibilityRole="button" disabled={busy} onPress={action} style={s.link}><Text style={s.linkText}>{label}</Text></Pressable>;
   const passwordField = <Field label="Password" placeholder="Enter your password" value={password} onChangeText={setPassword} secureTextEntry={!visible} maxLength={128} autoCapitalize="none" autoCorrect={false} autoComplete={step === "login" ? "current-password" : "new-password"} suffix={link(visible ? "Hide" : "Show", () => setVisible(value => !value))} />;
@@ -229,7 +233,14 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
             <Text style={s.coverCaption}>{step === "login" ? "Sign in with your registered mobile number." : shop?.name ?? session?.name ?? "Seller account"}</Text>
           </View>
         </View> : <View style={s.stepHeading}>
-          {!picker && step === "email" && <Text style={s.kicker}>Verify email</Text>}
+          {!picker && setupStep > 0 && <>
+            <Text style={s.progressLabel}>Step {setupStep} of {setupSteps.length}</Text>
+            <View style={s.progress} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              {setupSteps.map((name, index) => (
+                <View key={name} style={[s.progressSegment, index < setupStep && s.progressFilled]} />
+              ))}
+            </View>
+          </>}
           <Text accessibilityRole="header" style={s.title}>{title}</Text>
         </View>}
         {!!error && <View style={s.field}><Text accessibilityRole="alert" style={s.error}>{error}</Text>{requestId && <Text selectable style={s.copy}>Support reference: {requestId}</Text>}</View>}
@@ -254,14 +265,14 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           </Pressable>
         </>}
         {!picker && step === "account" && <View style={s.panel}>
-          <Field label="Full name" value={name} onChangeText={setName} maxLength={100} />
-          <Field label="Mobile number" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholder="+91" />
-          {verify && <Field label="Email address" value={email} onChangeText={value => { setEmail(value); setChallenge(undefined); setOtp(""); }} autoCapitalize="none" keyboardType="email-address" />}
+          <Field label="Full name" autoComplete="name" value={name} onChangeText={setName} maxLength={100} />
+          <Field label="Mobile number" value={phone} onChangeText={setPhone} autoComplete="tel" keyboardType="phone-pad" placeholder="+91 98765 43210" />
+          {verify && <Field label="Email address" value={email} onChangeText={value => { setEmail(value); setChallenge(undefined); setOtp(""); }} autoComplete="email" autoCorrect={false} autoCapitalize="none" keyboardType="email-address" />}
           {passwordField}<Text style={s.copy}>Use at least 12 characters.</Text>
         </View>}
-        {!picker && step === "email" && <>
+        {!picker && step === "email" && <View style={[s.panel, s.setupPanel]}>
           <Text style={s.copy}>Enter the 6-digit code sent to</Text>
-          <Text style={s.label}>{challenge?.address ?? email}</Text>
+          <Text selectable style={s.label}>{challenge?.address ?? email}</Text>
           {link("Change email address", () => go("account"))}
           <View style={s.field}>
             <Text style={s.label}>6-digit verification code</Text>
@@ -273,8 +284,8 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           </View>
           {cooldown ? <Text style={s.copy}>Resend in {cooldown}s</Text> : link("Send a new code", () => void run(send))}
           {expires && <Text style={s.error}>This code has expired.</Text>}
-          <View style={s.sage}><Text style={s.copy}>The email code is checked when you submit your shop. Shop approval is a separate step.</Text></View>
-        </>}
+          <View style={s.sage}><Text style={s.copy}>The email code is checked when you submit your shop for approval.</Text></View>
+        </View>}
         {!picker && step === "shop" && <View style={s.panel}>
           <Field label="Shop name" value={shopName} onChangeText={setShopName} maxLength={100} />
           {link(category?.name ?? "Choose shop category", () => setPicker("category"))}
@@ -286,7 +297,22 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           <Text style={s.label}>Fulfilment methods</Text>
           {methods.map(([key, label]) => <Pressable accessibilityRole="checkbox" accessibilityState={{checked:fulfilment.includes(key)}} key={key} style={[s.panel, fulfilment.includes(key) && s.sage]} onPress={() => setFulfilment(old => old.includes(key) ? old.filter(item => item !== key) : [...old,key])}><Text style={s.label}>{label}</Text></Pressable>)}
         </View>}
-        {!picker && step === "review" && <View style={s.panel}><Text style={s.label}>{shopName}</Text><Text style={s.copy}>{category?.name} · Opened {since}</Text><Text style={s.copy}>{address}</Text><Text style={s.copy}>{area?.name}, {area?.city}</Text><Text style={s.copy}>{methods.filter(([key]) => fulfilment.includes(key)).map(([,label]) => label).join(" · ")}</Text><Text style={s.copy}>Submitting creates your seller account and sends your shop for review.</Text></View>}
+        {!picker && step === "review" && <>
+          <View style={[s.panel, s.setupPanel]}>
+            <Text style={s.summaryHeading}>Shop details</Text>
+            <Text style={s.label}>{shopName}</Text>
+            <Text style={s.copy}>{category?.name} · Opened {since}</Text>
+            {link("Edit shop details", () => go("shop"))}
+          </View>
+          <View style={[s.panel, s.setupPanel]}>
+            <Text style={s.summaryHeading}>Address & fulfilment</Text>
+            <Text style={s.label}>{address}</Text>
+            <Text style={s.copy}>{area?.name}, {area?.city}</Text>
+            <Text style={s.copy}>{methods.filter(([key]) => fulfilment.includes(key)).map(([, label]) => label).join(" · ")}</Text>
+            {link("Edit address & fulfilment", () => go("delivery"))}
+          </View>
+          <Text style={s.copy}>Submitting creates your seller account and sends your shop for review.</Text>
+        </>}
         {!picker && step === "status" && <>
           {shop ? <BuyerStateCard title={shop.status === "pending" ? "Your shop is under review" : shop.status === "approved" ? "Your shop is approved" : shop.status === "rejected" ? "Changes requested" : "Shop suspended"} copy={shop.review?.reason || shop.name} tone={shop.status === "approved" ? "success" : "warning"} /> :
             shopError ? <BuyerStateCard title="Shop status unavailable" copy={shopError} tone="error" action="Retry status" onAction={() => setRefresh(value => value + 1)} /> : <ActivityIndicator color={theme.accentInk} />}
@@ -310,7 +336,7 @@ function Field({label,suffix,...props}:TextInputProps & {label:string; suffix?:R
 
 const s = themedStyles(() => StyleSheet.create({
   screen:{flex:1,backgroundColor:theme.canvas}, header:{minHeight:64,paddingHorizontal:20,flexDirection:"row",alignItems:"center",gap:16,width:"100%",maxWidth:540,alignSelf:"center"},
-  brand:{color:theme.accentInk,fontSize:22,fontWeight:"700",flex:1}, kicker:{fontSize:11,color:theme.accentInk,fontWeight:"700"},
+  brand:{color:theme.accentInk,fontSize:22,fontWeight:"700",flex:1},
   content:{padding:20,paddingTop:20,gap:16,width:"100%",maxWidth:540,alignSelf:"center"}, title:{fontSize:29,lineHeight:38,color:theme.ink,fontWeight:"700"},
   cover:{borderRadius:22,overflow:"hidden",backgroundColor:theme.hero},
   coverPhoto:{width:"100%",height:120},
@@ -321,7 +347,13 @@ const s = themedStyles(() => StyleSheet.create({
   coverCopy:{padding:16,gap:4},
   coverTitle:{color:theme.ink,fontSize:29,lineHeight:34,letterSpacing:-0.7,fontWeight:"700"},
   coverCaption:{color:theme.secondary,fontSize:14,lineHeight:20},
-  stepHeading:{gap:4,paddingHorizontal:12,paddingVertical:8,borderLeftWidth:4,borderColor:theme.warningBorder},
+  stepHeading:{gap:8},
+  progressLabel:{color:theme.accentInk,fontSize:13,fontWeight:"600"},
+  progress:{flexDirection:"row",gap:5,maxWidth:180,marginBottom:4},
+  progressSegment:{flex:1,height:3,borderRadius:2,backgroundColor:theme.border},
+  progressFilled:{backgroundColor:theme.primary},
+  setupPanel:{borderRadius:20,gap:10},
+  summaryHeading:{color:theme.accentInk,fontSize:14,fontWeight:"700"},
   copy:{fontSize:14,lineHeight:20,color:theme.secondary}, sage:{backgroundColor:theme.selected,borderRadius:16,padding:14,gap:6}, panel:{backgroundColor:theme.surface,borderRadius:16,borderWidth:1,borderColor:theme.border,padding:16,gap:8},
   field:{gap:8},label:{fontSize:15,fontWeight:"600",color:theme.ink},inputRow:{flexDirection:"row",alignItems:"center",backgroundColor:theme.surface,borderWidth:1,borderColor:theme.controlBorder,borderRadius:12},
   input:{flex:1,minHeight:50,padding:12,color:theme.ink,fontSize:15},link:{minHeight:44,justifyContent:"center",alignItems:"center",paddingHorizontal:10},linkText:{color:theme.accentInk,textAlign:"center",fontWeight:"600"},

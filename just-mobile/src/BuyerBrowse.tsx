@@ -853,12 +853,24 @@ export function BuyerBrowse({
                   renderProduct(item, !!category || !!brand),
                 )}
               </View>
+            ) : category ? (
+              <BuyerStateCard
+                title={search || subcategory ? "No matching products" : "No products are available in this category yet."}
+                copy={search || subcategory ? "Clear the search and filters to see all products in this category." : "Check again for new listings in this category."}
+                icon="bag"
+                action={search || subcategory ? "Clear search and filters" : "Refresh products"}
+                onAction={() => {
+                  setResult(null);
+                  if (search || subcategory) {
+                    setQuery("");
+                    setSubcategory(undefined);
+                  } else {
+                    setAttempt(value => value + 1);
+                  }
+                }}
+              />
             ) : (
-              empty(
-                category
-                  ? "No products are available in this category yet."
-                  : "No matching products found.",
-              )
+              empty("No matching products found.")
             )
           ) : null}
           {moreError ? (

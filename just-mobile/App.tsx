@@ -1,3 +1,4 @@
+import { StartupScreen } from "./src/StartupScreen";
 import { theme, themedStyles } from "./src/theme";
 import { BuyerStateCard, BuyerStateSkeleton } from "./src/BuyerStateCard";
 import { StatusBar } from "expo-status-bar";
@@ -67,6 +68,7 @@ export default function App() {
   const [shop, setShop] = useState<Shop | null>(null);
   const [shopOrigin, setShopOrigin] = useState<"home" | "browse" | "bag">("home");
   const [loading, setLoading] = useState(true);
+  const [startupComplete, setStartupComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [picker, setPicker] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
@@ -294,7 +296,11 @@ export default function App() {
     return () => { active = false; };
   }, [screen]);
   const starting = !sessionReady || (!bagError && (!bagReady || loading));
-  const body = starting ? (
+  const showStartup = starting && !startupComplete;
+  if (!starting && !startupComplete) setStartupComplete(true);
+  const body = showStartup ? (
+    <StartupScreen hindi={hindi} />
+  ) : starting ? (
     <State
       title={hindi ? "JustPackIt लोड हो रहा है…" : "Loading JustPackIt…"}
       copy={hindi ? "दुकानें और उत्पाद तैयार हो रहे हैं।" : "Getting shops and products ready."}
@@ -523,7 +529,7 @@ export default function App() {
         >
           {body}
         </BuyerProductContext.Provider>
-        {(screen === "home" || screen === "browse") && count > 0 ? (
+        {!showStartup && (screen === "home" || screen === "browse") && count > 0 ? (
           <Pressable style={s.bagBar} onPress={openBag}>
             <View>
               <Text style={s.bagBarTitle}>
@@ -534,7 +540,7 @@ export default function App() {
             <Text style={s.bagBarAction}>View bag</Text>
           </Pressable>
         ) : null}
-        {screen !== "shop" && screen !== "checkout" && screen !== "confirmation" && screen !== "tracking" && !(screen === "account" && !session && accountMode !== "hub") && (
+        {!showStartup && screen !== "shop" && screen !== "checkout" && screen !== "confirmation" && screen !== "tracking" && !(screen === "account" && !session && accountMode !== "hub") && (
           <Nav
             hindi={hindi}
             guestHome={screen === "home" && !session}

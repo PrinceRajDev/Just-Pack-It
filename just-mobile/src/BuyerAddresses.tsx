@@ -82,26 +82,29 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
     </View>;
   }
   if (!checkout && !draft) return <View style={s.screen}>
-    <View style={s.header}><Pressable accessibilityLabel="Back to Account" onPress={back} hitSlop={10}><Text style={s.headerText}>‹</Text></Pressable><Text style={s.headerText}>Saved addresses</Text></View>
+    <View style={[s.header,s.savedWidth]}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Back to Account" onPress={back} style={s.savedBack}><MarketIcon name="chevron-left" /></Pressable>
+      <Text accessibilityRole="header" style={s.savedTitle}>Saved addresses</Text>
+    </View>
     <ScrollView contentContainerStyle={s.content}>
       {!!savedLabel && <BuyerStateCard title={`${savedLabel} address saved`} copy="You can select this address at checkout. Your browsing area stays the same." tone="success" compact action="Back to Account" onAction={back} />}
-      <View style={s.hero}><View style={s.icon}><MarketIcon name="home" color={theme.accentInk} /></View><Text style={s.heroTitle}>Your familiar places.</Text></View>
+      <View style={s.hero}><View style={[s.icon,s.heroIcon]}><MarketIcon name="location" /></View><Text accessibilityRole="header" style={s.heroTitle}>Your delivery addresses</Text></View>
       {error ? <><Text accessibilityRole="alert" style={s.error}>{error}</Text><Pressable onPress={() => void reload()}><Text style={s.link}>Reload addresses</Text></Pressable></> : null}
       {loading ? <ActivityIndicator color={theme.accentInk} /> : rows.map(row => {
         const isDefault = row.id === defaultId;
         return <View key={row.id} style={[s.savedCard, isDefault && s.defaultCard]}>
-          <View style={s.addressHeading}><View style={s.icon}><MarketIcon name="home" color={theme.accentInk} /></View><Text style={s.headerText}>{row.label}{isDefault ? " · Default" : ""}</Text></View>
+          <View style={s.addressHeading}><View style={s.icon}><MarketIcon name="location" /></View><Text style={s.addressLabel}>{row.label}</Text>{isDefault && <Text style={s.defaultBadge}>Default</Text>}</View>
           <Text style={s.copy}>{row.line1}{"\n"}{row.locality}, {row.city} · {row.pincode}</Text>
           <View style={s.savedActions}>
-            <Pressable disabled={busy} onPress={() => { setEditing(row); setDraft({ label: row.label, line1: row.line1, locality: row.locality, city: row.city, pincode: row.pincode }); setError(null); }}><Text style={s.link}>Edit</Text></Pressable>
-            <Pressable disabled={busy} onPress={() => remove(row)}><Text style={s.link}>Remove</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={`Edit ${row.label} address`} style={s.savedAction} disabled={busy} onPress={() => { setEditing(row); setDraft({ label: row.label, line1: row.line1, locality: row.locality, city: row.city, pincode: row.pincode }); setError(null); }}><Text style={s.link}>Edit</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${row.label} address`} style={s.savedAction} disabled={busy} onPress={() => remove(row)}><Text style={s.error}>Remove</Text></Pressable>
           </View>
         </View>;
       })}
-      {!loading && !error && !rows.length ? <Text style={s.copy}>No saved addresses yet</Text> : null}
+      {!loading && !error && !rows.length ? <BuyerStateCard title="No saved addresses yet" copy="Add an address to select it at checkout." icon="location" compact /> : null}
       <Text style={s.copy}>{area ? `Your browsing area stays ${area}. ` : ""}Choose a delivery address again at checkout.</Text>
     </ScrollView>
-    <View style={s.footer}><Pressable disabled={busy} onPress={() => { setDraft({ ...blank }); setEditing(null); setError(null); }} style={s.primary}><Text style={s.buttonText}>+ Add new address</Text></Pressable></View>
+    <View style={s.footer}><Pressable accessibilityRole="button" disabled={busy} onPress={() => { setDraft({ ...blank }); setEditing(null); setError(null); }} style={[s.primary,s.savedAdd]}><Text style={s.buttonText}>+ Add new address</Text></Pressable></View>
   </View>;
   return <ScrollView contentContainerStyle={s.page} keyboardShouldPersistTaps="handled"><Pressable disabled={busy} onPress={draft && !checkout ? () => { setDraft(null); setEditing(null); setError(null); } : back}><Text style={s.link}>← {checkout ? "Choose address" : draft ? "Address list" : "Account"}</Text></Pressable><Text style={s.title}>{draft ? editing ? "Edit address" : "Add address" : "Saved addresses"}</Text><Text style={s.copy}>Delivery availability is checked separately at checkout</Text>{error ? <Text accessibilityRole="alert" style={s.error}>{error}</Text> : null}{draft ? <View>{fields.map(({ key, label }) => <View key={key}><Text style={s.label}>{label}</Text><TextInput editable={!busy} accessibilityLabel={label} value={draft[key]} onChangeText={(value) => setDraft((old) => old ? { ...old, [key]: value } : old)} keyboardType={key === "pincode" ? "number-pad" : "default"} maxLength={key === "pincode" ? 6 : key === "line1" ? 300 : key === "label" ? 60 : 120} style={s.input} /></View>)}{checkout ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: makeDefault }} aria-checked={makeDefault} disabled={busy} onPress={() => setMakeDefault(value => !value)} style={s.link}><Text style={{color: theme.accentInk}}>{makeDefault ? "✓ " : ""}Set as default on this device</Text></Pressable> : null}<Pressable disabled={busy} onPress={() => void save()} style={s.button}><Text style={s.buttonText}>{busy ? "Saving…" : "Save address"}</Text></Pressable></View> : loading ? <ActivityIndicator color={theme.accentInk} /> : <View><Pressable disabled={busy} onPress={() => { setDraft({ ...blank }); setEditing(null); setError(null); }} style={s.button}><Text style={s.buttonText}>Add new address</Text></Pressable>{error ? <Pressable onPress={() => void reload()}><Text style={s.link}>Reload addresses</Text></Pressable> : null}{rows.map((row) => <View key={row.id} style={s.card}><Text style={s.label}>{row.label}</Text><Text style={s.copy}>{row.line1}{"\n"}{row.locality}, {row.city} {row.pincode}</Text><View style={s.actions}><Pressable disabled={busy} onPress={() => { const { id: _id, version: _version, ...values } = row; setEditing(row); setDraft({ label: values.label, line1: values.line1, locality: values.locality, city: values.city, pincode: values.pincode }); setError(null); }}><Text style={s.link}>Edit</Text></Pressable><Pressable disabled={busy} onPress={() => remove(row)}><Text style={s.error}>Delete</Text></Pressable></View></View>)}{!rows.length && !error ? <Text style={s.copy}>No saved addresses yet</Text> : null}</View>}</ScrollView>;
 }
@@ -109,15 +112,23 @@ const s = themedStyles(() => StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.canvas },
   header: { height: 64, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", gap: 16 },
   headerText: { color: theme.accentInk, fontSize: 17, fontWeight: "600", flexShrink: 1 },
-  content: { padding: 20, gap: 20 },
+  savedWidth: { width: "100%", maxWidth: 600, alignSelf: "center" },
+  savedTitle: { fontSize: 22, fontWeight: "700", color: theme.ink, flex: 1 },
+  savedBack: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, alignItems: "center", justifyContent: "center" },
+  content: { padding: 20, paddingTop: 8, gap: 16, width: "100%", maxWidth: 600, alignSelf: "center" },
   hero: { flexDirection: "row", alignItems: "center", gap: 12, padding: 20, borderRadius: 24, backgroundColor: theme.selected },
-  heroTitle: { flex: 1, color: theme.accentInk, fontSize: 24, fontWeight: "600" },
+  heroTitle: { flex: 1, color: theme.ink, fontSize: 24, fontWeight: "700" },
+  heroIcon: { backgroundColor: theme.surface },
   icon: { width: 40, height: 40, borderRadius: 12, backgroundColor: theme.selected, alignItems: "center", justifyContent: "center" },
   savedCard: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: 24, padding: 20, gap: 12 },
   defaultCard: { borderColor: theme.accentInk },
   addressHeading: { flexDirection: "row", alignItems: "center", gap: 12 },
+  addressLabel: { flex: 1, color: theme.ink, fontSize: 16, fontWeight: "700" },
+  defaultBadge: { backgroundColor: theme.selected, color: theme.accentInk, borderRadius: 8, paddingVertical: 4, paddingHorizontal: 8, fontSize: 12, fontWeight: "700" },
   savedActions: { flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, borderColor: theme.border },
-  footer: { padding: 16, backgroundColor: theme.surface },
+  savedAction: { minHeight: 44, paddingHorizontal: 8, justifyContent: "center" },
+  footer: { padding: 16, backgroundColor: theme.surface, borderTopWidth: 1, borderColor: theme.border },
+  savedAdd: { backgroundColor: theme.accentInk, width: "100%", maxWidth: 560, alignSelf: "center" },
   editorContent: { padding: 20, paddingTop: 16, gap: 16 },
   editorCard: { borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, borderRadius: 24, padding: 20, gap: 12 },
   editorField: { flex: 1, minWidth: 0, gap: 10 },

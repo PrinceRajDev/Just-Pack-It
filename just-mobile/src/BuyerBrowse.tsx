@@ -775,7 +775,7 @@ export function BuyerBrowse({
                 ))}
               </View>
             ) : (
-              <BuyerStateCard title="No brands to show yet." copy="Our shops haven’t added brand information. You can still shop by category or by shop." icon="browse" action="Browse categories" onAction={() => setTab("Categories")} />
+              <BuyerStateCard title="No brands to show yet." copy="Brand listings will appear here when products with brand information become available." icon="browse" action="Browse categories" onAction={() => setTab("Categories")} />
             )
           ) : null}
           {tab === "Shops" ? (
@@ -809,7 +809,16 @@ export function BuyerBrowse({
                       onPress={() => onShop(item)}
                     />
                   ))
-                : empty("No matching shops in this area.")}
+                : <BuyerStateCard
+                    title="No matching shops in this area."
+                    copy={areaName ? `Check again for listings near ${areaName}.` : "Check again for nearby listings."}
+                    icon="shop"
+                    action="Refresh shops"
+                    onAction={() => {
+                      setResult(null);
+                      setAttempt(value => value + 1);
+                    }}
+                  />}
             </View>
           ) : null}
           {tab === "Categories" &&

@@ -9,7 +9,11 @@ import { sellerShopApproval, sellerShopAvailability, rupees, styles, LoadState, 
 import { useAndroidBack } from "./useAndroidBack";
 import { SellerPhotoEditor } from "./SellerPhotoEditor";
 
-const filters = ["All","Active","Inactive","Low stock","Out of stock","No photo"] as const;
+const filterGroups = [
+  { label: "Availability", filters: ["All", "Active", "Inactive"] },
+  { label: "Needs attention", filters: ["Low stock", "Out of stock", "No photo"] },
+] as const;
+type CatalogueFilter = (typeof filterGroups)[number]["filters"][number];
 const shelfPhoto = require("../assets/browse-categories/grocery.webp");
 const productIcon = require("../assets/nav-icons/bag.png");
 const productSections = ["Details","Pack variants","Photo"] as const;
@@ -18,7 +22,7 @@ function stockLevels(item: SellerProduct) {
   return item.variants?.length ? item.variants.map(option => option.stock) : [item.stock];
 }
 
-function matchesCatalogueFilter(item: SellerProduct, filter: typeof filters[number]) {
+function matchesCatalogueFilter(item: SellerProduct, filter: CatalogueFilter) {
   switch (filter) {
     case "All": return true;
     case "Active": return item.active;
@@ -34,7 +38,7 @@ export type StockFilter = "Low stock" | "Out of stock";
 export function SellerCatalogue({token,stockFilter}:{token:string;stockFilter?:StockFilter}) {
   const listing = useSellerPages(sellerApi.products,token);
   const [query,setQuery] = useState("");
-  const [filter,setFilter] = useState<typeof filters[number]>(stockFilter ?? "All");
+  const [filter,setFilter] = useState<CatalogueFilter>(stockFilter ?? "All");
   const [edit,setEdit] = useState<SellerProduct | "new">();
   const [editorSection,setEditorSection] = useState<typeof productSections[number]>("Details");
   const [stockProduct,setStockProduct] = useState<SellerProduct>();
@@ -75,20 +79,30 @@ export function SellerCatalogue({token,stockFilter}:{token:string;stockFilter?:S
         <TextInput accessibilityLabel="Search products" placeholder="Search by name or pack size" placeholderTextColor={theme.secondary} value={query} onChangeText={setQuery} returnKeyType="search" style={styles.catalogueSearchInput} />
         {!!query && <Pressable accessibilityRole="button" accessibilityLabel="Clear product search" onPress={() => setQuery("")} style={styles.catalogueAction}><Text style={styles.link}>Clear</Text></Pressable>}
       </View>
-      <View style={styles.chips}>{filters.map(value => {
-        const selected = value === filter;
-        const count = value === "Low stock" || value === "Out of stock" || value === "No photo"
-          ? matching?.filter(item => matchesCatalogueFilter(item,value)).length : undefined;
-        return <Pressable key={value} accessibilityRole="tab" accessibilityLabel={value}
-          accessibilityHint={count === undefined ? undefined : `${count} matching products loaded`}
-          accessibilityState={{selected}} style={[styles.chip,styles.catalogueChip,selected && styles.dispatchModeActive]} onPress={() => setFilter(value)}>
-          <Text style={selected ? styles.dispatchModeTextActive : styles.link}>{value}{count === undefined ? "" : ` · ${count}`}</Text>
-        </Pressable>;
-      })}</View>
+      {filterGroups.map(group => (
+        <View key={group.label} style={styles.workGroup}>
+          <Text accessibilityRole="header" style={styles.workGroupTitle}>{group.label}</Text>
+          <View style={styles.chips}>{group.filters.map(value => {
+            const selected = value === filter;
+            const count = value === "Low stock" || value === "Out of stock" || value === "No photo"
+              ? matching?.filter(item => matchesCatalogueFilter(item, value)).length : undefined;
+            return (
+              <Pressable key={value} accessibilityRole="tab" accessibilityLabel={value}
+                accessibilityHint={count === undefined ? undefined : `${count} matching products loaded`}
+                accessibilityState={{selected}} style={[styles.chip, styles.catalogueChip, selected && styles.catalogueSelectedFilter]} onPress={() => setFilter(value)}>
+                <Text style={selected ? styles.dispatchModeTextActive : styles.link}>{value}{count === undefined ? "" : ` · ${count}`}</Text>
+              </Pressable>
+            );
+          })}</View>
+        </View>
+      ))}
       {listing.data?.next && <Text style={styles.copy}>Counts reflect loaded products.</Text>}
     </View>
     <View style={styles.orderTop}>
-      <Text accessibilityRole="header" style={[styles.section,styles.grow]}>{filter === "All" ? "Products" : filter}</Text>
+      <View style={styles.grow}>
+        <Text accessibilityRole="header" style={styles.section}>{filter === "All" ? "Products" : filter}</Text>
+        {rows && !!term && !listing.error && <Text style={styles.copy}>{rows.length} {rows.length === 1 ? "match" : "matches"}{listing.data?.next ? " in loaded products" : ""}</Text>}
+      </View>
       <Pressable accessibilityRole="button" accessibilityLabel="Refresh catalogue" disabled={listing.loading} onPress={listing.reload} style={styles.dispatchRefresh}><Text style={styles.link}>{listing.loading ? "Refreshing…" : "Refresh"}</Text></Pressable>
     </View>
     <LoadState error={listing.error} loading={listing.loading&&!listing.data} retry={listing.reload} />

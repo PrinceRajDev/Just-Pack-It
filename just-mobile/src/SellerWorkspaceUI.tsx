@@ -160,6 +160,7 @@ export const styles = themedStyles(() => StyleSheet.create({
   catalogueCardActions:{flexDirection:"row",flexWrap:"wrap",gap:4},
   cataloguePhotoAction:{minHeight:44,justifyContent:"center",paddingHorizontal:8,borderRadius:10},
   catalogueNotice:{color:theme.accentInk,backgroundColor:theme.success,borderRadius:12,padding:12,fontWeight:"600"},
+  catalogueSelectedFilter:{backgroundColor:theme.selected,borderColor:theme.accentInk},
   catalogueChip:{backgroundColor:theme.surfaceSoft,paddingHorizontal:10},
   catalogueProductBody:{padding:12,flexDirection:"row",alignItems:"center",gap:12},
   catalogueThumb:{width:64,height:64,borderRadius:12,backgroundColor:theme.success,overflow:"hidden",alignItems:"center",justifyContent:"center"},

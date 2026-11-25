@@ -111,13 +111,13 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
         <View style={s.menu}>
           <Row icon="store" title={t("Seller access", "विक्रेता खाता")} copy={t("Sign in or set up your shop", "साइन इन करें या अपनी दुकान जोड़ें")} onPress={seller} />
         </View>
-        {session && <Action label={panels.signout} onPress={() => open("signout")} soft />}
+        {session && <Action label={panels.signout} onPress={() => open("signout")} danger />}
       </ScrollView>
       {panel && <Modal visible animationType="slide" onRequestClose={close}>
         <SafeAreaView style={s.screen}>
           <Header title={panels[panel]} back={close} />
           <ScrollView contentContainerStyle={s.content}>
-            {error && panel !== "notifications" && (panel === "signout" ? <BuyerStateCard title="Couldn’t sign you out" copy={error} tone="error" compact icon="network" action="Try sign out again" onAction={() => void run(signOut,"Couldn’t sign out. Check your connection and try again.")} /> : <BuyerAuthNotice title="Try again" copy={error} warning />)}
+            {error && panel !== "notifications" && (panel === "signout" ? <BuyerStateCard title="Couldn’t sign you out" copy={error} tone="error" compact icon="network" /> : <BuyerAuthNotice title="Try again" copy={error} warning />)}
             {panel === "language" && <>
               <View style={[s.hero,s.heroTop]}>
                 <View style={s.avatar}><MarketIcon name="globe" /></View>
@@ -182,15 +182,15 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
                 {!favourites.some(row => tab === "products" ? row.product : row.shop) && <BuyerStateCard title="Keep your favourites close." copy="Tap the heart on a product or shop to save it on this device." icon="heart" action="Discover favourites" onAction={() => { setPanel(null); browse(); }} />}
               </>}
             </>}
-            {panel === "signout" && <>
-              <Text style={s.panelTitle}>See you around?</Text>
-              <View style={s.card}>
-                <Text style={s.panelTitle}>Sign out of JustPackIt?</Text>
-                <Text style={s.copy}>Your device favourites stay saved. Sign in again to see your orders and addresses.</Text>
-                <Action label="Keep shopping" disabled={busy} onPress={close} />
-                <Action label={busy ? "Signing out…" : error ? "Try sign out again" : "Sign out"} soft disabled={busy} onPress={() => void run(signOut,"Couldn’t sign out. Check your connection and try again.")} />
+            {panel === "signout" && (
+              <View style={[s.card,s.signOutCard]}>
+                <View style={s.avatar}><MarketIcon name="account" /></View>
+                <Text accessibilityRole="header" style={s.heroTitle}>{t("Sign out of JustPackIt?", "JustPackIt से साइन आउट करें?")}</Text>
+                <Text style={s.signOutCopy}>{t("Your favourites stay on this device. Sign in again to access your orders and addresses.", "आपके पसंदीदा इस डिवाइस पर सहेजे रहेंगे। ऑर्डर और पते देखने के लिए फिर से साइन इन करें।")}</Text>
+                <Action label={t("Keep shopping", "खरीदारी जारी रखें")} disabled={busy} onPress={close} />
+                <Action label={busy ? t("Signing out…", "साइन आउट हो रहा है…") : error ? t("Try sign out again", "फिर से कोशिश करें") : panels.signout} danger disabled={busy} onPress={() => void run(signOut,"Couldn’t sign out. Check your connection and try again.")} />
               </View>
-            </>}
+            )}
           </ScrollView>
         </SafeAreaView>
       </Modal>}
@@ -201,8 +201,8 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
 function Header({title,back}:{title:string;back:()=>void}) {
   return <View style={s.header}><Pressable style={s.backButton} accessibilityRole="button" accessibilityLabel="Go back" onPress={back}><MarketIcon name="chevron-left" /></Pressable><Text accessibilityRole="header" style={s.headerTitle}>{title}</Text></View>;
 }
-function Action({label,onPress,soft,disabled}:{label:string;onPress:()=>void;soft?:boolean;disabled?:boolean}) {
-  return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [s.button,soft && s.selected,(pressed || disabled) && s.pressed]}><Text style={[s.buttonText,soft && s.softText]}>{label}</Text></Pressable>;
+function Action({label,onPress,soft,danger,disabled}:{label:string;onPress:()=>void;soft?:boolean;danger?:boolean;disabled?:boolean}) {
+  return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [s.button,soft && s.selected,danger && s.dangerButton,(pressed || disabled) && s.pressed]}><Text style={[s.buttonText,soft && s.softText,danger && s.dangerText]}>{label}</Text></Pressable>;
 }
 function Tile({icon,title,copy,onPress}:{icon:MarketIconName;title:string;copy:string;onPress:()=>void}) {
   return <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityHint={copy} onPress={onPress} style={({ pressed }) => [s.tile, pressed && s.selected]}><View style={s.tileTop}><View style={s.icon}><MarketIcon name={icon} /></View><MarketIcon name="chevron-right" /></View><Text style={s.rowTitle}>{title}</Text><Text style={s.copy}>{copy}</Text></Pressable>;
@@ -242,6 +242,10 @@ const s = themedStyles(() => StyleSheet.create({
   favouriteTab:{flex:1,minHeight:44,padding:8,borderRadius:12,alignItems:"center",justifyContent:"center"},
   favouriteHeading:{flexDirection:"row",alignItems:"center",gap:12},
   removeFavourite:{minHeight:44,paddingHorizontal:8,justifyContent:"center"},
+  signOutCard:{padding:20,gap:16,...cardShadow},
+  signOutCopy:{color:theme.ink,fontSize:14,lineHeight:20},
+  dangerButton:{backgroundColor:theme.surface,borderWidth:1,borderColor:theme.errorBorder},
+  dangerText:{color:theme.error},
   row:{flexDirection:"row",minHeight:60,alignItems:"center",gap:12,padding:8,borderRadius:16}, rowText:{flex:1,minWidth:0,gap:4}, icon:{backgroundColor:theme.selected,width:40,height:40,borderRadius:12,alignItems:"center",justifyContent:"center"},
   rowTitle:{color:theme.ink,fontSize:15,fontWeight:"600"}, panelTitle:{color:theme.accentInk,fontSize:18,fontWeight:"600"}, copy:{color:theme.muted,fontSize:13,lineHeight:18},
   button:{backgroundColor:theme.accentInk,borderRadius:12,minHeight:48,alignItems:"center",justifyContent:"center",padding:12}, buttonText:{color:theme.onPrimary,fontWeight:"700",textAlign:"center"}, softText:{color:theme.accentInk}, pressed:{opacity:0.75},

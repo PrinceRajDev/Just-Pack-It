@@ -1,7 +1,7 @@
 import { theme, themedStyles } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useRef, useState } from "react";
-import { StyleSheet, ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { StyleSheet, ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { CheckoutHeading } from "./CheckoutPresentation";
 import { buyerApi, type Address, type BuyerProfile } from "./api";
 
@@ -32,6 +32,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
   const [savedLabel, setSavedLabel] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof Draft, string>>>({});
+  const [pendingRemoval, setPendingRemoval] = useState<string>();
   const [draft, setDraft] = useState<Draft | null>(() => checkout ? (checkout.address ? { label: checkout.address.label, line1: checkout.address.line1, locality: checkout.address.locality, city: checkout.address.city, pincode: checkout.address.pincode } : { ...blank }) : null);
   const [editing, setEditing] = useState<Address | null>(checkout?.address ?? null)
   const [makeDefault, setMakeDefault] = useState(checkout?.isDefault ?? false);
@@ -80,6 +81,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
     try {
       await buyerApi.deleteAddress(token, row.id, row.version);
       setRows(items => items.filter(item => item.id !== row.id));
+      setPendingRemoval(undefined);
       if (row.id === defaultId && defaultKey) {
         setDefaultId(null);
         await storage.deleteItemAsync(defaultKey).catch(() => undefined);
@@ -91,10 +93,6 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
       setBusy(false);
     }
   };
-  const remove = (row: Address) => Alert.alert("Delete address?", `${row.label}: ${row.line1}`, [
-    { text: "Keep", style: "cancel" },
-    { text: "Delete", style: "destructive", onPress: () => void deleteAddress(row) },
-  ]);
   if (draft) {
     const closeEditor = () => {
       if (checkout) { back(); return; }
@@ -151,7 +149,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
     <ScrollView contentContainerStyle={s.content}>
       {!!savedLabel && <BuyerStateCard title={`${savedLabel} address saved`} copy="You can select this address at checkout. Your browsing area stays the same." tone="success" compact action="Back to Account" onAction={back} />}
       <View style={s.hero}><View style={[s.icon,s.heroIcon]}><MarketIcon name="location" /></View><Text accessibilityRole="header" style={s.heroTitle}>Your delivery addresses</Text></View>
-      {error ? <><Text accessibilityRole="alert" style={s.error}>{error}</Text><Pressable onPress={() => void reload()}><Text style={s.link}>Reload addresses</Text></Pressable></> : null}
+      {error && !pendingRemoval ? <><Text accessibilityRole="alert" style={s.error}>{error}</Text><Pressable onPress={() => void reload()}><Text style={s.link}>Reload addresses</Text></Pressable></> : null}
       {loading ? <ActivityIndicator color={theme.accentInk} /> : rows.map(row => {
         const isDefault = row.id === defaultId;
         return <View key={row.id} style={[s.savedCard, isDefault && s.defaultCard]}>
@@ -159,15 +157,23 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
           <Text style={s.copy}>{row.line1}{"\n"}{row.locality}, {row.city} · {row.pincode}</Text>
           <View style={s.savedActions}>
             {defaultKey && !isDefault && <Pressable accessibilityRole="button" accessibilityLabel={`Set ${row.label} as default`} style={s.savedAction} disabled={busy || !defaultReady} onPress={() => void setDefaultAddress(row)}><Text style={s.link}>Set as default</Text></Pressable>}
-            <Pressable accessibilityRole="button" accessibilityLabel={`Edit ${row.label} address`} style={s.savedAction} disabled={busy} onPress={() => { setEditing(row); setDraft({ label: row.label, line1: row.line1, locality: row.locality, city: row.city, pincode: row.pincode }); setError(null); }}><Text style={s.link}>Edit</Text></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${row.label} address`} style={s.savedAction} disabled={busy || (!!defaultKey && !defaultReady)} onPress={() => remove(row)}><Text style={s.error}>Remove</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={`Edit ${row.label} address`} style={s.savedAction} disabled={busy} onPress={() => { setPendingRemoval(undefined); setEditing(row); setDraft({ label: row.label, line1: row.line1, locality: row.locality, city: row.city, pincode: row.pincode }); setError(null); }}><Text style={s.link}>Edit</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${row.label} address`} style={s.savedAction} disabled={busy || (!!defaultKey && !defaultReady)} onPress={() => { setError(null); setPendingRemoval(row.id); }}><Text style={s.error}>Remove</Text></Pressable>
           </View>
+          {pendingRemoval === row.id && <View style={s.removeConfirmation} accessibilityLiveRegion="polite">
+            <Text style={s.addressLabel}>Remove {row.label} address?</Text>
+            {error && <Text accessibilityRole="alert" style={s.fieldError}>{error}</Text>}
+            <View style={s.savedActions}>
+              <Pressable accessibilityRole="button" disabled={busy} style={s.savedAction} onPress={() => { setPendingRemoval(undefined); setError(null); }}><Text style={s.link}>Keep address</Text></Pressable>
+              <Pressable accessibilityRole="button" disabled={busy} style={s.savedAction} onPress={() => void deleteAddress(row)}><Text style={s.error}>{busy ? "Removing…" : "Confirm removal"}</Text></Pressable>
+            </View>
+          </View>}
         </View>;
       })}
       {!loading && !error && !rows.length ? <BuyerStateCard title="No saved addresses yet" copy="Add an address to select it at checkout." icon="location" compact /> : null}
       <Text style={s.copy}>{area ? `Your browsing area stays ${area}. ` : ""}Choose a delivery address again at checkout.</Text>
     </ScrollView>
-    <View style={s.footer}><Pressable accessibilityRole="button" disabled={busy} onPress={() => { setDraft({ ...blank }); setEditing(null); setError(null); }} style={[s.primary,s.savedAdd]}><Text style={s.buttonText}>+ Add new address</Text></Pressable></View>
+    <View style={s.footer}><Pressable accessibilityRole="button" disabled={busy} onPress={() => { setPendingRemoval(undefined); setDraft({ ...blank }); setEditing(null); setError(null); }} style={[s.primary,s.savedAdd]}><Text style={s.buttonText}>+ Add new address</Text></Pressable></View>
   </View>;
 }
 const s = themedStyles(() => StyleSheet.create({
@@ -188,6 +194,7 @@ const s = themedStyles(() => StyleSheet.create({
   defaultBadge: { backgroundColor: theme.selected, color: theme.accentInk, borderRadius: 8, paddingVertical: 4, paddingHorizontal: 8, fontSize: 12, fontWeight: "700" },
   savedActions: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", borderTopWidth: 1, borderColor: theme.border },
   savedAction: { minHeight: 44, paddingHorizontal: 8, justifyContent: "center" },
+  removeConfirmation: { backgroundColor: theme.canvas, borderRadius: 12, borderWidth: 1, borderColor: theme.errorBorder, padding: 12, gap: 8 },
   footer: { padding: 16, backgroundColor: theme.surface, borderTopWidth: 1, borderColor: theme.border },
   savedAdd: { backgroundColor: theme.accentInk, width: "100%", maxWidth: 560, alignSelf: "center" },
   editorContent: { padding: 20, paddingTop: 8, gap: 16, width: "100%", maxWidth: 600, alignSelf: "center" },

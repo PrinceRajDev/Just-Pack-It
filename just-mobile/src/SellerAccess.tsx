@@ -10,6 +10,7 @@ import { BuyerStateCard } from "./BuyerStateCard";
 import { launchImageLibraryAsync, type ImagePickerAsset } from "expo-image-picker";
 import { onboardingPhotoLimits, photoBody } from "./SellerPhotoEditor";
 import { sellerApi } from "./sellerApi";
+import { resolveImage } from "./images";
 import * as storage from "./deviceStorage";
 
 const pendingRequests = new WeakSet<object>();
@@ -63,6 +64,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const [coverAsset, setCoverAsset] = useState<ImagePickerAsset>();
   const [coverError, setCoverError] = useState("");
   const [coverSaved, setCoverSaved] = useState(false);
+  const [failedCover, setFailedCover] = useState<string>();
   const [deliverySubmitted, setDeliverySubmitted] = useState(false);
   const [editingReview, setEditingReview] = useState(false);
   const [category, setCategory] = useState<Category>();
@@ -199,7 +201,9 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     if (!limits.enabled) throw new Error("Shop photo uploads are unavailable right now.");
     const { buffer, type } = photoBody(asset, limits);
     const currentShop = await sellerApi.shop(token);
-    await sellerApi.uploadShopCover(token, currentShop, buffer, type);
+    const uploaded = await sellerApi.uploadShopCover(token, currentShop, buffer, type);
+    setFailedCover(undefined);
+    setShop({ ...currentShop, coverImage: uploaded.coverImage, status: uploaded.status });
     setCoverAsset(undefined);
     setCoverSaved(true);
     refreshShop();
@@ -223,6 +227,8 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const title = picker === "area" ? "Choose service area" : picker === "category" ? "Choose category" :
     {login:"Welcome back", account:"Create seller account", email:"Check your email", shop:"Tell us about your shop", delivery:"Address & fulfilment", review:"Review your shop", status:"Your seller workspace"}[step];
   const hasCover = !picker && (step === "login" || step === "status");
+  const savedCover = step === "status" ? resolveImage(shop?.coverImage) : undefined;
+  const showSavedCover = !!savedCover && savedCover !== failedCover;
   const approval = shop ? ({
     pending: { title: "Your shop is under review", copy: "You can prepare your catalogue and opening hours while we review your shop.", tone: "info", icon: "clock", action: "Set up your shop" },
     approved: { title: "Your shop is approved", copy: "Open your workspace to manage your catalogue, opening hours and orders.", tone: "success", icon: "check", action: "Open seller workspace" },
@@ -365,7 +371,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     {restoring ? <ActivityIndicator style={s.loader} color={theme.accentInk} /> : <>
       <ScrollView key={picker ?? step} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={[s.content, step === "login" && s.loginContent]}>
         {hasCover ? <View style={s.cover}>
-          <Image source={storefront} resizeMode="cover" style={[s.coverPhoto, step === "login" && s.loginPhoto]} accessible={false} testID="seller-access-cover" />
+          <Image source={showSavedCover ? { uri: savedCover } : storefront} resizeMode="cover" style={[s.coverPhoto, step === "login" && s.loginPhoto]} accessible={showSavedCover} accessibilityLabel={showSavedCover ? "Current shop cover photo" : undefined} onError={showSavedCover ? () => setFailedCover(savedCover) : undefined} testID="seller-access-cover" />
           <View style={s.coverCopy}>
             <Text accessibilityRole="header" style={s.coverTitle}>{title}</Text>
             <Text style={s.coverCaption}>{step === "login" ? "Sign in with your registered mobile number." : shop?.name ?? session?.name ?? "Seller account"}</Text>

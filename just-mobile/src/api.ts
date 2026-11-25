@@ -133,7 +133,7 @@ export const buyerApi = {
   register: (name: string, phone: string, password: string, proof?: { email: string; emailChallengeId: string; emailOtp: string }) => request<Session>("/auth/register", undefined, { method: "POST", body: JSON.stringify({ name, phone, password, ...proof }) }),
   registerSeller: (input: { name: string; phone: string; password: string; email?: string; emailChallengeId?: string; emailOtp?: string; shop: { name: string; address: string; categoryIds: string[]; serviceAreaIds: string[]; since: number; fulfilment: string[] } }) =>
     request<Session>("/auth/register/seller", undefined, { method: "POST", body: JSON.stringify(input) }),
-  sellerShop: (token: string) => request<{ name: string; status: "pending" | "approved" | "rejected" | "suspended"; review?: { reason?: string } }>("/seller/shop", token),
+  sellerShop: (token: string) => request<{ name: string; coverImage?: string; status: "pending" | "approved" | "rejected" | "suspended"; review?: { reason?: string } }>("/seller/shop", token),
   me: (token: string) => request<Omit<Session, "token">>("/auth/me", token),
   logout: (token: string) => request<void>("/auth/logout", token, { method: "POST" }),
   profile: (token: string) => request<BuyerProfile>("/auth/profile", token),

@@ -14,7 +14,11 @@ const clockNow = () => Date.now();
 
 const sessionKey = "jpi.seller.session";
 const storefront = require("../assets/seller-storefront.jpg");
-const methods = [["pickup", "Customer pickup"], ["seller_delivery", "Shop delivery"], ["platform_delivery", "Platform rider"]] as const;
+const methods = [
+  ["pickup", "Customer pickup", "Customers collect their orders at your shop."],
+  ["seller_delivery", "Shop delivery", "You or your team deliver the orders."],
+  ["platform_delivery", "Platform rider", "A platform rider collects orders when available."],
+] as const;
 type Step = "login" | "account" | "email" | "shop" | "delivery" | "review" | "status" | "recovery";
 const backSteps: Partial<Record<Step, Step>> = { account:"login", email:"account", delivery:"shop", review:"delivery", recovery:"login" };
 
@@ -44,6 +48,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const [address, setAddress] = useState("");
   const [since, setSince] = useState("");
   const [shopSubmitted, setShopSubmitted] = useState(false);
+  const [deliverySubmitted, setDeliverySubmitted] = useState(false);
   const [category, setCategory] = useState<Category>();
   const [area, setArea] = useState<ServiceArea>();
   const [fulfilment, setFulfilment] = useState<string[]>([]);
@@ -188,6 +193,9 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const currentYear = new Date().getFullYear();
   const shopNameError = shopName.trim().length < 2 ? "Enter at least 2 characters for your shop name." : "";
   const categoryError = category ? "" : "Select a category for your shop.";
+  const addressError = address.trim().length < 2 ? "Enter your shop’s street address." : "";
+  const areaError = area ? "" : "Select your shop’s service area.";
+  const fulfilmentError = fulfilment.length ? "" : "Select at least one way to hand over orders.";
   const yearError = /^\d{4}$/.test(since) && Number(since) >= 1900 && Number(since) <= currentYear
     ? "" : `Enter a four-digit year from 1900 to ${currentYear}.`;
   const button = (label:string, action:()=>void, disabled = false) => <Pressable accessibilityRole="button" disabled={disabled || busy} onPress={action} style={[s.button, (disabled || busy) && s.disabled]}><Text style={[s.buttonText,(disabled || busy) && s.disabledText]}>{busy ? "Please wait…" : label}</Text></Pressable>;
@@ -220,7 +228,9 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     go("delivery");
   });
   if (!picker && step === "delivery") action = button("Review shop", () => {
-    if (address.trim().length < 2 || !area || !fulfilment.length) { setError("Enter the shop address and choose a service area and fulfilment method."); return; }
+    setDeliverySubmitted(true);
+    if (addressError || areaError || fulfilmentError) return;
+    setDeliverySubmitted(false);
     go("review");
   });
   if (!picker && step === "review") action = button("Submit shop for approval", () => void run(async () => {
@@ -320,12 +330,31 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           </View>
           <Field label="Year opened" placeholder="YYYY" hint="The year your shop started operating." value={since} onChangeText={value => setSince(value.replace(/\D/g, ""))} keyboardType="number-pad" maxLength={4} error={shopSubmitted ? yearError : undefined} />
         </View>}
-        {!picker && step === "delivery" && <View style={s.panel}>
-          <Field label="Street address" value={address} onChangeText={setAddress} maxLength={500} multiline />
-          {link(area ? area.name + ", " + area.city : "Choose service area", () => setPicker("area"))}
-          <Text style={s.label}>Fulfilment methods</Text>
-          {methods.map(([key, label]) => <Pressable accessibilityRole="checkbox" accessibilityState={{checked:fulfilment.includes(key)}} key={key} style={[s.panel, fulfilment.includes(key) && s.sage]} onPress={() => setFulfilment(old => old.includes(key) ? old.filter(item => item !== key) : [...old,key])}><Text style={s.label}>{label}</Text></Pressable>)}
-        </View>}
+        {!picker && step === "delivery" && <>
+          <View style={[s.panel, s.shopPanel]}>
+            <Field label="Shop address" placeholder="Shop number, building and street" value={address} onChangeText={setAddress} maxLength={500} multiline error={deliverySubmitted ? addressError : undefined} />
+            <View style={s.field}>
+              <Text style={s.label}>Service area</Text>
+              <Pressable accessibilityRole="button" onPress={() => setPicker("area")} style={[s.inputRow, s.categoryField, area && s.selectedOption, deliverySubmitted && !!areaError && s.invalidField]}>
+                <Text style={s.categoryText}>{area ? `${area.name}, ${area.city}` : "Choose service area"}</Text>
+                <Text accessible={false} style={s.categoryText}>›</Text>
+              </Pressable>
+              {deliverySubmitted && !!areaError && <Text accessibilityRole="alert" style={s.error}>{areaError}</Text>}
+            </View>
+          </View>
+          <View style={[s.panel, s.setupPanel]}>
+            <Text accessibilityRole="header" style={s.label}>How will customers get their orders?</Text>
+            <Text style={s.copy}>Choose all methods your shop supports.</Text>
+            {methods.map(([key, label, description]) => {
+              const checked = fulfilment.includes(key);
+              return <Pressable accessibilityRole="checkbox" accessibilityState={{ checked }} key={key} style={[s.inputRow, s.methodRow, checked && s.selectedOption]} onPress={() => setFulfilment(old => old.includes(key) ? old.filter(item => item !== key) : [...old, key])}>
+                <View style={s.methodCopy}><Text style={s.label}>{label}</Text><Text style={s.copy}>{description}</Text></View>
+                <View style={[s.methodCheck, checked && s.selectedOption]}><Text style={s.categoryText}>{checked ? "✓" : ""}</Text></View>
+              </Pressable>;
+            })}
+            {deliverySubmitted && !!fulfilmentError && <Text accessibilityRole="alert" style={s.error}>{fulfilmentError}</Text>}
+          </View>
+        </>}
         {!picker && step === "review" && <>
           <View style={[s.panel, s.setupPanel]}>
             <Text style={s.summaryHeading}>Shop details</Text>
@@ -413,6 +442,9 @@ const s = themedStyles(() => StyleSheet.create({
   categoryField:{minHeight:52,paddingHorizontal:12,justifyContent:"space-between",gap:12},
   categoryText:{color:theme.accentInk,fontSize:15,fontWeight:"600",flexShrink:1},
   selectedOption:{backgroundColor:theme.selected,borderColor:theme.accentInk},
+  methodRow:{padding:12,gap:12},
+  methodCopy:{flex:1,gap:4},
+  methodCheck:{height:22,width:22,borderWidth:1,borderColor:theme.secondary,borderRadius:6,alignItems:"center",justifyContent:"center"},
   invalidField:{borderColor:theme.errorBorder},
   statusBody:{gap:12},
   statusLoading:{flexDirection:"row",alignItems:"center",gap:8,paddingVertical:10},

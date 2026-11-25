@@ -161,16 +161,13 @@ export default function App() {
       const savedAreaId = wanted
         ? wanted.id
         : await SecureStore.getItemAsync("jpi.shopping.area").catch(() => null);
-      const first = await marketApi.loadHome(wanted?.id);
+      const availableAreas = await marketApi.areas();
       const active =
-        first.areas.find((x) => x.active && x.id === savedAreaId) ??
-        first.areas.find((x) => x.active) ??
+        availableAreas.find((x) => x.active && x.id === savedAreaId) ??
+        availableAreas.find((x) => x.active) ??
         null;
-      const data =
-        active?.id === wanted?.id
-          ? first
-          : await marketApi.loadHome(active?.id);
-      setAreas(data.areas);
+      const data = await marketApi.loadHome(active?.id);
+      setAreas(availableAreas);
       setArea(active);
       setCategories(data.categories);
       setShops(data.shops);

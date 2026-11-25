@@ -101,14 +101,13 @@ export const marketApi = {
     return { products: products.items, shops: shops.items, productCursor: products.cursor, shopCursor: shops.cursor };
   },
   async loadHome(areaId?: string) {
-    const areas = await getList<ServiceArea>("/areas", "delivery areas");
     const query = areaId ? `?area=${encodeURIComponent(areaId)}&limit=24` : "?limit=24";
     const [categories, shops, products] = await Promise.all([
       getList<Category>("/categories", "categories"),
       areaId ? getList<Shop>(`/shops${query}`, "shops") : Promise.resolve([]),
       areaId ? getList<Product>(`/products${query}`, "products") : Promise.resolve([]),
     ]);
-    return { areas, categories, shops, products };
+    return { categories, shops, products };
   },
 };
 

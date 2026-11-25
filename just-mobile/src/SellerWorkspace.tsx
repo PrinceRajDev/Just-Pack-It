@@ -49,7 +49,14 @@ function readyRiderLabel(order: SellerOrder) {
   if (order.delivery.state === "picked_up") return "Picked up by rider";
   return undefined;
 }
-const statementFilters = ["All", "Recorded payouts", "Pending review"] as const;
+const statementFilters = {
+  All: undefined,
+  "Recorded payouts": "Payout recorded",
+  "Prepared payouts": "Payout prepared",
+  "Posted statements": "Statement posted",
+  "Pending review": "Pending review",
+} as const;
+type StatementFilter = keyof typeof statementFilters;
 function sellerPaymentLabel(order: SellerOrder) {
   if (order.paymentMethod === "razorpay") {
     return order.paymentStatus === "paid" ? "Paid online" : "Online payment pending";
@@ -440,14 +447,13 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
 
 function SellerSettlements({token}:{token:string}) {
   const listing = useSellerPages(sellerApi.settlements, token);
-  const [filter,setFilter] = useState<typeof statementFilters[number]>("All");
+  const [filter,setFilter] = useState<StatementFilter>("All");
   const [search,setSearch] = useState("");
   const [expanded,setExpanded] = useState<string>();
   const rows = listing.data?.items ?? [];
   const term = search.trim().replace(/^(?:order\s*#\s*|#\s*)/i, "").toLowerCase();
   const visible = rows.filter(row => {
-    const matchesFilter = filter === "All" || (filter === "Recorded payouts"
-      ? row.payout?.state === "recorded" : statementStatus(row) === "Pending review");
+    const matchesFilter = filter === "All" || statementStatus(row) === statementFilters[filter];
     return matchesFilter && (!term || row.orderId.toLowerCase().includes(term)
       || row.payout?.reference?.toLowerCase().includes(term));
   });
@@ -475,8 +481,8 @@ function SellerSettlements({token}:{token:string}) {
         value={search} onChangeText={setSearch} autoCapitalize="none" autoCorrect={false} returnKeyType="search" style={styles.catalogueSearchInput} />
       {!!search && <Pressable accessibilityRole="button" accessibilityLabel="Clear statement search" onPress={() => setSearch("")} style={styles.catalogueAction}><Text style={styles.link}>Clear</Text></Pressable>}
     </View>}
-    {rows.length > 0 && <View style={styles.chips}>{statementFilters.map(value => <Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:value === filter}} onPress={() => setFilter(value)}
-      style={[styles.chip,styles.catalogueChip,value === filter && styles.dispatchModeActive]}><Text style={value === filter ? styles.dispatchModeTextActive : styles.link}>{value}</Text></Pressable>)}</View>}
+    {rows.length > 0 && <View style={styles.chips}>{(Object.keys(statementFilters) as StatementFilter[]).map(value => <Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:value === filter}} onPress={() => setFilter(value)}
+      style={[styles.chip,styles.catalogueChip,value === filter && styles.catalogueSelectedFilter]}><Text style={value === filter ? styles.dispatchModeTextActive : styles.link}>{value}</Text></Pressable>)}</View>}
     <LoadState loading={listing.loading && !listing.data} error={listing.error} retry={listing.reload} />
     {listing.data && !listing.loading && !listing.error && !visible.length && <BuyerStateCard
       title={rows.length ? "No matching statements" : "No settlements yet"}
@@ -484,6 +490,8 @@ function SellerSettlements({token}:{token:string}) {
       icon="wallet" action={rows.length ? "Reset filters" : undefined} onAction={() => {setSearch("");setFilter("All");}} />}
     {visible.map(row => {
       const isOpen = expanded === row.id;
+      const status = statementStatus(row);
+      const isRecorded = row.payout?.state === "recorded";
       const recordedAt = row.payout?.state === "recorded" && row.payout.recordedAt
         ? Date.parse(row.payout.recordedAt) : NaN;
       const breakdown = [
@@ -496,9 +504,9 @@ function SellerSettlements({token}:{token:string}) {
         <View style={styles.statementBody}>
           <View style={styles.orderTop}>
             <Text style={[styles.title,styles.grow]}>Order #{row.orderId.slice(-8).toUpperCase()}</Text>
-            <Text style={[styles.orderStatus,(!row.posted || row.holdReason) && styles.workCountActive]}>{statementStatus(row)}</Text>
+            <Text style={[styles.orderStatus, isRecorded && styles.recordedStatus, !isRecorded && (!row.posted || row.holdReason) && styles.workCountActive]}>{status}</Text>
           </View>
-          <View style={styles.statementAmount}>
+          <View style={[styles.statementAmount, isRecorded && styles.recordedAmount]}>
             <Text style={styles.copy}>Payout amount</Text>
             <Text style={styles.statementValue}>{typeof row.payoutAmount === "number" ? rupees(row.payoutAmount) : "—"}</Text>
             {Number.isFinite(recordedAt) && <Text style={styles.copy}>Recorded {payoutDate.format(recordedAt)}</Text>}

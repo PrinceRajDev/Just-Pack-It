@@ -222,7 +222,7 @@ export function BuyerShopPage({
         contentContainerStyle={s.content}
         ListHeaderComponent={
           <>
-            {!shop.isOpen && <View style={{margin:20}}><BuyerStateCard title="Closed for now" copy={`${shop.name} is currently closed. Ordering is unavailable while the shop is closed.`} tone="warning" icon="clock" compact /></View>}
+            {!shop.isOpen && <View style={{margin:20}}><BuyerStateCard title="Closed for now" copy={`${shop.name} is currently closed. Ordering is unavailable while the shop is closed.`} tone="neutral" icon="clock" compact /></View>}
             <View style={s.cover}>
               {resolveImage(shop.coverImage) && !coverFailed ? (
                 <Image
@@ -273,7 +273,7 @@ export function BuyerShopPage({
             </View>
             <View style={s.search}>
               <View style={{ transform: [{ scale: 0.75 }] }}>
-                <MarketIcon name="search" color={theme.muted} />
+                <MarketIcon name="search" color={theme.primary} />
               </View>
               <TextInput
                 accessibilityLabel="Search this shop"
@@ -445,7 +445,7 @@ export function BuyerShopPage({
   );
 }
 const s = themedStyles(() => StyleSheet.create({
-  clearSearch: { fontSize: 18, color: theme.muted },
+  clearSearch: { fontSize: 18, color: theme.accentInk },
   header: {
     height: 60,
     flexDirection: "row",

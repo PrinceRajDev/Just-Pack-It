@@ -378,7 +378,7 @@ export function BuyerBrowse({
         ]}
       >
         <View style={{ transform: [{ scale: 0.8 }] }}>
-          <MarketIcon name="search" color={theme.muted} />
+          <MarketIcon name="search" color={theme.primary} />
         </View>
         <TextInput
           ref={searchInput}
@@ -899,7 +899,7 @@ export function BuyerBrowse({
 const styles = themedStyles(() => StyleSheet.create({
   searchState: { gap: 14, marginTop: 6 },
   placeholder: { height: 98, borderRadius: 14, backgroundColor: theme.selected },
-  clearSearch: { fontSize: 18, color: theme.muted, paddingHorizontal: 4 },
+  clearSearch: { fontSize: 18, color: theme.accentInk, paddingHorizontal: 4 },
   resultsHeading: {
     fontSize: 22,
     lineHeight: 28,

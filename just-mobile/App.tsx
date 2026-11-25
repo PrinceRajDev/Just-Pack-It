@@ -1323,6 +1323,11 @@ function Home({
               </Pressable>}
             </View>
           )}
+          {!!shopTerm && !!shopCursor && allShops.length > 0 && (
+            <Text accessibilityLiveRegion="polite" style={s.shopFilterSummary}>
+              {visibleShops.length} {visibleShops.length === 1 ? "match" : "matches"} in {allShops.length} loaded {allShops.length === 1 ? "shop" : "shops"}
+            </Text>
+          )}
           {shopsBusy && !allShops.length ? (
             <ScrollView contentContainerStyle={s.shopPanelStatus}>
               <BuyerStateCard title="Loading shops…" copy="Checking your selected area" tone="info" compact loading />
@@ -1346,7 +1351,13 @@ function Home({
               keyExtractor={(item) => item.id}
               contentContainerStyle={{ padding: 16, gap: 12 }}
               ListEmptyComponent={shopTerm && allShops.length > 0 ? (
-                <BuyerStateCard title="No matching shops" icon="shop" action="Clear filter" onAction={() => setShopFilter("")} />
+                <BuyerStateCard
+                  title={shopCursor ? "No matches in loaded shops" : "No matching shops"}
+                  copy={shopCursor ? "Load more shops below to keep looking with this filter." : undefined}
+                  icon="shop"
+                  action="Clear filter"
+                  onAction={() => setShopFilter("")}
+                />
               ) : (
                 <BuyerStateCard
                   title={hindi ? "यहाँ अभी कोई दुकान नहीं है।" : "No shops available in this area yet"}
@@ -2417,6 +2428,7 @@ const s = themedStyles(() => StyleSheet.create({
   categoryActive: { borderColor: theme.accentInk, borderWidth: 2 },
   shopPanelSearch: { marginHorizontal: 16, marginTop: 8, paddingHorizontal: 12, gap: 8, minHeight: 48, borderWidth: 1, borderColor: theme.controlBorder, borderRadius: 12, backgroundColor: theme.surface, flexDirection: "row", alignItems: "center" },
   shopPanelInput: { flex: 1, minWidth: 0, minHeight: 48, color: theme.ink, fontSize: 14 },
+  shopFilterSummary: { marginHorizontal: 16, marginTop: 8, color: theme.secondary, fontSize: 13 },
   shopPanelStatus: { padding: 16, gap: 12 },
   categoryStatus: { paddingHorizontal: 20, gap: 12 },
   categoryImage: { width: "100%", backgroundColor: theme.surfaceSoft },

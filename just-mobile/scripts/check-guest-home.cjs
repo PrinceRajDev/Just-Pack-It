@@ -530,9 +530,15 @@ const assert = require("node:assert/strict");
       });
     });
     await page.getByRole("button", { name: "See all", exact: true }).click();
+    const pagedFilter = shopSheet.getByRole("textbox", { name: "Filter shops" });
+    await pagedFilter.fill("Second Page");
+    await shopSheet.getByText("0 matches in 1 loaded shop", { exact: true }).waitFor();
+    await shopSheet.getByRole("heading", { name: "No matches in loaded shops", exact: true }).waitFor();
     await shopSheet.getByRole("button", { name: "Load more shops", exact: true }).click();
-    await shopSheet.getByText("First Page Shop", { exact: true }).waitFor();
     await shopSheet.getByText("Second Page Shop", { exact: true }).waitFor();
+    assert.equal(await pagedFilter.inputValue(), "Second Page");
+    await shopSheet.getByRole("button", { name: "Clear shop filter", exact: true }).click();
+    await shopSheet.getByText("First Page Shop", { exact: true }).waitFor();
 
     assert.deepEqual(errors,[]);
     console.log("Guest Home visuals and navigation passed at four sizes.");

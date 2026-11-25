@@ -1,4 +1,4 @@
-import { theme, themedStyles } from "./theme";
+import { cardShadow, theme, themedStyles } from "./theme";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { StyleSheet, Pressable, RefreshControl, ScrollView, Text, TextInput, View, type TextInputProps } from "react-native";
 import { ApiError } from "./api";
@@ -97,7 +97,7 @@ export const styles = themedStyles(() => StyleSheet.create({
   workGroupTitle:{color:theme.secondary,fontSize:13,fontWeight:"700"},
   workTilePriority:{borderColor:theme.accentInk},
   workList:{flexDirection:"row",flexWrap:"wrap",gap:12},
-  workTile:{width:"46%",flexGrow:1,minHeight:96,borderRadius:16,borderWidth:1,borderColor:theme.border,backgroundColor:theme.surface,padding:12,gap:8,justifyContent:"space-between"},
+  workTile:{...cardShadow,width:"46%",flexGrow:1,minHeight:96,borderRadius:16,borderWidth:1,borderColor:theme.border,backgroundColor:theme.surface,padding:12,gap:8,justifyContent:"space-between"},
   workIcon:{width:36,height:36,borderRadius:10,borderWidth:1,borderColor:theme.tileBorder,alignItems:"center",justifyContent:"center"},
   workCount:{minWidth:32,textAlign:"center",paddingHorizontal:8,paddingVertical:4,borderRadius:8,backgroundColor:theme.surfaceSoft,color:theme.secondary,fontWeight:"700",fontVariant:["tabular-nums"]},
   workCountActive:{backgroundColor:theme.warning,color:theme.warningInk},
@@ -135,7 +135,7 @@ export const styles = themedStyles(() => StyleSheet.create({
   stageCurrent:{color:theme.ink,fontWeight:"700"},
   paymentTicket:{backgroundColor:theme.surfaceSoft,padding:16,borderRadius:16,gap:8},
   ticketIcon:{backgroundColor:theme.success},
-  dispatchTicket:{borderRadius:20,borderWidth:1,borderColor:theme.border,backgroundColor:theme.surface,overflow:"hidden"},
+  dispatchTicket:{...cardShadow,borderRadius:20,borderWidth:1,borderColor:theme.border,backgroundColor:theme.surface,overflow:"hidden"},
   dispatchTicketBody:{padding:16,gap:12},
   dispatchRoute:{backgroundColor:theme.canvas,padding:12,borderRadius:12,gap:4},
   dispatchTicketFooter:{minHeight:52,paddingHorizontal:16,paddingVertical:8,flexDirection:"row",flexWrap:"wrap",alignItems:"center",justifyContent:"space-between",gap:8,backgroundColor:theme.warning,borderTopWidth:1,borderColor:theme.border},
@@ -206,7 +206,7 @@ export const styles = themedStyles(() => StyleSheet.create({
   button:{minHeight:48,borderRadius:12,backgroundColor:theme.primary,alignItems:"center",justifyContent:"center",padding:12},buttonText:{color:theme.onPrimary,fontWeight:"600",fontSize:15,textAlign:"center"},
   input:{backgroundColor:theme.canvas,minHeight:48,borderRadius:11,borderWidth:1,borderColor:theme.controlBorder,padding:12,color:theme.ink},
   sage:{backgroundColor:theme.selected}, disabled:{opacity:.55}, chips:{flexDirection:"row",flexWrap:"wrap",gap:8},chip:{padding:10,minHeight:44,justifyContent:"center",borderRadius:12,backgroundColor:theme.surface},
-  nav:{backgroundColor:theme.surface,borderTopWidth:1,borderColor:theme.border,flexDirection:"row",padding:8,gap:2},
+  nav:{backgroundColor:theme.canvas,borderTopWidth:1,borderColor:theme.border,flexDirection:"row",padding:8,gap:2},
   navItem:{flex:1,minWidth:0,borderRadius:12,minHeight:56,alignItems:"center",justifyContent:"center",gap:4},
   navIcon:{alignItems:"center",justifyContent:"center",width:44,height:32,borderRadius:10},
   sellerIcon:{width:22,height:22,flexShrink:0},

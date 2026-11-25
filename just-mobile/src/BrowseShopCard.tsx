@@ -1,4 +1,4 @@
-import { theme, themedStyles } from "./theme";
+import { cardShadow, theme, themedStyles } from "./theme";
 import { useState } from "react";
 import { StyleSheet, Image, Pressable, Text, View } from "react-native";
 import type { Shop } from "./api";
@@ -103,6 +103,7 @@ export function BrowseShopCard({
 
 const styles = themedStyles(() => StyleSheet.create({
   card: {
+    ...cardShadow,
     overflow: "hidden",
     borderWidth: 1,
     borderColor: theme.border,

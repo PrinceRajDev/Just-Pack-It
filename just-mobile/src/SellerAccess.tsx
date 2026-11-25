@@ -1,6 +1,6 @@
 import { theme, themedStyles } from "./theme";
 import { useEffect, useState } from "react";
-import { StyleSheet, useColorScheme, ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, TextInput, View, type TextInputProps } from "react-native";
+import { StyleSheet, ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, TextInput, View, type TextInputProps } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { ApiError, buyerApi, marketApi, type Category, type ServiceArea, type Session } from "./api";
 import { StatusBar } from "expo-status-bar";
@@ -19,7 +19,6 @@ type Step = "login" | "account" | "email" | "shop" | "delivery" | "review" | "st
 const backSteps: Partial<Record<Step, Step>> = { account:"login", email:"account", delivery:"shop", review:"delivery", recovery:"login" };
 
 export function SellerAccess({ close, initialSession }: { close: () => void; initialSession?: Session }) {
-  const colorScheme = useColorScheme();
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [step, setStep] = useState<Step>(() => initialSession ? "status" : "login");
   const [session, setSession] = useState<Session | null>(() => initialSession ?? null);
@@ -170,7 +169,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     else close();
   };
 
-  if (workspaceOpen && session) return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style={colorScheme === "dark" ? "light" : "dark"} /><SellerWorkspace session={session} back={back} signOut={signOut} expired={expire} /></SafeAreaView></SafeAreaProvider></Modal>;
+  if (workspaceOpen && session) return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style="dark" /><SellerWorkspace session={session} back={back} signOut={signOut} expired={expire} /></SafeAreaView></SafeAreaProvider></Modal>;
   if (step === "recovery") return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><BuyerRecovery back={() => go("login")} /></SafeAreaView></SafeAreaProvider></Modal>;
   const title = picker === "area" ? "Choose service area" : picker === "category" ? "Choose category" :
     {login:"Welcome back", account:"Create seller account", email:"Check your email", shop:"Tell us about your shop", delivery:"Address & fulfilment", review:"Review your shop", status:"Your seller workspace"}[step];
@@ -234,7 +233,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   }));
   if (!picker && step === "status") action = button("Open seller workspace", () => setWorkspaceOpen(true));
 
-  return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+  return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style="dark" />
     <View style={s.header}>
       <Text style={s.brand}>JustPackIt Seller</Text>
       {link(step === "login" || step === "status" ? "Close" : "Back", back)}

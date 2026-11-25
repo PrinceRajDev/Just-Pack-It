@@ -54,7 +54,7 @@ async function run() {
       await page.getByText(`In stock · ${stock} packs available`, { exact: true }).waitFor();
       assert.equal(await selected.getAttribute("aria-checked"), "true");
       assert.equal(await unselected.getAttribute("aria-checked"), "false");
-      assert.equal(await selected.evaluate(node => getComputedStyle(node).backgroundColor), "rgb(234, 240, 217)");
+      assert.equal(await selected.evaluate(node => getComputedStyle(node).backgroundColor), "rgb(255, 232, 216)");
       assert.equal(await unselected.evaluate(node => getComputedStyle(node).backgroundColor), "rgb(255, 255, 255)");
       await page.getByTestId("product-scroll").getByText(`₹${price}`, { exact: true }).waitFor();
       assert.equal(await add.innerText(), `Add to Bag · ₹${price}`);

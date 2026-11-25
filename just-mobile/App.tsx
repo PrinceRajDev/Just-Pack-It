@@ -14,7 +14,6 @@ import {
   Text,
   View,
   useWindowDimensions,
-  useColorScheme,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -56,7 +55,6 @@ const categoryImage = (x: Category) =>
   `https://justpackit.vercel.app/categories/${x.slug}-v1.webp`;
 
 export default function App() {
-  const colorScheme = useColorScheme();
   const [screen, setScreen] = useState<Screen>("home");
   const [areas, setAreas] = useState<ServiceArea[]>([]);
   const [area, setArea] = useState<ServiceArea | null>(null);
@@ -493,7 +491,7 @@ export default function App() {
       style={s.safe}
       edges={["top", "left", "right", "bottom"]}
     >
-      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+      <StatusBar style="dark" />
       <View style={s.app}>
         <BuyerProductContext.Provider
           value={{
@@ -681,7 +679,7 @@ function GuestHomeHeader({
           gap: 10,
         }}
       >
-        <MarketIcon name="search" color={theme.muted} />
+        <MarketIcon name="search" />
         <Text style={{ fontSize: 13, color: theme.muted, flex: 1 }}>
           Search products, shops &amp; brands
         </Text>
@@ -1039,7 +1037,7 @@ function Home({
       >
         <SafeAreaProvider>
         <SafeAreaView style={s.safe} testID="all-categories">
-          <StatusBar style="auto" />
+          <StatusBar style="dark" />
           <View style={s.categoryHeader}>
             <Text accessibilityRole="header" style={s.categoryHeading}>All categories</Text>
             <Pressable
@@ -1592,8 +1590,8 @@ function ShopPreview({
           paddingHorizontal: 8,
           paddingVertical: 5,
           borderRadius: 6,
-          backgroundColor: theme.selected,
-          color: theme.accentInk,
+          backgroundColor: item.isOpen ? theme.selected : theme.closed,
+          color: item.isOpen ? theme.accentInk : theme.ink,
           fontSize: 9,
         }}
       >
@@ -2456,7 +2454,7 @@ const s = themedStyles(() => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: theme.surface,
+    backgroundColor: theme.canvas,
   },
   navButton: {
     height: 48,
@@ -2473,7 +2471,7 @@ const s = themedStyles(() => StyleSheet.create({
   packTitle: { color: theme.accentInk, fontSize: 16, fontWeight: "600" },
   packOption: { minHeight: 44, borderRadius: 12, padding: 10, marginTop: 8, backgroundColor: theme.selected, alignItems: "center", justifyContent: "center" },
   navIcon: { width: 24, height: 24, flexShrink: 0, tintColor: theme.muted },
-  navIconActive: { tintColor: theme.accentInk },
+  navIconActive: { tintColor: theme.primary },
   navActive: { backgroundColor: theme.selected, borderWidth: 1, borderColor: theme.accentInk },
   navText: { color: theme.secondary, fontSize: 10, fontWeight: "500" },
   navTextActive: { color: theme.accentInk, fontWeight: "600" },

@@ -192,7 +192,7 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
                 {favourites.filter(row => tab === "products" ? row.product : row.shop).map(row => {
                   const photo = resolveImage(row.product?.image ?? row.shop?.coverImage);
                   return <View key={row.key} style={s.card}>
-                  {photo && <Image accessible={false} accessibilityIgnoresInvertColors source={{uri: photo}} style={s.favouritePhoto} resizeMode="cover" />}
+                  <FavouritePhoto uri={photo} icon={row.shop ? "store" : "bag"} />
                   <View style={s.favouriteHeading}>
                     <Text style={[s.rowTitle,s.rowText]}>{row.name}</Text>
                     <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${row.name} from favourites`} style={s.removeFavourite} onPress={() => void storage.deleteItemAsync(row.key).then(() => setFavourites(rows => rows.filter(item => item.key !== row.key))).catch(() => setError("Couldn’t remove this favourite."))}><Text style={s.softText}>{t("Remove", "हटाएँ")}</Text></Pressable>
@@ -219,6 +219,15 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
         </SafeAreaView>
       </Modal>}
     </View>
+  );
+}
+
+function FavouritePhoto({ uri, icon }: { uri?: string; icon: "store" | "bag" }) {
+  const [failedUri, setFailedUri] = useState<string>();
+  return uri && uri !== failedUri ? (
+    <Image accessible={false} accessibilityIgnoresInvertColors source={{uri}} style={s.favouritePhoto} resizeMode="cover" onError={() => setFailedUri(uri)} />
+  ) : (
+    <View style={s.favouritePhotoFallback}><MarketIcon name={icon} /></View>
   );
 }
 
@@ -262,6 +271,7 @@ const s = themedStyles(() => StyleSheet.create({
   radioChecked:{borderColor:theme.accentInk},
   radioDot:{width:10,height:10,borderRadius:5,backgroundColor:theme.accentInk},
   favouritePhoto:{width:"100%",aspectRatio:2.6,borderRadius:12,backgroundColor:theme.selected},
+  favouritePhotoFallback:{alignSelf:"flex-start",width:44,height:44,borderRadius:12,backgroundColor:theme.selected,alignItems:"center",justifyContent:"center"},
   favouriteTabs:{flexDirection:"row",gap:4,padding:4,borderRadius:16,backgroundColor:theme.surface,borderWidth:1,borderColor:theme.border},
   favouriteTab:{flex:1,minHeight:44,padding:8,borderRadius:12,alignItems:"center",justifyContent:"center"},
   favouriteHeading:{flexDirection:"row",alignItems:"center",gap:12},

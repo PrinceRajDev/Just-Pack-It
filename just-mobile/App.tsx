@@ -1916,12 +1916,12 @@ function ProductCard({
                 {item.variants?.map(pack => (
                   <Pressable key={pack.id} accessibilityRole="radio" accessibilityState={{checked: variantId === pack.id}} aria-checked={variantId === pack.id}
                     disabled={pack.stock <= 0} onPress={() => setVariantId(pack.id)} style={[s.packOption, pack.stock <= 0 && s.addDisabled]}>
-                    <Text style={s.addText}>{variantId === pack.id ? "◉" : "○"} {pack.label} · {money(pack.price)}{pack.stock <= 0 ? " · Unavailable" : ""}</Text>
+                    <Text style={[s.addText, pack.stock <= 0 && s.addTextDisabled]}>{variantId === pack.id ? "◉" : "○"} {pack.label} · {money(pack.price)}{pack.stock <= 0 ? " · Unavailable" : ""}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
               <Pressable accessibilityRole="button" disabled={unavailable} style={[s.packOption, unavailable && s.addDisabled]} onPress={() => { onAdd(selected); setPackOpen(false); }}>
-                <Text style={s.addText}>{unavailable ? "Unavailable" : `Add ${selected.unit} · ${money(selected.price)}`}</Text>
+                <Text style={[s.addText, unavailable && s.addTextDisabled]}>{unavailable ? "Unavailable" : `Add ${selected.unit} · ${money(selected.price)}`}</Text>
               </Pressable>
             </SafeAreaView>
           </View>
@@ -2396,9 +2396,9 @@ const s = themedStyles(() => StyleSheet.create({
     justifyContent: "center",
     backgroundColor: theme.selected,
   },
-  addDisabled: { backgroundColor: theme.surfaceSoft },
+  addDisabled: { backgroundColor: theme.closed },
   addText: { color: theme.accentInk, fontSize: 12, fontWeight: "600" },
-  addTextDisabled: { color: theme.muted },
+  addTextDisabled: { color: theme.ink },
   title: {
     minHeight: 72,
     paddingHorizontal: 16,

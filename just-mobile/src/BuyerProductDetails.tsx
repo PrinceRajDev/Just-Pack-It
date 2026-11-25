@@ -352,7 +352,7 @@ export function BuyerProductDetails({
             })}
           </View>
           {verified && offer ? (
-            <Text accessibilityLiveRegion="polite" style={s.stock}>
+            <Text accessibilityLiveRegion="polite" style={[s.stock, offer.stock <= 0 && s.stockUnavailable]}>
               {offer.stock > 0
                 ? `In stock · ${offer.stock} ${offer.stock === 1 ? "pack" : "packs"} available`
                 : "Out of stock"}
@@ -376,9 +376,9 @@ export function BuyerProductDetails({
                 setFeedback(true);
               }
             }}
-            style={[s.cta, !canAdd && { opacity: 0.55 }]}
+            style={[s.cta, !canAdd && s.ctaDisabled]}
           >
-            <Text accessibilityLiveRegion="polite" style={s.ctaText}>
+            <Text accessibilityLiveRegion="polite" style={[s.ctaText, !canAdd && s.ctaDisabledText]}>
               {feedback
                 ? "Added to bag"
                 : !verified
@@ -511,6 +511,9 @@ const s = themedStyles(() => StyleSheet.create({
     fontWeight: "600",
     color: theme.accentInk,
   },
+  stockUnavailable: { color: theme.ink },
+  ctaDisabled: { backgroundColor: theme.closed },
+  ctaDisabledText: { color: theme.ink },
   error: { fontSize: 11, lineHeight: 17, color: theme.error, marginTop: 10 },
   ctaArea: {
     paddingHorizontal: 14,

@@ -64,6 +64,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const [coverAsset, setCoverAsset] = useState<ImagePickerAsset>();
   const [coverError, setCoverError] = useState("");
   const [coverSaved, setCoverSaved] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
   const [failedCover, setFailedCover] = useState<string>();
   const [deliverySubmitted, setDeliverySubmitted] = useState(false);
   const [editingReview, setEditingReview] = useState(false);
@@ -197,16 +198,21 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     setRefresh(value => value + 1);
   };
   const uploadCover = async (token: string, asset: ImagePickerAsset) => {
-    const limits = await sellerApi.photoCapability(token);
-    if (!limits.enabled) throw new Error("Shop photo uploads are unavailable right now.");
-    const { buffer, type } = photoBody(asset, limits);
-    const currentShop = await sellerApi.shop(token);
-    const uploaded = await sellerApi.uploadShopCover(token, currentShop, buffer, type);
-    setFailedCover(undefined);
-    setShop({ ...currentShop, coverImage: uploaded.coverImage, status: uploaded.status });
-    setCoverAsset(undefined);
-    setCoverSaved(true);
-    refreshShop();
+    setCoverUploading(true);
+    try {
+      const limits = await sellerApi.photoCapability(token);
+      if (!limits.enabled) throw new Error("Shop photo uploads are unavailable right now.");
+      const { buffer, type } = photoBody(asset, limits);
+      const currentShop = await sellerApi.shop(token);
+      const uploaded = await sellerApi.uploadShopCover(token, currentShop, buffer, type);
+      setFailedCover(undefined);
+      setShop({ ...currentShop, coverImage: uploaded.coverImage, status: uploaded.status });
+      setCoverAsset(undefined);
+      setCoverSaved(true);
+      refreshShop();
+    } finally {
+      setCoverUploading(false);
+    }
   };
   const back = () => {
     if (busy) return;
@@ -547,10 +553,17 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
         {!picker && step === "status" && (
           <View style={s.statusBody}>
             {session && coverAsset && <View style={[s.panel, s.setupPanel]}>
-              <Text style={s.label}>Shop photo still needs to upload</Text>
               <Image accessibilityLabel="Pending shop cover preview" source={{ uri: coverAsset.uri }} style={s.coverPreview} />
-              {button("Retry shop photo upload", () => void run(() => uploadCover(session.token, coverAsset)))}
-              {link("Discard selected photo", () => { setCoverAsset(undefined); setError(""); })}
+              {coverUploading || busy ? (
+                <View style={s.statusLoading} accessibilityLiveRegion="polite">
+                  <ActivityIndicator color={theme.accentInk} />
+                  <Text style={s.label}>Uploading shop photo…</Text>
+                </View>
+              ) : <>
+                <Text style={s.label}>Shop photo still needs to upload</Text>
+                {button("Retry shop photo upload", () => void run(() => uploadCover(session.token, coverAsset)))}
+                {link("Discard selected photo", () => { setCoverAsset(undefined); setError(""); })}
+              </>}
             </View>}
             {coverSaved && <Text accessibilityLiveRegion="polite" style={s.copy}>Shop cover photo submitted for review.</Text>}
             {approval && !shopError && (

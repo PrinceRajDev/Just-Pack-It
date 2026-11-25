@@ -53,6 +53,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const [challenge, setChallenge] = useState<{ id:string; expires:number; retryAt:number; address:string }>();
   const [otp, setOtp] = useState("");
   const [verify, setVerify] = useState(false);
+  const [accountSubmitted, setAccountSubmitted] = useState(false);
   const [now, setNow] = useState(0);
   const [shopName, setShopName] = useState("");
   const [address, setAddress] = useState("");
@@ -244,19 +245,24 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     ? "" : `Enter a four-digit year from 1900 to ${currentYear}.`;
   const button = (label:string, action:()=>void, disabled = false) => <Pressable accessibilityRole="button" disabled={disabled || busy} onPress={action} style={[s.button, (disabled || busy) && s.disabled]}><Text style={[s.buttonText,(disabled || busy) && s.disabledText]}>{busy ? "Please wait…" : label}</Text></Pressable>;
   const link = (label:string, action:()=>void) => <Pressable accessibilityRole="button" disabled={busy} onPress={action} style={s.link}><Text style={s.linkText}>{label}</Text></Pressable>;
-  const passwordField = <Field label="Password" placeholder="Enter your password" value={password} onChangeText={setPassword} secureTextEntry={!visible} maxLength={128} autoCapitalize="none" autoCorrect={false} autoComplete={step === "login" ? "current-password" : "new-password"} suffix={link(visible ? "Hide" : "Show", () => setVisible(value => !value))} />;
+  const nameError = name.trim().length < 2 ? "Enter your full name." : "";
+  const phoneError = !validPhone ? "Enter a valid mobile number with its country code." : "";
+  const passwordError = password.length < 12 ? "Use at least 12 characters." : "";
+  const emailError = !/^\S+@\S+\.\S+$/.test(email.trim()) ? "Enter a valid email address." : "";
+  const passwordField = <Field label="Password" placeholder="Enter your password" value={password} onChangeText={setPassword} secureTextEntry={!visible} maxLength={128} autoCapitalize="none" autoCorrect={false} autoComplete={step === "login" ? "current-password" : "new-password"} hint={step === "account" ? "Use at least 12 characters." : undefined} error={step === "account" && accountSubmitted ? passwordError : undefined} suffix={link(visible ? "Hide" : "Show", () => setVisible(value => !value))} />;
   let action;
   if (!picker && step === "login") action = button("Sign in", () => void run(async () => {
     if (!validPhone) throw new Error("Enter your registered mobile number, including the country code if needed.");
     await acceptSession(await buyerApi.login(normalizedPhone, password));
   }), !phone || !password);
   if (!picker && step === "account") action = button("Continue", () => void run(async () => {
-    if (name.trim().length < 2 || !validPhone || password.length < 12) throw new Error("Enter your name, valid mobile number and a password with at least 12 characters.");
+    setAccountSubmitted(true);
+    if (nameError || phoneError || passwordError || (verify && emailError)) return;
     const options = await buyerApi.registrationOptions();
     setVerify(options.emailOtpRequired);
     if (options.emailOtpRequired) {
       if (!options.emailOtpAvailable) throw new Error("Email verification is unavailable right now. Try again later.");
-      if (!/^\S+@\S+\.\S+$/.test(email.trim())) throw new Error("Enter a valid email address.");
+      if (emailError) return;
       await send();
     } else { if (!catalogue) await loadCatalogue(); go("shop"); }
   }));
@@ -364,16 +370,17 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           <Pressable accessibilityRole="button" disabled={busy} style={[s.link, s.applyAction]} onPress={() => void run(async () => {
             const options = await buyerApi.registrationOptions();
             setVerify(options.emailOtpRequired);
+            setAccountSubmitted(false);
             go("account");
           })}>
             <Text style={s.linkText}>New to JustPackIt? Create account</Text>
           </Pressable>
         </>}
         {!picker && step === "account" && <View style={s.panel}>
-          <Field label="Full name" autoComplete="name" value={name} onChangeText={setName} maxLength={100} />
-          <Field label="Mobile number" value={phone} onChangeText={setPhone} autoComplete="tel" keyboardType="phone-pad" placeholder="+91 98765 43210" />
-          {verify && <Field label="Email address" value={email} onChangeText={value => { setEmail(value); setChallenge(undefined); setOtp(""); }} autoComplete="email" autoCorrect={false} autoCapitalize="none" keyboardType="email-address" />}
-          {passwordField}<Text style={s.copy}>Use at least 12 characters.</Text>
+          <Field label="Full name" autoComplete="name" value={name} onChangeText={setName} maxLength={100} error={accountSubmitted ? nameError : undefined} />
+          <Field label="Mobile number" value={phone} onChangeText={setPhone} autoComplete="tel" keyboardType="phone-pad" placeholder="+91 98765 43210" error={accountSubmitted ? phoneError : undefined} />
+          {verify && <Field label="Email address" value={email} onChangeText={value => { setEmail(value); setChallenge(undefined); setOtp(""); }} autoComplete="email" autoCorrect={false} autoCapitalize="none" keyboardType="email-address" hint="We’ll send your verification code here." error={accountSubmitted ? emailError : undefined} />}
+          {passwordField}
         </View>}
         {!picker && step === "email" && <View style={[s.panel, s.setupPanel]}>
           <Text style={s.copy}>Enter the 6-digit code sent to</Text>

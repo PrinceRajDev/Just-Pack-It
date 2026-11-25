@@ -2,7 +2,7 @@ import { theme, themedStyles } from "./src/theme";
 import { BuyerStateCard, BuyerStateSkeleton } from "./src/BuyerStateCard";
 import { StatusBar } from "expo-status-bar";
 import * as SecureStore from "./src/deviceStorage";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -154,9 +154,17 @@ export default function App() {
     ready: bagReady,
     error: bagError,
   } = useBuyerBag(session?.userId);
-  const load = async (wanted?: ServiceArea | null) => {
-    setLoading(true);
-    setError(null);
+  const marketRequest = useRef(0);
+  const [refreshingMarket, setRefreshingMarket] = useState(false);
+  const [marketRefreshFailed, setMarketRefreshFailed] = useState(false);
+  const load = async (wanted?: ServiceArea | null, refresh = false) => {
+    const request = ++marketRequest.current;
+    setRefreshingMarket(refresh);
+    setMarketRefreshFailed(false);
+    if (!refresh) {
+      setLoading(true);
+      setError(null);
+    }
     try {
       const savedAreaId = wanted
         ? wanted.id
@@ -167,6 +175,7 @@ export default function App() {
         availableAreas.find((x) => x.active) ??
         null;
       const data = await marketApi.loadHome(active?.id);
+      if (request !== marketRequest.current) return;
       setAreas(availableAreas);
       setArea(active);
       setCategories(data.categories);
@@ -177,11 +186,16 @@ export default function App() {
           () => undefined,
         );
     } catch (e) {
-      setError(
+      if (request !== marketRequest.current) return;
+      if (refresh) setMarketRefreshFailed(true);
+      else setError(
         e instanceof Error ? e.message : "Could not load the marketplace",
       );
     } finally {
-      setLoading(false);
+      if (request === marketRequest.current) {
+        setLoading(false);
+        setRefreshingMarket(false);
+      }
     }
   };
   useEffect(() => {
@@ -297,7 +311,9 @@ export default function App() {
   ) : screen === "home" ? (
     <Home
       onArea={() => setPicker(true)}
-      onRefreshMarket={() => void load(area)}
+      onRefreshMarket={() => void load(area, true)}
+      refreshingMarket={refreshingMarket}
+      marketRefreshFailed={marketRefreshFailed}
       canChooseArea={areas.some(item => item.active && item.id !== area?.id) || !area}
       hindi={hindi}
       key={homeVisit}
@@ -726,6 +742,8 @@ function Home({
   onQuickSearch,
   onArea,
   onRefreshMarket,
+  refreshingMarket,
+  marketRefreshFailed,
   canChooseArea,
   hindi,
   session,
@@ -746,6 +764,8 @@ function Home({
   onQuickSearch: (query: string) => void;
   onArea: () => void;
   onRefreshMarket: () => void;
+  refreshingMarket: boolean;
+  marketRefreshFailed: boolean;
   canChooseArea: boolean;
   hindi: boolean;
   session: Session | null;
@@ -765,9 +785,10 @@ function Home({
   const emptyShops = (
     <BuyerStateCard
       title={hindi ? "यहाँ अभी कोई दुकान नहीं है।" : "No shops available in this area yet"}
-      copy={hindi ? "दुकानें उपलब्ध होने पर यहाँ दिखेंगी।" : "Shops will appear here when they become available."}
+      copy={marketRefreshFailed ? (hindi ? "दुकानें लोड नहीं हो सकीं। फिर से कोशिश करें।" : "Couldn’t refresh shops. Try again.") : (hindi ? "दुकानें उपलब्ध होने पर यहाँ दिखेंगी।" : "Shops will appear here when they become available.")}
       icon="shop"
-      action={canChooseArea ? (hindi ? "खरीदारी का क्षेत्र बदलें" : "Change browsing area") : (hindi ? "फिर से देखें" : "Refresh shops")}
+      action={refreshingMarket ? undefined : canChooseArea ? (hindi ? "खरीदारी का क्षेत्र बदलें" : "Change browsing area") : (hindi ? "फिर से देखें" : "Refresh shops")}
+      busyLabel={refreshingMarket ? (hindi ? "दुकानें लोड हो रही हैं…" : "Refreshing shops…") : undefined}
       onAction={canChooseArea ? onArea : onRefreshMarket}
     />
   );

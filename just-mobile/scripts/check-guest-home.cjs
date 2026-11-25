@@ -468,6 +468,14 @@ const assert = require("node:assert/strict");
     await page.getByRole("heading", { name: "No shops available in this area yet" }).waitFor();
     await page.getByRole("heading", { name: "Your neighbourhood, delivered." }).waitFor();
     await page.getByText("Shop by category", { exact: true }).waitFor();
+    await page.route("**/shops?area=**", route => route.fulfill({
+      status: 503,
+      json: { message: "Fixture refresh failed" },
+      headers: { "access-control-allow-origin": "*" },
+    }), { times: 1 });
+    await page.getByRole("button", { name: "Refresh shops", exact: true }).click();
+    await page.getByText("Couldn’t refresh shops. Try again.", { exact: true }).waitFor();
+    await page.getByRole("heading", { name: "Your neighbourhood, delivered." }).waitFor();
     emptyMarket = false;
     await page.getByRole("button", { name: "Refresh shops", exact: true }).click();
     await page.getByRole("heading", { name: "No shops available in this area yet" }).waitFor({ state: "hidden" });

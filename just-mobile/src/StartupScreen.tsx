@@ -64,8 +64,8 @@ export function StartupScreen({ hindi }: { hindi: boolean }) {
         opacity: reveal.interpolate({ inputRange: [0, 1], outputRange: [0.65, 1] }),
         transform: [{ translateY: reveal.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
       }]}>
-        <View style={styles.logoFrame}>
-          <Image source={require("../assets/just-pack-it-icon.png")} resizeMode="contain" style={styles.logo} accessible={false} />
+        <View style={styles.artworkFrame}>
+          <Image source={require("../assets/startup-parcel.jpg")} style={styles.artwork} accessible={false} />
         </View>
         <Text style={styles.brand}>JustPackIt</Text>
       </Animated.View>
@@ -86,12 +86,12 @@ export function StartupScreen({ hindi }: { hindi: boolean }) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.canvas, alignItems: "center", justifyContent: "center", padding: 24, gap: 32 },
   brandGroup: { alignItems: "center", gap: 16 },
-  logoFrame: {
-    width: 96, height: 96, borderRadius: 26, backgroundColor: theme.surface,
+  artworkFrame: {
+    width: 160, height: 160, borderRadius: 33, backgroundColor: theme.selected,
     borderWidth: 1, borderColor: theme.border, alignItems: "center", justifyContent: "center",
     shadowColor: theme.ink, shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3,
   },
-  logo: { width: 68, height: 68, borderRadius: 12 },
+  artwork: { width: "100%", height: "100%", borderRadius: 32 },
   brand: { color: theme.accentInk, fontSize: 36, fontWeight: "800", letterSpacing: -1.4 },
   status: { alignItems: "center", gap: 12 },
   track: { width: 108, height: 4, borderRadius: 2, overflow: "hidden", backgroundColor: theme.selected },

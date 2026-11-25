@@ -66,12 +66,12 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
           const saved = await Promise.all(Array.from(new Map(rows.map(row => [row.key, row])).values(), async row => await storage.getItemAsync(row.key) === "true" ? row : null));
           if (active) setFavourites(saved.filter(row => row !== null));
         }
-      } catch { if (active) setError("Couldn’t load right now. Please try again."); }
+      } catch { if (active) setError(hindi ? "अभी लोड नहीं हो सका। फिर से कोशिश करें।" : "Couldn’t load right now. Please try again."); }
       finally { if (active) setBusy(false); }
     };
     void load();
     return () => { active = false; };
-  }, [panel, products, shops, session, revision]);
+  }, [panel, products, shops, session, revision, hindi]);
   const open = (next: Panel) => { setError(""); setBusy(next === "notifications" || next === "favourites"); setDraftHindi(hindi); setPanel(next); };
   const refreshNotifications = () => {
     if (markingRead) return;
@@ -192,7 +192,7 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
               {busy ? <View style={[s.card,s.inlineCard]} accessibilityLiveRegion="polite">
                 <ActivityIndicator color={theme.accentInk} />
                 <Text style={s.rowTitle}>{t("Loading order updates…", "ऑर्डर अपडेट लोड हो रहे हैं…")}</Text>
-              </View> : error ? <BuyerStateCard title="Couldn’t load notifications" copy={error} tone="error" icon="network" action="Retry notifications" onAction={refreshNotifications} /> : updates.length ? <>
+              </View> : error ? <BuyerStateCard title={t("Couldn’t load notifications", "सूचनाएँ लोड नहीं हो सकीं")} copy={error} tone="error" icon="network" action={t("Retry notifications", "फिर से लोड करें")} onAction={refreshNotifications} /> : updates.length ? <>
                 {updates.map(item => {
                   const timestamp = item.createdAt ? Date.parse(item.createdAt) : NaN;
                   return <View key={item.id} style={[s.card,s.notification,!item.read && s.unread]}>
@@ -207,7 +207,7 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
                   </View>
                   </View>;
                 })}
-              </> : <BuyerStateCard title={session ? "You’re all caught up." : "No updates yet."} copy={session ? "Order updates will appear here, from accepted to delivered." : "Sign in to see your order updates."} icon="bell" action={session ? "Continue shopping" : "Sign in"} onAction={() => { setPanel(null); if (session) browse(); else signIn(); }} />}
+              </> : <BuyerStateCard title={session ? t("You’re all caught up.", "कोई नया अपडेट नहीं") : t("No updates yet.", "अभी कोई अपडेट नहीं")} copy={session ? t("Order updates will appear here, from accepted to delivered.", "ऑर्डर स्वीकार होने से डिलीवरी तक के अपडेट यहाँ दिखेंगे।") : t("Sign in to see your order updates.", "अपने ऑर्डर अपडेट देखने के लिए साइन इन करें।")} icon="bell" action={session ? t("Continue shopping", "खरीदारी जारी रखें") : t("Sign in", "साइन इन करें")} onAction={() => { setPanel(null); if (session) browse(); else signIn(); }} />}
             </>}
             {panel === "favourites" && <>
               <View style={[s.hero,s.heroTop]}>
@@ -218,7 +218,7 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
                 </View>
               </View>
               <View accessibilityRole="tablist" style={s.favouriteTabs}>{(["products","shops"] as const).map(value => <Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:tab === value}} onPress={() => setTab(value)} style={[s.favouriteTab,tab === value && s.selected]}><Text style={tab === value ? s.softText : s.rowTitle}>{value === "products" ? t("Products", "उत्पाद") : t("Shops", "दुकानें")}</Text></Pressable>)}</View>
-              {busy ? <ActivityIndicator color={theme.accentInk} /> : error ? <Action label="Retry favourites" onPress={() => { setError(""); setRevision(value => value+1); }} /> : <>
+              {busy ? <View style={[s.card,s.inlineCard]} accessibilityLiveRegion="polite"><ActivityIndicator color={theme.accentInk} /><Text style={s.rowTitle}>{t("Loading favourites…", "पसंदीदा लोड हो रहे हैं…")}</Text></View> : error ? <Action label={t("Retry favourites", "पसंदीदा फिर से लोड करें")} onPress={() => { setError(""); setBusy(true); setRevision(value => value+1); }} /> : <>
                 {favourites.filter(row => tab === "products" ? row.product : row.shop).map(row => {
                   const photo = resolveImage(row.product?.image ?? row.shop?.coverImage);
                   return <View key={row.key} style={s.card}>
@@ -234,7 +234,7 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
                   {row.product && !row.product.variants?.length && <Action label={row.product.stock > 0 ? `+ Add · ₹${row.product.price}` : "Unavailable"} disabled={row.product.stock <= 0} soft onPress={() => add(row.product!)} />}
                 </View>;
                 })}
-                {!favourites.some(row => tab === "products" ? row.product : row.shop) && <BuyerStateCard title="Keep your favourites close." copy="Tap the heart on a product or shop to save it on this device." icon="heart" action="Discover favourites" onAction={() => { setPanel(null); browse(); }} />}
+                {!favourites.some(row => tab === "products" ? row.product : row.shop) && <BuyerStateCard title={t("Keep your favourites close.", "अपने पसंदीदा सहेजें")} copy={t("Tap the heart on a product or shop to save it on this device.", "उत्पाद या दुकान को इस डिवाइस पर सहेजने के लिए दिल के आइकन पर टैप करें।")} icon="heart" action={t("Discover favourites", "खरीदारी देखें")} onAction={() => { setPanel(null); browse(); }} />}
               </>}
             </>}
             {panel === "signout" && (

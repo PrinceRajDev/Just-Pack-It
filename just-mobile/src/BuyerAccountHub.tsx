@@ -118,9 +118,25 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
           <ScrollView contentContainerStyle={s.content}>
             {error && (panel === "signout" ? <BuyerStateCard title="Couldn’t sign you out" copy={error} tone="error" compact icon="network" action="Try sign out again" onAction={() => void run(signOut,"Couldn’t sign out. Check your connection and try again.")} /> : <BuyerAuthNotice title="Try again" copy={error} warning />)}
             {panel === "language" && <>
-              <BuyerAuthNotice title={t("Shop in your language.", "अपनी भाषा में खरीदारी करें।")} copy={t("Choose the language for Account labels. Shop and product names stay as entered.", "खाते के लेबल की भाषा चुनें। दुकान और उत्पाद के नाम वैसे ही रहेंगे।")} />
-              {[false,true].map(value => <Pressable key={String(value)} accessibilityRole="radio" accessibilityState={{checked:draftHindi === value}} aria-checked={draftHindi === value} onPress={() => setDraftHindi(value)} style={[s.card, draftHindi === value && s.selected]}><Text style={s.panelTitle}>{draftHindi === value ? "◉" : "○"} {value ? "हिन्दी" : "English"}</Text></Pressable>)}
-              <Action label={draftHindi ? "Apply Hindi" : "Apply English"} disabled={busy} onPress={() => void run(async () => { await storage.setItemAsync(languageKey,draftHindi ? "hi" : "en"); setHindi(draftHindi); }, "Couldn’t save the language preference.")} />
+              <View style={[s.hero,s.heroTop]}>
+                <View style={s.avatar}><MarketIcon name="globe" /></View>
+                <View style={s.rowText}>
+                  <Text accessibilityRole="header" style={s.heroTitle}>{t("App language", "ऐप की भाषा")}</Text>
+                  <Text style={s.heroCopy}>{t("Choose how app labels appear. Shop and product names stay as entered.", "ऐप के लेबल की भाषा चुनें। दुकान और उत्पाद के नाम वैसे ही रहेंगे।")}</Text>
+                </View>
+              </View>
+              {[false,true].map(value => {
+                const checked = draftHindi === value;
+                return <Pressable key={String(value)} accessibilityRole="radio" accessibilityLabel={value ? "हिन्दी" : "English"} accessibilityState={{checked, disabled: busy}} aria-checked={checked} disabled={busy} onPress={() => setDraftHindi(value)} style={[s.card,s.languageOption,checked && s.languageSelected]}>
+                  <View style={s.icon}><Text style={s.panelTitle}>{value ? "अ" : "Aa"}</Text></View>
+                  <View style={s.rowText}>
+                    <Text style={s.rowTitle}>{value ? "हिन्दी" : "English"}</Text>
+                    {hindi === value && <Text style={s.copy}>{t("Current language", "मौजूदा भाषा")}</Text>}
+                  </View>
+                  <View style={[s.radio, checked && s.radioChecked]}>{checked && <View style={s.radioDot} />}</View>
+                </Pressable>;
+              })}
+              <Action label={busy ? t("Saving…", "सहेज रहे हैं…") : draftHindi ? t("Apply Hindi", "हिन्दी लागू करें") : t("Apply English", "अंग्रेज़ी लागू करें")} disabled={busy || draftHindi === hindi} onPress={() => void run(async () => { await storage.setItemAsync(languageKey,draftHindi ? "hi" : "en"); setHindi(draftHindi); }, "Couldn’t save the language preference.")} />
             </>}
             {panel === "notifications" && <>
               {!!updates.length && !busy && <BuyerAuthNotice title="Good news from nearby." copy="Order updates appear here." />}
@@ -190,6 +206,11 @@ const s = themedStyles(() => StyleSheet.create({
   tileTop:{flexDirection:"row",alignItems:"center",justifyContent:"space-between"},
   section:{color:theme.ink,fontSize:16,fontWeight:"700"}, card:{backgroundColor:theme.surface,borderWidth:1,borderColor:theme.border,borderRadius:20,padding:16,gap:12}, selected:{backgroundColor:theme.selected}, unread:{borderColor:theme.accentInk},
   menu:{backgroundColor:theme.surface,borderWidth:1,borderColor:theme.border,borderRadius:20,padding:4,...cardShadow},
+  languageOption:{flexDirection:"row",alignItems:"center",minHeight:72},
+  languageSelected:{borderColor:theme.accentInk,backgroundColor:theme.selected},
+  radio:{width:20,height:20,borderRadius:10,borderWidth:1.5,borderColor:theme.secondary,alignItems:"center",justifyContent:"center"},
+  radioChecked:{borderColor:theme.accentInk},
+  radioDot:{width:10,height:10,borderRadius:5,backgroundColor:theme.accentInk},
   favouritePhoto:{width:"100%",aspectRatio:2.6,borderRadius:12,backgroundColor:theme.selected},
   row:{flexDirection:"row",minHeight:60,alignItems:"center",gap:12,padding:8,borderRadius:16}, rowText:{flex:1,minWidth:0,gap:4}, icon:{backgroundColor:theme.selected,width:40,height:40,borderRadius:12,alignItems:"center",justifyContent:"center"},
   rowTitle:{color:theme.ink,fontSize:15,fontWeight:"600"}, panelTitle:{color:theme.accentInk,fontSize:18,fontWeight:"600"}, copy:{color:theme.muted,fontSize:13,lineHeight:18},

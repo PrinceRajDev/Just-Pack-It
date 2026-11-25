@@ -1271,7 +1271,19 @@ function Home({
               keyExtractor={(item) => item.id}
               contentContainerStyle={{ padding: 16, gap: 12 }}
               ListEmptyComponent={
-                emptyShops
+                <BuyerStateCard
+                  title={hindi ? "यहाँ अभी कोई दुकान नहीं है।" : "No shops available in this area yet"}
+                  icon="shop"
+                  action={canChooseArea ? (hindi ? "खरीदारी का क्षेत्र बदलें" : "Change browsing area") : (hindi ? "फिर से देखें" : "Refresh shops")}
+                  onAction={() => {
+                    if (canChooseArea) {
+                      setShowShops(false);
+                      onArea();
+                    } else {
+                      void openShops();
+                    }
+                  }}
+                />
               }
               renderItem={({ item }) => (
                 <ShopRow

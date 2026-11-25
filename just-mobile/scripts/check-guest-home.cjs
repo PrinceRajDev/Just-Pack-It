@@ -479,6 +479,14 @@ const assert = require("node:assert/strict");
     emptyMarket = false;
     await page.getByRole("button", { name: "Refresh shops", exact: true }).click();
     await page.getByRole("heading", { name: "No shops available in this area yet" }).waitFor({ state: "hidden" });
+    emptyMarket = true;
+    await page.getByRole("button", { name: "See all", exact: true }).click();
+    const shopSheet = page.getByRole("dialog");
+    await shopSheet.getByRole("heading", { name: "No shops available in this area yet" }).waitFor();
+    emptyMarket = false;
+    await shopSheet.getByRole("button", { name: "Refresh shops", exact: true }).click();
+    await shopSheet.getByRole("heading", { name: "No shops available in this area yet" }).waitFor({ state: "hidden" });
+    await shopSheet.getByRole("button", { name: "Refresh shops", exact: true }).waitFor({ state: "hidden" });
     assert.deepEqual(errors,[]);
     console.log("Guest Home visuals and navigation passed at four sizes.");
   } finally { await browser.close(); }

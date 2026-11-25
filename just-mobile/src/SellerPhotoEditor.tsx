@@ -6,7 +6,10 @@ import { resolveImage } from "./images";
 import { sellerApi, type ImageUploadCapability } from "./sellerApi";
 import { LoadState, MutationFeedback, SellerButton, SellerCard, styles, useSellerData, useSellerMutation } from "./SellerWorkspaceUI";
 
-export function photoBody(asset:ImagePickerAsset, limits:ImageUploadCapability) {
+// Mirrors the upload endpoint's baseline limits for pre-account onboarding.
+export const onboardingPhotoLimits = { maxBytes: 5 * 1024 * 1024, types: ["image/jpeg", "image/png", "image/webp"] };
+
+export function photoBody(asset:ImagePickerAsset, limits:Pick<ImageUploadCapability, "maxBytes" | "types">) {
   const encoded = asset.base64;
   if (!encoded) throw new Error("Could not read this photo. Choose another image.");
   const maxMb = Math.floor(limits.maxBytes / (1024 * 1024));

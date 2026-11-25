@@ -8,7 +8,7 @@ import { SellerWorkspace } from "./SellerWorkspace";
 import { BuyerRecovery } from "./BuyerRecovery";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { launchImageLibraryAsync, type ImagePickerAsset } from "expo-image-picker";
-import { photoBody } from "./SellerPhotoEditor";
+import { onboardingPhotoLimits, photoBody } from "./SellerPhotoEditor";
 import { sellerApi } from "./sellerApi";
 import * as storage from "./deviceStorage";
 
@@ -59,6 +59,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const [since, setSince] = useState("");
   const [shopSubmitted, setShopSubmitted] = useState(false);
   const [coverAsset, setCoverAsset] = useState<ImagePickerAsset>();
+  const [coverError, setCoverError] = useState("");
   const [coverSaved, setCoverSaved] = useState(false);
   const [deliverySubmitted, setDeliverySubmitted] = useState(false);
   const [category, setCategory] = useState<Category>();
@@ -159,6 +160,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     setSession(null);
     setCoverAsset(undefined);
     setCoverSaved(false);
+    setCoverError("");
     setShop(undefined);
     setCheckingShop(false);
     setShopError("");
@@ -366,12 +368,21 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
         <View style={[s.panel, s.setupPanel]}>
           <Text accessibilityRole="header" style={s.label}>Shop cover photo · Optional</Text>
           <Text style={s.copy}>Choose a clear photo of your storefront or shop interior. We’ll upload it when you submit.</Text>
+          <Text style={s.copy}>JPEG, PNG or WebP · Up to 5 MB</Text>
           {coverAsset && <Image accessibilityLabel="Selected shop cover" source={{ uri: coverAsset.uri }} style={s.coverPreview} />}
+          {!!coverError && <Text accessibilityRole="alert" style={s.error}>{coverError}</Text>}
           {link(coverAsset ? "Change shop photo" : "Choose shop photo", () => void run(async () => {
-            const result = await launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.85, base64: true });
-            if (!result.canceled) setCoverAsset(result.assets[0]);
+            setCoverError("");
+            try {
+              const result = await launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.85, base64: true });
+              if (result.canceled) return;
+              photoBody(result.assets[0], onboardingPhotoLimits);
+              setCoverAsset(result.assets[0]);
+            } catch (reason) {
+              setCoverError(reason instanceof Error ? reason.message : "Could not open your photo library.");
+            }
           }))}
-          {coverAsset && link("Remove selected photo", () => setCoverAsset(undefined))}
+          {coverAsset && link("Remove selected photo", () => { setCoverAsset(undefined); setCoverError(""); })}
         </View>
         </>}
         {!picker && step === "delivery" && <>

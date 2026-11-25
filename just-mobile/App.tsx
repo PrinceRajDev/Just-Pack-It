@@ -1265,18 +1265,15 @@ function Home({
             onBack={() => setShowShops(false)}
           />
           {shopsBusy ? (
-            <State
-              title="Loading shops"
-              copy="Checking your selected area"
-              loading
-            />
+            <ScrollView contentContainerStyle={s.shopPanelStatus}>
+              <BuyerStateCard title="Loading shops…" copy="Checking your selected area" tone="info" compact loading />
+              <BuyerStateSkeleton />
+            </ScrollView>
           ) : shopsError ? (
-            <State
-              title="Shops could not load"
-              copy={shopsError}
-              action="Try again"
-              onAction={() => void openShops()}
-            />
+            <ScrollView contentContainerStyle={s.shopPanelStatus}>
+              <BuyerStateCard title="Shops could not load" copy={shopsError} tone="error" icon="network"
+                action="Try again" onAction={() => void openShops()} />
+            </ScrollView>
           ) : (
             <FlatList
               data={allShops}
@@ -2342,6 +2339,7 @@ const s = themedStyles(() => StyleSheet.create({
     backgroundColor: theme.canvas,
   },
   categoryActive: { borderColor: theme.accentInk, borderWidth: 2 },
+  shopPanelStatus: { padding: 16, gap: 12 },
   categoryStatus: { paddingHorizontal: 20, gap: 12 },
   categoryImage: { width: "100%", backgroundColor: theme.surfaceSoft },
   categoryName: {

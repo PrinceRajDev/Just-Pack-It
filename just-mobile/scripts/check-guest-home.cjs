@@ -495,8 +495,15 @@ const assert = require("node:assert/strict");
     await page.getByRole("button", { name: "Refresh shops", exact: true }).click();
     await page.getByRole("heading", { name: "No shops available in this area yet" }).waitFor({ state: "hidden" });
     emptyMarket = true;
+    await page.route("**/shops?area=**", route => route.fulfill({
+      status: 503,
+      json: { message: "Fixture shop panel failed" },
+      headers: { "access-control-allow-origin": "*" },
+    }), { times: 1 });
     await page.getByRole("button", { name: "See all", exact: true }).click();
     const shopSheet = page.getByRole("dialog");
+    await shopSheet.getByRole("heading", { name: "Shops could not load", exact: true }).waitFor();
+    await shopSheet.getByRole("button", { name: "Try again", exact: true }).click();
     await shopSheet.getByRole("heading", { name: "No shops available in this area yet" }).waitFor();
     emptyMarket = false;
     await shopSheet.getByRole("button", { name: "Refresh shops", exact: true }).click();

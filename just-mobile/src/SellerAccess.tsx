@@ -357,19 +357,27 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
         </>}
         {!picker && step === "review" && <>
           <View style={[s.panel, s.setupPanel]}>
-            <Text style={s.summaryHeading}>Shop details</Text>
-            <Text style={s.label}>{shopName}</Text>
-            <Text style={s.copy}>{category?.name} · Opened {since}</Text>
-            {link("Edit shop details", () => go("shop"))}
+            <View style={s.reviewHeader}>
+              <Text accessibilityRole="header" style={s.reviewTitle}>Shop details</Text>
+              {link("Edit shop details", () => go("shop"))}
+            </View>
+            <ReviewField label="Shop name" value={shopName.trim()} />
+            <ReviewField label="Shop category" value={category?.name ?? ""} />
+            <ReviewField label="Year opened" value={since} />
           </View>
           <View style={[s.panel, s.setupPanel]}>
-            <Text style={s.summaryHeading}>Address & fulfilment</Text>
-            <Text style={s.label}>{address}</Text>
-            <Text style={s.copy}>{area?.name}, {area?.city}</Text>
-            <Text style={s.copy}>{methods.filter(([key]) => fulfilment.includes(key)).map(([, label]) => label).join(" · ")}</Text>
-            {link("Edit address & fulfilment", () => go("delivery"))}
+            <View style={s.reviewHeader}>
+              <Text accessibilityRole="header" style={s.reviewTitle}>Address & fulfilment</Text>
+              {link("Edit address & fulfilment", () => go("delivery"))}
+            </View>
+            <ReviewField label="Shop address" value={address.trim()} />
+            <ReviewField label="Service area" value={area ? `${area.name}, ${area.city}` : ""} />
+            <ReviewField label="Order handover" value={methods.filter(([key]) => fulfilment.includes(key)).map(([, label]) => label).join("\n")} />
           </View>
-          <Text style={s.copy}>Submitting creates your seller account and sends your shop for review.</Text>
+          <View style={s.sage}>
+            <Text accessibilityRole="header" style={s.label}>What happens next?</Text>
+            <Text style={s.reviewNote}>Submitting creates your seller account and sends your shop for approval. You can check the application status from Seller access.</Text>
+          </View>
         </>}
         {!picker && step === "status" && (
           <View style={s.statusBody}>
@@ -411,6 +419,13 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   </SafeAreaView></SafeAreaProvider></Modal>;
 }
 
+function ReviewField({ label, value }: { label: string; value: string }) {
+  return <View style={s.reviewField}>
+    <Text style={s.copy}>{label}</Text>
+    <Text style={s.label}>{value}</Text>
+  </View>;
+}
+
 function Field({label,suffix,error,hint,...props}:TextInputProps & {label:string; suffix?:React.ReactNode; error?:string; hint?:string}) {
   return <View style={s.field}>
     <Text style={s.label}>{label}</Text>
@@ -450,6 +465,10 @@ const s = themedStyles(() => StyleSheet.create({
   statusLoading:{flexDirection:"row",alignItems:"center",gap:8,paddingVertical:10},
   sessionRow:{alignItems:"center",paddingTop:8,borderTopWidth:1,borderColor:theme.border},
   summaryHeading:{color:theme.accentInk,fontSize:14,fontWeight:"700"},
+  reviewHeader:{flexDirection:"row",flexWrap:"wrap",alignItems:"center",justifyContent:"space-between"},
+  reviewTitle:{fontSize:16,fontWeight:"700",color:theme.accentInk},
+  reviewField:{gap:4,borderTopWidth:1,borderColor:theme.border,paddingTop:10},
+  reviewNote:{color:theme.ink,fontSize:14,lineHeight:20},
   copy:{fontSize:14,lineHeight:20,color:theme.secondary}, sage:{backgroundColor:theme.selected,borderRadius:16,padding:14,gap:6}, panel:{backgroundColor:theme.surface,borderRadius:16,borderWidth:1,borderColor:theme.border,padding:16,gap:8},
   field:{gap:8},label:{fontSize:15,fontWeight:"600",color:theme.ink},inputRow:{flexDirection:"row",alignItems:"center",backgroundColor:theme.surface,borderWidth:1,borderColor:theme.controlBorder,borderRadius:12},
   input:{flex:1,minHeight:50,padding:12,color:theme.ink,fontSize:15},link:{minHeight:44,justifyContent:"center",alignItems:"center",paddingHorizontal:10},linkText:{color:theme.accentInk,textAlign:"center",fontWeight:"600"},

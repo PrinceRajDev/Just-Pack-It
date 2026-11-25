@@ -116,7 +116,7 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
         <SafeAreaView style={s.screen}>
           <Header title={panels[panel]} back={close} />
           <ScrollView contentContainerStyle={s.content}>
-            {error && (panel === "signout" ? <BuyerStateCard title="Couldn’t sign you out" copy={error} tone="error" compact icon="network" action="Try sign out again" onAction={() => void run(signOut,"Couldn’t sign out. Check your connection and try again.")} /> : <BuyerAuthNotice title="Try again" copy={error} warning />)}
+            {error && panel !== "notifications" && (panel === "signout" ? <BuyerStateCard title="Couldn’t sign you out" copy={error} tone="error" compact icon="network" action="Try sign out again" onAction={() => void run(signOut,"Couldn’t sign out. Check your connection and try again.")} /> : <BuyerAuthNotice title="Try again" copy={error} warning />)}
             {panel === "language" && <>
               <View style={[s.hero,s.heroTop]}>
                 <View style={s.avatar}><MarketIcon name="globe" /></View>
@@ -127,7 +127,7 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
               </View>
               {[false,true].map(value => {
                 const checked = draftHindi === value;
-                return <Pressable key={String(value)} accessibilityRole="radio" accessibilityLabel={value ? "हिन्दी" : "English"} accessibilityState={{checked, disabled: busy}} aria-checked={checked} disabled={busy} onPress={() => setDraftHindi(value)} style={[s.card,s.languageOption,checked && s.languageSelected]}>
+                return <Pressable key={String(value)} accessibilityRole="radio" accessibilityLabel={value ? "हिन्दी" : "English"} accessibilityState={{checked, disabled: busy}} aria-checked={checked} disabled={busy} onPress={() => setDraftHindi(value)} style={[s.card,s.inlineCard,checked && s.languageSelected]}>
                   <View style={s.icon}><Text style={s.panelTitle}>{value ? "अ" : "Aa"}</Text></View>
                   <View style={s.rowText}>
                     <Text style={s.rowTitle}>{value ? "हिन्दी" : "English"}</Text>
@@ -139,8 +139,20 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
               <Action label={busy ? t("Saving…", "सहेज रहे हैं…") : draftHindi ? t("Apply Hindi", "हिन्दी लागू करें") : t("Apply English", "अंग्रेज़ी लागू करें")} disabled={busy || draftHindi === hindi} onPress={() => void run(async () => { await storage.setItemAsync(languageKey,draftHindi ? "hi" : "en"); setHindi(draftHindi); }, "Couldn’t save the language preference.")} />
             </>}
             {panel === "notifications" && <>
-              {!!updates.length && !busy && <BuyerAuthNotice title="Good news from nearby." copy="Order updates appear here." />}
-              {busy ? <ActivityIndicator color={theme.accentInk} /> : error ? <Action label="Retry notifications" onPress={() => { setError(""); setRevision(value => value+1); }} /> : updates.length ? updates.map(item => <View key={item.id} style={[s.card,!item.read && s.unread]}><Text style={s.panelTitle}>{!item.read ? "● " : ""}{item.title}</Text><Text style={s.copy}>{item.body}</Text></View>) : <BuyerStateCard title={session ? "You’re all caught up." : "No updates yet."} copy={session ? "Order updates will appear here, from accepted to delivered." : "Sign in to see your order updates."} icon="bell" action={session ? "Continue shopping" : "Sign in"} onAction={() => { setPanel(null); if (session) browse(); else signIn(); }} />}
+              {busy ? <View style={[s.card,s.inlineCard]} accessibilityLiveRegion="polite">
+                <ActivityIndicator color={theme.accentInk} />
+                <Text style={s.rowTitle}>{t("Loading order updates…", "ऑर्डर अपडेट लोड हो रहे हैं…")}</Text>
+              </View> : error ? <BuyerStateCard title="Couldn’t load notifications" copy={error} tone="error" icon="network" action="Retry notifications" onAction={() => { setError(""); setRevision(value => value+1); }} /> : updates.length ? <>
+                <Text accessibilityRole="header" style={s.section}>{t("Order updates", "ऑर्डर के अपडेट")}</Text>
+                {updates.map(item => <View key={item.id} style={[s.card,s.notification,!item.read && s.unread]}>
+                  <View style={s.icon}><MarketIcon name="bell" /></View>
+                  <View style={s.rowText}>
+                    {!item.read && <Text style={s.notificationBadge}>{t("Unread", "अपठित")}</Text>}
+                    <Text style={s.rowTitle}>{item.title}</Text>
+                    <Text style={s.copy}>{item.body}</Text>
+                  </View>
+                </View>)}
+              </> : <BuyerStateCard title={session ? "You’re all caught up." : "No updates yet."} copy={session ? "Order updates will appear here, from accepted to delivered." : "Sign in to see your order updates."} icon="bell" action={session ? "Continue shopping" : "Sign in"} onAction={() => { setPanel(null); if (session) browse(); else signIn(); }} />}
             </>}
             {panel === "favourites" && <>
               {!!favourites.length && <BuyerAuthNotice title="Your local favourites." copy="Saved on this device. Showing favourites available in your current area." />}
@@ -206,7 +218,9 @@ const s = themedStyles(() => StyleSheet.create({
   tileTop:{flexDirection:"row",alignItems:"center",justifyContent:"space-between"},
   section:{color:theme.ink,fontSize:16,fontWeight:"700"}, card:{backgroundColor:theme.surface,borderWidth:1,borderColor:theme.border,borderRadius:20,padding:16,gap:12}, selected:{backgroundColor:theme.selected}, unread:{borderColor:theme.accentInk},
   menu:{backgroundColor:theme.surface,borderWidth:1,borderColor:theme.border,borderRadius:20,padding:4,...cardShadow},
-  languageOption:{flexDirection:"row",alignItems:"center",minHeight:72},
+  inlineCard:{flexDirection:"row",alignItems:"center",minHeight:72},
+  notification:{flexDirection:"row",alignItems:"flex-start"},
+  notificationBadge:{alignSelf:"flex-start",color:theme.accentInk,backgroundColor:theme.selected,borderRadius:8,paddingHorizontal:8,paddingVertical:4,fontSize:12,fontWeight:"700"},
   languageSelected:{borderColor:theme.accentInk,backgroundColor:theme.selected},
   radio:{width:20,height:20,borderRadius:10,borderWidth:1.5,borderColor:theme.secondary,alignItems:"center",justifyContent:"center"},
   radioChecked:{borderColor:theme.accentInk},

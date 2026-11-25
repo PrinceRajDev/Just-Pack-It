@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Image, Text } from "react-native";
+import { Image, Text, View } from "react-native";
 import { launchImageLibraryAsync, type ImagePickerAsset } from "expo-image-picker";
 import { byteLength, toByteArray } from "base64-js";
 import { resolveImage } from "./images";
@@ -60,8 +60,18 @@ export function SellerPhotoEditor({token,image,shopCover,onUpload,onRefresh,onBu
   });
   return <SellerCard>
     <Text accessibilityRole="header" style={styles.section}>{shopCover ? "Shop cover photo" : "Product photo"}</Text>
-    {preview && <Image accessibilityLabel={asset ? "Selected photo preview" : shopCover ? "Current shop cover photo" : "Current product photo"}
-      source={{uri:preview}} style={styles.productPhotoPreview} resizeMode="contain" />}
+    {preview ? (
+      <View style={styles.workGroup}>
+        <Text style={styles.label}>{asset ? "Selected photo" : "Current photo"}</Text>
+        <Image accessibilityLabel={asset ? "Selected photo preview" : shopCover ? "Current shop cover photo" : "Current product photo"}
+          source={{uri:preview}} style={styles.productPhotoPreview} resizeMode="contain" />
+        {asset && <Text style={styles.copy}>Preview only. {shopCover ? "Submit the cover to send it for review." : "Upload the photo to update your listing."}</Text>}
+      </View>
+    ) : (
+      <View style={styles.dispatchRoute}>
+        <Text style={styles.label}>{shopCover ? "No custom cover yet" : "No product photo yet"}</Text>
+      </View>
+    )}
     <LoadState loading={capability.loading && !capability.data} error={capability.error} retry={capability.reload} />
     {capability.data?.enabled === false && <Text style={styles.copy}>Photo uploads are unavailable right now.</Text>}
     {!!pickError && <MutationFeedback error={pickError} />}
@@ -73,11 +83,9 @@ export function SellerPhotoEditor({token,image,shopCover,onUpload,onRefresh,onBu
     {capability.data?.enabled && <>
       <Text style={styles.copy}>JPEG, PNG or WebP · Up to {Math.floor(capability.data.maxBytes / (1024 * 1024))} MB</Text>
       {shopCover && <Text style={styles.copy}>Uploading a new cover sends your shop back for approval. It may temporarily disappear from the marketplace during review.</Text>}
-      <SellerButton label={asset ? "Choose another photo" : image ? "Replace photo" : "Choose photo"} soft disabled={mutation.busy} onPress={() => void choose()} />
-      {asset && <>
-        <SellerButton label={shopCover ? "Submit cover for review" : "Upload photo"} disabled={mutation.busy} onPress={upload} />
-        <SellerButton label="Discard selected photo" soft disabled={mutation.busy} onPress={() => { setAsset(undefined); setPickError(""); mutation.clear(); }} />
-      </>}
+      {asset && <SellerButton label={shopCover ? "Submit cover for review" : "Upload photo"} disabled={mutation.busy} onPress={upload} />}
+      <SellerButton label={asset ? "Choose another photo" : image ? "Replace photo" : "Choose photo"} soft={!!asset} disabled={mutation.busy} onPress={() => void choose()} />
+      {asset && <SellerButton label="Discard selected photo" soft disabled={mutation.busy} onPress={() => { setAsset(undefined); setPickError(""); mutation.clear(); }} />}
     </>}
   </SellerCard>;
 }

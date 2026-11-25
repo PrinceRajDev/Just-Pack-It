@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { buyerApi, type Product, type Session, type Shop } from "./api";
 import { BuyerAuthNotice } from "./BuyerAuthNotice";
 import { MarketIcon, type MarketIconName } from "./MarketIcon";
+import { resolveImage } from "./images";
 import * as storage from "./deviceStorage";
 
 const languageKey = "jpi.account.language";
@@ -155,18 +156,29 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
               </> : <BuyerStateCard title={session ? "You’re all caught up." : "No updates yet."} copy={session ? "Order updates will appear here, from accepted to delivered." : "Sign in to see your order updates."} icon="bell" action={session ? "Continue shopping" : "Sign in"} onAction={() => { setPanel(null); if (session) browse(); else signIn(); }} />}
             </>}
             {panel === "favourites" && <>
-              {!!favourites.length && <BuyerAuthNotice title="Your local favourites." copy="Saved on this device. Showing favourites available in your current area." />}
-              <View style={s.grid}>{(["products","shops"] as const).map(value => <Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:tab === value}} onPress={() => setTab(value)} style={[s.tile,tab === value && s.selected]}><Text style={s.panelTitle}>{value === "products" ? "Products" : "Shops"}</Text></Pressable>)}</View>
+              <View style={[s.hero,s.heroTop]}>
+                <View style={s.avatar}><MarketIcon name="heart" /></View>
+                <View style={s.rowText}>
+                  <Text accessibilityRole="header" style={s.heroTitle}>{t("Saved nearby", "आस-पास के पसंदीदा")}</Text>
+                  <Text style={s.heroCopy}>{t("Favourites available in your current area.", "आपके मौजूदा इलाके में उपलब्ध पसंदीदा।")}</Text>
+                </View>
+              </View>
+              <View accessibilityRole="tablist" style={s.favouriteTabs}>{(["products","shops"] as const).map(value => <Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:tab === value}} onPress={() => setTab(value)} style={[s.favouriteTab,tab === value && s.selected]}><Text style={tab === value ? s.softText : s.rowTitle}>{value === "products" ? t("Products", "उत्पाद") : t("Shops", "दुकानें")}</Text></Pressable>)}</View>
               {busy ? <ActivityIndicator color={theme.accentInk} /> : error ? <Action label="Retry favourites" onPress={() => { setError(""); setRevision(value => value+1); }} /> : <>
-                {favourites.filter(row => tab === "products" ? row.product : row.shop).map(row => <View key={row.key} style={s.card}>
-                  {row.product?.image ? <Image accessibilityIgnoresInvertColors source={{uri: row.product.image}} style={s.favouritePhoto} resizeMode="cover" /> : null}
-                  <Text style={s.panelTitle}>{row.name}</Text>
+                {favourites.filter(row => tab === "products" ? row.product : row.shop).map(row => {
+                  const photo = resolveImage(row.product?.image ?? row.shop?.coverImage);
+                  return <View key={row.key} style={s.card}>
+                  {photo && <Image accessible={false} accessibilityIgnoresInvertColors source={{uri: photo}} style={s.favouritePhoto} resizeMode="cover" />}
+                  <View style={s.favouriteHeading}>
+                    <Text style={[s.rowTitle,s.rowText]}>{row.name}</Text>
+                    <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${row.name} from favourites`} style={s.removeFavourite} onPress={() => void storage.deleteItemAsync(row.key).then(() => setFavourites(rows => rows.filter(item => item.key !== row.key))).catch(() => setError("Couldn’t remove this favourite."))}><Text style={s.softText}>{t("Remove", "हटाएँ")}</Text></Pressable>
+                  </View>
                   {row.product && <Text style={s.copy}>{row.product.unit}</Text>}
                   {row.shop && <Text style={s.copy}>{[row.shop.isOpen ? "Open" : "Closed", row.shop.distanceKm != null ? `${row.shop.distanceKm} km` : "", row.shop.rating != null ? `★ ${row.shop.rating}` : ""].filter(Boolean).join(" · ")}</Text>}
                   {row.shop && <Action label="View shop" soft onPress={() => { setPanel(null); openShop(row.shop!); }} />}
                   {row.product && !row.product.variants?.length && <Action label={row.product.stock > 0 ? `+ Add · ₹${row.product.price}` : "Unavailable"} disabled={row.product.stock <= 0} soft onPress={() => add(row.product!)} />}
-                  <Pressable accessibilityRole="button" onPress={() => void storage.deleteItemAsync(row.key).then(() => setFavourites(rows => rows.filter(item => item.key !== row.key))).catch(() => setError("Couldn’t remove this favourite."))}><Text style={s.copy}>Remove favourite</Text></Pressable>
-                </View>)}
+                </View>;
+                })}
                 {!favourites.some(row => tab === "products" ? row.product : row.shop) && <BuyerStateCard title="Keep your favourites close." copy="Tap the heart on a product or shop to save it on this device." icon="heart" action="Discover favourites" onAction={() => { setPanel(null); browse(); }} />}
               </>}
             </>}
@@ -226,6 +238,10 @@ const s = themedStyles(() => StyleSheet.create({
   radioChecked:{borderColor:theme.accentInk},
   radioDot:{width:10,height:10,borderRadius:5,backgroundColor:theme.accentInk},
   favouritePhoto:{width:"100%",aspectRatio:2.6,borderRadius:12,backgroundColor:theme.selected},
+  favouriteTabs:{flexDirection:"row",gap:4,padding:4,borderRadius:16,backgroundColor:theme.surface,borderWidth:1,borderColor:theme.border},
+  favouriteTab:{flex:1,minHeight:44,padding:8,borderRadius:12,alignItems:"center",justifyContent:"center"},
+  favouriteHeading:{flexDirection:"row",alignItems:"center",gap:12},
+  removeFavourite:{minHeight:44,paddingHorizontal:8,justifyContent:"center"},
   row:{flexDirection:"row",minHeight:60,alignItems:"center",gap:12,padding:8,borderRadius:16}, rowText:{flex:1,minWidth:0,gap:4}, icon:{backgroundColor:theme.selected,width:40,height:40,borderRadius:12,alignItems:"center",justifyContent:"center"},
   rowTitle:{color:theme.ink,fontSize:15,fontWeight:"600"}, panelTitle:{color:theme.accentInk,fontSize:18,fontWeight:"600"}, copy:{color:theme.muted,fontSize:13,lineHeight:18},
   button:{backgroundColor:theme.accentInk,borderRadius:12,minHeight:48,alignItems:"center",justifyContent:"center",padding:12}, buttonText:{color:theme.onPrimary,fontWeight:"700",textAlign:"center"}, softText:{color:theme.accentInk}, pressed:{opacity:0.75},

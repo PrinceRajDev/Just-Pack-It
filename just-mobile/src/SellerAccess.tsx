@@ -54,6 +54,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const [otp, setOtp] = useState("");
   const [verify, setVerify] = useState(false);
   const [accountSubmitted, setAccountSubmitted] = useState(false);
+  const [loginSubmitted, setLoginSubmitted] = useState(false);
   const [now, setNow] = useState(0);
   const [shopName, setShopName] = useState("");
   const [address, setAddress] = useState("");
@@ -251,12 +252,17 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const phoneError = !validPhone ? "Enter a valid mobile number with its country code." : "";
   const passwordError = password.length < 12 ? "Use at least 12 characters." : "";
   const emailError = !/^\S+@\S+\.\S+$/.test(email.trim()) ? "Enter a valid email address." : "";
-  const passwordField = <Field label="Password" placeholder="Enter your password" value={password} onChangeText={setPassword} secureTextEntry={!visible} maxLength={128} autoCapitalize="none" autoCorrect={false} autoComplete={step === "login" ? "current-password" : "new-password"} hint={step === "account" ? "Use at least 12 characters." : undefined} error={step === "account" && accountSubmitted ? passwordError : undefined} suffix={link(visible ? "Hide" : "Show", () => setVisible(value => !value))} />;
+  const loginPasswordError = !password.trim() ? "Enter your password." : "";
+  const visiblePasswordError = step === "account" && accountSubmitted ? passwordError
+    : step === "login" && loginSubmitted ? loginPasswordError : undefined;
+  const passwordField = <Field label="Password" placeholder="Enter your password" value={password} onChangeText={value => { setPassword(value); if (step === "login") setError(""); }} secureTextEntry={!visible} maxLength={128} autoCapitalize="none" autoCorrect={false} autoComplete={step === "login" ? "current-password" : "new-password"} hint={step === "account" ? "Use at least 12 characters." : undefined} error={visiblePasswordError} suffix={link(visible ? "Hide" : "Show", () => setVisible(value => !value))} />;
   let action;
   if (!picker && step === "login") action = button("Sign in", () => void run(async () => {
-    if (!validPhone) throw new Error("Enter your registered mobile number, including the country code if needed.");
+    setLoginSubmitted(true);
+    if (phoneError || loginPasswordError) return;
     await acceptSession(await buyerApi.login(normalizedPhone, password));
-  }), !phone || !password);
+    setLoginSubmitted(false);
+  }));
   if (!picker && step === "account") action = button("Continue", () => void run(async () => {
     setAccountSubmitted(true);
     if (nameError || phoneError || passwordError || (verify && emailError)) return;
@@ -365,7 +371,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
         )}
         {!picker && step === "login" && <>
           <View style={[s.panel, s.loginPanel]}>
-            <Field label="Mobile number" value={phone} onChangeText={setPhone} autoComplete="tel" keyboardType="phone-pad" placeholder="+91 98765 43210" />
+            <Field label="Mobile number" value={phone} onChangeText={value => { setPhone(value); setError(""); }} autoComplete="tel" keyboardType="phone-pad" placeholder="+91 98765 43210" error={loginSubmitted ? phoneError : undefined} />
             {passwordField}
             {action}
             {link("Forgot password?", () => { setPassword(""); go("recovery"); })}

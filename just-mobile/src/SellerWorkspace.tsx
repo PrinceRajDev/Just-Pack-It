@@ -296,7 +296,14 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
         <Text style={styles.orderStatus}>{packingUnits} {packingUnits === 1 ? "unit" : "units"}</Text>
       </View>
       <Text style={styles.copy}>{packingLines} {packingLines === 1 ? "line item" : "line items"} to check</Text>
-      {canCheckPacking && <Text accessibilityLiveRegion="polite" style={styles.copy}>{checkedLines.length} of {packingLines} checked</Text>}
+      {canCheckPacking && packingLines > 0 && (
+        <View style={styles.packingProgress}>
+          <Text accessibilityLiveRegion="polite" style={styles.label}>{checkedLines.length} of {packingLines} checked</Text>
+          <View style={styles.packingTrack} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+            <View style={[styles.packingFill, {width: `${checkedLines.length / packingLines * 100}%`}]} />
+          </View>
+        </View>
+      )}
       <SellerCard>{order.lines.map((item,index) => {
         const checked = checkedLines.includes(index);
         const contents = <>
@@ -308,9 +315,9 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
         </>;
         const rowStyle = [styles.row,index > 0 && styles.packingDivider];
         if (!canCheckPacking) return <View key={index} style={rowStyle}>{contents}</View>;
-        return <Pressable key={index} accessibilityRole="checkbox" accessibilityState={{checked}}
+        return <Pressable key={index} accessibilityRole="checkbox" aria-checked={checked} accessibilityState={{checked}}
           accessibilityLabel={[item.name,item.variantLabel || item.unit,`Quantity ${item.qty}`].filter(Boolean).join(", ")}
-          style={rowStyle} onPress={() => setPackingChecks(previous => {
+          style={[...rowStyle, checked && styles.packingRowChecked]} onPress={() => setPackingChecks(previous => {
             const lines = previous[packingKey] ?? [];
             return {...previous,[packingKey]:lines.includes(index) ? lines.filter(line => line !== index) : [...lines,index]};
           })}>

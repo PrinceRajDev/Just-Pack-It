@@ -43,6 +43,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const [shopName, setShopName] = useState("");
   const [address, setAddress] = useState("");
   const [since, setSince] = useState("");
+  const [shopSubmitted, setShopSubmitted] = useState(false);
   const [category, setCategory] = useState<Category>();
   const [area, setArea] = useState<ServiceArea>();
   const [fulfilment, setFulfilment] = useState<string[]>([]);
@@ -184,6 +185,11 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     ? ["account", "email", "shop", "delivery", "review"]
     : ["account", "shop", "delivery", "review"];
   const setupStep = setupSteps.indexOf(step) + 1;
+  const currentYear = new Date().getFullYear();
+  const shopNameError = shopName.trim().length < 2 ? "Enter at least 2 characters for your shop name." : "";
+  const categoryError = category ? "" : "Select a category for your shop.";
+  const yearError = /^\d{4}$/.test(since) && Number(since) >= 1900 && Number(since) <= currentYear
+    ? "" : `Enter a four-digit year from 1900 to ${currentYear}.`;
   const button = (label:string, action:()=>void, disabled = false) => <Pressable accessibilityRole="button" disabled={disabled || busy} onPress={action} style={[s.button, (disabled || busy) && s.disabled]}><Text style={[s.buttonText,(disabled || busy) && s.disabledText]}>{busy ? "Please wait…" : label}</Text></Pressable>;
   const link = (label:string, action:()=>void) => <Pressable accessibilityRole="button" disabled={busy} onPress={action} style={s.link}><Text style={s.linkText}>{label}</Text></Pressable>;
   const passwordField = <Field label="Password" placeholder="Enter your password" value={password} onChangeText={setPassword} secureTextEntry={!visible} maxLength={128} autoCapitalize="none" autoCorrect={false} autoComplete={step === "login" ? "current-password" : "new-password"} suffix={link(visible ? "Hide" : "Show", () => setVisible(value => !value))} />;
@@ -208,9 +214,9 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     go("shop");
   }), !challenge || expires || otp.length !== 6);
   if (!picker && step === "shop") action = button("Continue", () => {
-    if (shopName.trim().length < 2 || !category || !/^\d{4}$/.test(since) || Number(since) < 1900 || Number(since) > new Date().getFullYear()) {
-      setError("Enter a shop name, category and valid opening year."); return;
-    }
+    setShopSubmitted(true);
+    if (shopNameError || categoryError || yearError) return;
+    setShopSubmitted(false);
     go("delivery");
   });
   if (!picker && step === "delivery") action = button("Review shop", () => {
@@ -256,9 +262,11 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
             </View>
           </>}
           <Text accessibilityRole="header" style={s.title}>{title}</Text>
+          {picker === "category" && <Text style={s.copy}>Pick the category that best describes what your shop sells.</Text>}
+          {!picker && step === "account" && <Text style={s.copy}>Start with your account details. You’ll add your shop next.</Text>}
         </View>}
         {!!error && <View style={s.field}><Text accessibilityRole="alert" style={s.error}>{error}</Text>{requestId && <Text selectable style={s.copy}>Support reference: {requestId}</Text>}</View>}
-        {picker && (picker === "area" ? catalogue?.areas : catalogue?.categories)?.map(item => <Pressable accessibilityRole="button" key={item.id} style={s.panel} onPress={() => {
+        {picker && (picker === "area" ? catalogue?.areas : catalogue?.categories)?.map(item => <Pressable accessibilityRole="button" accessibilityState={{ selected: item.id === (picker === "area" ? area?.id : category?.id) }} key={item.id} style={[s.panel, item.id === (picker === "area" ? area?.id : category?.id) && s.selectedOption]} onPress={() => {
           if (picker === "area") setArea(item as ServiceArea); else setCategory(item as Category);
           setPicker(null);
         }}><Text style={s.label}>{item.name}</Text>{"city" in item && <Text style={s.copy}>{item.city}</Text>}</Pressable>)}
@@ -300,10 +308,17 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           {expires && <Text style={s.error}>This code has expired.</Text>}
           <View style={s.sage}><Text style={s.copy}>The email code is checked when you submit your shop for approval.</Text></View>
         </View>}
-        {!picker && step === "shop" && <View style={s.panel}>
-          <Field label="Shop name" value={shopName} onChangeText={setShopName} maxLength={100} />
-          {link(category?.name ?? "Choose shop category", () => setPicker("category"))}
-          <Field label="Year opened" value={since} onChangeText={setSince} keyboardType="number-pad" maxLength={4} />
+        {!picker && step === "shop" && <View style={[s.panel, s.shopPanel]}>
+          <Field label="Shop name" placeholder="Name customers know your shop by" value={shopName} onChangeText={setShopName} maxLength={100} error={shopSubmitted ? shopNameError : undefined} />
+          <View style={s.field}>
+            <Text style={s.label}>Shop category</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel={category ? `Shop category, ${category.name}` : "Choose shop category"} onPress={() => setPicker("category")} style={[s.inputRow, s.categoryField, category && s.selectedOption, shopSubmitted && categoryError ? s.invalidField : null]}>
+              <Text style={s.categoryText}>{category?.name ?? "Choose shop category"}</Text>
+              <Text style={s.categoryText} accessible={false}>›</Text>
+            </Pressable>
+            {shopSubmitted && !!categoryError && <Text accessibilityRole="alert" style={s.error}>{categoryError}</Text>}
+          </View>
+          <Field label="Year opened" placeholder="YYYY" hint="The year your shop started operating." value={since} onChangeText={value => setSince(value.replace(/\D/g, ""))} keyboardType="number-pad" maxLength={4} error={shopSubmitted ? yearError : undefined} />
         </View>}
         {!picker && step === "delivery" && <View style={s.panel}>
           <Field label="Street address" value={address} onChangeText={setAddress} maxLength={500} multiline />
@@ -367,8 +382,12 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   </SafeAreaView></SafeAreaProvider></Modal>;
 }
 
-function Field({label,suffix,...props}:TextInputProps & {label:string; suffix?:React.ReactNode}) {
-  return <View style={s.field}><Text style={s.label}>{label}</Text><View style={s.inputRow}><TextInput {...props} accessibilityLabel={label} placeholderTextColor={theme.secondary} style={s.input}/>{suffix}</View></View>;
+function Field({label,suffix,error,hint,...props}:TextInputProps & {label:string; suffix?:React.ReactNode; error?:string; hint?:string}) {
+  return <View style={s.field}>
+    <Text style={s.label}>{label}</Text>
+    <View style={[s.inputRow, !!error && s.invalidField]}><TextInput {...props} accessibilityLabel={label} placeholderTextColor={theme.secondary} style={s.input}/>{suffix}</View>
+    {error ? <Text accessibilityRole="alert" style={s.error}>{error}</Text> : hint ? <Text style={s.copy}>{hint}</Text> : null}
+  </View>;
 }
 
 const s = themedStyles(() => StyleSheet.create({
@@ -390,6 +409,11 @@ const s = themedStyles(() => StyleSheet.create({
   progressSegment:{flex:1,height:3,borderRadius:2,backgroundColor:theme.border},
   progressFilled:{backgroundColor:theme.primary},
   setupPanel:{borderRadius:20,gap:10},
+  shopPanel:{borderRadius:20,gap:16},
+  categoryField:{minHeight:52,paddingHorizontal:12,justifyContent:"space-between",gap:12},
+  categoryText:{color:theme.accentInk,fontSize:15,fontWeight:"600",flexShrink:1},
+  selectedOption:{backgroundColor:theme.selected,borderColor:theme.accentInk},
+  invalidField:{borderColor:theme.errorBorder},
   statusBody:{gap:12},
   statusLoading:{flexDirection:"row",alignItems:"center",gap:8,paddingVertical:10},
   sessionRow:{alignItems:"center",paddingTop:8,borderTopWidth:1,borderColor:theme.border},

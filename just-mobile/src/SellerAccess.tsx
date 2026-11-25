@@ -62,6 +62,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const [coverError, setCoverError] = useState("");
   const [coverSaved, setCoverSaved] = useState(false);
   const [deliverySubmitted, setDeliverySubmitted] = useState(false);
+  const [editingReview, setEditingReview] = useState(false);
   const [category, setCategory] = useState<Category>();
   const [area, setArea] = useState<ServiceArea>();
   const [fulfilment, setFulfilment] = useState<string[]>([]);
@@ -196,6 +197,11 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     if (busy) return;
     if (workspaceOpen) { setWorkspaceOpen(false); refreshShop(); return; }
     if (picker) { setPicker(null); return; }
+    if (editingReview && (step === "shop" || step === "delivery")) {
+      setEditingReview(false);
+      go("review");
+      return;
+    }
     if (step === "shop") go(verify ? "email" : "account");
     else if (backSteps[step]) go(backSteps[step]!);
     else close();
@@ -247,19 +253,33 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     if (!catalogue) await loadCatalogue();
     go("shop");
   }), !challenge || expires || otp.length !== 6);
-  if (!picker && step === "shop") action = button("Continue", () => {
+  if (!picker && step === "shop") action = button(editingReview ? "Back to review" : "Continue", () => {
     setShopSubmitted(true);
     if (shopNameError || categoryError || yearError) return;
     setShopSubmitted(false);
-    go("delivery");
+    go(editingReview ? "review" : "delivery");
+    setEditingReview(false);
   });
-  if (!picker && step === "delivery") action = button("Review shop", () => {
+  if (!picker && step === "delivery") action = button(editingReview ? "Back to review" : "Review shop", () => {
     setDeliverySubmitted(true);
     if (addressError || areaError || fulfilmentError) return;
     setDeliverySubmitted(false);
+    setEditingReview(false);
     go("review");
   });
   if (!picker && step === "review") action = button("Submit shop for approval", () => void run(async () => {
+    if (shopNameError || categoryError || yearError) {
+      setEditingReview(true);
+      setShopSubmitted(true);
+      go("shop");
+      return;
+    }
+    if (addressError || areaError || fulfilmentError) {
+      setEditingReview(true);
+      setDeliverySubmitted(true);
+      go("delivery");
+      return;
+    }
     if (verify && (!challenge || clockNow() >= challenge.expires)) { go("email"); throw new Error("Your email code has expired. Send a new code."); }
     try {
       const result = await buyerApi.registerSeller({
@@ -414,7 +434,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           <View style={[s.panel, s.setupPanel]}>
             <View style={s.reviewHeader}>
               <Text accessibilityRole="header" style={s.reviewTitle}>Shop details</Text>
-              {link("Edit shop details", () => go("shop"))}
+              {link("Edit shop details", () => { setEditingReview(true); go("shop"); })}
             </View>
             <ReviewField label="Shop name" value={shopName.trim()} />
             <ReviewField label="Shop category" value={category?.name ?? ""} />
@@ -425,7 +445,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           <View style={[s.panel, s.setupPanel]}>
             <View style={s.reviewHeader}>
               <Text accessibilityRole="header" style={s.reviewTitle}>Address & fulfilment</Text>
-              {link("Edit address & fulfilment", () => go("delivery"))}
+              {link("Edit address & fulfilment", () => { setEditingReview(true); go("delivery"); })}
             </View>
             <ReviewField label="Shop address" value={address.trim()} />
             <ReviewField label="Service area" value={area ? `${area.name}, ${area.city}` : ""} />

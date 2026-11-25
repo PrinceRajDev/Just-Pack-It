@@ -16,12 +16,16 @@ const assert = require("node:assert/strict");
     const errors = [];
     page.on("pageerror", error => errors.push(error.message));
     let emptyMarket = false;
+    let areaRequests = 0;
     let releaseStartup;
     const startup = new Promise(resolve => { releaseStartup = resolve; });
     await page.route("https://just-pack-it-bq64.onrender.com/**", async route => {
       const url = new URL(route.request().url());
       const resource = url.pathname.slice(1);
-      if (resource === "areas") await startup;
+      if (resource === "areas") {
+        areaRequests++;
+        await startup;
+      }
       if (resource.startsWith("auth/")) return route.abort();
       let records = JSON.parse(fs.readFileSync(path.join(snapshot, resource + ".json"), "utf8"));
       if (emptyMarket && (resource === "shops" || resource === "products")) records = [];
@@ -70,8 +74,11 @@ const assert = require("node:assert/strict");
     await selectedArea.waitFor();
     await page.waitForFunction(() => document.querySelector('[data-testid="delivery-area-sheet"]')?.getBoundingClientRect().bottom <= innerHeight + 1);
     await page.screenshot({path:path.join(output,"delivery-area-390.png")});
+    await page.getByText("Raiyam is currently the only available delivery area.", { exact: true }).waitFor();
+    const beforeReselect = areaRequests;
     await selectedArea.click();
     await page.getByTestId("delivery-area-sheet").waitFor({state:"hidden"});
+    assert.equal(areaRequests, beforeReselect);
     for (const name of ["Groceries","Vegetables","Fruits","Dairy","Bakery","Personal care","Home care","Snacks"]) {
       await page.getByRole("button",{name,exact:true}).click();
       await page.getByText("No active products are available in this category",{exact:true}).waitFor();

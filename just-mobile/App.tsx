@@ -553,6 +553,7 @@ export default function App() {
           close={() => setPicker(false)}
           choose={(x) => {
             setPicker(false);
+            if (x.id === area?.id) return;
             setPicked(null);
             setQuery("");
             setShop(null);
@@ -2085,7 +2086,11 @@ function AreaSheet({
                 <Text style={s.areaCloseText}>×</Text>
               </Pressable>
             </View>
-            <Text style={s.sheetCopy}>See nearby shops and products for the area you choose.</Text>
+            <Text style={s.sheetCopy}>
+              {available.length === 1 && selected?.id === available[0].id
+                ? `${selected.name} is currently the only available delivery area.`
+                : "See nearby shops and products for the area you choose."}
+            </Text>
             <ScrollView bounces={false} contentContainerStyle={s.areaOptions}>
               {!available.length && <BuyerStateCard title="We’re not here yet." copy="Shops aren’t available in this browsing area." tone="warning" icon="location" action="Back to marketplace" onAction={close} />}
               {available.map(item => {

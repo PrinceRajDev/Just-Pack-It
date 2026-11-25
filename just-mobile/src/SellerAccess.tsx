@@ -68,6 +68,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const [fulfilment, setFulfilment] = useState<string[]>([]);
   const [catalogue, setCatalogue] = useState<{categories:Category[]; areas:ServiceArea[]}>();
   const [picker, setPicker] = useState<"category" | "area" | null>(null);
+  const [categorySearch, setCategorySearch] = useState("");
   const enteredPhone = phone.replace(/[\s()-]/g, "");
   const normalizedPhone = /^[6-9]\d{9}$/.test(enteredPhone) ? "+91" + enteredPhone
     : /^91[6-9]\d{9}$/.test(enteredPhone) ? "+" + enteredPhone
@@ -222,6 +223,11 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     ? ["account", "email", "shop", "delivery", "review"]
     : ["account", "shop", "delivery", "review"];
   const setupStep = setupSteps.indexOf(step) + 1;
+  const pickerOptions = picker === "area" ? catalogue?.areas : catalogue?.categories;
+  const categoryQuery = categorySearch.trim().toLowerCase();
+  const visibleOptions = picker === "category" && categoryQuery
+    ? pickerOptions?.filter(item => item.name.toLowerCase().includes(categoryQuery))
+    : pickerOptions;
   const currentYear = new Date().getFullYear();
   const shopNameError = shopName.trim().length < 2 ? "Enter at least 2 characters for your shop name." : "";
   const categoryError = category ? "" : "Select a category for your shop.";
@@ -330,11 +336,18 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           {!picker && setupStep > 0 && <Text style={s.setupDescription}>{setupCopy[step as keyof typeof setupCopy][1]}</Text>}
         </View>}
         {!!error && <View style={s.field}><Text accessibilityRole="alert" style={s.error}>{error}</Text>{requestId && <Text selectable style={s.copy}>Support reference: {requestId}</Text>}</View>}
-        {picker && (picker === "area" ? catalogue?.areas : catalogue?.categories)?.map(item => <Pressable accessibilityRole="button" accessibilityState={{ selected: item.id === (picker === "area" ? area?.id : category?.id) }} key={item.id} style={[s.panel, item.id === (picker === "area" ? area?.id : category?.id) && s.selectedOption]} onPress={() => {
+        {picker === "category" && !!pickerOptions?.length && (
+          <Field label="Search categories" placeholder="e.g. Grocery" value={categorySearch} onChangeText={setCategorySearch} autoCorrect={false} returnKeyType="search"
+            suffix={categorySearch ? link("Clear", () => setCategorySearch("")) : undefined} />
+        )}
+        {picker && visibleOptions?.map(item => <Pressable accessibilityRole="button" accessibilityState={{ selected: item.id === (picker === "area" ? area?.id : category?.id) }} key={item.id} style={[s.panel, item.id === (picker === "area" ? area?.id : category?.id) && s.selectedOption]} onPress={() => {
           if (picker === "area") setArea(item as ServiceArea); else setCategory(item as Category);
           setPicker(null);
         }}><Text style={s.label}>{item.name}</Text>{"city" in item && <Text style={s.copy}>{item.city}</Text>}</Pressable>)}
-        {picker && !(picker === "area" ? catalogue?.areas.length : catalogue?.categories.length) && <BuyerStateCard title="No options available" copy="Try again to refresh available choices." action="Refresh options" onAction={() => void run(loadCatalogue)} />}
+        {picker && !pickerOptions?.length && <BuyerStateCard title="No options available" copy="Try again to refresh available choices." action="Refresh options" onAction={() => void run(loadCatalogue)} />}
+        {picker === "category" && !!pickerOptions?.length && !visibleOptions?.length && (
+          <BuyerStateCard title="No matching categories" copy="Try a shorter search or clear it to see all categories." action="Clear search" onAction={() => setCategorySearch("")} />
+        )}
         {!picker && step === "login" && <>
           <View style={[s.panel, s.loginPanel]}>
             <Field label="Mobile number" value={phone} onChangeText={setPhone} autoComplete="tel" keyboardType="phone-pad" placeholder="+91 98765 43210" />
@@ -377,7 +390,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           <Field label="Shop name" placeholder="Name customers know your shop by" value={shopName} onChangeText={setShopName} maxLength={100} error={shopSubmitted ? shopNameError : undefined} />
           <View style={s.field}>
             <Text style={s.label}>Shop category</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel={category ? `Shop category, ${category.name}` : "Choose shop category"} onPress={() => setPicker("category")} style={[s.inputRow, s.categoryField, category && s.selectedOption, shopSubmitted && categoryError ? s.invalidField : null]}>
+            <Pressable accessibilityRole="button" accessibilityLabel={category ? `Shop category, ${category.name}` : "Choose shop category"} onPress={() => { setCategorySearch(""); setPicker("category"); }} style={[s.inputRow, s.categoryField, category && s.selectedOption, shopSubmitted && categoryError ? s.invalidField : null]}>
               <Text style={s.categoryText}>{category?.name ?? "Choose shop category"}</Text>
               <Text style={s.categoryText} accessible={false}>›</Text>
             </Pressable>

@@ -193,6 +193,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     setError("Your seller session expired. Sign in again.");
   };
   const refreshShop = () => {
+    setFailedCover(undefined);
     setCheckingShop(true);
     setShopError("");
     setRefresh(value => value + 1);
@@ -577,11 +578,13 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
             ) : null}
             {shopError ? (
               <BuyerStateCard title="Shop status unavailable" copy={shopError} tone="error" action="Retry status" onAction={refreshShop} />
-            ) : checkingShop || !approval ? (
+            ) : checkingShop ? (
               <View style={s.statusLoading} accessibilityLiveRegion="polite">
                 <ActivityIndicator color={theme.accentInk} />
                 <Text style={s.copy}>Checking shop status…</Text>
               </View>
+            ) : !approval ? (
+              <BuyerStateCard title="Shop status unavailable" copy="Refresh to check for your shop application." icon="shop" action="Refresh shop status" onAction={refreshShop} />
             ) : (
               <Pressable accessibilityRole="button" style={[s.link, s.applyAction]} onPress={refreshShop}>
                 <Text style={s.linkText}>Refresh shop status</Text>

@@ -898,14 +898,21 @@ function Home({
   const productResults = (
     <>
       {picked && categoryFailure?.key === categoryKey ? (
-        <State
-          title="Category could not load"
-          copy={categoryFailure.message}
-          action="Try again"
-          onAction={retryCategory}
-        />
+        <View style={s.categoryStatus}>
+          <BuyerStateCard
+            title="Category could not load"
+            copy={categoryFailure.message}
+            tone="error"
+            icon="network"
+            action="Try again"
+            onAction={retryCategory}
+          />
+        </View>
       ) : picked && area && categoryResult?.key !== categoryKey ? (
-        <ActivityIndicator color={theme.accentInk} />
+        <View style={s.categoryStatus}>
+          <BuyerStateCard title="Loading products…" tone="info" loading compact />
+          <BuyerStateSkeleton />
+        </View>
       ) : categoryProducts.length ? (
         <View style={s.grid}>
           {categoryProducts.slice(0, picked ? undefined : 12).map((x) => (
@@ -2335,6 +2342,7 @@ const s = themedStyles(() => StyleSheet.create({
     backgroundColor: theme.canvas,
   },
   categoryActive: { borderColor: theme.accentInk, borderWidth: 2 },
+  categoryStatus: { paddingHorizontal: 20, gap: 12 },
   categoryImage: { width: "100%", backgroundColor: theme.surfaceSoft },
   categoryName: {
     minHeight: 52,

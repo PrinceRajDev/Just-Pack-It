@@ -38,7 +38,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   const [session, setSession] = useState<Session | null>(() => initialSession ?? null);
   const [shop, setShop] = useState<Awaited<ReturnType<typeof buyerApi.sellerShop>>>();
   const [shopError, setShopError] = useState("");
-  const [checkingShop, setCheckingShop] = useState(false);
+  const [checkingShop, setCheckingShop] = useState(true);
   const [refresh, setRefresh] = useState(0);
   const [restoring, setRestoring] = useState(!initialSession);
   const [error, setError] = useState("");
@@ -145,6 +145,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
       throw new Error("This mobile number is not registered as a seller.");
     }
     setSession(next);
+    setCheckingShop(true);
     setPassword(""); setOtp(""); setChallenge(undefined);
     go("status");
     await storage.setItemAsync(sessionKey, JSON.stringify(next)).catch(() => undefined);
@@ -218,10 +219,10 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     {login:"Welcome back", account:"Create seller account", email:"Check your email", shop:"Tell us about your shop", delivery:"Address & fulfilment", review:"Review your shop", status:"Your seller workspace"}[step];
   const hasCover = !picker && (step === "login" || step === "status");
   const approval = shop ? ({
-    pending: { title: "Your shop is under review", copy: "We’re checking your application. Check back here for the latest status.", tone: "info", icon: "clock" },
-    approved: { title: "Your shop is approved", copy: "Open your workspace to manage your catalogue, opening hours and orders.", tone: "success", icon: "check" },
-    rejected: { title: "Changes requested", copy: "Review the feedback on your shop application.", tone: "warning", icon: "warning" },
-    suspended: { title: "Shop suspended", copy: "Your shop is currently suspended. Check the latest status here.", tone: "error", icon: "warning" },
+    pending: { title: "Your shop is under review", copy: "You can prepare your catalogue and opening hours while we review your shop.", tone: "info", icon: "clock", action: "Set up your shop" },
+    approved: { title: "Your shop is approved", copy: "Open your workspace to manage your catalogue, opening hours and orders.", tone: "success", icon: "check", action: "Open seller workspace" },
+    rejected: { title: "Changes requested", copy: "Read the review feedback below, then update your shop details in the workspace.", tone: "warning", icon: "warning", action: "Open workspace to make changes" },
+    suspended: { title: "Shop suspended", copy: "Check the feedback below for any details about your shop’s suspension.", tone: "error", icon: "warning", action: "Open seller workspace" },
   } as const)[shop.status] : undefined;
   const setupSteps = verify
     ? ["account", "email", "shop", "delivery", "review"]
@@ -312,7 +313,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
       throw reason;
     }
   }));
-  if (!picker && step === "status") action = button("Open seller workspace", () => setWorkspaceOpen(true));
+  if (!picker && step === "status") action = button(approval?.action ?? "Open seller workspace", () => setWorkspaceOpen(true));
 
   return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style="dark" />
     <View style={s.header}>
@@ -483,7 +484,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
               {link("Discard selected photo", () => { setCoverAsset(undefined); setError(""); })}
             </View>}
             {coverSaved && <Text accessibilityLiveRegion="polite" style={s.copy}>Shop cover photo submitted for review.</Text>}
-            {approval && (
+            {approval && !shopError && (
               <BuyerStateCard title={approval.title} copy={approval.copy} tone={approval.tone} icon={approval.icon} />
             )}
             {shop?.review?.reason ? (

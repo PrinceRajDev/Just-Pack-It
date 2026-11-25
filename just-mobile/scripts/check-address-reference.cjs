@@ -227,6 +227,7 @@ const assert = require("node:assert/strict");
     const notificationId = "a9386f03-3fe5-4985-8a9c-dd20c2eb6d55";
     let notificationRead = false;
     let readAttempts = 0;
+    let orderDispatched = false;
     const notificationHeaders = {
       "access-control-allow-origin": "*",
       "access-control-allow-headers": "*",
@@ -234,7 +235,10 @@ const assert = require("node:assert/strict");
     };
     await page.route("**/notifications?limit=20", route => route.fulfill({
       headers: notificationHeaders,
-      json: [{ id: notificationId, title: "Order accepted", body: "Your shop is preparing your order.", createdAt: "2026-11-20T08:30:00Z", read: notificationRead }],
+      json: [
+        ...(orderDispatched ? [{ id: "dispatch-fixture", title: "Out for delivery", body: "Your rider is on the way.", createdAt: "2026-11-20T09:30:00Z", read: true }] : []),
+        { id: notificationId, title: "Order accepted", body: "Your shop is preparing your order.", createdAt: "2026-11-20T08:30:00Z", read: notificationRead },
+      ],
     }));
     await page.route(`**/notifications/${notificationId}/read`, route => {
       if (route.request().method() === "OPTIONS") return route.fulfill({ status: 204, headers: notificationHeaders });
@@ -260,6 +264,9 @@ const assert = require("node:assert/strict");
     await page.getByText("Order accepted", { exact: true }).waitFor();
     assert.equal(await markRead.count(), 0);
     assert.equal(readAttempts, 2);
+    orderDispatched = true;
+    await page.getByRole("button", { name: "Refresh", exact: true }).click();
+    await page.getByText("Out for delivery", { exact: true }).waitFor();
     await page.getByRole("button", { name: "Go back", exact: true }).last().click();
     await page.getByRole("button", { name: "Profile", exact: true }).click();
     const profileName = page.getByLabel("Full name", { exact: true });

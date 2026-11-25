@@ -112,6 +112,12 @@ const assert = require("node:assert/strict");
     for (const name of ["Explore shops","See all"]) {
       await page.getByRole("button",{name,exact:true}).click();
       await page.getByText("Shops in Raiyam",{exact:true}).waitFor();
+      const shopFilter = page.getByRole("textbox", { name: "Filter shops" });
+      await shopFilter.fill("missing-shop-fixture");
+      await page.getByRole("heading", { name: "No matching shops", exact: true }).waitFor();
+      await page.getByRole("button", { name: "Clear filter", exact: true }).click();
+      assert.equal(await shopFilter.inputValue(), "");
+
       await page.getByText("←",{exact:true}).first().click();
     }
     await page.getByRole("button",{name:"Search products, shops & brands"}).click();

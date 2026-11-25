@@ -12,6 +12,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
   useWindowDimensions,
 } from "react-native";
@@ -873,6 +874,11 @@ function Home({
   const categoryCardWidth = (Math.min(width, 600) - 52) / 2;
   const [showShops, setShowShops] = useState(false);
   const [allShops, setAllShops] = useState<Shop[]>([]);
+  const [shopFilter, setShopFilter] = useState("");
+  const shopTerm = shopFilter.trim().toLowerCase();
+  const visibleShops = shopTerm
+    ? allShops.filter(item => `${item.name} ${item.locality ?? ""}`.toLowerCase().includes(shopTerm))
+    : allShops;
   const [shopsBusy, setShopsBusy] = useState(false);
   const [shopsError, setShopsError] = useState<string | null>(null);
   const shopsRequestPending = useRef(false);
@@ -880,7 +886,10 @@ function Home({
     setShowShops(true);
     if (shopsRequestPending.current) return;
     shopsRequestPending.current = true;
-    if (!refresh) setAllShops([]);
+    if (!refresh) {
+      setAllShops([]);
+      setShopFilter("");
+    }
     setShopsBusy(true);
     setShopsError(null);
     try {
@@ -1269,6 +1278,24 @@ function Home({
             copy="Choose a shop to browse its products"
             onBack={() => setShowShops(false)}
           />
+          {allShops.length > 0 && (
+            <View style={s.shopPanelSearch}>
+              <MarketIcon name="search" />
+              <TextInput
+                accessibilityLabel="Filter shops"
+                value={shopFilter}
+                onChangeText={setShopFilter}
+                placeholder="Filter by shop name or locality"
+                placeholderTextColor={theme.muted}
+                autoCorrect={false}
+                returnKeyType="search"
+                style={s.shopPanelInput}
+              />
+              {!!shopFilter && <Pressable accessibilityRole="button" accessibilityLabel="Clear shop filter" onPress={() => setShopFilter("")} style={s.areaClose}>
+                <Text style={s.areaCloseText}>×</Text>
+              </Pressable>}
+            </View>
+          )}
           {shopsBusy && !allShops.length ? (
             <ScrollView contentContainerStyle={s.shopPanelStatus}>
               <BuyerStateCard title="Loading shops…" copy="Checking your selected area" tone="info" compact loading />
@@ -1281,7 +1308,8 @@ function Home({
             </ScrollView>
           ) : (
             <FlatList
-              data={allShops}
+              data={visibleShops}
+              keyboardShouldPersistTaps="handled"
               refreshing={shopsBusy}
               onRefresh={() => void openShops(true)}
               ListHeaderComponent={shopsError ? (
@@ -1290,7 +1318,9 @@ function Home({
               ) : undefined}
               keyExtractor={(item) => item.id}
               contentContainerStyle={{ padding: 16, gap: 12 }}
-              ListEmptyComponent={
+              ListEmptyComponent={shopTerm && allShops.length > 0 ? (
+                <BuyerStateCard title="No matching shops" icon="shop" action="Clear filter" onAction={() => setShopFilter("")} />
+              ) : (
                 <BuyerStateCard
                   title={hindi ? "यहाँ अभी कोई दुकान नहीं है।" : "No shops available in this area yet"}
                   icon="shop"
@@ -1304,7 +1334,7 @@ function Home({
                     }
                   }}
                 />
-              }
+              )}
               renderItem={({ item }) => (
                 <ShopRow
                   item={item}
@@ -2350,6 +2380,8 @@ const s = themedStyles(() => StyleSheet.create({
     backgroundColor: theme.canvas,
   },
   categoryActive: { borderColor: theme.accentInk, borderWidth: 2 },
+  shopPanelSearch: { marginHorizontal: 16, marginTop: 8, paddingHorizontal: 12, gap: 8, minHeight: 48, borderWidth: 1, borderColor: theme.controlBorder, borderRadius: 12, backgroundColor: theme.surface, flexDirection: "row", alignItems: "center" },
+  shopPanelInput: { flex: 1, minWidth: 0, minHeight: 48, color: theme.ink, fontSize: 14 },
   shopPanelStatus: { padding: 16, gap: 12 },
   categoryStatus: { paddingHorizontal: 20, gap: 12 },
   categoryImage: { width: "100%", backgroundColor: theme.surfaceSoft },

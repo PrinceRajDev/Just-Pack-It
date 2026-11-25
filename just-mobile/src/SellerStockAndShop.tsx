@@ -211,6 +211,7 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
   const [isActive,setIsActive] = useState(product?.active ?? true);
   const [variant,setVariant] = useState<{id?:string;label:string;price:string;stock:string}>();
   const [notice,setNotice] = useState("");
+  const [confirmExit, setConfirmExit] = useState(false);
   const categories = useSellerData(marketApi.categories,token);
   const mutation = useSellerMutation();
   const hasVariants = !!current?.variants?.length;
@@ -222,6 +223,18 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
     || (mrp === "" ? null : Number(mrp)) !== (current.mrp ?? null)
     || (!hasVariants && (!validStock(stock) || Number(stock) !== current.stock))
     || isActive !== current.active;
+  const draftStarted = current ? detailsChanged : Boolean(
+    name.trim() || unit.trim() || description.trim() || categoryId || price || mrp || stock || !isActive
+  );
+  const savedVariant = variant?.id ? current?.variants?.find(item => item.id === variant.id) : undefined;
+  const variantChanged = variant && (savedVariant
+    ? variant.label.trim() !== savedVariant.label.trim() || variant.price !== String(savedVariant.price) || variant.stock !== String(savedVariant.stock)
+    : Boolean(variant.label.trim() || variant.price || variant.stock));
+  const requestExit = () => {
+    if (mutation.busy || photoBusy) return;
+    if (draftStarted || variantChanged) setConfirmExit(true);
+    else close();
+  };
   const discardDetails = () => {
     if (!current) return;
     setName(current.name);
@@ -235,7 +248,7 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
     setNotice("");
     mutation.clear();
   };
-  useAndroidBack(() => { if (!mutation.busy && !photoBusy) close(); return true; }, 25);
+  useAndroidBack(() => { if (confirmExit) setConfirmExit(false); else requestExit(); return true; }, 25);
   const refresh = async () => {
     if (!current) return;
     const next = await sellerApi.product(token,current.id);
@@ -254,7 +267,7 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
   const feedback = <MutationFeedback error={mutation.error} onReload={current ? ()=>void mutation.run(refresh) : undefined} />;
   return <>
   <SellerScroll>
-    <Pressable accessibilityRole="button" onPress={close} disabled={mutation.busy || photoBusy} style={styles.orderBack}><Text style={styles.link}>‹  Back to catalogue</Text></Pressable>
+    <Pressable accessibilityRole="button" onPress={requestExit} disabled={mutation.busy || photoBusy} style={styles.orderBack}><Text style={styles.link}>‹  Back to catalogue</Text></Pressable>
     <View style={styles.orderHero}>
       <View style={styles.orderTop}>
         <Image source={productIcon} resizeMode="contain" style={[styles.sellerIcon,styles.editorIcon]} accessible={false} />
@@ -323,7 +336,16 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
       </>}
     </SellerCard>}
   </SellerScroll>
-  {section === "Details" && <View style={styles.orderDock}>
+  {confirmExit ? (
+    <View style={styles.orderDock}>
+      <Text accessibilityRole="header" style={styles.title}>Leave without saving?</Text>
+      <Text style={styles.copy}>Unsaved edits to this product will be lost.</Text>
+      <View style={styles.shopTimes}>
+        <View style={styles.grow}><SellerButton label="Keep editing" soft onPress={() => setConfirmExit(false)} /></View>
+        <View style={styles.grow}><SellerButton label="Discard and leave" onPress={close} /></View>
+      </View>
+    </View>
+  ) : section === "Details" && <View style={styles.orderDock}>
     {feedback}
     {(!!notice || (!!current && detailsChanged)) && <Text accessibilityLiveRegion="polite" style={styles.shopSaved}>
       {current && detailsChanged ? "Unsaved product changes." : notice}

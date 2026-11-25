@@ -881,6 +881,9 @@ function Home({
     : allShops;
   const [shopsBusy, setShopsBusy] = useState(false);
   const [shopsError, setShopsError] = useState<string | null>(null);
+  const [shopCursor, setShopCursor] = useState<string | null>(null);
+  const [shopsMoreBusy, setShopsMoreBusy] = useState(false);
+  const [shopsMoreError, setShopsMoreError] = useState(false);
   const shopsRequestPending = useRef(false);
   const openShops = async (refresh = false) => {
     setShowShops(true);
@@ -888,12 +891,16 @@ function Home({
     shopsRequestPending.current = true;
     if (!refresh) {
       setAllShops([]);
+      setShopCursor(null);
       setShopFilter("");
     }
     setShopsBusy(true);
     setShopsError(null);
+    setShopsMoreError(false);
     try {
-      setAllShops(area ? await marketApi.shops(area.id) : []);
+      const page = area ? await marketApi.searchShops(area.id, "") : { items: [], cursor: null };
+      setAllShops(page.items);
+      setShopCursor(page.cursor);
     } catch (error) {
       setShopsError(
         error instanceof Error ? error.message : "Shops could not load",
@@ -901,6 +908,26 @@ function Home({
     } finally {
       shopsRequestPending.current = false;
       setShopsBusy(false);
+    }
+  };
+  const loadMoreShops = async () => {
+    if (!area || !shopCursor || shopsRequestPending.current) return;
+    shopsRequestPending.current = true;
+    setShopsMoreBusy(true);
+    setShopsMoreError(false);
+    try {
+      const page = await marketApi.searchShops(area.id, "", shopCursor);
+      setAllShops(previous => {
+        const merged = new Map(previous.map(item => [item.id, item]));
+        page.items.forEach(item => merged.set(item.id, item));
+        return [...merged.values()];
+      });
+      setShopCursor(page.cursor === shopCursor ? null : page.cursor);
+    } catch {
+      setShopsMoreError(true);
+    } finally {
+      shopsRequestPending.current = false;
+      setShopsMoreBusy(false);
     }
   };
   const retryCategory = () => {
@@ -1335,6 +1362,14 @@ function Home({
                   }}
                 />
               )}
+              ListFooterComponent={shopCursor ? (
+                <View style={s.shopPanelStatus}>
+                  {shopsMoreError && <Text style={s.emptyText}>More shops couldn’t load.</Text>}
+                  <Pressable accessibilityRole="button" disabled={shopsMoreBusy || shopsBusy} onPress={() => void loadMoreShops()} style={s.secondary}>
+                    <Text style={s.secondaryText}>{shopsMoreBusy ? "Loading more shops…" : shopsMoreError ? "Retry loading more shops" : "Load more shops"}</Text>
+                  </Pressable>
+                </View>
+              ) : undefined}
               renderItem={({ item }) => (
                 <ShopRow
                   item={item}

@@ -515,6 +515,25 @@ const assert = require("node:assert/strict");
     await shopSheet.getByRole("button", { name: "Refresh shops", exact: true }).click();
     await shopSheet.getByRole("heading", { name: "No shops available in this area yet" }).waitFor({ state: "hidden" });
     await shopSheet.getByRole("button", { name: "Refresh shops", exact: true }).waitFor({ state: "hidden" });
+    await page.getByText("←", { exact: true }).first().click();
+    await page.route("**/shops?area=**", route => {
+      const { searchParams } = new URL(route.request().url());
+      const later = searchParams.get("cursor") === "qa-next-shops";
+      return route.fulfill({
+        json: [{ id: later ? "second-shop" : "first-shop", name: later ? "Second Page Shop" : "First Page Shop", locality: "Raiyam", isOpen: true }],
+        headers: {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "X-Has-More, X-Next-Cursor",
+          "X-Has-More": String(!later),
+          "X-Next-Cursor": "qa-next-shops",
+        },
+      });
+    });
+    await page.getByRole("button", { name: "See all", exact: true }).click();
+    await shopSheet.getByRole("button", { name: "Load more shops", exact: true }).click();
+    await shopSheet.getByText("First Page Shop", { exact: true }).waitFor();
+    await shopSheet.getByText("Second Page Shop", { exact: true }).waitFor();
+
     assert.deepEqual(errors,[]);
     console.log("Guest Home visuals and navigation passed at four sizes.");
   } finally { await browser.close(); }

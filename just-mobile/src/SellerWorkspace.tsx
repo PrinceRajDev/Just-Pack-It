@@ -342,18 +342,18 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
     </>;
   }
   return <SellerScroll refreshing={listing.loading} onRefresh={reloadOrders}>
-    <View style={styles.dispatchBanner}>
-      <Image source={dispatchPhoto} resizeMode="cover" style={styles.dispatchBannerImage} accessible={false} testID="seller-dispatch-art" />
-      <View style={styles.dispatchBannerCopy}>
-        <Text accessibilityRole="header" style={styles.dispatchTitle}>Dispatch desk</Text>
-        {activeOrderCount !== undefined && !listing.error && <Text style={styles.dispatchBannerStatus}>{activeOrderCount}{listing.data?.next ? "+" : ""} active {activeOrderCount === 1 && !listing.data?.next ? "order" : "orders"}</Text>}
-      </View>
-    </View>
     <View style={styles.catalogueSearch}>
       <TextInput accessibilityLabel="Search order ID" placeholder="Search order ID" placeholderTextColor={theme.secondary} value={search}
         onChangeText={setSearch} autoCapitalize="none" autoCorrect={false} returnKeyType="search" style={styles.catalogueSearchInput} />
       {!!search && <Pressable accessibilityRole="button" accessibilityLabel="Clear order search" onPress={() => setSearch("")} style={styles.catalogueAction}><Text style={styles.link}>Clear</Text></Pressable>}
     </View>
+    {!term && <View style={styles.dispatchBanner}>
+      <Image source={dispatchPhoto} resizeMode="cover" style={styles.dispatchBannerImage} accessible={false} testID="seller-dispatch-art" />
+      <View style={styles.dispatchBannerCopy}>
+        <Text accessibilityRole="header" style={styles.dispatchTitle}>Dispatch desk</Text>
+        {activeOrderCount !== undefined && !listing.error && <Text style={styles.dispatchBannerStatus}>{activeOrderCount}{listing.data?.next ? "+" : ""} active {activeOrderCount === 1 && !listing.data?.next ? "order" : "orders"}</Text>}
+      </View>
+    </View>}
     {!term && <View style={styles.dispatchPanel}>
       <View style={styles.dispatchModes}>
         {(["Active","Completed"] as const).map(mode => {
@@ -368,7 +368,8 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
           const count = listing.data?.items.filter(order => (orderGroups[queue] as OrderStatus[]).includes(order.status)).length;
           const selected = group === queue;
           return <Pressable key={queue} accessibilityRole="tab" accessibilityLabel={queue} accessibilityState={{selected}} accessibilityHint={count === undefined ? undefined : `${count} orders loaded`} onPress={() => setGroup(queue)} style={[styles.dispatchCounter,selected && styles.dispatchSelected]}>
-            <Text style={[styles.dispatchNumber,selected && styles.dispatchInk]}>{count ?? "–"}</Text><Text style={[styles.dispatchModeText,selected && styles.dispatchInk]}>{queue === "Out for delivery" ? "On the way" : queue}</Text>
+            <Text style={[styles.dispatchQueueLabel,selected && styles.dispatchInk]}>{queue === "Out for delivery" ? "On the way" : queue}</Text>
+            <Text style={[styles.dispatchNumber,selected && styles.dispatchInk]}>{count ?? "–"}</Text>
           </Pressable>;
         })}
       </View>
@@ -389,7 +390,8 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
     {!listing.loading && !listing.error && !rows?.length && <BuyerStateCard
       title={term ? "No matching order ID" : "No orders in this view"}
       copy={listing.data?.next ? "Load more orders to check earlier activity." : term ? "Check the order ID and try again." : "Matching orders will appear here."}
-      icon="orders" action={!term && fulfilmentFilter !== "all" ? "Show all methods" : undefined} onAction={() => setFulfilmentFilter("all")} />}
+      icon="orders" action={term ? "Clear search" : fulfilmentFilter !== "all" ? "Show all methods" : undefined}
+      onAction={term ? () => setSearch("") : () => setFulfilmentFilter("all")} />}
     {rows?.map(order => {
       const reference = `Order #${order.orderId.slice(-8).toUpperCase()}`;
       const status = orderStatusNames[order.status];

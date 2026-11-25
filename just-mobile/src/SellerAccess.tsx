@@ -359,7 +359,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
       {link(step === "login" || step === "status" ? "Close" : "Back", back)}
     </View>
     {restoring ? <ActivityIndicator style={s.loader} color={theme.accentInk} /> : <>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[s.content, step === "login" && s.loginContent]}>
+      <ScrollView key={picker ?? step} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={[s.content, step === "login" && s.loginContent]}>
         {hasCover ? <View style={s.cover}>
           <Image source={storefront} resizeMode="cover" style={[s.coverPhoto, step === "login" && s.loginPhoto]} accessible={false} testID="seller-access-cover" />
           <View style={s.coverCopy}>

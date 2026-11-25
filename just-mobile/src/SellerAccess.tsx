@@ -216,11 +216,14 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   if (!picker && step === "status") action = button("Open seller workspace", () => setWorkspaceOpen(true));
 
   return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
-    <View style={s.header}><Text style={s.brand}>JustPackIt</Text><Text style={s.kicker}>SELLER</Text>{link(step === "login" || step === "status" ? "Close" : "Back", back)}</View>
+    <View style={s.header}>
+      <Text style={s.brand}>JustPackIt Seller</Text>
+      {link(step === "login" || step === "status" ? "Close" : "Back", back)}
+    </View>
     {restoring ? <ActivityIndicator style={s.loader} color={theme.accentInk} /> : <>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[s.content, step === "login" && s.loginContent]}>
         {hasCover ? <View style={s.cover}>
-          <Image source={storefront} resizeMode="cover" style={s.coverPhoto} accessible={false} testID="seller-access-cover" />
+          <Image source={storefront} resizeMode="cover" style={[s.coverPhoto, step === "login" && s.loginPhoto]} accessible={false} testID="seller-access-cover" />
           <View style={s.coverCopy}>
             <Text accessibilityRole="header" style={s.coverTitle}>{title}</Text>
             <Text style={s.coverCaption}>{step === "login" ? "Sign in with your registered mobile number." : shop?.name ?? session?.name ?? "Seller account"}</Text>
@@ -235,11 +238,21 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           setPicker(null);
         }}><Text style={s.label}>{item.name}</Text>{"city" in item && <Text style={s.copy}>{item.city}</Text>}</Pressable>)}
         {picker && !(picker === "area" ? catalogue?.areas.length : catalogue?.categories.length) && <BuyerStateCard title="No options available" copy="Try again to refresh available choices." action="Refresh options" onAction={() => void run(loadCatalogue)} />}
-        {!picker && step === "login" && <View style={s.panel}>
-          <Field label="Mobile number" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholder="+91  Enter 10-digit number" />
-          {passwordField}
-          {link("Forgot password?", () => { setPassword(""); go("recovery"); })}
-        </View>}
+        {!picker && step === "login" && <>
+          <View style={[s.panel, s.loginPanel]}>
+            <Field label="Mobile number" value={phone} onChangeText={setPhone} autoComplete="tel" keyboardType="phone-pad" placeholder="+91 98765 43210" />
+            {passwordField}
+            {action}
+            {link("Forgot password?", () => { setPassword(""); go("recovery"); })}
+          </View>
+          <Pressable accessibilityRole="button" disabled={busy} style={[s.link, s.applyAction]} onPress={() => void run(async () => {
+            const options = await buyerApi.registrationOptions();
+            setVerify(options.emailOtpRequired);
+            go("account");
+          })}>
+            <Text style={s.linkText}>New to JustPackIt? Create account</Text>
+          </Pressable>
+        </>}
         {!picker && step === "account" && <View style={s.panel}>
           <Field label="Full name" value={name} onChangeText={setName} maxLength={100} />
           <Field label="Mobile number" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholder="+91" />
@@ -281,7 +294,12 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           {link("Sign out of seller account", () => void run(signOut))}
         </>}
       </ScrollView>
-      {action && <View style={s.footer}>{action}{step === "login" && link("New to JustPackIt? Create account", () => void run(async () => { const options = await buyerApi.registrationOptions(); setVerify(options.emailOtpRequired); go("account"); }))}{step === "account" && link("Already have an account? Sign in", () => go("login"))}</View>}
+      {action && step !== "login" && (
+        <View style={s.footer}>
+          {action}
+          {step === "account" && link("Already have an account? Sign in", () => go("login"))}
+        </View>
+      )}
     </>}
   </SafeAreaView></SafeAreaProvider></Modal>;
 }
@@ -296,6 +314,10 @@ const s = themedStyles(() => StyleSheet.create({
   content:{padding:20,paddingTop:20,gap:16,width:"100%",maxWidth:540,alignSelf:"center"}, title:{fontSize:29,lineHeight:38,color:theme.ink,fontWeight:"700"},
   cover:{borderRadius:22,overflow:"hidden",backgroundColor:theme.hero},
   coverPhoto:{width:"100%",height:120},
+  loginPhoto:{height:96},
+  loginContent:{paddingTop:8},
+  loginPanel:{borderRadius:20,gap:12},
+  applyAction:{backgroundColor:theme.selected,borderWidth:1,borderColor:theme.border,borderRadius:14,minHeight:50},
   coverCopy:{padding:16,gap:4},
   coverTitle:{color:theme.ink,fontSize:29,lineHeight:34,letterSpacing:-0.7,fontWeight:"700"},
   coverCaption:{color:theme.secondary,fontSize:14,lineHeight:20},

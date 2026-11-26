@@ -583,9 +583,17 @@ function HomeHeader({
           marginRight: -12,
         }}
       >
-        <Text style={{ color: theme.accentInk, fontSize: 21, fontWeight: "700" }}>
-          JustPackIt
-        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1 }}>
+          <Image
+            source={require("./assets/just-pack-it-icon.png")}
+            accessible={false}
+            resizeMode="contain"
+            style={{ width: 40, height: 40, borderRadius: 10 }}
+          />
+          <Text style={{ color: theme.accentInk, fontSize: 21, fontWeight: "700", flexShrink: 1 }}>
+            JustPackIt
+          </Text>
+        </View>
         <HomeNotifications session={session} />
       </View>
       <Pressable

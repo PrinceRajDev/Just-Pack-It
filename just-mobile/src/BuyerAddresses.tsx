@@ -1,7 +1,7 @@
 import { theme, themedStyles } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useRef, useState } from "react";
-import { StyleSheet, ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { StyleSheet, ActivityIndicator, Pressable, ScrollView, Text, TextInput, View, type TextInputProps } from "react-native";
 import { CheckoutHeading } from "./CheckoutPresentation";
 import { buyerApi, type Address, type BuyerProfile } from "./api";
 
@@ -13,6 +13,9 @@ const blank: Draft = { label: "Home", line1: "", locality: "", city: "", pincode
 const fields: { key: keyof Draft; label: string }[] = [{ key: "label", label: "Label (Home, Work)" }, { key: "line1", label: "House, street and landmark" }, { key: "locality", label: "Locality" }, { key: "city", label: "City" }, { key: "pincode", label: "PIN code" }];
 const hindiFields: Record<keyof Draft, string> = {
   label: "पते का नाम", line1: "मकान, इमारत और सड़क", locality: "इलाका", city: "शहर", pincode: "पिन कोड",
+};
+const addressAutocomplete: Record<keyof Draft, TextInputProps["autoComplete"]> = {
+  label: "off", line1: "street-address", locality: undefined, city: "postal-address-locality", pincode: "postal-code",
 };
 const normalizePin = (value: string) => value.replace(/[०-९]/g, digit => String(digit.charCodeAt(0) - 0x0966));
 type CheckoutEditor = {
@@ -119,7 +122,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
       const label = fields.find(row => row.key === key)!.label;
       return <View key={key} style={s.editorField}>
         <Text style={s.editorLabel}>{t(key === "line1" ? "Flat, building and street" : key === "label" ? "Label" : label, hindiFields[key])}</Text>
-        <TextInput editable={!busy} accessibilityLabel={t(label, hindiFields[key])} value={draft[key]}
+        <TextInput editable={!busy} accessibilityLabel={t(label, hindiFields[key])} autoComplete={addressAutocomplete[key]} value={draft[key]}
           onChangeText={value => {
             setDraft(old => old ? {...old, [key]: key === "pincode" ? normalizePin(value) : value} : old);
             setFieldErrors(old => ({...old, [key]: undefined}));

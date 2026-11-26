@@ -15,7 +15,7 @@ export function pushRoutes(config:Config){
     res.json({available:config.FIREBASE_PUSH_ENABLED,subscribed:Boolean(sub)});
   });
   router.put("/push",async(req,res)=>{
-    if(!config.FIREBASE_PUSH_ENABLED)fail(503,"PUSH_DISABLED","Browser push is not configured");
+    if(!config.FIREBASE_PUSH_ENABLED)fail(503,"PUSH_DISABLED","Push notifications are not configured");
     const {token}=z.object({token:z.string().min(20).max(4096).regex(/^[A-Za-z0-9_:-]+$/)}).strict().parse(req.body),who=actor(req),sid=sessionId(req.headers.authorization);
     await throttle(`push:${who.id}`,config,30);
     await mongoose.connection.transaction(async session=>{
@@ -23,7 +23,7 @@ export function pushRoutes(config:Config){
       if(!active)fail(401,"INVALID_SESSION","Sign in again");
       const existing=await PushSubscription.findById(pushId(token)).session(session);
       if(existing && existing.userId!==who.id){
-        if(await Session.exists({_id:existing.sessionId,expiresAt:{$gt:new Date()}}).session(session))fail(409,"PUSH_ALREADY_BOUND","Disable browser alerts for the previous account first");
+        if(await Session.exists({_id:existing.sessionId,expiresAt:{$gt:new Date()}}).session(session))fail(409,"PUSH_ALREADY_BOUND","Disable alerts for the previous account first");
         await PushSubscription.deleteOne({_id:existing._id}).session(session);
       }
       await PushSubscription.deleteMany({sessionId:sid}).session(session);

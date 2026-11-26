@@ -25,7 +25,14 @@ export async function verifyPushIndexes(){
 export async function sweepPush(config:Config,send?:PushSender){
   const result={sent:0,discarded:0,retry:0,failed:0};
   if(!config.FIREBASE_PUSH_ENABLED)return result;
-  const sender=send ?? ((token,tag)=>firebaseMessaging(config).send({token,data:{title:"Just Pack It update",body:"You have a new marketplace update. Sign in to view it.",tag},webpush:{headers:{TTL:"60",Urgency:"normal"}}}));
+  const sender=send ?? ((token,tag)=>{
+    const title="Just Pack It update",body="You have a new marketplace update. Sign in to view it.";
+    return firebaseMessaging(config).send({
+      token,data:{title,body,tag},
+      android:{ttl:60000,priority:"high",notification:{title,body,tag,channelId:"marketplace-updates"}},
+      webpush:{headers:{TTL:"60",Urgency:"normal"}},
+    });
+  });
   for(let i=0;i<20;i++){
     const now=new Date(),leaseId=randomUUID();
     const job=await PushJob.findOneAndUpdate({$or:[{state:"pending",nextAt:{$lte:now}},{state:"sending",leaseUntil:{$lte:now}}]},{$set:{state:"sending",leaseId,leaseUntil:new Date(now.getTime()+120000)},$inc:{attempts:1}},{sort:{nextAt:1,_id:1},returnDocument:"after"}).lean();

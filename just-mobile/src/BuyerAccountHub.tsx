@@ -5,6 +5,7 @@ import { StyleSheet, ActivityIndicator, Image, Modal, Pressable, ScrollView, Tex
 import { SafeAreaView } from "react-native-safe-area-context";
 import { buyerApi, type Product, type Session, type Shop } from "./api";
 import { BuyerAuthNotice } from "./BuyerAuthNotice";
+import { AndroidPushSettings } from "./AndroidPushSettings";
 import { MarketIcon, type MarketIconName } from "./MarketIcon";
 import { resolveImage } from "./images";
 import * as storage from "./deviceStorage";
@@ -183,6 +184,7 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
               <Action label={busy ? t("Saving…", "सहेज रहे हैं…") : draftHindi ? t("Apply Hindi", "हिन्दी लागू करें") : t("Apply English", "अंग्रेज़ी लागू करें")} disabled={busy || draftHindi === hindi} onPress={() => void run(async () => { await storage.setItemAsync(languageKey,draftHindi ? "hi" : "en"); setHindi(draftHindi); }, t("Couldn’t save the language preference.", "भाषा की पसंद सहेजी नहीं जा सकी।"))} />
             </>}
             {panel === "notifications" && <>
+              {session && <AndroidPushSettings token={session.token} />}
               {session && <View style={s.notificationToolbar}>
                 <Text accessibilityRole="header" style={s.section}>{t("Order updates", "ऑर्डर के अपडेट")}</Text>
                 <Pressable accessibilityRole="button" disabled={busy || !!markingRead} onPress={refreshNotifications} style={({pressed}) => [s.refreshButton, (pressed || busy || !!markingRead) && s.pressed]}>

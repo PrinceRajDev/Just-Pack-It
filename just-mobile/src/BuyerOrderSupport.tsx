@@ -10,6 +10,11 @@ const reasons = [
   ["payment", "Payment or refund"],
   ["other", "Other"],
 ] as const;
+const statusLabels: Record<OrderSupportTicket["status"], string> = {
+  open: "Open",
+  in_progress: "In progress",
+  resolved: "Resolved",
+};
 
 export function BuyerOrderSupport({ token, orderId, suborderId }: { token: string; orderId: string; suborderId: string }) {
   const [open, setOpen] = useState(false);
@@ -54,11 +59,14 @@ export function BuyerOrderSupport({ token, orderId, suborderId }: { token: strin
       if (!open) void check();
     }}><Text style={styles.actionText}>{open ? "Hide order help" : "Get help"}</Text></Pressable>
     {open && <>
-      {busy && <Text accessibilityLiveRegion="polite" style={styles.copy}>{checked ? "Sending request…" : "Checking support requests…"}</Text>}
+      {busy && <Text accessibilityLiveRegion="polite" style={styles.copy}>{checked && !ticket ? "Sending request…" : "Checking support requests…"}</Text>}
       {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
       {ticket ? <View style={styles.section}>
-        <Text style={styles.copy}>Support request · {ticket.status.replaceAll("_", " ")}</Text>
+        <Text accessibilityLiveRegion="polite" style={styles.copy}>Support request · {statusLabels[ticket.status]}</Text>
         {!!ticket.note && <Text style={styles.copy}>{ticket.note}</Text>}
+        <Pressable accessibilityRole="button" disabled={busy} onPress={() => void check()} style={styles.action}>
+          <Text style={styles.actionText}>Refresh support status</Text>
+        </Pressable>
       </View> : checked ? <>
         <View style={styles.reasons}>
           {reasons.map(([value, label]) => <Pressable key={value} accessibilityRole="button" accessibilityState={{ selected: kind === value }} disabled={busy} onPress={() => { setKind(value); setError(""); }} style={[styles.action, kind === value && styles.selected]}>

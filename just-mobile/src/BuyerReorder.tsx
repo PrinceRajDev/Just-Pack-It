@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { buyerApi, type BuyerOrder, type Product } from "./api";
 import { theme } from "./theme";
 
-type Preview = { key: string; name: string; oldPrice: number; qty: number; product?: Product; closed: boolean };
+type Preview = { key: string; name: string; oldPrice: number; qty: number; product?: Product; unavailableReason: string };
 const keyFor = (id: string, variant?: string) => variant ? `${id}:${variant}` : id;
 const price = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
@@ -42,12 +42,18 @@ export function BuyerReorder({ order, token, areaId, bag, add, openBag }: {
         const current = quotes.get(key);
         const item = current?.product;
         const shop = quote.shops.find(group => group.shop.id === item?.shopId)?.shop;
+        const issue = current?.issues.find(issue => issue.code !== "INSUFFICIENT_STOCK")?.code;
         const valid = item?.shopId === line.shopId && shop?.isOpen && current?.unitPrice != null && current.availableStock != null &&
-          !current.issues.some(issue => issue.code !== "INSUFFICIENT_STOCK") &&
+          !issue &&
           (!line.variantId || item.variants?.some(variant => variant.id === line.variantId));
+        const unavailableReason = shop?.isOpen === false ? "Shop is closed"
+          : issue === "OUT_OF_STOCK" ? "Out of stock"
+          : issue === "VARIANT_UNAVAILABLE" ? "This pack is no longer available"
+          : issue === "VARIANT_REQUIRED" ? "Choose a pack on the product page"
+          : "Unavailable in this browsing area";
         return {
           key, name: [line.name, line.variantLabel].filter(Boolean).join(" · "), oldPrice: line.price, qty: line.qty,
-          closed: shop?.isOpen === false,
+          unavailableReason,
           product: valid ? {...item, id:key, productId:line.productId, variantId:line.variantId, unit:line.variantLabel ?? item.unit, price:current.unitPrice!, stock:current.availableStock!} : undefined,
         };
       }));
@@ -75,7 +81,7 @@ export function BuyerReorder({ order, token, areaId, bag, add, openBag }: {
       {rows.map(row => <View key={row.key} style={s.row}>
         <Text style={s.heading}>{row.name}</Text>
         {row.product ? <Text style={s.copy}>{price(row.product.price)} each{row.oldPrice !== row.product.price ? ` · Previously ${price(row.oldPrice)}` : ""} · {row.available ? `${row.available} of ${row.qty} can be added` : row.full ? "Bag has 100 different items" : "No additional stock available"}</Text>
-          : <Text style={s.copy}>{row.closed ? "Shop is closed" : "Unavailable in this browsing area"}</Text>}
+          : <Text style={s.copy}>{row.unavailableReason}</Text>}
       </View>)}
       {count > 0 && <Pressable accessibilityRole="button" style={s.button} onPress={() => {
         if (lock.current) return;

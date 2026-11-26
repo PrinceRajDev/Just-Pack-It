@@ -10,6 +10,7 @@ import { StyleSheet,
 } from "react-native";
 import { BuyerReceipt } from "./BuyerReceipt";
 import { BuyerCancelOrder } from "./BuyerCancelOrder";
+import { BuyerOrderSupport } from "./BuyerOrderSupport";
 import { ApiError, buyerApi, type BuyerOrder } from "./api";
 
 export const money = (value: number) => `₹${value.toLocaleString("en-IN")}`;
@@ -194,6 +195,7 @@ export function BuyerOrderDetails({
       </View>
       <ScrollView
         ref={scroller}
+        keyboardShouldPersistTaps="handled"
         style={s.scroll}
         contentContainerStyle={s.content}
       >
@@ -259,13 +261,15 @@ export function BuyerOrderDetails({
               </Pressable>
             )}
             {order.subOrders.map((shop) => (
-              <ShopCard
-                key={shop.id}
-                shop={shop}
-                order={order}
-                token={token}
-                refresh={() => setAttempt((value) => value + 1)}
-              />
+              <View key={shop.id} style={{ gap: 8 }}>
+                <ShopCard
+                  shop={shop}
+                  order={order}
+                  token={token}
+                  refresh={() => setAttempt((value) => value + 1)}
+                />
+                <BuyerOrderSupport token={token} orderId={order.id} suborderId={shop.id} />
+              </View>
             ))}
             <View
               style={s.card}

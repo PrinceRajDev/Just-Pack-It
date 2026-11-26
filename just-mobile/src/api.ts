@@ -13,6 +13,7 @@ export type BuyerOrder = { id: string; total: number; amountDue?: number; online
 type ListPayload<T> = T[] | { items?: T[] };
 const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
 export class ApiError extends Error { constructor(message: string, public status: number, public code?: string, public requestId?: string) { super(message); } }
+export type OrderSupportTicket = { id: string; suborderId: string; status: "open" | "in_progress" | "resolved"; note: string };
 const sessionListeners = new Set<(token: string) => void>();
 async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
   const controller = new AbortController();
@@ -112,6 +113,9 @@ export const marketApi = {
 };
 
 export const buyerApi = {
+  orderSupport: (token: string, orderId: string, after?: string) => request<{items: OrderSupportTicket[]; next?: string}>(`/support?orderId=${encodeURIComponent(orderId)}${after ? `&after=${encodeURIComponent(after)}` : ""}`, token),
+  createOrderSupport: (token: string, input: {orderId: string; suborderId: string; kind: string; description: string}) =>
+    request<OrderSupportTicket>("/support", token, { method: "POST", body: JSON.stringify(input) }),
   notifications: (token: string) => request<{ id: string; title: string; body: string; read: boolean; createdAt?: string }[]>("/notifications?limit=20", token),
   markNotificationRead: (token: string, id: string) => request<void>(`/notifications/${encodeURIComponent(id)}/read`, token, { method: "POST", body: "{}" }),
   pushStatus: (token: string) => request<{available: boolean; subscribed: boolean}>("/notifications/push", token),

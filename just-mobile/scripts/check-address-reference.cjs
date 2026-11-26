@@ -224,6 +224,9 @@ const assert = require("node:assert/strict");
     // Metro's development error toast covers the bottom tabs after the intentional HTTP 503.
     await page.addStyleTag({ content: "#error-toast { pointer-events: none !important; }" });
     await page.getByRole("button", { name: "Account", exact: true }).click();
+    const accountHub = page.getByTestId("buyer-account-hub");
+    await accountHub.getByText(buyer.name, { exact: true }).waitFor();
+    assert.equal(await accountHub.getByText(/Raiyam/).count(), 0);
     await page.getByRole("button", { name: "Language", exact: true }).click();
     const english = page.getByRole("radio", { name: "English", exact: true });
     const hindi = page.getByRole("radio", { name: "हिन्दी", exact: true });
@@ -547,7 +550,7 @@ const assert = require("node:assert/strict");
     await confirmation
       .getByRole("button", { name: "Continue Shopping" })
       .click();
-    await page.getByText("Good shops. Close by.", { exact: true }).waitFor();
+    await page.getByText("Shops around you", { exact: true }).waitFor();
     assert.deepEqual(
       await page.evaluate(
         (userId) => JSON.parse(sessionStorage.getItem("jpi.bag." + userId)),

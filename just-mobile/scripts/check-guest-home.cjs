@@ -84,14 +84,14 @@ const assert = require("node:assert/strict");
       await page.screenshot({path:path.join(output,`guest-${width}.png`)});
     }
     await page.setViewportSize({width:390,height:844});
-    await page.getByRole("button",{name:"Change delivery area"}).click();
-    await page.getByText("Choose delivery area",{exact:true}).waitFor();
+    await page.getByRole("button",{name:"Change browsing area"}).click();
+    await page.getByText("Choose browsing area",{exact:true}).waitFor();
     const selectedArea = page.getByRole("radio",{name:"Raiyam",exact:true});
     assert.equal(await selectedArea.getAttribute("aria-checked"),"true");
     await selectedArea.waitFor();
     await page.waitForFunction(() => document.querySelector('[data-testid="delivery-area-sheet"]')?.getBoundingClientRect().bottom <= innerHeight + 1);
     await page.screenshot({path:path.join(output,"delivery-area-390.png")});
-    await page.getByText("Raiyam is currently the only available delivery area.", { exact: true }).waitFor();
+    await page.getByText("Raiyam is currently the only available browsing area.", { exact: true }).waitFor();
     const beforeReselect = areaRequests;
     await selectedArea.click();
     await page.getByTestId("delivery-area-sheet").waitFor({state:"hidden"});

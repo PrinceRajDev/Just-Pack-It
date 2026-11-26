@@ -167,7 +167,7 @@ export function BuyerAccount({
   if (!session && recoveryOpen) return <BuyerRecovery back={() => { setPassword(""); setRecoveryOpen(false); }} />;
   if (session && profileOpen) return <Modal onRequestClose={() => setProfileOpen(false)}><SafeAreaView style={{ flex: 1, backgroundColor: theme.canvas }}><BuyerProfile key={session.userId} token={session.token} back={() => setProfileOpen(false)} onSaved={(updatedName) => save({ ...session, name: updatedName })} /></SafeAreaView></Modal>;
   if (session || !signInOpen) return (
-    <BuyerAccountHub initialFavourites={initialFavourites} session={session} area={area} shops={shops} products={products}
+    <BuyerAccountHub initialFavourites={initialFavourites} session={session} shops={shops} products={products}
       back={back} signIn={startSignIn} profile={() => setProfileOpen(true)} addresses={() => setAddressesOpen(true)}
       seller={() => setSellerOpen(true)}
       orders={openOrders} browse={browse} openShop={openShop} add={add}

@@ -14,10 +14,10 @@ const languageKey = "jpi.account.language";
 type Panel = "language" | "notifications" | "favourites" | "signout";
 type Favourite = { id: string; name: string; key: string; shop?: Shop; product?: Product };
 
-export function BuyerAccountHub({ initialFavourites, seller, session, area, shops, products, back, signIn, profile, addresses, orders, signOut, browse, openShop, add }: {
+export function BuyerAccountHub({ initialFavourites, seller, session, shops, products, back, signIn, profile, addresses, orders, signOut, browse, openShop, add }: {
   initialFavourites?: boolean;
   seller: () => void;
-  session: Session | null; area?: string; shops: Shop[]; products: Product[];
+  session: Session | null; shops: Shop[]; products: Product[];
   back: () => void; signIn: () => void; profile: () => void; addresses: () => void;
   orders: () => void; signOut: () => Promise<void>; browse: () => void;
   openShop: (shop: Shop) => void; add: (product: Product) => void;
@@ -133,7 +133,7 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
             <View style={s.rowText}>
               <Text style={s.eyebrow}>{session ? t("Your account", "आपका खाता") : "JustPackIt"}</Text>
               <Text style={s.heroTitle}>{session ? session.name : t("Your neighbourhood starts here.", "आपका पड़ोस यहीं से शुरू होता है।")}</Text>
-              {(!session || phone || area) && <Text style={s.heroCopy}>{session ? [phone, area].filter(Boolean).join(" · ") : t("Sign in to track orders and save delivery addresses.", "ऑर्डर ट्रैक करने और पते सहेजने के लिए साइन इन करें।")}</Text>}
+              {(!session || !!phone) && <Text style={s.heroCopy}>{session ? phone : t("Sign in to track orders and save delivery addresses.", "ऑर्डर ट्रैक करने और पते सहेजने के लिए साइन इन करें।")}</Text>}
             </View>
             {session ? <View style={s.avatar}><MarketIcon name="account" /></View> : (
               <Image source={require("../assets/startup-parcel.jpg")} style={s.heroArt} accessible={false} />

@@ -39,7 +39,6 @@ import { useAndroidBack } from "./src/useAndroidBack";
 import { resolveImage } from "./src/images";
 import { MarketIcon } from "./src/MarketIcon";
 import { HomeNotifications, BuyAgain } from "./src/HomeExtras";
-import { ReferenceArtwork } from "./src/ReferenceArtwork";
 import { BuyerBrowse, browseCategoryPhotos } from "./src/BuyerBrowse";
 
 import { BuyerShopPage } from "./src/BuyerShopPage";
@@ -325,25 +324,15 @@ export default function App() {
       hindi={hindi}
       key={homeVisit}
       header={
-        !session ? (
-          <GuestHomeHeader
-            area={area}
-            onArea={() => setPicker(true)}
-            onSearch={() => {
-              setQuery("");
-              setScreen("browse");
-            }}
-          />
-        ) : (
-          <Header
-            session={session}
-            area={area}
-            count={count}
-            onArea={() => setPicker(true)}
-            onBrowse={() => setScreen("browse")}
-            onBag={openBag}
-          />
-        )
+        <HomeHeader
+          session={session}
+          area={area}
+          onArea={() => setPicker(true)}
+          onSearch={() => {
+            setQuery("");
+            setScreen("browse");
+          }}
+        />
       }
       session={session}
       onBag={() => {
@@ -543,7 +532,6 @@ export default function App() {
         {!showStartup && screen !== "shop" && screen !== "checkout" && screen !== "confirmation" && screen !== "tracking" && !(screen === "account" && !session && accountMode !== "hub") && (
           <Nav
             hindi={hindi}
-            guestHome={screen === "home" && !session}
             screen={screen}
             count={count}
             home={goHome}
@@ -573,65 +561,13 @@ export default function App() {
   );
 }
 
-function Header({
+function HomeHeader({
   session,
-  area,
-  count,
-  onArea,
-  onBrowse,
-  onBag,
-}: {
-  session: Session | null;
-  area: ServiceArea | null;
-  count: number;
-  onArea: () => void;
-  onBrowse: () => void;
-  onBag: () => void;
-}) {
-  return (
-    <View style={s.header}>
-      <View style={s.top}>
-        <View style={s.brandBlock}>
-          <ReferenceArtwork crop={[20, 47, 46, 46]} style={s.logo} />
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text numberOfLines={1} adjustsFontSizeToFit style={s.brand}>
-              JustPackIt
-            </Text>
-            <Text numberOfLines={1} style={s.tagline}>
-              Your Neighbourhood, Delivered.
-            </Text>
-          </View>
-        </View>
-        <HomeNotifications session={session} />
-        <Pressable onPress={onBag} style={s.bagTop}>
-          <MarketIcon name="bag" color={theme.accentInk} />
-          <Text style={s.bagCount}>{count}</Text>
-        </Pressable>
-      </View>
-      <Pressable onPress={onArea} style={s.location}>
-        <View style={s.pin}>
-          <MarketIcon name="location" />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={s.locationLabel}>DELIVERING TO</Text>
-          <Text numberOfLines={1} style={s.locationName}>
-            {area ? `${area.name}, ${area.city}` : "Choose area"} ⌄
-          </Text>
-        </View>
-        <Text style={s.change}>Change</Text>
-      </Pressable>
-      <Pressable onPress={onBrowse} style={s.search}>
-        <MarketIcon name="search" />
-        <Text style={s.searchText}>Search products, shops & brands</Text>
-      </Pressable>
-    </View>
-  );
-}
-function GuestHomeHeader({
   area,
   onArea,
   onSearch,
 }: {
+  session: Session | null;
   area: ServiceArea | null;
   onArea: () => void;
   onSearch: () => void;
@@ -650,11 +586,11 @@ function GuestHomeHeader({
         <Text style={{ color: theme.accentInk, fontSize: 21, fontWeight: "700" }}>
           JustPackIt
         </Text>
-        <HomeNotifications session={null} />
+        <HomeNotifications session={session} />
       </View>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Change delivery area"
+        accessibilityLabel="Change browsing area"
         onPress={onArea}
         style={{
           marginTop: 17,
@@ -667,7 +603,7 @@ function GuestHomeHeader({
         <MarketIcon name="location" />
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 10, color: theme.muted, fontWeight: "600" }}>
-            DELIVERING IN
+            BROWSING AREA
           </Text>
           <Text
             numberOfLines={1}
@@ -675,7 +611,7 @@ function GuestHomeHeader({
           >
             {area
               ? [area.name, area.city].filter(Boolean).join(", ")
-              : "Choose delivery area"}{" "}
+              : "Choose browsing area"}{" "}
             ⌄
           </Text>
         </View>
@@ -1103,21 +1039,13 @@ function Home({
           />
         </View>
       </View>
-      {!session ? (
-        <View style={{ marginTop: 10 }}>
-          <GuestSection
-            title="Shop by category"
-            action="More →"
-            onPress={() => setShowCategories(true)}
-          />
-        </View>
-      ) : (
-        <Section
-          title="A little of everything"
-          action="View all"
+      <View style={{ marginTop: 10 }}>
+        <GuestSection
+          title="Shop by category"
+          action="More →"
           onPress={() => setShowCategories(true)}
         />
-      )}
+      </View>
       <Modal
         visible={showCategories}
         animationType="slide"
@@ -1156,150 +1084,58 @@ function Home({
         </SafeAreaView>
         </SafeAreaProvider>
       </Modal>
-      {!session ? (
-        <View
-          style={{
-            marginHorizontal: 20,
-            marginTop: 15,
-            flexDirection: "row",
-            flexWrap: "wrap",
-            justifyContent: "space-between",
-            rowGap: 27,
-          }}
-        >
-          {guestCategories.map((entry) => (
-            <Pressable
-              key={entry.label}
-              accessibilityRole="button"
-              accessibilityLabel={entry.label}
-              onPress={() =>
-                categories.some((category) => category.slug === entry.slug)
-                  ? onChoose(entry.slug)
-                  : onQuickSearch(entry.label)
-              }
-              style={{ width: "23%", alignItems: "center" }}
+      <View
+        style={{
+          marginHorizontal: 20,
+          marginTop: 15,
+          flexDirection: "row",
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+          rowGap: 27,
+        }}
+      >
+        {guestCategories.map((entry) => (
+          <Pressable
+            key={entry.label}
+            accessibilityRole="button"
+            accessibilityLabel={entry.label}
+            onPress={() =>
+              categories.some((category) => category.slug === entry.slug)
+                ? onChoose(entry.slug)
+                : onQuickSearch(entry.label)
+            }
+            style={{ width: "23%", alignItems: "center" }}
+          >
+            <View style={{ width: "100%", maxWidth: 74, height: 54, borderRadius: 12, borderWidth: 1, borderColor: theme.tileBorder, overflow: "hidden", backgroundColor: theme.surfaceSoft }}>
+              <Image
+                accessible={false}
+                source={entry.photo}
+                resizeMode="contain"
+                style={{ width: "100%", height: "100%" }}
+              />
+            </View>
+            <Text
+              style={{
+                fontSize: 10,
+                lineHeight: 14,
+                fontWeight: "600",
+                color: theme.ink,
+                marginTop: 7,
+                textAlign: "center",
+              }}
             >
-              <View style={{ width: "100%", maxWidth: 74, height: 54, borderRadius: 12, borderWidth: 1, borderColor: theme.tileBorder, overflow: "hidden", backgroundColor: theme.surfaceSoft }}>
-                <Image
-                  accessible={false}
-                  source={entry.photo}
-                  resizeMode="contain"
-                  style={{ width: "100%", height: "100%" }}
-                />
-              </View>
-              <Text
-                style={{
-                  fontSize: 10,
-                  lineHeight: 14,
-                  fontWeight: "600",
-                  color: theme.ink,
-                  marginTop: 7,
-                  textAlign: "center",
-                }}
-              >
-                {entry.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      ) : (
-        <View
-          style={{
-            flexDirection: "row",
-            flexWrap: "wrap",
-            paddingHorizontal: 20,
-            justifyContent: "space-between",
-            rowGap: 20,
-          }}
-        >
-          {[
-            { slug: "fruits-vegetables", label: "Vegetables\n& Fruits", photo: require("./assets/home-categories/vegetables.webp") },
-            { slug: "grocery-kirana", label: "Grocery", photo: require("./assets/home-categories/grocery.webp") },
-            { slug: "fashion", label: "Fashion", photo: require("./assets/home-categories/fashion.webp") },
-            { slug: "dairy-eggs", label: "Dairy & Eggs", photo: require("./assets/home-categories/dairy.webp") },
-            { slug: "electronics", label: "Electronics", photo: require("./assets/home-categories/electronics.webp") },
-            { slug: "stationery-books", label: "Stationery", photo: require("./assets/home-categories/stationery.webp") },
-            {
-              slug: "personal-care-household",
-              label: "Beauty &\nPersonal Care",
-              photo: require("./assets/home-categories/personal-care.webp"),
-            },
-            { slug: "more", label: "More" },
-          ].map((entry) => {
-            const item = categories.find(
-              (category) => category.slug === entry.slug,
-            );
-            return (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={entry.label.replace(/\n/g, " ")}
-                accessibilityState={{ selected: picked === entry.slug }}
-                key={entry.slug}
-                onPress={() =>
-                  entry.slug === "more"
-                    ? setShowCategories(true)
-                    : item
-                      ? onChoose(item.slug)
-                      : onQuickSearch(entry.label)
-                }
-                style={{ width: "23%" }}
-              >
-                <View
-                  style={{
-                    aspectRatio: 1.25,
-                    borderRadius: 12,
-                    overflow: "hidden",
-                    backgroundColor: theme.selected,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderWidth: picked === entry.slug ? 2 : 1,
-                    borderColor: picked === entry.slug ? theme.accentInk : theme.tileBorder,
-                  }}
-                >
-                  {entry.photo ? (
-                    <Image
-                      accessible={false}
-                      source={entry.photo}
-                      resizeMode="contain"
-                      style={{ width: "100%", height: "100%" }}
-                    />
-                  ) : (
-                    <MarketIcon name="browse" color={theme.muted} />
-                  )}
-                </View>
-                <Text
-                  numberOfLines={2}
-                  style={{
-                    textAlign: "center",
-                    fontSize: 11,
-                    lineHeight: 14,
-                    marginTop: 9,
-                    minHeight: 28,
-                    color: theme.ink,
-                  }}
-                >
-                  {entry.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      )}
-      {!session ? (
-        <View style={{ marginTop: 14, marginBottom: 8 }}>
-          <GuestSection
-            title="Shops around you"
-            action="See all"
-            onPress={() => void openShops()}
-          />
-        </View>
-      ) : (
-        <Section
-          title="Good shops. Close by."
+              {entry.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      <View style={{ marginTop: 14, marginBottom: 8 }}>
+        <GuestSection
+          title="Shops around you"
           action="See all"
           onPress={() => void openShops()}
         />
-      )}
+      </View>
       <Modal
         visible={showShops}
         animationType="slide"
@@ -1420,21 +1256,20 @@ function Home({
         <View style={{ paddingHorizontal: 20 }}>{emptyShops}</View>
       )}
 
+      <View style={s.popularHeading}>
+        <Text style={s.popularTitle}>
+          {picked ? "Available products" : "Popular in Your\nNeighbourhood"}
+        </Text>
+        <Text style={s.popularSubtitle}>
+          Local favourites, across your everyday.
+        </Text>
+      </View>
+      {!picked && productResults}
       {session && (
-        <>
-          <View style={s.popularHeading}>
-            <Text style={s.popularTitle}>
-              {picked ? "Available products" : "Popular in Your\nNeighbourhood"}
-            </Text>
-            <Text style={s.popularSubtitle}>
-              Local favourites, across your everyday.
-            </Text>
-          </View>
-          {!picked && productResults}
           <BuyAgain
             onBrowseAlternatives={onQuickSearch}
             onAdd={onAdd}
-            key={session?.userId ?? "guest"}
+            key={session.userId}
             session={session}
             onAccount={onAccount}
             renderProduct={(item) => (
@@ -1449,14 +1284,12 @@ function Home({
               />
             )}
           />
-        </>
       )}
     </ScrollView>
   );
 }
 function Nav({
   hindi,
-  guestHome = false,
   screen,
   count,
   home,
@@ -1465,7 +1298,6 @@ function Nav({
   account,
   orders,
 }: {
-  guestHome?: boolean;
   hindi: boolean;
   screen: Screen;
   count: number;
@@ -1479,7 +1311,7 @@ function Nav({
     <View
       style={[
         s.nav,
-        (guestHome || screen === "browse" || screen === "bag" || screen === "orders") && {
+        (screen === "home" || screen === "browse" || screen === "bag" || screen === "orders") && {
           height: 70,
           paddingHorizontal: 8,
         },
@@ -1487,7 +1319,7 @@ function Nav({
     >
       <NavButton hindi={hindi}
         label="Home"
-        guestHighlight={guestHome}
+        guestHighlight={screen === "home"}
         active={screen === "home" || screen === "shop"}
         onPress={home}
       />
@@ -1582,24 +1414,6 @@ function Title({
           {copy}
         </Text>
       </View>
-    </View>
-  );
-}
-function Section({
-  title,
-  action,
-  onPress,
-}: {
-  title: string;
-  action: string;
-  onPress: () => void;
-}) {
-  return (
-    <View style={s.section}>
-      <Text style={s.sectionTitle}>{title}</Text>
-      <Pressable onPress={onPress}>
-        <Text style={s.sectionAction}>{action}</Text>
-      </Pressable>
     </View>
   );
 }
@@ -2182,14 +1996,14 @@ function AreaSheet({
             <View style={s.handle} />
             <View style={s.areaHeading}>
               <View style={s.areaIcon}><MarketIcon name="home" /></View>
-              <Text accessibilityRole="header" style={s.sheetTitle}>Choose delivery area</Text>
+              <Text accessibilityRole="header" style={s.sheetTitle}>Choose browsing area</Text>
               <Pressable accessibilityRole="button" accessibilityLabel="Close delivery area picker" onPress={close} style={s.areaClose}>
                 <Text style={s.areaCloseText}>×</Text>
               </Pressable>
             </View>
             <Text style={s.sheetCopy}>
               {available.length === 1 && selected?.id === available[0].id
-                ? `${selected.name} is currently the only available delivery area.`
+                ? `${selected.name} is currently the only available browsing area.`
                 : "See nearby shops and products for the area you choose."}
             </Text>
             <ScrollView bounces={false} contentContainerStyle={s.areaOptions}>
@@ -2216,95 +2030,6 @@ function AreaSheet({
 const s = themedStyles(() => StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.canvas },
   app: { flex: 1, backgroundColor: theme.canvas },
-  header: {
-    backgroundColor: theme.canvas,
-    paddingTop: 8,
-  },
-  top: {
-    height: 64,
-    paddingHorizontal: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  brandBlock: {
-    flex: 1,
-    minWidth: 0,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  logo: { width: 46, height: 46, marginRight: 11 },
-  brand: {
-    color: theme.accentInk,
-    fontSize: 24,
-    lineHeight: 28,
-    fontWeight: "700",
-    letterSpacing: -0.8,
-  },
-  tagline: { color: theme.accentInk, marginTop: 0, fontSize: 9 },
-  bagTop: {
-    height: 36,
-    width: 32,
-    paddingHorizontal: 4,
-    borderRadius: 8,
-    gap: 6,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: theme.canvas,
-  },
-  bagTopText: { color: theme.ink, fontSize: 13, fontWeight: "500" },
-  bagCount: {
-    position: "absolute",
-    top: -3,
-    right: -4,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    textAlign: "center",
-    overflow: "hidden",
-    backgroundColor: theme.primary,
-    color: theme.onPrimary,
-    fontSize: 12,
-    fontWeight: "600",
-    lineHeight: 18,
-  },
-  location: {
-    height: 55,
-    paddingHorizontal: 20,
-    borderTopWidth: 0,
-    borderTopColor: theme.border,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  pin: {
-    width: 20,
-    height: 28,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 10,
-  },
-  pinText: { color: theme.accentInk, fontSize: 18 },
-  locationLabel: { color: theme.secondary, fontSize: 8, lineHeight: 12 },
-  locationName: { color: theme.ink, marginTop: 2, fontSize: 13, fontWeight: "600" },
-  change: { color: theme.accentInk, fontSize: 11, fontWeight: "600" },
-  search: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: theme.controlBorder,
-    paddingHorizontal: 14,
-    marginHorizontal: 20,
-    marginBottom: 0,
-    marginTop: 9,
-    borderRadius: 14,
-    gap: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: theme.selected,
-  },
-  searchIcon: { color: theme.secondary, marginRight: 10, fontSize: 22 },
-  searchText: { color: theme.muted, fontSize: 12, flex: 1, flexShrink: 1 },
   content: {
     paddingBottom: 24,
     width: "100%",
@@ -2401,25 +2126,6 @@ const s = themedStyles(() => StyleSheet.create({
     borderTopLeftRadius: 56,
     backgroundColor: theme.selected,
   },
-  section: {
-    minHeight: 65,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    marginTop: 0,
-    gap: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  sectionTitle: {
-    color: theme.ink,
-    fontSize: 20,
-    lineHeight: 25,
-    fontWeight: "600",
-    flex: 1,
-    flexShrink: 1,
-  },
-  sectionAction: { color: theme.accentInk, fontSize: 11, fontWeight: "600" },
   rail: { paddingHorizontal: 16, gap: 12 },
   categoryHeader: { width: "100%", maxWidth: 600, alignSelf: "center", minHeight: 68, paddingHorizontal: 20, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   categoryHeading: { fontSize: 24, color: theme.accentInk, fontWeight: "600", flexShrink: 1 },

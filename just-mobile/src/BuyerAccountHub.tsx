@@ -160,7 +160,7 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
         <SafeAreaView style={s.screen}>
           <Header title={panels[panel]} back={close} />
           <ScrollView contentContainerStyle={s.content}>
-            {error && (panel === "signout" ? <BuyerStateCard title="Couldn’t sign you out" copy={error} tone="error" compact icon="network" /> : panel === "language" && <BuyerAuthNotice title={t("Try again", "फिर से कोशिश करें")} copy={error} warning />)}
+            {error && (panel === "signout" ? <BuyerStateCard title={t("Couldn’t sign you out", "साइन आउट नहीं हो सका")} copy={error} tone="error" compact icon="network" /> : panel === "language" && <BuyerAuthNotice title={t("Try again", "फिर से कोशिश करें")} copy={error} warning />)}
             {panel === "language" && <>
               <View style={[s.hero,s.heroTop]}>
                 <View style={s.avatar}><MarketIcon name="globe" /></View>
@@ -180,7 +180,7 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
                   <View style={[s.radio, checked && s.radioChecked]}>{checked && <View style={s.radioDot} />}</View>
                 </Pressable>;
               })}
-              <Action label={busy ? t("Saving…", "सहेज रहे हैं…") : draftHindi ? t("Apply Hindi", "हिन्दी लागू करें") : t("Apply English", "अंग्रेज़ी लागू करें")} disabled={busy || draftHindi === hindi} onPress={() => void run(async () => { await storage.setItemAsync(languageKey,draftHindi ? "hi" : "en"); setHindi(draftHindi); }, "Couldn’t save the language preference.")} />
+              <Action label={busy ? t("Saving…", "सहेज रहे हैं…") : draftHindi ? t("Apply Hindi", "हिन्दी लागू करें") : t("Apply English", "अंग्रेज़ी लागू करें")} disabled={busy || draftHindi === hindi} onPress={() => void run(async () => { await storage.setItemAsync(languageKey,draftHindi ? "hi" : "en"); setHindi(draftHindi); }, t("Couldn’t save the language preference.", "भाषा की पसंद सहेजी नहीं जा सकी।"))} />
             </>}
             {panel === "notifications" && <>
               {session && <View style={s.notificationToolbar}>
@@ -243,7 +243,7 @@ export function BuyerAccountHub({ initialFavourites, seller, session, area, shop
                 <Text accessibilityRole="header" style={s.heroTitle}>{t("Sign out of JustPackIt?", "JustPackIt से साइन आउट करें?")}</Text>
                 <Text style={s.signOutCopy}>{t("Your favourites stay on this device. Sign in again to access your orders and addresses.", "आपके पसंदीदा इस डिवाइस पर सहेजे रहेंगे। ऑर्डर और पते देखने के लिए फिर से साइन इन करें।")}</Text>
                 <Action label={t("Keep shopping", "खरीदारी जारी रखें")} disabled={busy} onPress={close} />
-                <Action label={busy ? t("Signing out…", "साइन आउट हो रहा है…") : error ? t("Try sign out again", "फिर से कोशिश करें") : panels.signout} danger disabled={busy} onPress={() => void run(signOut,"Couldn’t sign out. Check your connection and try again.")} />
+                <Action label={busy ? t("Signing out…", "साइन आउट हो रहा है…") : error ? t("Try sign out again", "फिर से कोशिश करें") : panels.signout} danger disabled={busy} onPress={() => void run(signOut, t("Check your connection and try again.", "अपना इंटरनेट कनेक्शन जाँचें और फिर से कोशिश करें।"))} />
               </View>
             )}
           </ScrollView>

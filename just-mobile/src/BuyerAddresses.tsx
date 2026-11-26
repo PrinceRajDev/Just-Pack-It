@@ -24,7 +24,7 @@ type CheckoutEditor = {
   profile?: BuyerProfile | null;
   onSaved: (address: Address, makeDefault: boolean) => void;
 };
-export function BuyerAddresses({ token, back, checkout, userId, area }: { token: string; userId?: string; area?: string; back: () => void; checkout?: CheckoutEditor }) {
+export function BuyerAddresses({ token, back, checkout, userId, area, fromHome }: { token: string; userId?: string; area?: string; back: () => void; checkout?: CheckoutEditor; fromHome?: boolean }) {
   const [hindi, setHindi] = useState(false);
   useEffect(() => {
     if (checkout) return;
@@ -35,6 +35,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
     return () => { active = false; };
   }, [checkout]);
   const t = (english: string, translated: string) => hindi ? translated : english;
+  const backLabel = fromHome ? t("Back to Home", "होम पर वापस जाएँ") : t("Back to Account", "खाते पर वापस जाएँ");
   const [defaultId, setDefaultId] = useState<string | null>(null);
   const [defaultReady, setDefaultReady] = useState(false);
   const defaultKey = userId ? `jpi.address.default.${userId}` : undefined;
@@ -160,11 +161,11 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
   }
   return <View style={s.screen}>
     <View style={[s.header,s.savedWidth]}>
-      <Pressable accessibilityRole="button" accessibilityLabel={t("Back to Account", "खाते पर वापस जाएँ")} onPress={back} style={s.savedBack}><MarketIcon name="chevron-left" /></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel={backLabel} onPress={back} style={s.savedBack}><MarketIcon name="chevron-left" /></Pressable>
       <Text accessibilityRole="header" style={s.savedTitle}>{t("Saved addresses", "सहेजे गए पते")}</Text>
     </View>
     <ScrollView contentContainerStyle={s.content}>
-      {!!savedLabel && <BuyerStateCard title={t(`${savedLabel} address saved`, `${savedLabel} का पता सहेजा गया`)} copy={t("You can select this address at checkout. Your browsing area stays the same.", "यह पता चेकआउट पर चुन सकते हैं। आपका खरीदारी इलाका वही रहेगा।")} tone="success" compact action={t("Back to Account", "खाते पर वापस जाएँ")} onAction={back} />}
+      {!!savedLabel && <BuyerStateCard title={t(`${savedLabel} address saved`, `${savedLabel} का पता सहेजा गया`)} copy={t("You can select this address at checkout. Your browsing area stays the same.", "यह पता चेकआउट पर चुन सकते हैं। आपका खरीदारी इलाका वही रहेगा।")} tone="success" compact action={backLabel} onAction={back} />}
       <View style={s.hero}><View style={[s.icon,s.heroIcon]}><MarketIcon name="location" /></View><Text accessibilityRole="header" style={s.heroTitle}>{t("Your delivery addresses", "आपके डिलीवरी पते")}</Text></View>
       {error && !pendingRemoval ? <><Text accessibilityRole="alert" style={s.error}>{error}</Text><Pressable onPress={() => void reload()}><Text style={s.link}>{t("Reload addresses", "पते फिर से लोड करें")}</Text></Pressable></> : null}
       {loading ? <ActivityIndicator color={theme.accentInk} /> : rows.map(row => {

@@ -15,21 +15,54 @@ const assert = require('node:assert/strict');
     const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
     const errors = [];
     const session = {userId:"signed-in-home-qa", name:"QA Buyer", role:"buyer", token:"local-fixture", isDemo:false};
-    await page.addInitScript(value => sessionStorage.setItem("jpi.buyer.session", JSON.stringify(value)), session);
+    const address = {id:"work", label:"Work", line1:"Studio 204", locality:"Kothrud", city:"Pune", pincode:"411038", version:0};
+    let addresses = [address];
+    let addressReads = 0;
     page.on('pageerror', error => errors.push(error.message));
     // Fresh public API snapshots avoid local-port CORS and flaky Node TLS.
     // They are test inputs only; the app still fetches its real API in builds.
-    await page.route('https://just-pack-it-bq64.onrender.com/**', async route => {
+    await page.context().route('https://just-pack-it-bq64.onrender.com/**', async route => {
       const url = new URL(route.request().url());
-      if (url.pathname === "/auth/me" || url.pathname === "/orders") {
+      if (["/auth/me", "/orders", "/addresses"].includes(url.pathname)) {
         const headers = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization" };
         if (route.request().method() === "OPTIONS") return route.fulfill({status:204, headers});
-        return route.fulfill({json:url.pathname === "/auth/me" ? session : [], headers});
+        if (url.pathname === "/addresses") addressReads += 1;
+        return route.fulfill({json:url.pathname === "/auth/me" ? session : url.pathname === "/addresses" ? addresses : [], headers});
       }
       const file = url.searchParams.has('category') ? 'category-' + url.searchParams.get('category') : url.pathname.slice(1);
       await route.fulfill({ body: fs.readFileSync(path.join(output, file + '.json'), 'utf8'), contentType: 'application/json', headers: { 'access-control-allow-origin': '*' } });
     });
-    await page.goto(process.env.PREVIEW_URL || 'http://localhost:8084', { timeout: 60000 });
+    const url = process.env.PREVIEW_URL || 'http://localhost:8084';
+    await page.goto(url, { timeout: 60000 });
+    await page.getByRole("button", {name:"SAVED DELIVERY ADDRESS, Sign in to access addresses"}).waitFor();
+    assert.equal(addressReads, 0, "Guest Home must not request saved addresses");
+    const categoryNames = ['Groceries', 'Vegetables', 'Fruits', 'Dairy', 'Bakery', 'Personal care', 'Home care', 'Snacks'];
+    const snapshot = async () => ({
+      logo: await page.getByTestId("home-logo").locator("img").getAttribute("src"),
+      hero: await page.getByTestId("home-hero").boundingBox(),
+      categories: await Promise.all(categoryNames.map(name =>
+        page.getByRole("button", {name, exact:true}).boundingBox())),
+    });
+    await page.getByRole("button", {name:"Snacks", exact:true}).waitFor();
+    const guestHome = await snapshot();
+    await page.evaluate(value => sessionStorage.setItem("jpi.buyer.session", JSON.stringify(value)), session);
+    await page.reload();
+    await page.getByTestId("home-saved-address").getByText("Work · Kothrud · Pune").waitFor();
+    await page.getByText("BROWSING AREA", {exact:true}).waitFor();
+    assert.deepEqual(await snapshot(), guestHome, "Guest and buyer use the same logo, hero and category positions");
+    const browsingArea = await page.getByRole("button", {name:"Change browsing area"}).innerText();
+    addresses = [address, {...address, id:"home", label:"Home", locality:"Karve Nagar"}];
+    await page.getByTestId("home-saved-address").click();
+    await page.getByRole("heading", {name:"Saved addresses"}).waitFor();
+    await page.getByRole("button", {name:"Set Home as default"}).click();
+    await page.getByText("Default", {exact:true}).waitFor();
+    await page.getByRole("button", {name:"Back to Home", exact:true}).click();
+    await page.getByTestId("home-saved-address").getByText("Home · Karve Nagar · Pune").waitFor();
+    assert.equal(await page.getByRole("button", {name:"Change browsing area"}).innerText(), browsingArea);
+    addresses = [];
+    await page.reload();
+    await page.getByTestId("home-saved-address").getByText("Add a delivery address").waitFor();
+    await page.getByText("BROWSING AREA", {exact:true}).waitFor();
     await page.getByText('Shops around you', { exact: true }).waitFor({ timeout: 60000 });
     await page.waitForTimeout(2000);
     assert.equal(await page.getByText('Showing one category', { exact: true }).count(), 0);

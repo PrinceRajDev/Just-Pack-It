@@ -23,6 +23,7 @@ import {
   buyerApi,
   ApiError,
   onSessionExpired,
+  type Address,
   type Category,
   type BuyerOrder,
   type Product,
@@ -31,6 +32,7 @@ import {
   type Shop,
 } from "./src/api";
 import { BuyerAccount, BuyerOrders } from "./src/BuyerAccount";
+import { BuyerAddresses } from "./src/BuyerAddresses";
 import { BuyerCheckout } from "./src/BuyerCheckout";
 import { BuyerOrderConfirmation } from "./src/BuyerOrderConfirmation";
 import { BuyerOrderDetails } from "./src/BuyerOrderDetails";
@@ -327,6 +329,8 @@ export default function App() {
         <HomeHeader
           session={session}
           area={area}
+          hindi={hindi}
+          onSignIn={openAccount}
           onArea={() => setPicker(true)}
           onSearch={() => {
             setQuery("");
@@ -564,11 +568,15 @@ export default function App() {
 function HomeHeader({
   session,
   area,
+  hindi,
+  onSignIn,
   onArea,
   onSearch,
 }: {
   session: Session | null;
   area: ServiceArea | null;
+  hindi: boolean;
+  onSignIn: () => void;
   onArea: () => void;
   onSearch: () => void;
 }) {
@@ -585,6 +593,7 @@ function HomeHeader({
       >
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1 }}>
           <Image
+            testID="home-logo"
             source={require("./assets/just-pack-it-icon.png")}
             accessible={false}
             resizeMode="contain"
@@ -598,7 +607,7 @@ function HomeHeader({
       </View>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Change browsing area"
+        accessibilityLabel={hindi ? "खरीदारी का क्षेत्र बदलें" : "Change browsing area"}
         onPress={onArea}
         style={{
           marginTop: 17,
@@ -611,7 +620,7 @@ function HomeHeader({
         <MarketIcon name="location" />
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 10, color: theme.muted, fontWeight: "600" }}>
-            BROWSING AREA
+            {hindi ? "खरीदारी का क्षेत्र" : "BROWSING AREA"}
           </Text>
           <Text
             numberOfLines={1}
@@ -619,11 +628,12 @@ function HomeHeader({
           >
             {area
               ? [area.name, area.city].filter(Boolean).join(", ")
-              : "Choose browsing area"}{" "}
+              : hindi ? "खरीदारी का क्षेत्र चुनें" : "Choose browsing area"}{" "}
             ⌄
           </Text>
         </View>
       </Pressable>
+      <HomeSavedAddress key={session?.userId} session={session} area={area} hindi={hindi} onSignIn={onSignIn} />
       <Pressable
         accessibilityRole="button"
         onPress={onSearch}
@@ -648,7 +658,71 @@ function HomeHeader({
     </View>
   );
 }
-const guestCategories = [
+function HomeSavedAddress({ session, area, hindi, onSignIn }: {
+  session: Session | null;
+  area: ServiceArea | null;
+  hindi: boolean;
+  onSignIn: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [saved, setSaved] = useState<{ address?: Address; count: number }>();
+  const token = session?.token;
+  const userId = session?.userId;
+  useEffect(() => {
+    if (!token || !userId || open) return;
+    let active = true;
+    void Promise.all([
+      buyerApi.addresses(token),
+      SecureStore.getItemAsync(`jpi.address.default.${userId}`).catch(() => null),
+    ]).then(([addresses, defaultId]) => {
+      if (!active) return;
+      const address = addresses.find(item => item.id === defaultId) ??
+        (addresses.length === 1 ? addresses[0] : undefined);
+      setSaved({ address, count: addresses.length });
+    }).catch(() => {
+      if (active) setSaved(undefined);
+    });
+    return () => { active = false; };
+  }, [open, token, userId]);
+
+  const label = hindi ? "सहेजा गया डिलीवरी पता" : "SAVED DELIVERY ADDRESS";
+  const address = saved?.address;
+  const summary = address
+    ? [address.label, address.locality, address.city].filter(Boolean).join(" · ")
+    : !session
+      ? (hindi ? "पते के लिए साइन इन करें" : "Sign in to access addresses")
+      : saved?.count === 0
+        ? (hindi ? "डिलीवरी पता जोड़ें" : "Add a delivery address")
+        : (hindi ? "सहेजे गए पते देखें" : "View saved addresses");
+  return (
+    <>
+      <Pressable
+        testID="home-saved-address"
+        accessibilityRole="button"
+        accessibilityLabel={`${label}, ${summary}`}
+        onPress={session ? () => setOpen(true) : onSignIn}
+        style={{ minHeight: 44, marginTop: 8, flexDirection: "row", alignItems: "center", gap: 14 }}
+      >
+        <MarketIcon name="location" />
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 10, color: theme.muted, fontWeight: "600" }}>{label}</Text>
+          <Text numberOfLines={1} style={{ fontSize: 14, color: theme.ink, fontWeight: "600" }}>{summary}</Text>
+        </View>
+        <Text style={{ color: theme.accentInk, fontSize: 18 }}>›</Text>
+      </Pressable>
+      {session && open && (
+        <Modal onRequestClose={() => setOpen(false)}>
+          <SafeAreaProvider>
+            <SafeAreaView style={s.safe}>
+              <BuyerAddresses token={session.token} userId={session.userId} area={area?.name} fromHome back={() => setOpen(false)} />
+            </SafeAreaView>
+          </SafeAreaProvider>
+        </Modal>
+      )}
+    </>
+  );
+}
+const homeCategories = [
   { slug: "grocery-kirana", label: "Groceries", photo: require("./assets/home-categories/grocery.webp") },
   { slug: "fruits-vegetables", label: "Vegetables", photo: require("./assets/home-categories/vegetables.webp") },
   { slug: "fruits-vegetables", label: "Fruits", photo: require("./assets/home-categories/fruits.webp") },
@@ -658,7 +732,7 @@ const guestCategories = [
   { slug: "personal-care-household", label: "Home care", photo: require("./assets/home-categories/home-care.webp") },
   { slug: "fast-food-snacks", label: "Snacks", photo: require("./assets/home-categories/snacks.webp") },
 ];
-function GuestSection({
+function HomeSection({
   title,
   action,
   onPress,
@@ -1048,7 +1122,7 @@ function Home({
         </View>
       </View>
       <View style={{ marginTop: 10 }}>
-        <GuestSection
+        <HomeSection
           title="Shop by category"
           action="More →"
           onPress={() => setShowCategories(true)}
@@ -1102,7 +1176,7 @@ function Home({
           rowGap: 27,
         }}
       >
-        {guestCategories.map((entry) => (
+        {homeCategories.map((entry) => (
           <Pressable
             key={entry.label}
             accessibilityRole="button"
@@ -1138,7 +1212,7 @@ function Home({
         ))}
       </View>
       <View style={{ marginTop: 14, marginBottom: 8 }}>
-        <GuestSection
+        <HomeSection
           title="Shops around you"
           action="See all"
           onPress={() => void openShops()}

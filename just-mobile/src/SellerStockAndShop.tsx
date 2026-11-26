@@ -1,11 +1,12 @@
 import { theme } from "./theme";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { shopHoursLabel, validTime } from "./shopHours";
 import { Image, Pressable, Text, TextInput, View } from "react-native";
 import { marketApi } from "./api";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { resolveImage } from "./images";
 import { fulfilmentNames, sellerApi, type Fulfilment, type SellerProduct, type SellerShop } from "./sellerApi";
-import { sellerShopApproval, sellerShopAvailability, rupees, styles, LoadState, MutationFeedback, Row, SellerButton, SellerCard, SellerField, SellerScroll, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
+import { sellerShopApproval, rupees, styles, LoadState, MutationFeedback, Row, SellerButton, SellerCard, SellerField, SellerScroll, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
 import { useAndroidBack } from "./useAndroidBack";
 import { SellerPhotoEditor } from "./SellerPhotoEditor";
 
@@ -430,6 +431,11 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
   const [description,setDescription] = useState(shop.description ?? "");
   const [closed,setClosed] = useState(!!shop.temporarilyClosed);
   const [hours,setHours] = useState(shop.openingHours ?? []);
+  const [now,setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 15000);
+    return () => clearInterval(timer);
+  }, []);
   const [methods,setMethods] = useState(shop.fulfilment ?? []);
   const [pickupNote,setPickupNote] = useState(shop.pickupNote ?? "");
   const mutation = useSellerMutation();
@@ -438,10 +444,16 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
     || address.trim() !== (shop.address ?? "").trim()
     || description.trim() !== (shop.description ?? "").trim();
   const pauseChanged = closed !== !!shop.temporarilyClosed;
+  const hoursChanged = JSON.stringify(hours) !== JSON.stringify(shop.openingHours ?? []);
+  const formatAvailability = (openingHours: SellerShop["openingHours"], temporarilyClosed?: boolean) => {
+    if (shop.status !== "approved") return sellerShopApproval[shop.status];
+    if (shop.active === false) return "Shop is inactive";
+    return shopHoursLabel({openingHours, temporarilyClosed, timezone:shop.timezone || "Asia/Kolkata"}, now);
+  };
   const savedMethods = shop.fulfilment ?? [];
   const scheduledDays = new Set(hours.map(row => row.day)).size;
   const availabilityChanged = pauseChanged
-    || JSON.stringify(hours) !== JSON.stringify(shop.openingHours ?? [])
+    || hoursChanged
     || methods.length !== savedMethods.length
     || methods.some(method => !savedMethods.includes(method))
     || pickupNote.trim() !== (shop.pickupNote ?? "").trim();
@@ -497,7 +509,7 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
     <SellerCard>
       <View style={styles.orderTop}>
         <Text accessibilityRole="header" style={[styles.section, styles.grow]}>Shop availability</Text>
-        <Text style={styles.orderStatus}>{sellerShopAvailability(shop)}</Text>
+        <Text style={styles.orderStatus}>{formatAvailability(shop.openingHours ?? [], shop.temporarilyClosed)}</Text>
       </View>
       <View style={[styles.shopAvailability, closed && styles.shopPauseActive]}>
         <View style={styles.grow}>
@@ -515,6 +527,13 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
     <SellerCard>
       <Text accessibilityRole="header" style={styles.section}>Opening hours</Text>
       <Text style={styles.copy}>24-hour time · {shop.timezone || "Asia/Kolkata"}</Text>
+      <View style={styles.shopAvailability} testID="seller-hours-preview">
+        <View style={styles.grow}>
+          <Text style={styles.label}>Buyer preview</Text>
+          <Text accessibilityLiveRegion="polite" style={styles.title}>{formatAvailability(hours, closed)}</Text>
+          {(hoursChanged || pauseChanged) && <Text style={styles.copy}>Preview of unsaved changes</Text>}
+        </View>
+      </View>
       {scheduledDays > 0 && <Text style={styles.copy}>Scheduled on {scheduledDays} {scheduledDays === 1 ? "day" : "days"} per week</Text>}
       {overlappingHours(hours) && <Text accessibilityLiveRegion="polite" style={styles.shopHoursWarning}>Some opening hours overlap. Check the time slots below.</Text>}
       {!hours.length && <Text style={styles.copy}>No opening hours set.</Text>}
@@ -598,4 +617,3 @@ function SellerAccountCard({name,signOut}:{name:string;signOut:()=>Promise<void>
 }
 const validMoney = (value:string) => /^\d+(?:\.\d{1,2})?$/.test(value) && Number(value)>0 && Number.isFinite(Number(value));
 const validStock = (value:string) => /^\d+$/.test(value) && Number.isSafeInteger(Number(value));
-const validTime = (value:string) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);

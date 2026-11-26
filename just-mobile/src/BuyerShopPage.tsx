@@ -14,6 +14,7 @@ import { StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { marketApi, type Category, type Product, type Shop } from "./api";
+import { shopHoursLabel, type OpeningInterval } from "./shopHours";
 import { resolveImage } from "./images";
 import { MarketIcon } from "./MarketIcon";
 import * as storage from "./deviceStorage";
@@ -25,6 +26,9 @@ type ShopInfo = Shop & {
   scheduleLabel?: string;
   ratingCount?: number;
   address?: string;
+  openingHours?: OpeningInterval[];
+  timezone?: string;
+  availability?: string;
 };
 export function BuyerShopPage({
   shop,
@@ -172,11 +176,14 @@ export function BuyerShopPage({
   const total = bag.reduce((sum, line) => sum + line.quantity * line.price, 0);
 
   const info = shop as ShopInfo;
+  const closedLabel = info.availability === "temporarily_closed" || info.openingHours
+    ? shopHoursLabel({ ...info, temporarilyClosed: info.availability === "temporarily_closed" })
+    : "Closed for now";
   const shopCategory = categories.find((category) =>
     shop.categories?.includes(category.slug),
   )?.name;
   const availability = [
-    shop.isOpen ? "Open" : "Closed",
+    shop.isOpen ? "Open now" : "Closed",
     info.scheduleLabel?.split(" · ")[0],
   ]
     .filter(Boolean)
@@ -222,7 +229,7 @@ export function BuyerShopPage({
         contentContainerStyle={s.content}
         ListHeaderComponent={
           <>
-            {!shop.isOpen && <View style={{margin:20}}><BuyerStateCard title="Closed for now" copy={`${shop.name} is currently closed. Ordering is unavailable while the shop is closed.`} tone="neutral" icon="clock" compact /></View>}
+            {!shop.isOpen && <View style={{margin:20}}><BuyerStateCard title={closedLabel} copy={`${shop.name} is currently closed. Ordering is unavailable while the shop is closed.`} tone="neutral" icon="clock" compact /></View>}
             <View style={s.cover}>
               {resolveImage(shop.coverImage) && !coverFailed ? (
                 <Image

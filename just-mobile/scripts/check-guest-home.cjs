@@ -164,7 +164,25 @@ const assert = require("node:assert/strict");
         await mismatch.waitFor({state:"hidden"});
         assert.equal(await registration.getByRole("button",{name:"Create account",exact:true}).isDisabled(),true);
         await registration.screenshot({path:path.join(output,"buyer-signup-390.png")});
-        await registration.getByRole("button",{name:"Back to sign in",exact:true}).click();
+        const signupHeaders = {"access-control-allow-origin":"*","access-control-allow-headers":"*","access-control-allow-methods":"POST, OPTIONS"};
+        await page.route("**/auth/email-otp/send", route => route.request().method() === "OPTIONS"
+          ? route.fulfill({status:204,headers:signupHeaders})
+          : route.fulfill({status:202,headers:signupHeaders,json:{challengeId:"buyer-qa-code",expiresAt:new Date(Date.now()+600000).toISOString(),resendAfterSeconds:60}}));
+        await page.route("**/auth/register", route => {
+          if (route.request().method() === "OPTIONS") return route.fulfill({status:204,headers:signupHeaders});
+          const payload = route.request().postDataJSON();
+          assert.equal(payload.phone, "+919876543210");
+          assert.equal(payload.email, "buyer@example.test");
+          assert.equal(payload.emailOtp, "628415");
+          return route.fulfill({status:409,headers:signupHeaders,json:{code:"DUPLICATE",message:"A record with this identifier already exists"}});
+        });
+        await registration.getByLabel("Mobile number",{exact:true}).fill("+91 98765 43210");
+        await registration.getByLabel("Email",{exact:true}).fill("Buyer@example.test");
+        await registration.getByRole("button",{name:"Send email code",exact:true}).click();
+        await registration.getByLabel("Email verification code",{exact:true}).fill("628415");
+        await registration.getByRole("button",{name:"Create account",exact:true}).click();
+        await registration.getByRole("alert").filter({hasText:"An account already uses this mobile number or email."}).waitFor();
+        await registration.getByRole("button",{name:"Back to sign in",exact:true}).last().click();
         await page.getByRole("button", {name:"Back from sign in"}).click();
         await page.getByTestId("buyer-account-hub").waitFor();
       }

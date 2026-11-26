@@ -61,6 +61,7 @@ export function BuyerAccount({
   const [busy, setBusy] = useState(false);
   const [signInError, setSignInError] = useState("");
   const [signInServerError, setSignInServerError] = useState(false);
+  const [existingAccount, setExistingAccount] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [addressesOpen, setAddressesOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -110,11 +111,16 @@ export function BuyerAccount({
   const submit = async () => {
     if (authLock.current) return;
     setSignInError("");
+    setExistingAccount(false);
     authLock.current = true;
     setBusy(true);
     try {
-      const enteredPhone = register ? phone.trim() : phone.replace(/\s/g, "");
-      const normalizedPhone = /^\d{10}$/.test(enteredPhone) ? `+91${enteredPhone}` : enteredPhone;
+      const enteredPhone = phone.replace(/[\s()-]/g, "");
+      const normalizedPhone = /^\d{10}$/.test(enteredPhone) ? `+91${enteredPhone}`
+        : /^91\d{10}$/.test(enteredPhone) ? `+${enteredPhone}` : enteredPhone;
+      if (register && !/^\+[1-9]\d{9,14}$/.test(normalizedPhone)) {
+        throw new Error("Enter a valid mobile number, such as +91 98765 43210.");
+      }
       if (!register) {
         if (!enteredPhone) throw new Error("Enter your mobile number.");
         if (!/^\+[1-9]\d{9,14}$/.test(normalizedPhone) ||
@@ -141,7 +147,9 @@ export function BuyerAccount({
         throw new Error("Use the matching workspace for this account.");
       await save(next);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Please try again.";
+      const duplicate = register && error instanceof ApiError && error.code === "DUPLICATE";
+      const message = duplicate ? "An account already uses this mobile number or email. Sign in with your existing account." : error instanceof Error ? error.message : "Please try again.";
+      setExistingAccount(duplicate);
       setSignInServerError(error instanceof ApiError);
       setSignInError(message);
     } finally {
@@ -249,6 +257,7 @@ export function BuyerAccount({
   const codeDisabled = busy || !options?.emailOtpAvailable || signupCooldown > 0;
   const returnToSignIn = () => {
     setSignInError("");
+    setExistingAccount(false);
     setPasswordVisible(false);
     setRegister(false);
   };
@@ -263,14 +272,13 @@ export function BuyerAccount({
       </View>
       <ScrollView style={login.scroll} contentContainerStyle={[login.content, login.signInContent]} keyboardShouldPersistTaps="handled">
         <AuthHero title="Shop close to home" copy="Create an account to order from independent shops." />
-        {signInError ? <BuyerAuthNotice title="Check your details" copy={signInError} warning /> : null}
         <View style={[login.card, login.signInCard]}>
           <Text accessibilityRole="header" style={login.verificationTitle}>Account details</Text>
           <Text style={login.label}>Your name</Text>
           <TextInput accessibilityLabel="Your name" editable={!busy} autoComplete="name" maxLength={100} value={name} onChangeText={value => { setName(value); setSignInError(""); }} placeholder="Full name" placeholderTextColor={theme.muted} style={[login.field, login.phone]} />
 
           <Text style={login.label}>Mobile number</Text>
-          <TextInput accessibilityLabel="Mobile number" editable={!busy} autoComplete="tel" maxLength={16} value={phone} onChangeText={setPhone} placeholder="+91 98765 43210" placeholderTextColor={theme.muted} keyboardType="phone-pad" style={[login.field, login.phone]} />
+          <TextInput accessibilityLabel="Mobile number" editable={!busy} autoComplete="tel" maxLength={20} value={phone} onChangeText={value => { setPhone(value); setSignInError(""); setExistingAccount(false); }} placeholder="+91 98765 43210" placeholderTextColor={theme.muted} keyboardType="phone-pad" style={[login.field, login.phone]} />
 
           <Text style={login.label}>Password</Text>
           <View style={login.field}>
@@ -305,7 +313,7 @@ export function BuyerAccount({
               </View>
             </View>
             <Text style={login.label}>Email address</Text>
-            <TextInput editable={!busy} accessibilityLabel="Email" value={email} onChangeText={value => { setEmail(value); setChallenge(null); setOtp(""); }} autoComplete="email" autoCapitalize="none" autoCorrect={false} keyboardType="email-address" placeholder="you@example.com" placeholderTextColor={theme.muted} style={[login.field, login.phone]} />
+            <TextInput editable={!busy} accessibilityLabel="Email" value={email} onChangeText={value => { setEmail(value); setChallenge(null); setOtp(""); setSignInError(""); setExistingAccount(false); }} autoComplete="email" autoCapitalize="none" autoCorrect={false} keyboardType="email-address" placeholder="you@example.com" placeholderTextColor={theme.muted} style={[login.field, login.phone]} />
             <Pressable accessibilityRole="button" disabled={codeDisabled} onPress={() => void sendCode()} style={[login.button, login.create, login.codeAction, codeDisabled && login.disabledAction]}>
               <Text style={[login.buttonText, codeDisabled && login.disabledLabel]}>
                 {signupCooldown > 0 ? `Resend in ${signupCooldown}s` : challenge ? "Resend email code" : "Send email code"}
@@ -330,8 +338,10 @@ export function BuyerAccount({
         </Pressable>
       </ScrollView>
       <View style={login.stickyFooter}>
-        <Pressable accessibilityRole="button" accessibilityState={{ busy }} disabled={!canCreate} onPress={() => void submit()} style={[login.button, login.footerButton, !canCreate && login.disabledAction]}>
-          <Text style={[login.buttonText, canCreate ? login.primaryText : login.disabledLabel]}>{busy ? "Please wait…" : "Create account"}</Text>
+        {signInError ? <Text accessibilityRole="alert" style={login.signupStatus}>{signInError}</Text> :
+          options?.emailOtpRequired && options.emailOtpAvailable && !canCreate && !busy ? <Text style={login.signupHint}>Request and enter the six-digit email code to continue.</Text> : null}
+        <Pressable accessibilityRole="button" accessibilityState={{ busy }} disabled={!canCreate && !existingAccount} onPress={existingAccount ? returnToSignIn : () => void submit()} style={[login.button, login.footerButton, !canCreate && !existingAccount && login.disabledAction]}>
+          <Text style={[login.buttonText, canCreate || existingAccount ? login.primaryText : login.disabledLabel]}>{busy ? "Please wait…" : existingAccount ? "Back to sign in" : "Create account"}</Text>
         </Pressable>
       </View>
     </View>
@@ -556,6 +566,8 @@ const login = themedStyles(() => StyleSheet.create({
   button: { minHeight: 50, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 12, gap: 8 },
   buttonText: { color: theme.accentInk, fontSize: 15, fontWeight: "600", textAlign: "center" },
   footerButton: { backgroundColor: theme.accentInk, width: "100%", maxWidth: 480, alignSelf: "center" },
+  signupStatus: { color: theme.error, fontSize: 13, lineHeight: 18, paddingBottom: 8, width: "100%", maxWidth: 480, alignSelf: "center" },
+  signupHint: { color: theme.ink, fontSize: 13, lineHeight: 18, paddingBottom: 8, width: "100%", maxWidth: 480, alignSelf: "center" },
   signInPrimary: { backgroundColor: theme.accentInk, marginTop: 16 },
   primaryText: { color: theme.onPrimary },
   recovery: { minHeight: 44, marginTop: 2, alignItems: "center", justifyContent: "center" },

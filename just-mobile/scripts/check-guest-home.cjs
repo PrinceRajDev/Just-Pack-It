@@ -37,6 +37,9 @@ const assert = require("node:assert/strict");
       if (query) records = records.filter(item => item.name.toLowerCase().includes(query));
       await route.fulfill({ json: records, headers: { "access-control-allow-origin": "*" } });
     });
+    await page.route("**/auth/registration-options", route => route.fulfill({
+      json:{emailOtpRequired:true,emailOtpAvailable:true},headers:{"access-control-allow-origin":"*"},
+    }));
     await page.goto(process.env.PREVIEW_URL || "http://localhost:8084", { timeout: 60000 });
     const loader = page.getByRole("heading", {name:"Loading JustPackIt…",exact:true});
     await loader.waitFor();
@@ -136,6 +139,14 @@ const assert = require("node:assert/strict");
         await page.getByTestId("buyer-account-hub").screenshot({path:path.join(output,"account-390.png")});
         await page.getByText("Sign in / Create account",{exact:true}).click();
         await page.getByTestId("buyer-sign-in").waitFor();
+        await page.getByTestId("buyer-sign-in").screenshot({path:path.join(output,"buyer-signin-390.png")});
+        await page.getByRole("button",{name:"Create account",exact:true}).click();
+        const registration = page.getByTestId("buyer-sign-up");
+        await registration.getByRole("heading",{name:"Account details",exact:true}).waitFor();
+        await registration.getByRole("heading",{name:"Verify your email",exact:true}).waitFor();
+        assert.equal(await registration.getByRole("button",{name:"Create account",exact:true}).isDisabled(),true);
+        await registration.screenshot({path:path.join(output,"buyer-signup-390.png")});
+        await registration.getByRole("button",{name:"Back to sign in",exact:true}).click();
         await page.getByRole("button", {name:"Back from sign in"}).click();
         await page.getByTestId("buyer-account-hub").waitFor();
       }

@@ -1,4 +1,4 @@
-import { theme, themedStyles } from "./theme";
+import { cardShadow, theme, themedStyles } from "./theme";
 import { BuyerStateCard, BuyerStateSkeleton } from "./BuyerStateCard";
 import { BuyerAccountHub } from "./BuyerAccountHub";
 
@@ -163,23 +163,13 @@ export function BuyerAccount({
     <View style={login.screen} testID="buyer-sign-in">
       <View style={login.header}>
         <Pressable accessibilityRole="button" accessibilityLabel="Back from sign in" hitSlop={10} disabled={busy} onPress={back} style={login.backButton}>
-          <Text style={login.chevron}>‹</Text>
+          <MarketIcon name="chevron-left" />
         </Pressable>
         <Text accessibilityRole="header" style={login.headerText}>Sign in</Text>
       </View>
       <ScrollView style={login.scroll} contentContainerStyle={[login.content, login.signInContent]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <View style={login.signInHero}>
-          <View style={login.signInIntro}>
-            <Text style={login.signInBrand}>JustPackIt</Text>
-            <Text accessibilityRole="header" style={login.signInTitle}>
-              {fromBag ? "Sign in to checkout" : "Welcome back."}
-            </Text>
-            <Text style={login.signInDescription}>
-              {fromBag ? "We'll bring you back to your bag." : "View orders and save delivery addresses."}
-            </Text>
-          </View>
-          <Image source={require("../assets/startup-parcel.jpg")} style={login.signInArt} accessible={false} />
-        </View>
+        <AuthHero title={fromBag ? "Sign in to checkout" : "Welcome back."}
+          copy={fromBag ? "We'll bring you back to your bag." : "Track your orders and keep delivery addresses handy."} />
         {signInError ? (
           <BuyerAuthNotice
             title={signInServerError ? "Couldn’t sign you in" : "Check your details"}
@@ -199,10 +189,10 @@ export function BuyerAccount({
             placeholderTextColor={theme.muted}
             keyboardType="phone-pad"
             autoComplete="tel"
-            style={[login.field, login.signInField, login.phone]}
+            style={[login.field, login.phone]}
           />
           <Text style={[login.label, login.signInLabel, login.signInPasswordLabel]}>Password</Text>
-          <View style={[login.field, login.signInField]}>
+          <View style={login.field}>
             <TextInput
               accessibilityLabel="Password"
               editable={!busy}
@@ -231,9 +221,9 @@ export function BuyerAccount({
           </Pressable>
         </View>
         <View style={login.signInOptions}>
-          <Text style={login.newAccount}>New to the neighbourhood?</Text>
           <Pressable accessibilityRole="button" disabled={busy} onPress={() => { setRegister(true); setSignInError(""); }} style={[login.button, login.create]}>
             <Text style={login.buttonText}>Create account</Text>
+            <MarketIcon name="chevron-right" />
           </Pressable>
           {!fromBag && (
             <Pressable accessibilityRole="button" disabled={busy} onPress={() => setSellerOpen(true)} style={login.button}>
@@ -259,18 +249,15 @@ export function BuyerAccount({
     <View style={login.screen} testID="buyer-sign-up">
       <View style={login.header}>
         <Pressable accessibilityRole="button" accessibilityLabel="Back to sign in" hitSlop={10} disabled={busy} onPress={returnToSignIn} style={login.backButton}>
-          <Text style={login.chevron}>‹</Text>
+          <MarketIcon name="chevron-left" />
         </Pressable>
         <Text accessibilityRole="header" style={login.headerText}>Create account</Text>
       </View>
       <ScrollView style={login.scroll} contentContainerStyle={[login.content, login.signInContent]} keyboardShouldPersistTaps="handled">
-        <View style={login.signInHeading}>
-          <View style={login.signInIcon}><MarketIcon name="account" /></View>
-          <Text accessibilityRole="header" style={login.signInTitle}>Join your neighbourhood.</Text>
-          <Text style={login.description}>Create an account to order from independent shops.</Text>
-        </View>
+        <AuthHero title="Shop close to home" copy="Create an account to order from independent shops." />
         {signInError ? <BuyerAuthNotice title="Check your details" copy={signInError} warning /> : null}
         <View style={[login.card, login.signInCard]}>
+          <Text accessibilityRole="header" style={login.verificationTitle}>Account details</Text>
           <Text style={login.label}>Your name</Text>
           <TextInput accessibilityLabel="Your name" editable={!busy} autoComplete="name" maxLength={100} value={name} onChangeText={setName} placeholder="Full name" placeholderTextColor={theme.muted} style={[login.field, login.phone]} />
 
@@ -284,6 +271,7 @@ export function BuyerAccount({
               <Text style={login.visibilityText}>{passwordVisible ? "Hide" : "Show"}</Text>
             </Pressable>
           </View>
+          <Text style={login.fieldHint}>Use at least 12 characters.</Text>
 
           <Text style={login.label}>Confirm password</Text>
           <TextInput accessibilityLabel="Confirm password" editable={!busy} autoComplete="new-password" autoCapitalize="none" autoCorrect={false} maxLength={128} value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Re-enter password" placeholderTextColor={theme.muted} secureTextEntry={!passwordVisible} style={[login.field, login.phone]} />
@@ -292,8 +280,13 @@ export function BuyerAccount({
         {optionsError ? <BuyerAuthNotice title="Couldn’t load registration settings" copy="Reopen Account to retry." warning /> : null}
         {options?.emailOtpRequired ? (
           <View style={[login.card, login.signInCard]}>
-            <Text accessibilityRole="header" style={login.verificationTitle}>Verify your email</Text>
-            <Text style={login.description}>We’ll send a six-digit code to your email address.</Text>
+            <View style={login.verificationHeading}>
+              <View style={login.verificationIcon}><MarketIcon name="account" /></View>
+              <View style={login.verificationCopy}>
+                <Text accessibilityRole="header" style={login.verificationTitle}>Verify your email</Text>
+                <Text style={login.description}>We’ll send a six-digit code to your email address.</Text>
+              </View>
+            </View>
             <Text style={login.label}>Email address</Text>
             <TextInput editable={!busy} accessibilityLabel="Email" value={email} onChangeText={value => { setEmail(value); setChallenge(null); setOtp(""); }} autoComplete="email" autoCapitalize="none" autoCorrect={false} keyboardType="email-address" placeholder="you@example.com" placeholderTextColor={theme.muted} style={[login.field, login.phone]} />
             <Pressable accessibilityRole="button" disabled={codeDisabled} onPress={() => void sendCode()} style={[login.button, login.create, login.codeAction, codeDisabled && login.disabledAction]}>
@@ -320,12 +313,23 @@ export function BuyerAccount({
         </Pressable>
       </ScrollView>
       <View style={login.stickyFooter}>
-        <Pressable accessibilityRole="button" disabled={!canCreate} onPress={() => void submit()} style={[login.button, login.primary, !canCreate && login.disabledAction]}>
+        <Pressable accessibilityRole="button" accessibilityState={{ busy }} disabled={!canCreate} onPress={() => void submit()} style={[login.button, login.footerButton, !canCreate && login.disabledAction]}>
           <Text style={[login.buttonText, canCreate ? login.primaryText : login.disabledLabel]}>{busy ? "Please wait…" : "Create account"}</Text>
         </Pressable>
       </View>
     </View>
   );
+}
+
+function AuthHero({ title, copy }: { title: string; copy: string }) {
+  return <View style={login.signInHero}>
+    <View style={login.signInIntro}>
+      <Text style={login.signInBrand}>JustPackIt</Text>
+      <Text accessibilityRole="header" style={login.signInTitle}>{title}</Text>
+      <Text style={login.signInDescription}>{copy}</Text>
+    </View>
+    <Image source={require("../assets/startup-parcel.jpg")} style={login.signInArt} accessible={false} />
+  </View>;
 }
 export function BuyerOrders({
   session,
@@ -497,48 +501,47 @@ const ordersUI = themedStyles(() => StyleSheet.create({
 }));
 const login = themedStyles(() => StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.canvas },
-  header: { height: 64, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", gap: 14 },
-  backButton: { minHeight: 44, justifyContent: "center" },
-  chevron: { color: theme.accentInk, fontSize: 27, lineHeight: 30 },
-  headerText: { color: theme.accentInk, fontSize: 21, fontWeight: "600" },
+  header: { minHeight: 64, width: "100%", maxWidth: 520, alignSelf: "center", paddingHorizontal: 20, flexDirection: "row", alignItems: "center", gap: 12 },
+  backButton: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, alignItems: "center", justifyContent: "center" },
+  headerText: { color: theme.ink, fontSize: 22, fontWeight: "700", flex: 1 },
   scroll: { flex: 1 },
-  content: { paddingTop: 16, paddingHorizontal: 20, paddingBottom: 12, width: "100%", maxWidth: 520, alignSelf: "center" },
-  stickyFooter: { paddingHorizontal: 20, paddingBottom: 16, paddingTop: 6, borderTopWidth: 1, borderColor: theme.border, backgroundColor: theme.surface },
+  content: { paddingTop: 8, paddingHorizontal: 20, width: "100%", maxWidth: 520, alignSelf: "center" },
+  stickyFooter: { paddingHorizontal: 20, paddingVertical: 12, borderTopWidth: 1, borderColor: theme.border, backgroundColor: theme.surface },
   disabledAction: { backgroundColor: theme.disabled },
   disabledLabel: {color:theme.muted},
   signInContent: { gap: 16, paddingBottom: 24 },
-  signInHeading: { gap: 8 },
-  signInIcon: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: theme.selected },
-  signInHero: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 12, padding: 16, borderRadius: 24, backgroundColor: theme.hero },
+  signInHero: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 12, padding: 16, borderRadius: 24, backgroundColor: theme.hero, borderWidth: 1, borderColor: theme.border },
   signInIntro: { flexGrow: 1, flexShrink: 1, flexBasis: 144, gap: 6 },
   signInBrand: { color: theme.accentInk, fontSize: 14, fontWeight: "800" },
   signInTitle: { color: theme.ink, fontSize: 28, lineHeight: 32, fontWeight: "800" },
   signInDescription: { color: theme.ink, fontSize: 14, lineHeight: 20 },
   signInArt: { width: 100, height: 100, borderRadius: 16 },
   card: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: 16, marginTop: 20, padding: 16 },
-  signInCard: { marginTop: 0, borderRadius: 20, padding: 16 },
+  signInCard: { marginTop: 0, borderRadius: 20, padding: 16, ...cardShadow },
   description: { color: theme.secondary, fontSize: 14, lineHeight: 20 },
   verificationTitle: { color: theme.ink, fontWeight: "700", fontSize: 18, lineHeight: 24, marginBottom: 4 },
+  verificationHeading: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 4 },
+  verificationIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: theme.selected, alignItems: "center", justifyContent: "center" },
+  verificationCopy: { flex: 1 },
+  fieldHint: { color: theme.secondary, fontSize: 13, lineHeight: 18, marginTop: 6 },
   codeAction: { marginTop: 10, marginBottom: 4 },
   codeStatus: { marginTop: 8 },
-  label: { color: theme.muted, fontSize: 12, lineHeight: 16, fontWeight: "600", marginTop: 10 },
+  label: { color: theme.ink, fontSize: 14, lineHeight: 20, fontWeight: "600", marginTop: 12 },
   signInLabel: { color: theme.ink, fontSize: 14, marginTop: 0 },
   signInPasswordLabel: { marginTop: 16 },
-  field: { flexDirection: "row", minHeight: 52, borderWidth: 1, borderColor: theme.controlBorder, borderRadius: 12, backgroundColor: theme.surface, marginTop: 6 },
-  signInField: { backgroundColor: theme.surfaceSoft },
+  field: { flexDirection: "row", minHeight: 52, borderWidth: 1, borderColor: theme.controlBorder, borderRadius: 12, backgroundColor: theme.surfaceSoft, marginTop: 8 },
   phone: { paddingHorizontal: 16, fontSize: 14, color: theme.ink },
   password: { flex: 1, minWidth: 0, paddingHorizontal: 16, fontSize: 14, color: theme.ink },
   visibility: { minWidth: 56, justifyContent: "center", alignItems: "center", paddingHorizontal: 12 },
-  visibilityText: { color: theme.muted, fontSize: 14 },
+  visibilityText: { color: theme.accentInk, fontWeight: "600", fontSize: 14 },
   error: { color: theme.error, marginTop: 10, fontSize: 13, lineHeight: 18 },
   button: { minHeight: 50, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 12, gap: 8 },
   buttonText: { color: theme.accentInk, fontSize: 15, fontWeight: "600", textAlign: "center" },
-  primary: { backgroundColor: theme.primary, marginTop: 10 },
+  footerButton: { backgroundColor: theme.accentInk, width: "100%", maxWidth: 480, alignSelf: "center" },
   signInPrimary: { backgroundColor: theme.accentInk, marginTop: 16 },
   primaryText: { color: theme.onPrimary },
   recovery: { minHeight: 44, marginTop: 2, alignItems: "center", justifyContent: "center" },
   signInOptions: { gap: 4 },
-  newAccount: { color: theme.muted, fontSize: 14, lineHeight: 20, textAlign: "center" },
   create: { backgroundColor: theme.selected, borderWidth: 1, borderColor: theme.border, marginTop: 4 },
   guestText: { color: theme.secondary, fontSize: 14, fontWeight: "600", textAlign: "center" },
 }));

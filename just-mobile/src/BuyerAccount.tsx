@@ -148,7 +148,12 @@ export function BuyerAccount({
       await save(next);
     } catch (error) {
       const duplicate = register && error instanceof ApiError && error.code === "DUPLICATE";
-      const message = duplicate ? "An account already uses this mobile number or email. Sign in with your existing account." : error instanceof Error ? error.message : "Please try again.";
+      const invalidCode = register && error instanceof ApiError && error.code === "OTP_INVALID";
+      if (invalidCode) setOtp("");
+      const message = duplicate
+        ? "An account already uses this mobile number or email. Sign in with your existing account."
+        : invalidCode ? "That email code is invalid or expired. Check your inbox or request a new code."
+          : error instanceof Error ? error.message : "Please try again.";
       setExistingAccount(duplicate);
       setSignInServerError(error instanceof ApiError);
       setSignInError(message);
@@ -325,7 +330,11 @@ export function BuyerAccount({
                 {!signupExpired ? (
                   <>
                     <Text style={login.label}>Email verification code</Text>
-                    <TextInput editable={!busy} accessibilityLabel="Email verification code" autoComplete="one-time-code" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} placeholder="6-digit email code" placeholderTextColor={theme.muted} style={[login.field, login.phone]} />
+                    <TextInput editable={!busy} accessibilityLabel="Email verification code" autoComplete="one-time-code" value={otp} onChangeText={value => {
+                      setOtp(value.replace(/\D/g, "").slice(0, 6));
+                      setSignInError("");
+                      setExistingAccount(false);
+                    }} keyboardType="number-pad" placeholder="6-digit email code" placeholderTextColor={theme.muted} style={[login.field, login.phone]} />
                   </>
                 ) : null}
               </View>

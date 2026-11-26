@@ -83,8 +83,15 @@ export function BuyerAccount({
   const signupExpired = !!challenge && emailClock >= Date.parse(challenge.expiresAt);
   const signupCooldown = challenge ? Math.max(0, Math.ceil((challenge.resendAt - emailClock) / 1000)) : 0;
   const [optionsError, setOptionsError] = useState(false);
+  const [optionsAttempt, setOptionsAttempt] = useState(0);
   const authLock = useRef(false);
-  useEffect(() => { let active = true; void buyerApi.registrationOptions().then((value) => { if (active) setOptions(value); }).catch(() => { if (active) setOptionsError(true); }); return () => { active = false; }; }, []);
+  useEffect(() => {
+    let active = true;
+    void buyerApi.registrationOptions()
+      .then(value => { if (active) setOptions(value); })
+      .catch(() => { if (active) setOptionsError(true); });
+    return () => { active = false; };
+  }, [optionsAttempt]);
   useEffect(() => {
     if (!challenge || !register) return;
     const timer = setInterval(() => setEmailClock(Date.now()), 500);
@@ -279,7 +286,15 @@ export function BuyerAccount({
           {passwordMismatch && <Text style={login.error}>Passwords must match.</Text>}
         </View>
 
-        {optionsError ? <BuyerAuthNotice title="Couldn’t load registration settings" copy="Reopen Account to retry." warning /> : null}
+        {optionsError ? (
+          <BuyerAuthNotice title="Couldn’t load registration settings" copy="Check your connection and try again." warning
+            action="Retry registration settings" onAction={() => { setOptionsError(false); setOptionsAttempt(attempt => attempt + 1); }} />
+        ) : !options ? (
+          <View style={[login.card, login.signInCard, login.verificationHeading]} accessibilityLiveRegion="polite">
+            <ActivityIndicator size="small" color={theme.accentInk} />
+            <Text style={login.description}>Loading registration settings…</Text>
+          </View>
+        ) : null}
         {options?.emailOtpRequired ? (
           <View style={[login.card, login.signInCard]}>
             <View style={login.verificationHeading}>

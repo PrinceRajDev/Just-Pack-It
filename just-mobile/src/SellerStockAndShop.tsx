@@ -42,16 +42,18 @@ export function SellerCatalogue({token,stockFilter}:{token:string;stockFilter?:S
   const [edit,setEdit] = useState<SellerProduct | "new">();
   const [editorSection,setEditorSection] = useState<typeof productSections[number]>("Details");
   const [stockProduct,setStockProduct] = useState<SellerProduct>();
-  const [notice,setNotice] = useState("");
+  const [savedStockId,setSavedStockId] = useState<string>();
   const open = useSellerMutation();
   const leaveEditor = () => { setEdit(undefined); setEditorSection("Details"); };
-  if (edit) return <ProductEditor token={token} product={edit==="new" ? undefined : edit} initialSection={editorSection} close={leaveEditor} saved={listing.reload} />;
+  const stockSaved = (updated: SellerProduct) => {
+    listing.setData(previous => previous && {...previous,items:previous.items.map(item => item.id === updated.id ? updated : item)});
+    setSavedStockId(updated.id);
+  };
+  if (edit) return <ProductEditor token={token} product={edit==="new" ? undefined : edit} initialSection={editorSection} close={leaveEditor} saved={listing.reload} stockSaved={stockSaved} />;
   if (stockProduct) return <QuickStock token={token} product={stockProduct} close={() => setStockProduct(undefined)}
     reload={() => sellerApi.product(token,stockProduct.id)} saved={updated => {
-      listing.setData(previous => previous && {...previous,items:previous.items.map(item => item.id === updated.id ? updated : item)});
-      setNotice(`Stock updated for ${updated.name}.`);
+      stockSaved(updated);
       setStockProduct(undefined);
-      listing.reload();
     }} />;
   const term = query.trim().toLowerCase();
   const words = term.split(/\s+/);
@@ -62,7 +64,7 @@ export function SellerCatalogue({token,stockFilter}:{token:string;stockFilter?:S
       return words.every(word => label.includes(word));
     });
   });
-  const rows = matching?.filter(item => matchesCatalogueFilter(item,filter));
+  const rows = matching?.filter(item => item.id === savedStockId || matchesCatalogueFilter(item,filter));
   return <SellerScroll refreshing={listing.loading} onRefresh={listing.reload}>
     <View style={styles.catalogueHero}>
       <View style={styles.catalogueHeroCopy}>
@@ -89,7 +91,7 @@ export function SellerCatalogue({token,stockFilter}:{token:string;stockFilter?:S
             return (
               <Pressable key={value} accessibilityRole="tab" accessibilityLabel={value}
                 accessibilityHint={count === undefined ? undefined : `${count} matching products loaded`}
-                accessibilityState={{selected}} style={[styles.chip, styles.catalogueChip, selected && styles.catalogueSelectedFilter]} onPress={() => setFilter(value)}>
+                accessibilityState={{selected}} style={[styles.chip, styles.catalogueChip, selected && styles.catalogueSelectedFilter]} onPress={() => { setFilter(value); setSavedStockId(undefined); }}>
                 <Text style={selected ? styles.dispatchModeTextActive : styles.link}>{value}{count === undefined ? "" : ` · ${count}`}</Text>
               </Pressable>
             );
@@ -107,19 +109,17 @@ export function SellerCatalogue({token,stockFilter}:{token:string;stockFilter?:S
     </View>
     <LoadState error={listing.error} loading={listing.loading&&!listing.data} retry={listing.reload} />
     <MutationFeedback error={open.error} />
-    {!!notice && <Text accessibilityLiveRegion="polite" style={styles.catalogueNotice}>{notice}</Text>}
     {!listing.loading && !listing.error && !rows?.length && <BuyerStateCard title="No products in this view"
       copy={listing.data?.next ? "Load more products to check the rest of your catalogue." : "Add a product or try a different search or filter."}
       icon="bag" action={term || filter !== "All" ? "Reset filters" : undefined}
       onAction={() => { setQuery(""); setFilter("All"); }} />}
-    {rows?.map(item => <CatalogueProduct key={item.id} item={item} disabled={open.busy}
-      onPress={() => void open.run(async () => { setNotice(""); setEdit(await sellerApi.product(token,item.id)); })}
+    {rows?.map(item => <CatalogueProduct key={item.id} item={item} stockSaved={item.id === savedStockId} disabled={open.busy}
+      onPress={() => void open.run(async () => { setEdit(await sellerApi.product(token,item.id)); })}
       onPhoto={() => void open.run(async () => {
         const current = await sellerApi.product(token,item.id);
-        setNotice(""); setEditorSection("Photo"); setEdit(current);
+        setEditorSection("Photo"); setEdit(current);
       })}
       onStock={() => void open.run(async () => {
-        setNotice("");
         const current = await sellerApi.product(token,item.id);
         if (current.variants?.length) { setEditorSection("Pack variants"); setEdit(current); }
         else setStockProduct(current);
@@ -128,16 +128,19 @@ export function SellerCatalogue({token,stockFilter}:{token:string;stockFilter?:S
   </SellerScroll>;
 }
 
-function CatalogueProduct({item,disabled,onPress,onStock,onPhoto}:{item:SellerProduct;disabled:boolean;onPress:()=>void;onStock:()=>void;onPhoto:()=>void}) {
+function CatalogueProduct({item,stockSaved,disabled,onPress,onStock,onPhoto}:{item:SellerProduct;stockSaved:boolean;disabled:boolean;onPress:()=>void;onStock:()=>void;onPhoto:()=>void}) {
   const [failedImage,setFailedImage] = useState("");
   const image = resolveImage(item.image);
   const stocks = stockLevels(item);
   const empty = stocks.filter(stock => stock === 0).length;
   const low = stocks.some(stock => stock > 0 && stock <= 5);
   const status = !item.active ? "Inactive" : empty === stocks.length ? "Out of stock" : empty > 0 ? "Some packs sold out" : low ? "Low stock" : "In stock";
-  const stockLabel = item.variants?.length ? `${item.variants.length} ${item.variants.length === 1 ? "pack" : "packs"}` : `${item.stock} available`;
-  return <View style={styles.dispatchTicket}>
-    <Pressable accessibilityRole="button" accessibilityLabel={`Edit ${item.name}`} accessibilityHint={`${stockLabel}, ${status}`} disabled={disabled} onPress={onPress}
+  const stockLabel = `${stocks.reduce((sum, stock) => sum + stock, 0)} available${item.variants?.length ? ` across ${item.variants.length} options` : ""}`;
+  const prices = item.variants?.length ? item.variants.map(option => option.price) : [item.price];
+  const lowest = Math.min(...prices), highest = Math.max(...prices);
+  const priceLabel = lowest === highest ? rupees(lowest) : `${rupees(lowest)}–${rupees(highest)}`;
+  return <View style={styles.dispatchTicket} testID={`catalogue-product-${item.id}`}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Edit ${item.name}`} accessibilityHint={`${priceLabel}, ${stockLabel}, ${status}`} disabled={disabled} onPress={onPress}
       style={({pressed})=>[styles.catalogueProductBody,pressed && styles.pressed]}>
       <View style={styles.catalogueThumb}>
         {image && image !== failedImage
@@ -147,12 +150,12 @@ function CatalogueProduct({item,disabled,onPress,onStock,onPhoto}:{item:SellerPr
       <View style={styles.grow}>
         <Text style={styles.title}>{item.name}</Text>
         <Text style={styles.copy}>{[item.unit,stockLabel].filter(Boolean).join(" · ")}</Text>
-        <Text style={styles.orderAmount}>{rupees(item.price)}</Text>
+        <Text style={styles.orderAmount}>{priceLabel}</Text>
+        <Text style={[styles.orderStatus,!item.active && styles.catalogueInactive,(empty > 0 || low) && item.active && styles.workCountActive]}>{status}</Text>
       </View>
       <Text style={styles.link}>›</Text>
     </Pressable>
     <View style={styles.catalogueProductFooter}>
-      <Text style={[styles.orderStatus,!item.active && styles.catalogueInactive,(empty > 0 || low) && item.active && styles.workCountActive]}>{status}</Text>
       <View style={styles.catalogueCardActions}>
         <Pressable accessibilityRole="button" accessibilityLabel={`${item.image ? "Change" : "Add"} photo for ${item.name}`} disabled={disabled} onPress={onPhoto} style={styles.cataloguePhotoAction}>
           <Text style={styles.link}>{item.image ? "Photo" : "Add photo"}</Text>
@@ -162,6 +165,7 @@ function CatalogueProduct({item,disabled,onPress,onStock,onPhoto}:{item:SellerPr
         </Pressable>
       </View>
     </View>
+    {stockSaved && <Text accessibilityLiveRegion="polite" style={styles.catalogueNotice}>{`Stock updated for ${item.name}.`}</Text>}
   </View>;
 }
 
@@ -215,7 +219,7 @@ function QuickStock({token,product,close,saved,reload}:{token:string;product:Sel
   </SellerScroll>;
 }
 
-function ProductEditor({token,product,initialSection,close,saved}:{token:string;product?:SellerProduct;initialSection:typeof productSections[number];close:()=>void;saved:()=>void}) {
+function ProductEditor({token,product,initialSection,close,saved,stockSaved}:{token:string;product?:SellerProduct;initialSection:typeof productSections[number];close:()=>void;saved:()=>void;stockSaved:(product:SellerProduct)=>void}) {
   const [current,setCurrent] = useState(product);
   const [section,setSection] = useState(initialSection);
   const [offerPhoto,setOfferPhoto] = useState(false);
@@ -268,10 +272,11 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
     mutation.clear();
   };
   useAndroidBack(() => { if (confirmExit) setConfirmExit(false); else requestExit(); return true; }, 25);
-  const refresh = async () => {
+  const refresh = async (confirmStock = false) => {
     if (!current) return;
     const next = await sellerApi.product(token,current.id);
     setCurrent(next); setStock(String(next.stock));
+    if (confirmStock) stockSaved(next);
   };
   const save = () => void mutation.run(async () => {
     if (!name.trim() || !unit.trim() || !categoryId || !validMoney(price) || (!hasVariants && !validStock(stock)) || (mrp && (!validMoney(mrp) || Number(mrp)<Number(price)))) throw new Error("Enter a name, unit, category, valid price and whole-number stock. MRP must be at least the selling price.");
@@ -281,7 +286,9 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
       ...(current && current.categoryId!==categoryId ? {subcategoryId:null} : {}),
     },current);
     if (!current && !result.image) setOfferPhoto(true);
-    setCurrent(result); setStock(String(result.stock)); saved(); setNotice("Product saved.");
+    if (current && current.stock !== result.stock) stockSaved(result);
+    else saved();
+    setCurrent(result); setStock(String(result.stock)); setNotice("Product saved.");
   });
   const feedback = <MutationFeedback error={mutation.error} onReload={current ? ()=>void mutation.run(refresh) : undefined} />;
   return <>
@@ -325,7 +332,8 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
       {!hasVariants && <SellerField label="Stock" value={stock} onChangeText={setStock} keyboardType="number-pad" />}
       {current && !hasVariants && <SellerButton label="Update stock only" soft disabled={mutation.busy} onPress={() => void mutation.run(async () => {
         if (!validStock(stock)) throw new Error("Enter a whole number of units.");
-        setCurrent(await sellerApi.inventory(token,current,Number(stock))); saved(); setNotice("Stock updated.");
+        const updated = await sellerApi.inventory(token,current,Number(stock));
+        setCurrent(updated); setStock(String(updated.stock)); stockSaved(updated); setNotice("Stock updated.");
       })} />}
     </SellerCard>
     <View style={styles.shopAvailability}>
@@ -349,7 +357,11 @@ function ProductEditor({token,product,initialSection,close,saved}:{token:string;
         <SellerButton label="Save variant" disabled={mutation.busy} onPress={() => void mutation.run(async () => {
           if (!variant.label.trim() || !validMoney(variant.price) || !validStock(variant.stock)) throw new Error("Enter a pack label, valid price and whole-number stock.");
           await sellerApi.variant(token,current,{label:variant.label.trim(),price:Number(variant.price),stock:Number(variant.stock)},variant.id);
-          setVariant(undefined); saved(); await refresh(); setNotice("Variant saved.");
+          setVariant(undefined);
+          const stockChanged = !savedVariant || savedVariant.stock !== Number(variant.stock);
+          await refresh(stockChanged);
+          if (!stockChanged) saved();
+          setNotice("Variant saved.");
         })} />
         <SellerButton label="Close variant editor" soft disabled={mutation.busy} onPress={() => setVariant(undefined)} />
       </>}

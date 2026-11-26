@@ -39,9 +39,23 @@ const packingStages = ["Accept", "Pack", "Handoff", "Complete"];
 const packingProgress: Record<OrderStatus, number> = {
   placed:0, accepted:1, preparing:1, ready:2, out_for_delivery:2, delivered:3, cancelled:-1,
 };
-const orderNextStep: Partial<Record<OrderStatus,string>> = {
-  placed:"Review order", accepted:"Start packing", preparing:"Continue packing", ready:"View handoff", out_for_delivery:"View delivery",
+const orderTransitions: Partial<Record<OrderStatus,{ status:OrderStatus; label:string }>> = {
+  placed:{status:"accepted",label:"Accept order"},
+  accepted:{status:"preparing",label:"Start packing"},
+  preparing:{status:"ready",label:"Mark ready for pickup"},
+  ready:{status:"out_for_delivery",label:"Start delivery"},
 };
+function sellerOrderAction(order: SellerOrder) {
+  if (order.testMode) return {};
+  const move = order.status !== "ready" || order.fulfilment === "seller_delivery" ? orderTransitions[order.status] : undefined;
+  if (move) return { label: order.status === "preparing" && order.fulfilment === "seller_delivery" ? "Mark packed" : move.label, move: move.status };
+  if (order.status === "ready" && order.fulfilment === "platform_delivery" && order.delivery?.state === "claimed")
+    return {label:"Review rider handoff", panel:"pickup" as const};
+  if ((order.fulfilment === "pickup" && order.status === "ready") || (order.fulfilment === "seller_delivery" && order.status === "out_for_delivery"))
+    return {label:"Verify buyer receipt code", panel:"cash" as const};
+  if (order.delivery?.state === "returning") return {label:"Record goods received", panel:"return" as const};
+  return {};
+}
 function readyRiderLabel(order: SellerOrder) {
   if (order.testMode || order.status !== "ready" || order.fulfilment !== "platform_delivery") return undefined;
   if (!order.delivery) return "Waiting for a rider";
@@ -125,8 +139,8 @@ function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:O
   const dashboard = useSellerData(() => sellerApi.dashboard(token), token);
   const counts = dashboard.data?.counts;
   const work = [
-    {group:"Orders", title:"New orders", count:counts?.placed ?? 0, action:"Review new orders", open:() => orders("New"), icon:"orders", tint:theme.selected},
-    {group:"Orders", title:"To prepare", count:(counts?.accepted ?? 0) + (counts?.preparing ?? 0), action:"Open packing queue", open:() => orders("Preparing"), icon:"bag", tint:theme.hero},
+    {group:"Orders", title:"New orders", count:counts?.placed ?? 0, action:"Review orders to accept", open:() => orders("New"), icon:"orders", tint:theme.selected},
+    {group:"Orders", title:"To prepare", count:(counts?.accepted ?? 0) + (counts?.preparing ?? 0), action:"Review orders to pack", open:() => orders("Preparing"), icon:"bag", tint:theme.hero},
     {group:"Orders", title:"Ready for handoff", count:counts?.ready ?? 0, action:"Review handoffs", open:() => orders("Ready"), icon:"home", tint:theme.success},
     {group:"Inventory", title:"Out of stock", count:dashboard.data?.lowStock?.outOfStock ?? 0, action:"Review sold-out products", open:() => openStock("Out of stock"), icon:"browse", tint:theme.hero},
     {group:"Inventory", title:"Low stock", count:dashboard.data?.lowStock?.count ?? 0, action:"Review low stock", open:() => openStock("Low stock"), icon:"browse", tint:theme.selected},
@@ -246,15 +260,10 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
     const canCheckPacking = !order.testMode && (order.status === "accepted" || order.status === "preparing");
     const packingKey = `${order.id}:${order.version}`;
     const checkedLines = packingChecks[packingKey] ?? [];
-    const move = ({placed:"accepted",accepted:"preparing",preparing:"ready",ready:order.fulfilment==="seller_delivery" ? "out_for_delivery" : undefined} as Partial<Record<OrderStatus,OrderStatus>>)[order.status];
-    const actionLabel = {placed:"Accept order",accepted:"Start packing",preparing:"Mark ready",ready:"Start delivery"}[order.status as "placed"|"accepted"|"preparing"|"ready"];
-    const allowReceipt = order.fulfilment === "pickup" ? order.status === "ready" : order.fulfilment === "seller_delivery" && order.status === "out_for_delivery";
+    const {label, move, panel} = sellerOrderAction(order);
     const perform = (task:()=>Promise<unknown>) => void mutation.run(async () => { await task(); close(); listing.reload(); });
     const openAction = (value: typeof action) => { setAction(value); setReason(""); setCode(""); setRestock(false); mutation.clear(); };
-    const riderReady = order.status === "ready" && order.fulfilment === "platform_delivery" && order.delivery?.state === "claimed";
-    const primary = move ? {label:actionLabel,press:() => perform(() => sellerApi.move(token,order,move))}
-      : riderReady ? {label:"Review rider handoff",press:() => openAction("pickup")}
-      : allowReceipt ? {label:"Verify buyer receipt code",press:() => openAction("cash")} : undefined;
+    const primary = label && {label, press:() => move ? perform(() => sellerApi.move(token,order,move)) : openAction(panel)};
     return <>
     <SellerScroll>
       <View style={styles.orderTop}>
@@ -338,7 +347,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
       {!order.testMode && !action && <>
         {(order.status === "placed" || order.status === "accepted") && <SellerButton label="Cancel order" soft onPress={() => openAction("cancel")} disabled={mutation.busy} />}
         {readyRiderLabel(order) === "Waiting for a rider" && <Text style={styles.copy}>Waiting for a platform rider to claim this order.</Text>}
-        {order.delivery?.state === "returning" && <SellerButton label="Record goods received" soft onPress={() => openAction("return")} />}
+        {order.delivery?.state === "returning" && panel !== "return" && <SellerButton label="Record goods received" soft onPress={() => openAction("return")} />}
       </>}
       {action && <SellerCard>
         {action === "pickup" && <><Text style={styles.title}>Confirm rider handoff</Text><Text style={styles.copy}>Match the rider to this assignment before handing over the packed order.</Text><Text selectable style={styles.label}>Rider ID · {order.delivery?.partnerId}</Text><SellerButton label="Confirm handoff" disabled={mutation.busy} onPress={() => perform(() => sellerApi.handoff(token,order))} /></>}
@@ -412,8 +421,8 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
       const units = order.lines.reduce((sum,item) => sum + item.qty,0);
       const checkedCount = packingChecks[`${order.id}:${order.version}`]?.length ?? 0;
       const packingProgressLabel = checkedCount > 0 ? `${checkedCount} of ${order.lines.length} checked` : undefined;
-      const nextStep = order.status === "ready" && order.fulfilment === "platform_delivery" && order.delivery?.state !== "claimed"
-        ? "View order" : orderNextStep[order.status] ?? "View details";
+      const {label: nextAction} = sellerOrderAction(order);
+      const nextStep = nextAction ?? (order.status === "out_for_delivery" ? "View delivery" : "View details");
       const riderStatus = readyRiderLabel(order);
       const refundLabel = order.status === "cancelled" && !order.testMode ? sellerRefundLabel(order) : undefined;
       const cashDue = sellerCashDue(order) ? `Cash due ${rupees(order.amountDue)}` : undefined;
@@ -441,7 +450,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
         </View>
         <View style={styles.dispatchTicketFooter}>
           <Text style={styles.orderAmount}>{cashDue ?? (order.status === "cancelled" ? `Original ${rupees(order.total)}` : rupees(order.total))}</Text>
-          <Text style={styles.dispatchTicketLink}>{nextStep}  ›</Text>
+          <Text style={[styles.dispatchTicketLink, nextAction && styles.dispatchPrimaryAction]}>{nextStep}  ›</Text>
         </View>
       </Pressable>;
     })}

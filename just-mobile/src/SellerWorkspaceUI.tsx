@@ -140,6 +140,7 @@ export const styles = themedStyles(() => StyleSheet.create({
   dispatchRoute:{backgroundColor:theme.canvas,padding:12,borderRadius:12,gap:4},
   dispatchTicketFooter:{minHeight:52,paddingHorizontal:16,paddingVertical:8,flexDirection:"row",flexWrap:"wrap",alignItems:"center",justifyContent:"space-between",gap:8,backgroundColor:theme.warning,borderTopWidth:1,borderColor:theme.border},
   dispatchTicketLink:{color:theme.accentInk,fontSize:14,fontWeight:"700"},
+  dispatchPrimaryAction:{backgroundColor:theme.selected,borderRadius:10,paddingHorizontal:10,paddingVertical:8,flexShrink:1},
   statementHero:{backgroundColor:theme.hero,borderRadius:24,padding:20,gap:12},
   statementHeroIcon:{alignItems:"center",justifyContent:"center",width:44,height:44,borderRadius:12,backgroundColor:theme.selected},
   statementMetrics:{flexDirection:"row",gap:16,borderTopWidth:1,borderColor:theme.border,paddingTop:12},

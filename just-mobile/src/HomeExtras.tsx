@@ -114,6 +114,7 @@ export function BuyAgain({
   const [products, setProducts] = useState<Product[]>([]);
   const [done, setDone] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     if (!session) return;
     let active = true;
@@ -158,7 +159,7 @@ export function BuyAgain({
     return () => {
       active = false;
     };
-  }, [session]);
+  }, [session, attempt]);
   const product = products.find(item => item.stock > 0 || item.variants?.some(variant => variant.stock > 0)) ?? products[0];
   const unavailable = products.find(item => item.stock <= 0 && !item.variants?.some(variant => variant.stock > 0));
   return (
@@ -239,6 +240,19 @@ export function BuyAgain({
             </Text>
           </Pressable>
         </View>
+      ) : failed ? (
+        <BuyerStateCard
+          title="Purchase history could not load"
+          tone="error"
+          icon="network"
+          compact
+          action="Retry purchases"
+          onAction={() => {
+            setDone(false);
+            setFailed(false);
+            setAttempt(value => value + 1);
+          }}
+        />
       ) : (
         <Text
           style={{
@@ -248,9 +262,7 @@ export function BuyAgain({
             marginTop: 16,
           }}
         >
-          {failed
-            ? "Purchase history could not load"
-            : "Your purchases will appear here"}
+          Your purchases will appear here
         </Text>
       )}
       {expanded

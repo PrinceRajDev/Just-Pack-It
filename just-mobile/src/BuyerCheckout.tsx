@@ -16,6 +16,7 @@ import { StyleSheet,
   View,
 } from "react-native";
 import {
+  ApiError,
   buyerApi,
   type Address,
   type BuyerOrder,
@@ -40,8 +41,13 @@ export type BagDelivery = {
   saved: () => void;
   retry: () => void;
   checkout: () => void;
-  notice?: { title: string; copy: string; action: string; run: () => void };
+  itemNotices: Map<string, RecoveryNotice>;
+  shopNotices: Map<string, RecoveryNotice>;
+  addressIssue?: string;
+  feeChanges: Map<string, string>;
+  acceptFees: () => void;
 };
+type RecoveryNotice = { title: string; copy: string; action: string; run: () => void };
 
 export function BuyerCheckout({
   session,
@@ -77,8 +83,10 @@ export function BuyerCheckout({
   const [review, setReview] = useState<CheckoutReview | null>(null);
   const [reviewedAddress, setReviewedAddress] = useState<Address | null>(null);
   const [changedQuote, setChangedQuote] = useState<number | null>(null);
+  const [feeBaseline, setFeeBaseline] = useState<CheckoutReview["fulfilments"]>();
+  const [addressError, setAddressError] = useState<string>();
   const [placing, setPlacing] = useState(false);
-  const [placementError, setPlacementError] = useState<{message:string; uncertain:boolean; retry:()=>void} | null>(null);
+  const [placementError, setPlacementError] = useState<{message:string; uncertain:boolean; retry:()=>void; code?:string} | null>(null);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,6 +116,8 @@ export function BuyerCheckout({
 
   const reload = () => {
     setError(null);
+    setRequestedKey("");
+    setAddressError(undefined);
     setAddressesLoading(true);
     setAddressRevision((value) => value + 1);
   };
@@ -195,27 +205,46 @@ export function BuyerCheckout({
     setQuoteKey("");
     setBusy(true);
     setError(null);
+    setAddressError(undefined);
     try {
+      const items = bag.map(line => ({
+        productId: line.productId ?? line.id, variantId: line.variantId, qty: line.quantity,
+      }));
       const result = await buyerApi.reviewCheckout(
         session.token,
         areaId,
         selected,
-        bag.map((line) => ({
-          productId: line.productId ?? line.id,
-          variantId: line.variantId,
-          qty: line.quantity,
-        })),
+        items,
         [...new Set(bag.map((line) => line.shopId))],
-      );
-      if (!inBag && review?.grandTotal != null && result.grandTotal != null && result.grandTotal !== review.grandTotal) setChangedQuote(review.grandTotal);
+      ).catch(async (reason: unknown): Promise<CheckoutReview> => {
+        if (!(reason instanceof ApiError) || reason.code !== "INVALID_SHOP_SELECTION") throw reason;
+        const cart = await buyerApi.quoteReorder(session.token, areaId, items);
+        return {
+          ...cart, checkoutAvailable: false, deliveryTotal: null, grandTotal: null,
+          paymentMethods: [], issues: [], fulfilments: [],
+        };
+      });
+      if (reviewedAddress?.id !== selected.id) {
+        setFeeBaseline(undefined);
+        setChangedQuote(null);
+      } else if (review) {
+        setFeeBaseline(previous => [
+          ...(previous ?? []),
+          ...review.fulfilments.filter(row => !previous?.some(item => item.shopId === row.shopId)),
+        ]);
+        if (!inBag && review.grandTotal != null && result.grandTotal != null && result.grandTotal !== review.grandTotal)
+          setChangedQuote(previous => previous ?? review.grandTotal);
+      }
       setReviewedAddress(selected);
       setReview(result);
       setQuoteKey(currentKey);
       if (closeAfter) setChoosing(false);
     } catch (reason) {
-      setError(
-        reason instanceof Error ? reason.message : "Delivery check failed",
-      );
+      if (reason instanceof ApiError && (reason.code === "ADDRESS_CHANGED" || reason.code === "NOT_FOUND")) {
+        setAddressError(reason.message);
+      } else {
+        setError(reason instanceof Error ? reason.message : "Delivery check failed");
+      }
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -281,38 +310,49 @@ export function BuyerCheckout({
     const item = bag.find(line => (line.productId ?? line.id) === quoted.productId && line.variantId === quoted.variantId);
     return item ? [{ item, quoted }] : [];
   }) ?? [];
-  const stockChange = changes.find(({ item, quoted }) => quoted.availableStock != null && quoted.availableStock < item.quantity);
-  const priceChange = changes.find(({ item, quoted }) => quoted.unitPrice != null && item.price !== quoted.unitPrice);
-  const minimum = currentReview?.shops.find(group => group.issues.some(issue => issue.code === "MINIMUM_NOT_MET"));
-  const notice = stockChange ? {
-    title: "Not enough stock",
-    copy: `${stockChange.item.name}: only ${stockChange.quoted.availableStock} available.`,
-    action: "Update quantity",
-    run: () => bagActions.onChange(stockChange.item.id, stockChange.quoted.availableStock! - stockChange.item.quantity),
-  } : priceChange ? {
-    title: "A price has changed",
-    copy: `${priceChange.item.name} is now ${money(priceChange.quoted.unitPrice!)}, previously ${money(priceChange.item.price)}.`,
-    action: "Accept updated price",
-    run: () => acceptPrice(priceChange.item.id, priceChange.quoted.unitPrice!),
-  } : minimum ? {
-    title: "Shop minimum not met",
-    copy: minimum.issues.find(issue => issue.code === "MINIMUM_NOT_MET")!.message,
-    action: "Add more from this shop",
-    run: () => openShop(minimum.shop),
-  } : undefined;
-  const ready = !busy && !notice && !!currentReview?.checkoutAvailable && !issues.length && hasDelivery && hasCod && total !== null;
+  const itemNotices = new Map<string, RecoveryNotice>();
+  for (const { item, quoted } of changes) {
+    const { availableStock, unitPrice } = quoted;
+    const remove = () => bagActions.onChange(item.id, -item.quantity);
+    if (availableStock === 0 || quoted.issues.some(issue => issue.code === "PRODUCT_UNAVAILABLE" || issue.code === "VARIANT_UNAVAILABLE" || issue.code === "VARIANT_REQUIRED")) {
+      itemNotices.set(item.id, { title: "Item unavailable", copy: quoted.issues[0]?.message ?? "This item is out of stock.", action: "Remove from bag", run: remove });
+    } else if (availableStock != null && availableStock < item.quantity) {
+      itemNotices.set(item.id, { title: "Not enough stock", copy: `Only ${availableStock} available. You requested ${item.quantity}.`, action: "Update quantity", run: () => bagActions.onChange(item.id, availableStock - item.quantity) });
+    } else if (unitPrice != null && unitPrice !== item.price) {
+      itemNotices.set(item.id, { title: "A price has changed", copy: `Now ${money(unitPrice)} each, previously ${money(item.price)}.`, action: "Accept updated price", run: () => acceptPrice(item.id, unitPrice) });
+    } else if (quoted.issues.length) {
+      itemNotices.set(item.id, { title: "Check this item", copy: quoted.issues.map(issue => issue.message).join(" "), action: "Remove from bag", run: remove });
+    }
+  }
+  const shopNotices = new Map<string, RecoveryNotice>();
+  for (const group of currentReview?.shops ?? []) {
+    const minimum = group.issues.find(issue => issue.code === "MINIMUM_NOT_MET");
+    if (minimum) shopNotices.set(group.shop.id, { title: "Shop minimum not met", copy: minimum.message, action: "Add more from this shop", run: () => openShop(group.shop) });
+  }
+  const feeChanges = new Map<string, string>();
+  for (const row of currentReview?.fulfilments ?? []) {
+    const previous = feeBaseline?.find(item => item.shopId === row.shopId)?.listedFee;
+    if (previous != null && row.listedFee != null && previous !== row.listedFee)
+      feeChanges.set(row.shopId, `Delivery fee changed from ${money(previous)} to ${money(row.listedFee)}.`);
+  }
+  const acceptFees = () => {
+    setFeeBaseline(currentReview?.fulfilments);
+    setChangedQuote(null);
+  };
+  const addressIssue = addressError ?? currentReview?.issues.find(issue => issue.code === "ADDRESS_CHANGED")?.message;
+  const ready = !busy && !itemNotices.size && !shopNotices.size && !feeChanges.size && !!currentReview?.checkoutAvailable && !issues.length && hasDelivery && hasCod && total !== null;
   const delivery: BagDelivery = {
     address: selected, contact, total, checking,
     blocked: !!selected && !ready,
     unavailable,
-    notice,
-    error: error ?? (!checking && !unavailable.length && !notice && currentReview && !ready
+    itemNotices, shopNotices, feeChanges, acceptFees, addressIssue,
+    error: error ?? (!checking && !unavailable.length && !addressIssue && !itemNotices.size && !shopNotices.size && !feeChanges.size && currentReview && !ready
       ? issues[0]?.message ?? currentReview.shops.flatMap(group => group.issues)[0]?.message ??
         "Cash on Delivery or delivery quote is unavailable. Try again."
       : null),
     change: openPicker,
     saved: () => { openPicker(); setSaved(true); },
-    retry: () => { if (selected) void check(); else reload(); },
+    retry: () => { if (selected && !addressIssue) void check(); else reload(); },
     checkout: () => { if (!selected) openPicker(); else if (ready) openCheckout(); },
   };
 
@@ -388,9 +428,14 @@ export function BuyerCheckout({
         testID="checkout-scroll"
       >
         {placing && <BuyerStateCard title="Placing your order…" copy="Please keep this screen open while we check your order." tone="info" compact busyLabel="Placing order…" />}
-        {placementError && !placing && <BuyerStateCard title={placementError.uncertain ? "Let’s check before trying again." : "Your order wasn’t placed."} copy={placementError.message} tone={placementError.uncertain ? "warning" : "error"} icon={placementError.uncertain ? "clock" : "warning"} compact={!placementError.uncertain} action={placementError.uncertain ? "Check Orders" : "Retry Place Order"} onAction={placementError.uncertain ? openOrders : placementError.retry} />}
-        {changedQuote !== null && total != null && <BuyerStateCard title="Delivery quote updated" copy={`Your total changed from ${money(changedQuote)} to ${money(total)}. Review the new total before placing your order.`} tone="warning" compact icon="wallet" action="Accept new quote" onAction={() => setChangedQuote(null)} />}
-        {notice && <BuyerStateCard title={notice.title} copy={notice.copy} tone="warning" compact action="Review bag" onAction={back} />}
+        {placementError && !placing && <BuyerStateCard title={placementError.uncertain ? "Let’s check before trying again." : "Your order wasn’t placed."} copy={placementError.message} tone={placementError.uncertain ? "warning" : "error"} icon={placementError.uncertain ? "clock" : "warning"} compact={!placementError.uncertain} action={placementError.uncertain ? "Check Orders" : placementError.code ? "Review checkout" : "Retry Place Order"} onAction={placementError.uncertain ? openOrders : placementError.code ? () => {
+          setPlacementError(null);
+          if (["ADDRESS_CHANGED", "ADDRESS_UNSERVICEABLE", "NOT_FOUND"].includes(placementError.code!)) {
+            reload();
+            openPicker();
+          } else void check();
+        } : placementError.retry} />}
+        {(changedQuote !== null || feeChanges.size > 0) && total != null && <BuyerStateCard title="Delivery quote updated" copy={`Review the updated quote of ${money(total)} before placing your order.`} tone="warning" compact icon="wallet" action="Accept new quote" onAction={acceptFees} />}
         <CheckoutHeading title="One last look." icon="orders" />
         {!session ? (
           <Pressable
@@ -408,6 +453,7 @@ export function BuyerCheckout({
                 <DeliveryAddressContents address={reviewedAddress} contact={contact} selected />
               </View>
             )}
+            {addressIssue && <BuyerStateCard title="Your saved address changed" copy={addressIssue} tone="warning" compact action="Review delivery address" onAction={() => { reload(); openPicker(); }} />}
             <Pressable
               accessibilityRole="button"
               onPress={openPicker}
@@ -462,6 +508,13 @@ export function BuyerCheckout({
                             {message}
                           </Text>
                         ))}
+                        {feeChanges.has(id) && <Text style={s.error}>{feeChanges.get(id)}</Text>}
+                        {unavailable.some(shop => shop.id === id) && <Pressable accessibilityRole="button" onPress={openPicker}><Text style={s.action}>Choose another address</Text></Pressable>}
+                        {shopNotices.has(id) && <Pressable accessibilityRole="button" onPress={shopNotices.get(id)?.run}><Text style={s.action}>{shopNotices.get(id)?.action}</Text></Pressable>}
+                        {bag.filter(item => item.shopId === id && itemNotices.has(item.id)).map(item => {
+                          const notice = itemNotices.get(item.id)!;
+                          return <BuyerStateCard key={item.id} title={`${item.name} · ${notice.title}`} copy={notice.copy} tone="warning" compact action="Fix in bag" onAction={back} />;
+                        })}
                         </View>
                       </View>
                     );
@@ -490,7 +543,10 @@ export function BuyerCheckout({
                     </Text>
                   )}
                 </View>
-                {[...new Set(issues.map((issue) => issue.message))].map(
+                {[...new Set([
+                  ...currentReview.issues.filter(issue => issue.code !== "ADDRESS_CHANGED"),
+                  ...currentReview.lines.filter(line => !changes.some(change => change.quoted === line)).flatMap(line => line.issues),
+                ].map(issue => issue.message))].map(
                   (message) => (
                     <Text key={message} style={s.error}>
                       {message}
@@ -519,7 +575,7 @@ export function BuyerCheckout({
       </ScrollView>
       {session && currentReview && (
         <View style={s.footer} testID="checkout-footer">
-          {ready && changedQuote === null &&
+          {ready && changedQuote === null && (!placementError || placementError.uncertain || !placementError.code) &&
           !issues.length &&
           hasDelivery &&
           hasCod &&

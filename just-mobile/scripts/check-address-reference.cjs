@@ -88,6 +88,8 @@ const assert = require("node:assert/strict");
       })),
     };
     let stockUnavailable = false;
+    let deliveryFeeChanged = false;
+    let savedAddressChanged = false;
     page.on("pageerror", (error) => errors.push(error.message));
     await page.addInitScript(
       ({ buyer, products }) => {
@@ -162,17 +164,20 @@ const assert = require("node:assert/strict");
           );
           const eligible = input.addressId !== "work";
           data = {
-            checkoutAvailable: eligible && !stockUnavailable,
+            checkoutAvailable: eligible && !stockUnavailable && !savedAddressChanged,
             itemsSubtotal: 129,
-            deliveryTotal: eligible ? 60 : null,
-            grandTotal: eligible ? 189 : null,
+            deliveryTotal: eligible ? (deliveryFeeChanged ? 70 : 60) : null,
+            grandTotal: eligible ? (deliveryFeeChanged ? 199 : 189) : null,
             paymentMethods: eligible && !stockUnavailable ? ["cod"] : [],
-            issues: [],
+            issues: savedAddressChanged ? [{code:"ADDRESS_CHANGED",message:"Your saved address changed. Reload addresses and review again."}] : [],
             lines: stockUnavailable
               ? [
                   {
+                    productId: products[0].productId ?? products[0].id,
+                    variantId: products[0].variantId,
+                    availableStock: 0,
                     issues: [
-                      { message: "Farm fresh tomatoes are out of stock." },
+                      { code:"OUT_OF_STOCK", message: "Farm fresh tomatoes are out of stock." },
                     ],
                   },
                 ]
@@ -185,7 +190,7 @@ const assert = require("node:assert/strict");
                   ? null
                   : input.addressId === "other"
                     ? [25, 35][index]
-                    : 30,
+                    : deliveryFeeChanged && index === 1 ? 40 : 30,
               issues:
                 !eligible && index === 1
                   ? [{ message: "No approved partner for this address." }]
@@ -461,7 +466,9 @@ const assert = require("node:assert/strict");
     assert.equal(await other.getAttribute("aria-checked"), "true");
     stockUnavailable = true;
     await deliver.click();
-    await page.getByText("Farm fresh tomatoes are out of stock.", { exact: true }).waitFor();
+    const affectedShop = page.getByTestId(`bag-shop-${shops[0].id}`);
+    await affectedShop.getByText("Farm fresh tomatoes are out of stock.", { exact: true }).waitFor();
+    await affectedShop.getByRole("button", {name:"Remove from bag", exact:true}).waitFor();
     assert.equal(await page.getByRole("button", {name:"Resolve delivery to continue",exact:true}).isDisabled(),true);
     stockUnavailable = false;
     Object.assign(addresses[0], {line1:"Flat 302, Suyog Apartment, Paud Road"});
@@ -629,6 +636,25 @@ const assert = require("node:assert/strict");
     await page.screenshot({path:path.join(output,"bag-price-changed-390.png")});
     await page.getByRole("button",{name:"Accept updated price",exact:true}).click();
     await page.getByText(/₹48 each/).waitFor();
+    await page.getByRole("button",{name:"Checkout · ₹189",exact:true}).waitFor();
+    await page.getByRole("button",{name:"Change delivery address",exact:true}).click();
+    await home.click();
+    await deliver.click();
+    await page.getByRole("button",{name:"Checkout · ₹189",exact:true}).waitFor();
+    deliveryFeeChanged = true;
+    await page.getByRole("button",{name:"Change delivery address",exact:true}).click();
+    await deliver.click();
+    await page.getByTestId(`bag-shop-${shops[1].id}`).getByText("Delivery fee changed from ₹30 to ₹40.",{exact:true}).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Resolve delivery to continue",exact:true}).isDisabled(),true);
+    await page.getByRole("button",{name:"Accept new quote",exact:true}).click();
+    await page.getByRole("button",{name:"Checkout · ₹199",exact:true}).waitFor();
+    savedAddressChanged = true;
+    await page.getByRole("button",{name:"Change delivery address",exact:true}).click();
+    await deliver.click();
+    await page.getByText("Your saved address changed",{exact:true}).waitFor();
+    savedAddressChanged = false;
+    await page.getByRole("button",{name:"Reload saved addresses",exact:true}).click();
+    await page.getByRole("button",{name:"Checkout · ₹199",exact:true}).waitFor();
     let removalRequests = 0;
     await page.route("**/addresses/work", async route => {
       if (route.request().method() !== "DELETE") return route.fallback();

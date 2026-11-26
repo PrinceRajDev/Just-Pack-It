@@ -31,7 +31,7 @@ export function PlaceCodOrder({
   shopIds: string[];
   onConfirmed: (order: BuyerOrder) => void;
   onBusy: (busy: boolean) => void;
-  onFailure: (failure: {message:string; uncertain:boolean; retry:()=>void} | null) => void;
+  onFailure: (failure: {message:string; uncertain:boolean; retry:()=>void; code?:string} | null) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -92,6 +92,7 @@ export function PlaceCodOrder({
       onFailure({
         message: reason instanceof Error ? reason.message : "Order result could not be confirmed. Check Orders before trying again.",
         uncertain: !(reason instanceof ApiError) || reason.status >= 500,
+        code: reason instanceof ApiError ? reason.code : undefined,
         retry: () => void place(),
       });
     } finally {

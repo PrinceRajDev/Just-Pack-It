@@ -102,7 +102,6 @@ export function BuyerBag({
             testID="bag-scroll"
             showsVerticalScrollIndicator={false}
           >
-            {signedIn && !delivery.checking && delivery.notice && <BuyerStateCard title={delivery.notice.title} copy={delivery.notice.copy} tone="warning" icon="bag" compact action={delivery.notice.action} onAction={delivery.notice.run} />}
             <CheckoutHeading title={shopRemoved ? "Shop removed from your bag" : "Fresh finds, ready to go."} icon="bag" plain />
             {!signedIn && (
               <View style={[s.card, s.signInCard]}>
@@ -125,18 +124,8 @@ export function BuyerBag({
               <OrderSymbol name="out_for_delivery" />
               <Text accessibilityLiveRegion="polite" style={s.delivery}>Checking rider availability…</Text>
             </View>}
-            {signedIn && !delivery.checking && delivery.unavailable.map(shop => (
-              <View key={shop.id} style={[s.card, s.problem]}>
-                <Text style={[s.cardTitle, s.remove]}>No rider for {shop.name}</Text>
-                <Text style={s.copy}>{shop.reason ? `${shop.reason} ` : ""}Your items are saved. Try a different delivery address or remove this shop to continue.</Text>
-                <Pressable accessibilityRole="button" style={[s.button, s.spaced]} onPress={delivery.change}><Text style={s.buttonText}>Change address</Text></Pressable>
-                <Pressable accessibilityRole="button" style={[s.button, s.sageButton]} onPress={delivery.retry}><Text style={[s.buttonText, s.sageText]}>Retry delivery check</Text></Pressable>
-                <Pressable accessibilityRole="button" style={[s.button, s.removeShop]} onPress={() => {
-                  groups.get(shop.id)?.forEach(item => onChange(item.id, -item.quantity));
-                  setShopRemoved(true);
-                }}><Text style={[s.buttonText, s.remove]}>Remove {shop.name}</Text></Pressable>
-              </View>
-            ))}
+            {signedIn && !delivery.checking && delivery.addressIssue && <BuyerStateCard title="Your saved address changed" copy={delivery.addressIssue} tone="warning" compact action="Reload saved addresses" onAction={delivery.retry} />}
+            {signedIn && delivery.feeChanges.size > 0 && <BuyerStateCard title="Delivery quote updated" copy="Review the updated fees under each shop." tone="warning" compact action="Accept new quote" onAction={delivery.acceptFees} />}
             {signedIn && !delivery.checking && delivery.error && <View style={[s.card, s.problem]}>
               <Text accessibilityRole="alert" style={s.remove}>{delivery.error}</Text>
               <Pressable accessibilityRole="button" style={[s.button, s.sageButton]} onPress={delivery.retry}><Text style={[s.buttonText, s.sageText]}>Retry delivery check</Text></Pressable>
@@ -150,7 +139,8 @@ export function BuyerBag({
             </View>}
             {[...groups].map(([id, lines]) => {
               const shop = known.get(id);
-              const riderAvailable = signedIn && delivery.unavailable.some(row => row.id === id)
+              const unavailable = signedIn && !delivery.checking ? delivery.unavailable.find(row => row.id === id) : undefined;
+              const riderAvailable = unavailable
                 ? false : shop?.fulfilment?.includes("platform_delivery");
               return (
                 <View key={id} style={s.card} testID={`bag-shop-${id}`}>
@@ -166,64 +156,82 @@ export function BuyerBag({
                   </Text>
                     </View>
                   </View>
+                  {unavailable && (
+                    <View style={[s.card, s.problem]}>
+                      <Text style={[s.cardTitle, s.remove]}>No rider for {unavailable.name}</Text>
+                      <Text style={s.copy}>{unavailable.reason ? `${unavailable.reason} ` : ""}Your items are saved. Try a different delivery address or remove this shop to continue.</Text>
+                      <Pressable accessibilityRole="button" style={[s.button, s.spaced]} onPress={delivery.change}><Text style={s.buttonText}>Change address</Text></Pressable>
+                      <Pressable accessibilityRole="button" style={[s.button, s.sageButton]} onPress={delivery.retry}><Text style={[s.buttonText, s.sageText]}>Retry delivery check</Text></Pressable>
+                      <Pressable accessibilityRole="button" style={[s.button, s.removeShop]} onPress={() => {
+                        lines.forEach(item => onChange(item.id, -item.quantity));
+                        setShopRemoved(true);
+                      }}><Text style={[s.buttonText, s.remove]}>Remove {unavailable.name}</Text></Pressable>
+                    </View>
+                  )}
+                  {signedIn && delivery.feeChanges.has(id) && <Text style={s.remove}>{delivery.feeChanges.get(id)}</Text>}
+                  {signedIn && delivery.shopNotices.has(id) && <BuyerStateCard title={delivery.shopNotices.get(id)!.title} copy={delivery.shopNotices.get(id)!.copy} tone="warning" compact action={delivery.shopNotices.get(id)!.action} onAction={delivery.shopNotices.get(id)!.run} />}
                   {lines.map((item) => {
                     const image = resolveImage(item.image);
+                    const notice = signedIn ? delivery.itemNotices.get(item.id) : undefined;
                     return (
-                      <View key={item.id} style={s.row}>
-                        <View style={s.thumbnail}>
-                          {image ? (
-                            <Image
-                              source={{ uri: image }}
-                              style={s.photo}
-                              resizeMode="cover"
-                            />
-                          ) : (
-                            <MarketIcon name="bag" color={theme.accentInk} />
-                          )}
-                        </View>
-                        <View style={s.item}>
-                          <Text style={s.name}>{item.name}</Text>
-                          <Text style={s.unit}>
-                            {item.unit} · {money(item.price)} each
-                          </Text>
-                          <View style={s.stepper}>
+                      <View key={item.id}>
+                        <View style={s.row}>
+                          <View style={s.thumbnail}>
+                            {image ? (
+                              <Image
+                                source={{ uri: image }}
+                                style={s.photo}
+                                resizeMode="cover"
+                              />
+                            ) : (
+                              <MarketIcon name="bag" color={theme.accentInk} />
+                            )}
+                          </View>
+                          <View style={s.item}>
+                            <Text style={s.name}>{item.name}</Text>
+                            <Text style={s.unit}>
+                              {item.unit} · {money(item.price)} each
+                            </Text>
+                            <View style={s.stepper}>
+                              <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel={`Remove one ${item.name}`}
+                                onPress={() => onChange(item.id, -1)}
+                                style={s.stepButton}
+                              >
+                                <Text style={s.step}>−</Text>
+                              </Pressable>
+                              <Text style={s.step}>{item.quantity}</Text>
+                              <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel={`Add one ${item.name}`}
+                                disabled={item.quantity >= item.stock}
+                                onPress={() => onChange(item.id, 1)}
+                                style={[
+                                  s.stepButton,
+                                  item.quantity >= item.stock && s.disabled,
+                                ]}
+                              >
+                                <Text style={s.step}>+</Text>
+                              </Pressable>
+                            </View>
                             <Pressable
                               accessibilityRole="button"
-                              accessibilityLabel={`Remove one ${item.name}`}
-                              onPress={() => onChange(item.id, -1)}
-                              style={s.stepButton}
+                              accessibilityLabel={`Remove ${item.name}`}
+                              onPress={() => onChange(item.id, -item.quantity)}
+                              style={s.removeButton}
                             >
-                              <Text style={s.step}>−</Text>
-                            </Pressable>
-                            <Text style={s.step}>{item.quantity}</Text>
-                            <Pressable
-                              accessibilityRole="button"
-                              accessibilityLabel={`Add one ${item.name}`}
-                              disabled={item.quantity >= item.stock}
-                              onPress={() => onChange(item.id, 1)}
-                              style={[
-                                s.stepButton,
-                                item.quantity >= item.stock && s.disabled,
-                              ]}
-                            >
-                              <Text style={s.step}>+</Text>
+                              <Text style={s.remove}>Remove</Text>
                             </Pressable>
                           </View>
-                          <Pressable
-                            accessibilityRole="button"
-                            accessibilityLabel={`Remove ${item.name}`}
-                            onPress={() => onChange(item.id, -item.quantity)}
-                            style={s.removeButton}
+                          <Text
+                            accessibilityLabel={`Item total ${money(item.price * item.quantity)}`}
+                            style={s.amount}
                           >
-                            <Text style={s.remove}>Remove</Text>
-                          </Pressable>
+                            {money(item.price * item.quantity)}
+                          </Text>
                         </View>
-                        <Text
-                          accessibilityLabel={`Item total ${money(item.price * item.quantity)}`}
-                          style={s.amount}
-                        >
-                          {money(item.price * item.quantity)}
-                        </Text>
+                        {notice && <BuyerStateCard title={notice.title} copy={notice.copy} tone="warning" compact action={notice.action} onAction={notice.run} />}
                       </View>
                     );
                   })}

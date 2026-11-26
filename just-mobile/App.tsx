@@ -280,15 +280,15 @@ export default function App() {
   };
   const saveSession = async (next: Session | null) => {
     if (next && !session) await mergeGuestBag(next.userId);
+    if (next)
+      await SecureStore.setItemAsync("jpi.buyer.session", JSON.stringify(next));
+    else await SecureStore.deleteItemAsync("jpi.buyer.session");
     setSession(next);
     if (next && signInFromBag) {
       setSignInFromBag(false);
       setScreen("bag");
     }
     if (next && !session && accountMode === "auth" && accountOrigin === "orders") setScreen("orders");
-    if (next)
-      await SecureStore.setItemAsync("jpi.buyer.session", JSON.stringify(next));
-    else await SecureStore.deleteItemAsync("jpi.buyer.session");
   };
   useEffect(() => {
     let active = true;

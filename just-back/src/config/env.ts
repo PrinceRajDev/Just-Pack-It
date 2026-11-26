@@ -23,6 +23,7 @@ const schema = z
     SESSION_PEPPER: secret,
     CURSOR_SECRET: secret,
     SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(72).default(12),
+    BUYER_SELLER_SESSION_TTL_DAYS: z.coerce.number().int().min(1).max(30).default(30),
     EMAIL_OTP_REQUIRED:z.enum(["true","false"]).default("true").transform(value=>value==="true"),
     GOOGLE_SIGN_IN_ENABLED:z.enum(["true","false"]).default("false").transform(value=>value==="true"),
     EMAIL_OTP_SECRET:secret.optional(),

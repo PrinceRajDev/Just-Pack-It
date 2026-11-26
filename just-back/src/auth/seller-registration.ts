@@ -2,7 +2,7 @@ import { randomUUID, randomBytes } from "node:crypto";
 import { z } from "zod";
 import { registerInput } from "./validators.js";
 import { User, Session } from "./models.js";
-import { hashPassword, tokenHash } from "./service.js";
+import { hashPassword, sessionExpiry, tokenHash } from "./service.js";
 import { shopCreate } from "../catalogue/validators.js";
 import { createShop, transaction } from "../catalogue/service.js";
 import { Area } from "../catalogue/models.js";
@@ -23,7 +23,7 @@ export async function registerSeller(input:z.infer<typeof sellerRegistrationInpu
     if(!area) fail(400,"INVALID_AREA","Service area is not active");
     await User.create([{_id:userId,name:input.name,phone:input.phone,passwordHash,role:"seller",active:true,...verifiedEmail}],{session});
     await createShop({id:userId,role:"seller"},shopCreate.parse({...input.shop,slug:`${base}-${userId}`,locality:area.name,initials:input.shop.name.split(/\s+/).map(word=>word[0]).join("").slice(0,4).toUpperCase()}),session);
-    await Session.create([{_id:tokenHash(token,config),userId,expiresAt:new Date(Date.now()+config.SESSION_TTL_HOURS*3600000)}],{session});
+    await Session.create([{_id:tokenHash(token,config),userId,expiresAt:sessionExpiry("seller",config)}],{session});
   });
   return {userId,name:input.name,role:"seller" as const,token,isDemo:false};
 }

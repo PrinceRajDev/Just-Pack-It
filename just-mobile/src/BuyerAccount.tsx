@@ -173,7 +173,9 @@ export function BuyerAccount({
       orders={openOrders} browse={browse} openShop={openShop} add={add}
       signOut={async () => {
         if (session) {
-          await buyerApi.logout(session.token);
+          await buyerApi.logout(session.token).catch(reason => {
+            if (!(reason instanceof ApiError && reason.status === 401)) throw reason;
+          });
           await save(null);
         }
       }}

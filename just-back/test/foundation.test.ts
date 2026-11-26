@@ -4,6 +4,7 @@ import { createApp } from "../src/app.js";
 import { loadConfig } from "../src/config/env.js";
 import { decodeCursor, encodeCursor } from "../src/common/cursor.js";
 import { randomUUID } from "node:crypto";
+import { sessionExpiry } from "../src/auth/service.js";
 const testEnv = {
   NODE_ENV: "test",
   MONGODB_URI: "mongodb://127.0.0.1:27017/unused_test",
@@ -14,6 +15,14 @@ const testEnv = {
 };
 const config = loadConfig(testEnv);
 describe("database-independent foundation", () => {
+  it("keeps buyer and seller sessions for 30 days and preserves shorter privileged sessions", () => {
+    const secondsUntilExpiry = (role: Parameters<typeof sessionExpiry>[0]) =>
+      Math.round((sessionExpiry(role, config).getTime() - Date.now()) / 1000);
+    expect(secondsUntilExpiry("buyer")).toBe(30 * 86400);
+    expect(secondsUntilExpiry("seller")).toBe(30 * 86400);
+    expect(secondsUntilExpiry("admin")).toBe(12 * 3600);
+    expect(secondsUntilExpiry("delivery")).toBe(12 * 3600);
+  });
   it("keeps Razorpay opt-in, requires credentials and gates live keys separately",()=>{
     expect(loadConfig(testEnv).RAZORPAY_ENABLED).toBe(false);
     expect(loadConfig(testEnv).PAYMENT_RECOVERY_WORKER_ENABLED).toBe(false);

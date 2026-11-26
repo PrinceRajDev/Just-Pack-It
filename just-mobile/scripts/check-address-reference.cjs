@@ -588,6 +588,26 @@ const assert = require("node:assert/strict");
     await removeWork.waitFor({ state: "hidden" });
     await page.waitForFunction(key => sessionStorage.getItem(key) === null, defaultKey);
     assert.equal(removalRequests, 1);
+    await page.getByRole("button", { name: "Back to Account", exact: true }).click();
+    await page.route("**/auth/me", route => route.fulfill({status:503,headers:notificationHeaders,json:{message:"Temporarily unavailable"}}));
+    await page.reload();
+    await page.getByRole("button", { name: "Account", exact: true }).click();
+    await page.getByTestId("buyer-account-hub").getByText(buyer.name, { exact: true }).waitFor();
+    let logoutRequests = 0;
+    await page.route("**/auth/logout", route => {
+      if (route.request().method() === "OPTIONS") return route.fulfill({status:204,headers:notificationHeaders});
+      assert.equal(route.request().method(), "POST");
+      logoutRequests++;
+      return route.fulfill({status:204,headers:notificationHeaders});
+    });
+    await page.getByRole("button", { name: "Sign out", exact: true }).click();
+    await page.getByRole("heading", { name: "Sign out of JustPackIt?", exact: true }).waitFor();
+    await page.getByRole("button", { name: "Sign out", exact: true }).last().click();
+    await page.waitForFunction(() => sessionStorage.getItem("jpi.buyer.session") === null);
+    assert.equal(logoutRequests, 1);
+    await page.reload();
+    await page.getByRole("button", { name: "Account", exact: true }).click();
+    await page.getByRole("button", { name: "Sign in / Create account", exact: true }).waitFor();
     assert.deepEqual(errors, []);
     console.log(
       "PASS: address management, four viewports, shop fees, delivery and stock blockers, COD payload, duplicate prevention and confirmed navigation",

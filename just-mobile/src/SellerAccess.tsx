@@ -101,9 +101,19 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
         if (!saved) return;
         const candidate = JSON.parse(saved) as Session;
         if (candidate.role !== "seller" || typeof candidate.token !== "string") return;
-        const verified = await buyerApi.me(candidate.token);
-        if (active && verified.role === "seller" && verified.userId === candidate.userId) {
-          setSession({ ...verified, token: candidate.token });
+        let restored = candidate;
+        try {
+          const verified = await buyerApi.me(candidate.token);
+          if (verified.role !== "seller" || verified.userId !== candidate.userId) {
+            await storage.deleteItemAsync(sessionKey);
+            return;
+          }
+          restored = { ...verified, token: candidate.token };
+        } catch (reason) {
+          if (reason instanceof ApiError && reason.status === 401) throw reason;
+        }
+        if (active) {
+          setSession(restored);
           setStep("status");
         }
       } catch (reason) {
@@ -119,7 +129,14 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     void buyerApi.sellerShop(session.token).then(value => {
       if (active) { setShop(value); setShopError(""); }
     }).catch(reason => {
-      if (active) setShopError(reason instanceof Error ? reason.message : "Could not load shop status.");
+      if (!active) return;
+      if (reason instanceof ApiError && reason.status === 401) {
+        void storage.deleteItemAsync(sessionKey).catch(() => undefined);
+        setSession(null);
+        setShop(undefined);
+        setStep("login");
+        setError("Your seller session expired. Sign in again.");
+      } else setShopError(reason instanceof Error ? reason.message : "Could not load shop status.");
     }).finally(() => {
       if (active) setCheckingShop(false);
     });
@@ -152,11 +169,11 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
       await buyerApi.logout(next.token).catch(() => undefined);
       throw new Error("This mobile number is not registered as a seller.");
     }
+    await storage.setItemAsync(sessionKey, JSON.stringify(next));
     setSession(next);
     setCheckingShop(true);
     setPassword(""); setOtp(""); setChallenge(undefined);
     go("status");
-    await storage.setItemAsync(sessionKey, JSON.stringify(next)).catch(() => undefined);
   };
   const loadCatalogue = async () => {
     const [categories, areas] = await Promise.all([marketApi.categories(), marketApi.areas()]);
@@ -183,7 +200,9 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   };
   const signOut = async () => {
     if (!session) return;
-    await buyerApi.logout(session.token);
+    await buyerApi.logout(session.token).catch(reason => {
+      if (!(reason instanceof ApiError && reason.status === 401)) throw reason;
+    });
     await storage.deleteItemAsync(sessionKey);
     clearSeller();
   };

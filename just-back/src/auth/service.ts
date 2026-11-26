@@ -95,7 +95,7 @@ export async function issueSession(user:UserRecord,config:Config,googleUid?:stri
     const current=await User.findOneAndUpdate({_id:user._id,passwordHash:user.passwordHash,active:true,$or:[{authVersion:user.authVersion ?? 0},...((user.authVersion ?? 0)===0 ? [{authVersion:{$exists:false}}] : [])]},{$inc:{authVersion:1,authRevision:1},...(googleUid ? {$set:{googleUid}} : {})},{session,returnDocument:"after"});
     if(!current)fail(401,"INVALID_CREDENTIALS","Credentials changed. Sign in again.");
     await Session.deleteMany({userId:current._id}).session(session);
-    await Session.create([{_id:tokenHash(token,config),userId:current._id,authVersion:current.authVersion ?? 0,expiresAt:new Date(Date.now()+config.SESSION_TTL_HOURS*3600000)}],{session});
+    await Session.create([{_id:tokenHash(token,config),userId:current._id,authVersion:current.authVersion ?? 0,expiresAt:sessionExpiry(current.role,config)}],{session});
   });
   return {
     userId: user._id,
@@ -104,6 +104,10 @@ export async function issueSession(user:UserRecord,config:Config,googleUid?:stri
     token,
     isDemo: false,
   };
+}
+export function sessionExpiry(role:UserRecord["role"],config:Config){
+  const hours=role==="buyer" || role==="seller" ? config.BUYER_SELLER_SESSION_TTL_DAYS*24 : config.SESSION_TTL_HOURS;
+  return new Date(Date.now()+hours*3600000);
 }
 export async function secureAccount(userId:string,currentPassword:string,newPassword:string|undefined,config:Config){
   await throttle(`account-security:${userId}`,config,5);

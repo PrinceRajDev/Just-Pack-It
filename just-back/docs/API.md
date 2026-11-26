@@ -46,7 +46,7 @@ Managed and public shop DTOs gain optional `address` (up to 500 characters), dis
 | POST | `/auth/logout` | Authenticated, revoke current bearer; 204 |
 | POST | `/auth/send-otp`, `/auth/verify-otp` | Explicit 503; no SMS provider selected |
 
-Phone: E.164, `+` and 10–15 digits; password 12–128 characters. Session is `{userId,name,role,token,isDemo:false}`. Roles match frontend `buyer|seller|delivery|admin` (`delivery` means delivery partner). Roles cannot be chosen via public requests. Operator provisioning is documented in README. Auth throttles are fixed 15-minute buckets (100 login attempts/IP, 10/account, 10 registration attempts/IP); general process-local ceiling is 1000 requests/15min/IP. Production deployments should also enforce ingress/shared rate controls. Token lifetime defaults to 12 hours, configurable 1–72; there is no refresh flow.
+Phone: E.164, `+` and 10–15 digits; password 12–128 characters. Session is `{userId,name,role,token,isDemo:false}`. Roles match frontend `buyer|seller|delivery|admin` (`delivery` means delivery partner). Roles cannot be chosen via public requests. Operator provisioning is documented in README. Auth throttles are fixed 15-minute buckets (100 login attempts/IP, 10/account, 10 registration attempts/IP); general process-local ceiling is 1000 requests/15min/IP. Production deployments should also enforce ingress/shared rate controls. New buyer and seller tokens default to 30 days, configurable with BUYER_SELLER_SESSION_TTL_DAYS (1–30). Admin and delivery tokens default to 12 hours, configurable with SESSION_TTL_HOURS (1–72). There is no refresh flow.
 
 ## Public catalogue
 

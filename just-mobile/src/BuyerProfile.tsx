@@ -5,6 +5,7 @@ import { StyleSheet, ActivityIndicator, Pressable, ScrollView, Text, TextInput, 
 import { buyerApi, type BuyerProfile as Profile } from "./api";
 
 import { MarketIcon } from "./MarketIcon";
+import * as storage from "./deviceStorage";
 
 export function BuyerProfile({ token, back, onSaved }: { token: string; back: () => void; onSaved: (name: string) => Promise<void> }) {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -15,6 +16,15 @@ export function BuyerProfile({ token, back, onSaved }: { token: string; back: ()
   const [busy, setBusy] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const lock = useRef(false);
+  const [hindi, setHindi] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void storage.getItemAsync("jpi.account.language").then(value => {
+      if (active) setHindi(value === "hi");
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, []);
+  const t = (english: string, translated: string) => hindi ? translated : english;
   useEffect(() => { let active = true; void buyerApi.profile(token).then((data) => { if (active) { setProfile(data); setName(data.name); setError(null); } }).catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "Profile could not load"); }); return () => { active = false; }; }, [token, attempt]);
   const trimmedName = name.trim();
   const invalidName = trimmedName.length < 2 || trimmedName.length > 100;
@@ -30,36 +40,36 @@ export function BuyerProfile({ token, back, onSaved }: { token: string; back: ()
   const disabled = busy || !profile || invalidName || trimmedName === profile.name;
   return <View style={s.screen}>
     <View style={s.header}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Back to Account" onPress={back} style={s.backButton}><MarketIcon name="chevron-left" /></Pressable>
-      <Text accessibilityRole="header" style={s.heading}>Profile</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel={t("Back to Account", "खाते पर वापस जाएँ")} onPress={back} style={s.backButton}><MarketIcon name="chevron-left" /></Pressable>
+      <Text accessibilityRole="header" style={s.heading}>{t("Profile", "प्रोफ़ाइल")}</Text>
     </View>
     <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
-      {success && <BuyerStateCard title="Profile updated" copy="Your details were saved successfully." tone="success" icon="check" compact action="Back to Account" onAction={back} />}
+      {success && <BuyerStateCard title={t("Profile updated", "प्रोफ़ाइल अपडेट हुई")} copy={t("Your details were saved successfully.", "आपकी जानकारी सहेज ली गई है।")} tone="success" icon="check" compact action={t("Back to Account", "खाते पर वापस जाएँ")} onAction={back} />}
       <View style={s.hero}>
         <View style={s.icon}><MarketIcon name="account" /></View>
         <View style={s.intro}>
-          <Text accessibilityRole="header" style={s.heroTitle}>Personal details</Text>
-          <Text style={s.copy}>Update the name on your JustPackIt account.</Text>
+          <Text accessibilityRole="header" style={s.heroTitle}>{t("Personal details", "निजी जानकारी")}</Text>
+          <Text style={s.copy}>{t("Update the name on your JustPackIt account.", "अपने JustPackIt खाते का नाम बदलें।")}</Text>
         </View>
       </View>
       {error ? <Text accessibilityRole="alert" style={s.error}>{error}</Text> : null}
       {!profile && !error ? <ActivityIndicator color={theme.accentInk} /> : null}
-      {!profile && error ? <Pressable accessibilityRole="button" style={s.backButton} onPress={() => { setError(null); setAttempt(value => value + 1); }}><Text style={s.retryText}>Retry profile</Text></Pressable> : null}
+      {!profile && error ? <Pressable accessibilityRole="button" style={s.backButton} onPress={() => { setError(null); setAttempt(value => value + 1); }}><Text style={s.retryText}>{t("Retry profile", "प्रोफ़ाइल फिर से लोड करें")}</Text></Pressable> : null}
       {profile ? <View style={s.card}>
-        <Text style={s.label}>Full name</Text>
-        <TextInput accessibilityLabel="Full name" autoComplete="name" value={name} onChangeText={(value) => { setName(value); setNameTouched(true); setSuccess(false); setError(null); }} editable={!busy} maxLength={100} style={[s.input, showNameError && s.invalidInput]} />
-        {showNameError && <Text accessibilityRole="alert" style={s.error}>Enter a name between 2 and 100 characters.</Text>}
+        <Text style={s.label}>{t("Full name", "पूरा नाम")}</Text>
+        <TextInput accessibilityLabel={t("Full name", "पूरा नाम")} autoComplete="name" value={name} onChangeText={(value) => { setName(value); setNameTouched(true); setSuccess(false); setError(null); }} editable={!busy} maxLength={100} style={[s.input, showNameError && s.invalidInput]} />
+        {showNameError && <Text accessibilityRole="alert" style={s.error}>{t("Enter a name between 2 and 100 characters.", "2 से 100 अक्षरों का नाम दर्ज करें।")}</Text>}
         <View style={s.contacts}>
-          <Text accessibilityRole="header" style={s.label}>Contact details</Text>
-          <Text style={s.copy}>Mobile number</Text>
+          <Text accessibilityRole="header" style={s.label}>{t("Contact details", "संपर्क जानकारी")}</Text>
+          <Text style={s.copy}>{t("Mobile number", "मोबाइल नंबर")}</Text>
           <Text selectable style={s.contactValue}>{profile.phone}</Text>
-          <Text style={s.copy}>Email</Text>
-          <Text selectable style={s.contactValue}>{profile.email || "No email on file"}</Text>
-          <Text style={s.copy}>Used for sign-in, email recovery and order updates.</Text>
+          <Text style={s.copy}>{t("Email", "ईमेल")}</Text>
+          <Text selectable style={s.contactValue}>{profile.email || t("No email on file", "कोई ईमेल दर्ज नहीं है")}</Text>
+          <Text style={s.copy}>{t("Used for sign-in, email recovery and order updates.", "साइन इन, ईमेल से खाता वापस पाने और ऑर्डर अपडेट के लिए इस्तेमाल होता है।")}</Text>
         </View>
       </View> : null}
     </ScrollView>
-    <View style={s.footer}><Pressable accessibilityRole="button" disabled={disabled} onPress={() => void save()} style={[s.action, disabled && s.disabled]}><Text style={s.actionText}>{busy ? "Saving…" : "Save changes"}</Text></Pressable></View>
+    <View style={s.footer}><Pressable accessibilityRole="button" disabled={disabled} onPress={() => void save()} style={[s.action, disabled && s.disabled]}><Text style={s.actionText}>{busy ? t("Saving…", "सहेज रहे हैं…") : t("Save changes", "बदलाव सहेजें")}</Text></Pressable></View>
   </View>;
 }
 

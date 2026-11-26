@@ -132,12 +132,22 @@ export function BuyAgain({
         const resolved = await Promise.allSettled(
           ids.map((id) => marketApi.product(id)),
         );
-        if (active)
-          setProducts(
-            resolved.flatMap((result) =>
-              result.status === "fulfilled" ? [result.value] : [],
-            ),
-          );
+        if (!active) return;
+        const available = resolved.flatMap((result, index) => {
+          if (result.status !== "fulfilled") return [];
+          const product = result.value;
+          if (
+            product?.id !== ids[index] ||
+            typeof product.name !== "string" ||
+            typeof product.unit !== "string" ||
+            typeof product.shopId !== "string" ||
+            !Number.isFinite(product.price) ||
+            !Number.isFinite(product.stock)
+          ) return [];
+          return [product];
+        });
+        setProducts(available);
+        setFailed(ids.length > 0 && available.length === 0);
       })
       .catch(() => {
         if (active) setFailed(true);

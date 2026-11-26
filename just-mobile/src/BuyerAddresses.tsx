@@ -11,6 +11,9 @@ import * as storage from "./deviceStorage";
 type Draft = Omit<Address, "id" | "version">;
 const blank: Draft = { label: "Home", line1: "", locality: "", city: "", pincode: "" };
 const fields: { key: keyof Draft; label: string }[] = [{ key: "label", label: "Label (Home, Work)" }, { key: "line1", label: "House, street and landmark" }, { key: "locality", label: "Locality" }, { key: "city", label: "City" }, { key: "pincode", label: "PIN code" }];
+const hindiFields: Record<keyof Draft, string> = {
+  label: "पते का नाम", line1: "मकान, इमारत और सड़क", locality: "इलाका", city: "शहर", pincode: "पिन कोड",
+};
 type CheckoutEditor = {
   address?: Address;
   isDefault: boolean;
@@ -70,11 +73,11 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
     if (!draft || lock.current) return;
     const input = Object.fromEntries(Object.entries(draft).map(([key, value]) => [key, value.trim()])) as Draft;
     const errors: Partial<Record<keyof Draft, string>> = {};
-    if (!input.label) errors.label = "Enter a label, such as Home or Work.";
-    if (input.line1.length < 3) errors.line1 = "Enter your house or building and street.";
-    if (!input.locality) errors.locality = "Enter your locality.";
-    if (!input.city) errors.city = "Enter your city.";
-    if (!/^[1-9][0-9]{5}$/.test(input.pincode)) errors.pincode = "Enter a valid 6-digit PIN code.";
+    if (!input.label) errors.label = t("Enter a label, such as Home or Work.", "पते का नाम दर्ज करें, जैसे घर या दफ़्तर।");
+    if (input.line1.length < 3) errors.line1 = t("Enter your house or building and street.", "मकान या इमारत और सड़क का नाम दर्ज करें।");
+    if (!input.locality) errors.locality = t("Enter your locality.", "अपना इलाका दर्ज करें।");
+    if (!input.city) errors.city = t("Enter your city.", "अपना शहर दर्ज करें।");
+    if (!/^[1-9][0-9]{5}$/.test(input.pincode)) errors.pincode = t("Enter a valid 6-digit PIN code.", "6 अंकों का सही पिन कोड दर्ज करें।");
     setFieldErrors(errors);
     setError(null);
     if (Object.keys(errors).length) return;
@@ -114,13 +117,13 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
     const field = (key: keyof Draft) => {
       const label = fields.find(row => row.key === key)!.label;
       return <View key={key} style={s.editorField}>
-        <Text style={s.editorLabel}>{key === "line1" ? "Flat, building and street" : key === "label" ? "Label" : label}</Text>
-        <TextInput editable={!busy} accessibilityLabel={label} value={draft[key]}
+        <Text style={s.editorLabel}>{t(key === "line1" ? "Flat, building and street" : key === "label" ? "Label" : label, hindiFields[key])}</Text>
+        <TextInput editable={!busy} accessibilityLabel={t(label, hindiFields[key])} value={draft[key]}
           onChangeText={value => {
             setDraft(old => old ? {...old, [key]: value} : old);
             setFieldErrors(old => ({...old, [key]: undefined}));
           }}
-          placeholder={key === "line1" ? "Flat / house, building, street" : undefined}
+          placeholder={key === "line1" ? t("Flat / house, building, street", "फ़्लैट / मकान, इमारत, सड़क") : undefined}
           keyboardType={key === "pincode" ? "number-pad" : "default"} maxLength={key === "pincode" ? 6 : key === "line1" ? 300 : key === "label" ? 60 : 120}
           style={[s.editorInput, fieldErrors[key] && s.invalidInput]} />
         {!!fieldErrors[key] && <Text accessibilityRole="alert" style={s.fieldError}>{fieldErrors[key]}</Text>}
@@ -128,12 +131,12 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
     };
     return <View style={s.screen} testID={checkout ? "checkout-address-editor" : "account-address-editor"}>
       <View style={[s.header,s.savedWidth]}>
-        <Pressable disabled={busy} accessibilityRole="button" accessibilityLabel="Back to address list" onPress={closeEditor} style={s.savedBack}><MarketIcon name="chevron-left" /></Pressable>
-        <Text accessibilityRole="header" style={s.savedTitle}>{editing ? "Edit address" : "Add address"}</Text>
+        <Pressable disabled={busy} accessibilityRole="button" accessibilityLabel={t("Back to address list", "पतों की सूची पर वापस जाएँ")} onPress={closeEditor} style={s.savedBack}><MarketIcon name="chevron-left" /></Pressable>
+        <Text accessibilityRole="header" style={s.savedTitle}>{editing ? t("Edit address", "पता बदलें") : t("Add address", "पता जोड़ें")}</Text>
       </View>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.editorContent}>
-        <CheckoutHeading title="Make it easy to find you." icon="home" />
-        {error && <BuyerStateCard title="Couldn't save this address" copy={error} tone="error" icon="location" compact action="Retry saving address" onAction={() => void save()} />}
+        <CheckoutHeading title={t("Make it easy to find you.", "अपना पूरा पता दर्ज करें")} icon="home" />
+        {error && <BuyerStateCard title={t("Couldn't save this address", "पता सहेजा नहीं जा सका")} copy={error} tone="error" icon="location" compact action={t("Retry saving address", "पता फिर से सहेजें")} onAction={() => void save()} />}
         <View style={s.editorCard}>
           {field("label")}
           {checkout?.profile && <>
@@ -148,7 +151,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
           </Pressable>}
         </View>
       </ScrollView>
-      <View style={s.editorFooter}><Pressable accessibilityRole="button" disabled={busy} onPress={() => void save()} style={[s.primary,s.savedAdd,busy && s.saving]}><Text style={s.buttonText}>{busy ? "Saving…" : "Save address"}</Text></Pressable></View>
+      <View style={s.editorFooter}><Pressable accessibilityRole="button" disabled={busy} onPress={() => void save()} style={[s.primary,s.savedAdd,busy && s.saving]}><Text style={s.buttonText}>{busy ? t("Saving…", "सहेज रहे हैं…") : t("Save address", "पता सहेजें")}</Text></Pressable></View>
     </View>;
   }
   return <View style={s.screen}>

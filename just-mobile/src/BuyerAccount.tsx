@@ -238,6 +238,7 @@ export function BuyerAccount({
     </View>
   );
   const canCreate = !busy && !!options && (!options.emailOtpRequired || (options.emailOtpAvailable && !!challenge && !signupExpired && /^\d{6}$/.test(otp)));
+  const passwordMismatch = confirmPassword.length > 0 && password !== confirmPassword;
   const codeDisabled = busy || !options?.emailOtpAvailable || signupCooldown > 0;
   const returnToSignIn = () => {
     setSignInError("");
@@ -259,14 +260,14 @@ export function BuyerAccount({
         <View style={[login.card, login.signInCard]}>
           <Text accessibilityRole="header" style={login.verificationTitle}>Account details</Text>
           <Text style={login.label}>Your name</Text>
-          <TextInput accessibilityLabel="Your name" editable={!busy} autoComplete="name" maxLength={100} value={name} onChangeText={setName} placeholder="Full name" placeholderTextColor={theme.muted} style={[login.field, login.phone]} />
+          <TextInput accessibilityLabel="Your name" editable={!busy} autoComplete="name" maxLength={100} value={name} onChangeText={value => { setName(value); setSignInError(""); }} placeholder="Full name" placeholderTextColor={theme.muted} style={[login.field, login.phone]} />
 
           <Text style={login.label}>Mobile number</Text>
           <TextInput accessibilityLabel="Mobile number" editable={!busy} autoComplete="tel" maxLength={16} value={phone} onChangeText={setPhone} placeholder="+91 98765 43210" placeholderTextColor={theme.muted} keyboardType="phone-pad" style={[login.field, login.phone]} />
 
           <Text style={login.label}>Password</Text>
           <View style={login.field}>
-            <TextInput accessibilityLabel="Password" editable={!busy} autoComplete="new-password" autoCapitalize="none" autoCorrect={false} maxLength={128} value={password} onChangeText={setPassword} placeholder="Choose a password" placeholderTextColor={theme.muted} secureTextEntry={!passwordVisible} style={login.password} />
+            <TextInput accessibilityLabel="Password" editable={!busy} autoComplete="new-password" autoCapitalize="none" autoCorrect={false} maxLength={128} value={password} onChangeText={value => { setPassword(value); setSignInError(""); }} placeholder="Choose a password" placeholderTextColor={theme.muted} secureTextEntry={!passwordVisible} style={login.password} />
             <Pressable accessibilityRole="button" accessibilityLabel={passwordVisible ? "Hide password" : "Show password"} disabled={busy} onPress={() => setPasswordVisible(value => !value)} style={login.visibility}>
               <Text style={login.visibilityText}>{passwordVisible ? "Hide" : "Show"}</Text>
             </Pressable>
@@ -274,7 +275,8 @@ export function BuyerAccount({
           <Text style={login.fieldHint}>Use at least 12 characters.</Text>
 
           <Text style={login.label}>Confirm password</Text>
-          <TextInput accessibilityLabel="Confirm password" editable={!busy} autoComplete="new-password" autoCapitalize="none" autoCorrect={false} maxLength={128} value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Re-enter password" placeholderTextColor={theme.muted} secureTextEntry={!passwordVisible} style={[login.field, login.phone]} />
+          <TextInput accessibilityLabel="Confirm password" editable={!busy} autoComplete="new-password" autoCapitalize="none" autoCorrect={false} maxLength={128} value={confirmPassword} onChangeText={value => { setConfirmPassword(value); setSignInError(""); }} placeholder="Re-enter password" placeholderTextColor={theme.muted} secureTextEntry={!passwordVisible} style={[login.field, login.phone, passwordMismatch && login.invalidField]} />
+          {passwordMismatch && <Text style={login.error}>Passwords must match.</Text>}
         </View>
 
         {optionsError ? <BuyerAuthNotice title="Couldn’t load registration settings" copy="Reopen Account to retry." warning /> : null}
@@ -535,6 +537,7 @@ const login = themedStyles(() => StyleSheet.create({
   visibility: { minWidth: 56, justifyContent: "center", alignItems: "center", paddingHorizontal: 12 },
   visibilityText: { color: theme.accentInk, fontWeight: "600", fontSize: 14 },
   error: { color: theme.error, marginTop: 10, fontSize: 13, lineHeight: 18 },
+  invalidField: { borderColor: theme.errorBorder },
   button: { minHeight: 50, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 12, gap: 8 },
   buttonText: { color: theme.accentInk, fontSize: 15, fontWeight: "600", textAlign: "center" },
   footerButton: { backgroundColor: theme.accentInk, width: "100%", maxWidth: 480, alignSelf: "center" },

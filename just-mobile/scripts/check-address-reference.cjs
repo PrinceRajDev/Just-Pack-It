@@ -530,6 +530,37 @@ const assert = require("node:assert/strict");
     const tracking = page.getByTestId("buyer-order-details");
     await tracking.getByText("Picked up", {exact:true}).first().waitFor();
     await tracking.getByText("Patil Fresh Mart",{exact:true}).waitFor();
+    let supportTicket;
+    let supportRequests = 0;
+    await page.route("**/support?orderId=*", route => {
+      assert.equal(new URL(route.request().url()).searchParams.get("orderId"), confirmed.id);
+      return route.fulfill({headers:notificationHeaders,json:{items:supportTicket ? [supportTicket] : []}});
+    });
+    await page.route("**/support", route => {
+      if (route.request().method() === "OPTIONS") return route.fulfill({status:204,headers:notificationHeaders});
+      assert.equal(route.request().method(), "POST");
+      assert.deepEqual(route.request().postDataJSON(), {
+        orderId:confirmed.id, suborderId:confirmed.subOrders[1].id, kind:"missing_item", description:"One item was missing.",
+      });
+      supportRequests++;
+      supportTicket = {id:"support-fixture",suborderId:confirmed.subOrders[1].id,status:"open",note:""};
+      return route.fulfill({headers:notificationHeaders,json:supportTicket});
+    });
+    await tracking.getByRole("button",{name:"Get help",exact:true}).nth(1).click();
+    await tracking.getByRole("button",{name:"Send support request",exact:true}).click();
+    await tracking.getByRole("alert").filter({hasText:"Choose an issue"}).waitFor();
+    assert.equal(supportRequests,0);
+    await tracking.getByRole("button",{name:"Missing item",exact:true}).click();
+    await tracking.getByLabel("Describe the issue",{exact:true}).fill("One item was missing.");
+    await tracking.getByRole("button",{name:"Send support request",exact:true}).click();
+    await tracking.getByText("Support request · open",{exact:true}).waitFor();
+    await tracking.getByRole("button",{name:"Hide order help",exact:true}).click();
+    supportTicket = {...supportTicket,status:"resolved",note:"The shop reviewed your request."};
+    await tracking.getByRole("button",{name:"Get help",exact:true}).nth(1).click();
+    await tracking.getByText("Support request · resolved",{exact:true}).waitFor();
+    await tracking.getByText(supportTicket.note,{exact:true}).waitFor();
+    assert.equal(supportRequests,1);
+    await tracking.getByRole("button",{name:"Hide order help",exact:true}).click();
     await tracking.getByRole("button",{name:"View receipt code"}).click();
     assert.equal(receiptRequests,0);
     await tracking.getByRole("button",{name:"Received and paid"}).click();

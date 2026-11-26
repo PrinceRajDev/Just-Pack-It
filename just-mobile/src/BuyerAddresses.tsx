@@ -18,6 +18,16 @@ type CheckoutEditor = {
   onSaved: (address: Address, makeDefault: boolean) => void;
 };
 export function BuyerAddresses({ token, back, checkout, userId, area }: { token: string; userId?: string; area?: string; back: () => void; checkout?: CheckoutEditor }) {
+  const [hindi, setHindi] = useState(false);
+  useEffect(() => {
+    if (checkout) return;
+    let active = true;
+    void storage.getItemAsync("jpi.account.language").then(value => {
+      if (active) setHindi(value === "hi");
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, [checkout]);
+  const t = (english: string, translated: string) => hindi ? translated : english;
   const [defaultId, setDefaultId] = useState<string | null>(null);
   const [defaultReady, setDefaultReady] = useState(false);
   const defaultKey = userId ? `jpi.address.default.${userId}` : undefined;
@@ -143,37 +153,37 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
   }
   return <View style={s.screen}>
     <View style={[s.header,s.savedWidth]}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Back to Account" onPress={back} style={s.savedBack}><MarketIcon name="chevron-left" /></Pressable>
-      <Text accessibilityRole="header" style={s.savedTitle}>Saved addresses</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel={t("Back to Account", "खाते पर वापस जाएँ")} onPress={back} style={s.savedBack}><MarketIcon name="chevron-left" /></Pressable>
+      <Text accessibilityRole="header" style={s.savedTitle}>{t("Saved addresses", "सहेजे गए पते")}</Text>
     </View>
     <ScrollView contentContainerStyle={s.content}>
-      {!!savedLabel && <BuyerStateCard title={`${savedLabel} address saved`} copy="You can select this address at checkout. Your browsing area stays the same." tone="success" compact action="Back to Account" onAction={back} />}
-      <View style={s.hero}><View style={[s.icon,s.heroIcon]}><MarketIcon name="location" /></View><Text accessibilityRole="header" style={s.heroTitle}>Your delivery addresses</Text></View>
-      {error && !pendingRemoval ? <><Text accessibilityRole="alert" style={s.error}>{error}</Text><Pressable onPress={() => void reload()}><Text style={s.link}>Reload addresses</Text></Pressable></> : null}
+      {!!savedLabel && <BuyerStateCard title={t(`${savedLabel} address saved`, `${savedLabel} का पता सहेजा गया`)} copy={t("You can select this address at checkout. Your browsing area stays the same.", "यह पता चेकआउट पर चुन सकते हैं। आपका खरीदारी इलाका वही रहेगा।")} tone="success" compact action={t("Back to Account", "खाते पर वापस जाएँ")} onAction={back} />}
+      <View style={s.hero}><View style={[s.icon,s.heroIcon]}><MarketIcon name="location" /></View><Text accessibilityRole="header" style={s.heroTitle}>{t("Your delivery addresses", "आपके डिलीवरी पते")}</Text></View>
+      {error && !pendingRemoval ? <><Text accessibilityRole="alert" style={s.error}>{error}</Text><Pressable onPress={() => void reload()}><Text style={s.link}>{t("Reload addresses", "पते फिर से लोड करें")}</Text></Pressable></> : null}
       {loading ? <ActivityIndicator color={theme.accentInk} /> : rows.map(row => {
         const isDefault = row.id === defaultId;
         return <View key={row.id} style={[s.savedCard, isDefault && s.defaultCard]}>
-          <View style={s.addressHeading}><View style={s.icon}><MarketIcon name="location" /></View><Text style={s.addressLabel}>{row.label}</Text>{isDefault && <Text style={s.defaultBadge}>Default</Text>}</View>
+          <View style={s.addressHeading}><View style={s.icon}><MarketIcon name="location" /></View><Text style={s.addressLabel}>{row.label}</Text>{isDefault && <Text style={s.defaultBadge}>{t("Default", "डिफ़ॉल्ट")}</Text>}</View>
           <Text style={s.copy}>{row.line1}{"\n"}{row.locality}, {row.city} · {row.pincode}</Text>
           <View style={s.savedActions}>
-            {defaultKey && !isDefault && <Pressable accessibilityRole="button" accessibilityLabel={`Set ${row.label} as default`} style={s.savedAction} disabled={busy || !defaultReady} onPress={() => void setDefaultAddress(row)}><Text style={s.link}>Set as default</Text></Pressable>}
-            <Pressable accessibilityRole="button" accessibilityLabel={`Edit ${row.label} address`} style={s.savedAction} disabled={busy} onPress={() => { setPendingRemoval(undefined); setEditing(row); setDraft({ label: row.label, line1: row.line1, locality: row.locality, city: row.city, pincode: row.pincode }); setError(null); }}><Text style={s.link}>Edit</Text></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${row.label} address`} style={s.savedAction} disabled={busy || (!!defaultKey && !defaultReady)} onPress={() => { setError(null); setPendingRemoval(row.id); }}><Text style={s.error}>Remove</Text></Pressable>
+            {defaultKey && !isDefault && <Pressable accessibilityRole="button" accessibilityLabel={t(`Set ${row.label} as default`, `${row.label} को डिफ़ॉल्ट बनाएँ`)} style={s.savedAction} disabled={busy || !defaultReady} onPress={() => void setDefaultAddress(row)}><Text style={s.link}>{t("Set as default", "डिफ़ॉल्ट बनाएँ")}</Text></Pressable>}
+            <Pressable accessibilityRole="button" accessibilityLabel={t(`Edit ${row.label} address`, `${row.label} का पता बदलें`)} style={s.savedAction} disabled={busy} onPress={() => { setPendingRemoval(undefined); setEditing(row); setDraft({ label: row.label, line1: row.line1, locality: row.locality, city: row.city, pincode: row.pincode }); setError(null); }}><Text style={s.link}>{t("Edit", "बदलें")}</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={t(`Remove ${row.label} address`, `${row.label} का पता हटाएँ`)} style={s.savedAction} disabled={busy || (!!defaultKey && !defaultReady)} onPress={() => { setError(null); setPendingRemoval(row.id); }}><Text style={s.error}>{t("Remove", "हटाएँ")}</Text></Pressable>
           </View>
           {pendingRemoval === row.id && <View style={s.removeConfirmation} accessibilityLiveRegion="polite">
-            <Text style={s.addressLabel}>Remove {row.label} address?</Text>
+            <Text style={s.addressLabel}>{t(`Remove ${row.label} address?`, `क्या ${row.label} का पता हटाएँ?`)}</Text>
             {error && <Text accessibilityRole="alert" style={s.fieldError}>{error}</Text>}
             <View style={s.savedActions}>
-              <Pressable accessibilityRole="button" disabled={busy} style={s.savedAction} onPress={() => { setPendingRemoval(undefined); setError(null); }}><Text style={s.link}>Keep address</Text></Pressable>
-              <Pressable accessibilityRole="button" disabled={busy} style={s.savedAction} onPress={() => void deleteAddress(row)}><Text style={s.error}>{busy ? "Removing…" : "Confirm removal"}</Text></Pressable>
+              <Pressable accessibilityRole="button" disabled={busy} style={s.savedAction} onPress={() => { setPendingRemoval(undefined); setError(null); }}><Text style={s.link}>{t("Keep address", "पता रखें")}</Text></Pressable>
+              <Pressable accessibilityRole="button" disabled={busy} style={s.savedAction} onPress={() => void deleteAddress(row)}><Text style={s.error}>{busy ? t("Removing…", "हटा रहे हैं…") : t("Confirm removal", "पता हटाएँ")}</Text></Pressable>
             </View>
           </View>}
         </View>;
       })}
-      {!loading && !error && !rows.length ? <BuyerStateCard title="No saved addresses yet" copy="Add an address to select it at checkout." icon="location" compact /> : null}
-      <Text style={s.copy}>{area ? `Your browsing area stays ${area}. ` : ""}Choose a delivery address again at checkout.</Text>
+      {!loading && !error && !rows.length ? <BuyerStateCard title={t("No saved addresses yet", "अभी कोई पता सहेजा नहीं गया")} copy={t("Add an address to select it at checkout.", "चेकआउट पर चुनने के लिए एक पता जोड़ें।")} icon="location" compact /> : null}
+      <Text style={s.copy}>{area ? t(`Your browsing area stays ${area}. `, `आपका खरीदारी इलाका ${area} ही रहेगा। `) : ""}{t("Choose a delivery address again at checkout.", "चेकआउट पर डिलीवरी का पता चुनें।")}</Text>
     </ScrollView>
-    <View style={s.footer}><Pressable accessibilityRole="button" disabled={busy} onPress={() => { setPendingRemoval(undefined); setDraft({ ...blank }); setEditing(null); setError(null); }} style={[s.primary,s.savedAdd]}><Text style={s.buttonText}>+ Add new address</Text></Pressable></View>
+    <View style={s.footer}><Pressable accessibilityRole="button" disabled={busy} onPress={() => { setPendingRemoval(undefined); setDraft({ ...blank }); setEditing(null); setError(null); }} style={[s.primary,s.savedAdd]}><Text style={s.buttonText}>{t("+ Add new address", "+ नया पता जोड़ें")}</Text></Pressable></View>
   </View>;
 }
 const s = themedStyles(() => StyleSheet.create({

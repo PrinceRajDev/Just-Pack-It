@@ -26,8 +26,8 @@
       "package": "com.princeraj.justpackit",
       "versionCode": 2,
       "adaptiveIcon": {
-        "backgroundColor": "#F7F1E4",
-        "foregroundImage": "./assets/just-pack-it-icon.png"
+        "backgroundColor": "#FFF9F2",
+        "foregroundImage": "./assets/just-pack-it-adaptive.png"
       },
       "predictiveBackGestureEnabled": false
     },

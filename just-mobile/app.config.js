@@ -5,7 +5,7 @@ module.exports = ({ config }) => {
   return {
     ...config,
     version: "1.0.3",
-    android: { ...config.android, versionCode: 3, ...(googleServicesFile ? { googleServicesFile } : {}) },
+    android: { ...config.android, versionCode: 4, ...(googleServicesFile ? { googleServicesFile } : {}) },
     extra: { ...config.extra, androidPushEnabled: true },
     plugins: [...config.plugins, ["expo-notifications", { defaultChannel: "marketplace-updates" }]],
   };

@@ -1,4 +1,4 @@
-import { theme, themedStyles } from "./theme";
+import { cardShadow, theme, themedStyles } from "./theme";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { buyerApi } from "./api";
 import { BuyerAuthNotice } from "./BuyerAuthNotice";
+import { MarketIcon } from "./MarketIcon";
 
 const countdown = (milliseconds: number) => {
   const seconds = Math.max(0, Math.ceil(milliseconds / 1000));
@@ -156,9 +157,9 @@ export function BuyerRecovery({ back }: { back: () => void }) {
     <View style={s.screen} testID="buyer-recovery">
       <View style={s.header}>
         <Pressable accessibilityRole="button" accessibilityLabel="Back from password recovery" hitSlop={10} disabled={busy} onPress={back} style={s.headerBack}>
-          <Text style={s.chevron}>‹</Text>
+          <MarketIcon name="chevron-left" />
         </Pressable>
-        <Text style={s.headerTitle}>Reset password</Text>
+        <Text accessibilityRole="header" style={s.headerTitle}>Reset password</Text>
       </View>
     <ScrollView style={s.scroll}
       keyboardShouldPersistTaps="handled"
@@ -168,7 +169,7 @@ export function BuyerRecovery({ back }: { back: () => void }) {
         <BuyerAuthNotice title={title} copy={copy} tone={expired ? "warning" : "success"} icon={expired ? "clock" : "check"} action={step === "done" ? "Back to sign in" : undefined} onAction={back} />
       ) : (
         <View style={s.intro}>
-          <Text style={s.stepLabel}>Step {stage} of 3</Text>
+          <Text style={s.stepLabel}>Step {stage} of 3 · {step === "email" ? "Account email" : step === "code" ? "Email verification" : "New password"}</Text>
           <View style={s.progress} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
             {[1, 2, 3].map(index => <View key={index} style={[s.segment, index <= stage && s.segmentActive]} />)}
           </View>
@@ -235,6 +236,7 @@ export function BuyerRecovery({ back }: { back: () => void }) {
             <Text style={s.label}>Confirm password</Text>
             <TextInput
               accessibilityLabel="Confirm password"
+              autoComplete="new-password"
               autoCapitalize="none"
               editable={!busy}
               style={s.input}
@@ -245,6 +247,8 @@ export function BuyerRecovery({ back }: { back: () => void }) {
             />
             <Pressable
               accessibilityRole="button"
+              disabled={busy}
+              style={s.inlineAction}
               onPress={() => setVisible((value) => !value)}
             >
               <Text style={s.link}>
@@ -254,6 +258,7 @@ export function BuyerRecovery({ back }: { back: () => void }) {
             <Pressable
               accessibilityRole="button"
               disabled={busy}
+              style={s.inlineAction}
               onPress={() => {
                 setError("");
                 setStep("code");
@@ -288,10 +293,10 @@ export function BuyerRecovery({ back }: { back: () => void }) {
 const s = themedStyles(() => StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.canvas },
   scroll: { flex: 1 },
-  footer: { padding: 16, paddingHorizontal: 20, backgroundColor: theme.surface, borderTopWidth: 1, borderColor: theme.border },
+  footer: { paddingVertical: 12, paddingHorizontal: 20, backgroundColor: theme.surface, borderTopWidth: 1, borderColor: theme.border },
   resend: { backgroundColor: theme.selected },
   page: {
-    paddingTop: 16,
+    paddingTop: 8,
     paddingHorizontal: 20,
     paddingBottom: 24,
     gap: 16,
@@ -299,33 +304,36 @@ const s = themedStyles(() => StyleSheet.create({
     maxWidth: 520,
     alignSelf: "center",
   },
-  header: { minHeight: 64, paddingHorizontal: 20, gap: 14, flexDirection: "row", alignItems: "center" },
-  headerBack: { minHeight: 44, justifyContent: "center" },
-  chevron: { color: theme.accentInk, fontSize: 27, lineHeight: 30 },
-  headerTitle: { color: theme.accentInk, fontSize: 21, fontWeight: "600" },
-  intro: { gap: 8 },
-  stepLabel: { color: theme.accentInk, fontSize: 13, fontWeight: "600" },
-  progress: { flexDirection: "row", gap: 5, maxWidth: 160, marginBottom: 6 },
-  segment: { flex: 1, height: 3, borderRadius: 2, backgroundColor: theme.border },
-  segmentActive: { backgroundColor: theme.primary },
-  title: { color: theme.ink, fontSize: 32, lineHeight: 38, fontWeight: "700" },
-  description: { color: theme.secondary, fontSize: 14, lineHeight: 20 },
+  header: { minHeight: 64, width: "100%", maxWidth: 520, alignSelf: "center", paddingHorizontal: 20, gap: 12, flexDirection: "row", alignItems: "center" },
+  headerBack: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, alignItems: "center", justifyContent: "center" },
+  headerTitle: { color: theme.ink, fontSize: 22, fontWeight: "700", flex: 1 },
+  intro: { gap: 8, padding: 16, borderRadius: 24, backgroundColor: theme.hero },
+  stepLabel: { color: theme.accentInk, fontSize: 13, fontWeight: "700" },
+  progress: { flexDirection: "row", gap: 4, maxWidth: 160, marginBottom: 4 },
+  segment: { flex: 1, height: 4, borderRadius: 2, backgroundColor: theme.surface },
+  segmentActive: { backgroundColor: theme.accentInk },
+  title: { color: theme.ink, fontSize: 28, lineHeight: 34, fontWeight: "800" },
+  description: { color: theme.ink, fontSize: 14, lineHeight: 20 },
   codeInput: { letterSpacing: 6, fontSize: 20, fontVariant: ["tabular-nums"] },
   expiredText: { color: theme.error },
   backAction: { borderWidth: 1, borderColor: theme.border, borderRadius: 12, minHeight: 50, justifyContent: "center", alignItems: "center" },
-  form: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: 20, padding: 16, gap: 10 },
-  label: { fontSize: 13, color: theme.secondary },
+  form: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: 20, padding: 16, gap: 12, ...cardShadow },
+  inlineAction: { minHeight: 44, justifyContent: "center" },
+  label: { fontSize: 14, color: theme.ink, fontWeight: "600" },
   input: {
     minHeight: 52,
     borderWidth: 1,
     borderColor: theme.controlBorder,
     borderRadius: 12,
     paddingHorizontal: 12,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.surfaceSoft,
     color: theme.ink,
   },
   button: {
-    backgroundColor: theme.primary,
+    backgroundColor: theme.accentInk,
+    width: "100%",
+    maxWidth: 480,
+    alignSelf: "center",
     borderRadius: 12,
     minHeight: 50,
     flexDirection: "row",

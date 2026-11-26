@@ -31,7 +31,8 @@ export function BuyerOrderSupport({ token, orderId, suborderId }: { token: strin
   const [messages, setMessages] = useState<OrderSupportMessage[]>([]);
   const [nextMessage, setNextMessage] = useState<string>();
   const [reply, setReply] = useState("");
-  const pendingReply = useRef<{body: string; key: string}>(undefined);
+  const [reopening, setReopening] = useState(false);
+  const pendingReply = useRef<{body: string; key: string; reopen: boolean}>(undefined);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
@@ -80,14 +81,21 @@ export function BuyerOrderSupport({ token, orderId, suborderId }: { token: strin
   };
   const sendReply = () => {
     const body = reply.trim();
-    if (!ticket || ticket.status === "resolved" || !body) return;
+    if (!ticket || !body) return;
+    const reopen = ticket.status === "resolved";
+    if (reopen && (!reopening || body.length < 10)) {
+      setError("Explain what still needs help in at least 10 characters.");
+      return;
+    }
     void run(async () => {
-      const pending = pendingReply.current?.body === body ? pendingReply.current : {body, key: replyKey()};
+      const previous = pendingReply.current;
+      const pending = previous?.body === body && previous.reopen === reopen ? previous : {body, key: replyKey(), reopen};
       pendingReply.current = pending;
-      const result = await buyerApi.replyToOrderSupport(token, ticket, body, pending.key);
+      const result = await buyerApi.replyToOrderSupport(token, ticket, body, pending.key, reopen);
       pendingReply.current = undefined;
       setReply("");
-      setTicket({ ...ticket, version: result.version });
+      setReopening(false);
+      setTicket({ ...ticket, version: result.version, ...(reopen ? {status: "open", note: ""} : {}) });
       await loadMessages(ticket.id);
     });
   };
@@ -111,12 +119,17 @@ export function BuyerOrderSupport({ token, orderId, suborderId }: { token: strin
         {nextMessage && <Pressable accessibilityRole="button" disabled={busy} onPress={() => void run(() => loadMessages(ticket.id, nextMessage))} style={styles.action}>
           <Text style={styles.actionText}>Load more messages</Text>
         </Pressable>}
-        {ticket.status !== "resolved" && <>
-          <TextInput accessibilityLabel="Reply to support" placeholder="Reply to support" placeholderTextColor={theme.muted} multiline maxLength={2000} editable={!busy} value={reply} onChangeText={setReply} style={styles.input} />
+        {(ticket.status !== "resolved" || reopening) && <>
+          <TextInput accessibilityLabel={ticket.status === "resolved" ? "Why are you reopening this request?" : "Reply to support"} placeholder={ticket.status === "resolved" ? "What still needs help?" : "Reply to support"} placeholderTextColor={theme.muted} multiline maxLength={2000} editable={!busy} value={reply} onChangeText={value => { setReply(value); setError(""); }} style={styles.input} />
           <Pressable accessibilityRole="button" disabled={busy || !reply.trim()} onPress={sendReply} style={[styles.action, styles.primary, !reply.trim() && styles.disabled]}>
-            <Text style={styles.primaryText}>Send reply</Text>
+            <Text style={styles.primaryText}>{ticket.status === "resolved" ? "Confirm reopen" : "Send reply"}</Text>
           </Pressable>
         </>}
+        {ticket.status === "resolved" && <Pressable accessibilityRole="button" disabled={busy} onPress={() => {
+          setReopening(!reopening);
+          setReply("");
+          setError("");
+        }} style={styles.action}><Text style={styles.actionText}>{reopening ? "Cancel reopening" : "Reopen request"}</Text></Pressable>}
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => void check()} style={styles.action}>
           <Text style={styles.actionText}>Refresh support status</Text>
         </Pressable>

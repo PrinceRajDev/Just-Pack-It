@@ -117,8 +117,8 @@ export const buyerApi = {
   orderSupport: (token: string, orderId: string, after?: string) => request<{items: OrderSupportTicket[]; next?: string}>(`/support?orderId=${encodeURIComponent(orderId)}${after ? `&after=${encodeURIComponent(after)}` : ""}`, token),
   orderSupportMessages: (token: string, ticketId: string, cursor?: string) =>
     request<{items: OrderSupportMessage[]; next?: string}>(`/support/${encodeURIComponent(ticketId)}/messages${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`, token),
-  replyToOrderSupport: (token: string, ticket: OrderSupportTicket, body: string, key: string) =>
-    request<{version: number}>(`/support/${encodeURIComponent(ticket.id)}/messages`, token, {method: "POST", body: JSON.stringify({version: ticket.version, body, key})}),
+  replyToOrderSupport: (token: string, ticket: OrderSupportTicket, body: string, key: string, reopen: boolean) =>
+    request<{version: number}>(`/support/${encodeURIComponent(ticket.id)}/${reopen ? "reopen" : "messages"}`, token, {method: "POST", body: JSON.stringify({version: ticket.version, body, key})}),
   createOrderSupport: (token: string, input: {orderId: string; suborderId: string; kind: string; description: string}) =>
     request<OrderSupportTicket>("/support", token, { method: "POST", body: JSON.stringify(input) }),
   notifications: (token: string) => request<{ id: string; title: string; body: string; read: boolean; createdAt?: string }[]>("/notifications?limit=20", token),

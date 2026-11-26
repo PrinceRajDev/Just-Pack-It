@@ -18,6 +18,7 @@ type CatalogueFilter = (typeof filterGroups)[number]["filters"][number];
 const shelfPhoto = require("../assets/browse-categories/grocery.webp");
 const productIcon = require("../assets/nav-icons/bag.png");
 const productSections = ["Details","Pack variants","Photo"] as const;
+const isLowStock = (stock: number) => stock > 0 && stock <= 5;
 
 function stockLevels(item: SellerProduct) {
   return item.variants?.length ? item.variants.map(option => option.stock) : [item.stock];
@@ -28,7 +29,7 @@ function matchesCatalogueFilter(item: SellerProduct, filter: CatalogueFilter) {
     case "All": return true;
     case "Active": return item.active;
     case "Inactive": return !item.active;
-    case "Low stock": return item.active && stockLevels(item).some(stock => stock > 0 && stock <= 5);
+    case "Low stock": return item.active && stockLevels(item).some(isLowStock);
     case "Out of stock": return item.active && stockLevels(item).some(stock => stock === 0);
     case "No photo": return !item.image?.trim();
   }
@@ -42,15 +43,17 @@ export function SellerCatalogue({token,stockFilter}:{token:string;stockFilter?:S
   const [filter,setFilter] = useState<CatalogueFilter>(stockFilter ?? "All");
   const [edit,setEdit] = useState<SellerProduct | "new">();
   const [editorSection,setEditorSection] = useState<typeof productSections[number]>("Details");
+  const [editorPackId,setEditorPackId] = useState<string>();
+  const [packExpansion,setPackExpansion] = useState<Record<string,boolean>>({});
   const [stockProduct,setStockProduct] = useState<SellerProduct>();
   const [savedStockId,setSavedStockId] = useState<string>();
   const open = useSellerMutation();
-  const leaveEditor = () => { setEdit(undefined); setEditorSection("Details"); };
+  const leaveEditor = () => { setEdit(undefined); setEditorSection("Details"); setEditorPackId(undefined); };
   const stockSaved = (updated: SellerProduct) => {
     listing.setData(previous => previous && {...previous,items:previous.items.map(item => item.id === updated.id ? updated : item)});
     setSavedStockId(updated.id);
   };
-  if (edit) return <ProductEditor token={token} product={edit==="new" ? undefined : edit} initialSection={editorSection} close={leaveEditor} saved={listing.reload} stockSaved={stockSaved} />;
+  if (edit) return <ProductEditor token={token} product={edit==="new" ? undefined : edit} initialSection={editorSection} initialPackId={editorPackId} close={leaveEditor} saved={listing.reload} stockSaved={stockSaved} />;
   if (stockProduct) return <QuickStock token={token} product={stockProduct} close={() => setStockProduct(undefined)}
     reload={() => sellerApi.product(token,stockProduct.id)} saved={updated => {
       stockSaved(updated);
@@ -92,7 +95,7 @@ export function SellerCatalogue({token,stockFilter}:{token:string;stockFilter?:S
             return (
               <Pressable key={value} accessibilityRole="tab" accessibilityLabel={value}
                 accessibilityHint={count === undefined ? undefined : `${count} matching products loaded`}
-                accessibilityState={{selected}} style={[styles.chip, styles.catalogueChip, selected && styles.catalogueSelectedFilter]} onPress={() => { setFilter(value); setSavedStockId(undefined); }}>
+                accessibilityState={{selected}} style={[styles.chip, styles.catalogueChip, selected && styles.catalogueSelectedFilter]} onPress={() => { setFilter(value); setSavedStockId(undefined); setPackExpansion({}); }}>
                 <Text style={selected ? styles.dispatchModeTextActive : styles.link}>{value}{count === undefined ? "" : ` · ${count}`}</Text>
               </Pressable>
             );
@@ -115,6 +118,20 @@ export function SellerCatalogue({token,stockFilter}:{token:string;stockFilter?:S
       icon="bag" action={term || filter !== "All" ? "Reset filters" : undefined}
       onAction={() => { setQuery(""); setFilter("All"); }} />}
     {rows?.map(item => <CatalogueProduct key={item.id} item={item} stockSaved={item.id === savedStockId} disabled={open.busy}
+      packsExpanded={packExpansion[item.id] ?? filter === "Low stock"}
+      highlightLowStock={filter === "Low stock"}
+      onTogglePacks={() => setPackExpansion(previous => ({...previous,[item.id]:!(previous[item.id] ?? filter === "Low stock")}))}
+      onPackStock={packId => void open.run(async () => {
+        const current = await sellerApi.product(token,item.id);
+        const pack = current.variants?.find(option => option.id === packId);
+        if (!pack) {
+          listing.reload();
+          throw new Error("This pack is no longer available. Choose a pack from the updated catalogue.");
+        }
+        setEditorSection("Pack variants");
+        setEditorPackId(pack.id);
+        setEdit(current);
+      })}
       onPress={() => void open.run(async () => { setEdit(await sellerApi.product(token,item.id)); })}
       onPhoto={() => void open.run(async () => {
         const current = await sellerApi.product(token,item.id);
@@ -129,12 +146,15 @@ export function SellerCatalogue({token,stockFilter}:{token:string;stockFilter?:S
   </SellerScroll>;
 }
 
-function CatalogueProduct({item,stockSaved,disabled,onPress,onStock,onPhoto}:{item:SellerProduct;stockSaved:boolean;disabled:boolean;onPress:()=>void;onStock:()=>void;onPhoto:()=>void}) {
+function CatalogueProduct({item,stockSaved,disabled,packsExpanded,highlightLowStock,onTogglePacks,onPackStock,onPress,onStock,onPhoto}:{
+  item:SellerProduct;stockSaved:boolean;disabled:boolean;packsExpanded:boolean;highlightLowStock:boolean;
+  onTogglePacks:()=>void;onPackStock:(id:string)=>void;onPress:()=>void;onStock:()=>void;onPhoto:()=>void;
+}) {
   const [failedImage,setFailedImage] = useState("");
   const image = resolveImage(item.image);
   const stocks = stockLevels(item);
   const empty = stocks.filter(stock => stock === 0).length;
-  const low = stocks.some(stock => stock > 0 && stock <= 5);
+  const low = stocks.some(isLowStock);
   const status = !item.active ? "Inactive" : empty === stocks.length ? "Out of stock" : empty > 0 ? "Some packs sold out" : low ? "Low stock" : "In stock";
   const stockLabel = `${stocks.reduce((sum, stock) => sum + stock, 0)} available${item.variants?.length ? ` across ${item.variants.length} options` : ""}`;
   const prices = item.variants?.length ? item.variants.map(option => option.price) : [item.price];
@@ -164,8 +184,24 @@ function CatalogueProduct({item,stockSaved,disabled,onPress,onStock,onPhoto}:{it
         <Pressable accessibilityRole="button" accessibilityLabel={`Manage stock for ${item.name}`} disabled={disabled} onPress={onStock} style={styles.catalogueAction}>
           <Text style={styles.link}>{item.variants?.length ? "Manage packs" : "Update stock"}</Text>
         </Pressable>
+        {!!item.variants?.length && <Pressable accessibilityRole="button" accessibilityState={{expanded:packsExpanded}} onPress={onTogglePacks} style={styles.catalogueAction}>
+          <Text style={styles.link}>{packsExpanded ? "Hide packs" : "View packs"}</Text>
+        </Pressable>}
       </View>
     </View>
+    {packsExpanded && item.variants?.map(pack => {
+      const lowStock = item.active && isLowStock(pack.stock);
+      return <View key={pack.id} style={[styles.catalogueProductFooter,highlightLowStock && lowStock && styles.sage]}>
+        <View style={styles.grow}>
+          <Text style={styles.label}>{pack.label}</Text>
+          <Text style={styles.copy}>{rupees(pack.price)} · {pack.stock} available</Text>
+          {lowStock && <Text style={styles.label}>Low stock</Text>}
+          {!pack.stock && <Text style={styles.copy}>Out of stock</Text>}
+        </View>
+        <Pressable accessibilityRole="button" accessibilityLabel={`Update stock for ${item.name}, ${pack.label}`} disabled={disabled}
+          onPress={() => onPackStock(pack.id)} style={styles.catalogueAction}><Text style={styles.link}>Update stock</Text></Pressable>
+      </View>;
+    })}
     {stockSaved && <Text accessibilityLiveRegion="polite" style={styles.catalogueNotice}>{`Stock updated for ${item.name}.`}</Text>}
   </View>;
 }
@@ -220,7 +256,7 @@ function QuickStock({token,product,close,saved,reload}:{token:string;product:Sel
   </SellerScroll>;
 }
 
-function ProductEditor({token,product,initialSection,close,saved,stockSaved}:{token:string;product?:SellerProduct;initialSection:typeof productSections[number];close:()=>void;saved:()=>void;stockSaved:(product:SellerProduct)=>void}) {
+function ProductEditor({token,product,initialSection,initialPackId,close,saved,stockSaved}:{token:string;product?:SellerProduct;initialSection:typeof productSections[number];initialPackId?:string;close:()=>void;saved:()=>void;stockSaved:(product:SellerProduct)=>void}) {
   const [current,setCurrent] = useState(product);
   const [section,setSection] = useState(initialSection);
   const [offerPhoto,setOfferPhoto] = useState(false);
@@ -233,7 +269,10 @@ function ProductEditor({token,product,initialSection,close,saved,stockSaved}:{to
   const [mrp,setMrp] = useState(product?.mrp != null ? String(product.mrp) : "");
   const [stock,setStock] = useState(product ? String(product.stock) : "");
   const [isActive,setIsActive] = useState(product?.active ?? true);
-  const [variant,setVariant] = useState<{id?:string;label:string;price:string;stock:string}>();
+  const [variant,setVariant] = useState<{id?:string;label:string;price:string;stock:string} | undefined>(() => {
+    const pack = product?.variants?.find(item => item.id === initialPackId);
+    return pack ? {id:pack.id,label:pack.label,price:String(pack.price),stock:String(pack.stock)} : undefined;
+  });
   const [notice,setNotice] = useState("");
   const [confirmExit, setConfirmExit] = useState(false);
   const categories = useSellerData(marketApi.categories,token);

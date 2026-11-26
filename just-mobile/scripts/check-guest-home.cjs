@@ -343,6 +343,13 @@ const assert = require("node:assert/strict");
         json={...input,id:"new-fixture-product",version:1,shopId:"shop-qa"};
       }
       if(pathname==="/seller/products/seller-product") json=sellerProduct;
+      if(pathname==="/seller/products/seller-product/variants/small" && method==="PATCH"){
+        const input=route.request().postDataJSON();
+        assert.equal(input.version,sellerProduct.version);
+        assert.equal(input.stock,12);
+        json={id:"small",label:input.label,price:input.price,stock:input.stock};
+        sellerProduct={...sellerProduct,version:sellerProduct.version+1,variants:[json,sellerProduct.variants[1]]};
+      }
       if(pathname==="/seller/image-upload") json={enabled:true,maxBytes:5242880,types:["image/jpeg","image/png","image/webp"]};
       if(pathname==="/seller/products/seller-product/image"){
         assert.equal(method,"POST");
@@ -506,6 +513,21 @@ const assert = require("node:assert/strict");
     await workspace.getByText("No products in this view",{exact:true}).waitFor();
     await workspace.getByRole("tab",{name:"All",exact:true}).click();
     await workspace.getByRole("button",{name:"Change photo for Tomatoes",exact:true}).waitFor();
+    sellerProduct={...sellerProduct,variants:[{id:"small",label:"500 g",price:45,stock:2},{id:"large",label:"1 kg",price:89,stock:9}]};
+    await workspace.getByRole("button",{name:"Refresh catalogue",exact:true}).click();
+    await tomatoCard.getByRole("button",{name:"View packs",exact:true}).click();
+    await tomatoCard.getByText("₹89 · 9 available",{exact:true}).waitFor();
+    await workspace.getByRole("tab",{name:"Low stock",exact:true}).click();
+    await tomatoCard.getByText("₹45 · 2 available",{exact:true}).waitFor();
+    await tomatoCard.getByRole("button",{name:"Update stock for Tomatoes, 500 g",exact:true}).click();
+    const packStock=workspace.getByLabel("Variant stock",{exact:true});
+    assert.equal(await packStock.inputValue(),"2");
+    await packStock.fill("12");
+    await workspace.getByRole("button",{name:"Save variant",exact:true}).click();
+    await workspace.getByText("Variant saved.",{exact:true}).waitFor();
+    await workspace.getByRole("button",{name:/Back to catalogue/}).click();
+    await tomatoCard.getByText("₹45 · 12 available",{exact:true}).waitFor();
+    await tomatoCard.getByText("Stock updated for Tomatoes.",{exact:true}).waitFor();
     await workspace.getByRole("button",{name:"Add product",exact:true}).click();
     await workspace.getByLabel("Product name",{exact:true}).fill("Fixture rice");
     await workspace.getByLabel("Unit or pack size",{exact:true}).fill("1 kg");

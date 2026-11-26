@@ -2189,7 +2189,7 @@ describe("live platform delivery",()=>{
   expect((await api.put(`/admin/delivery/partners/${delivery.id}`).set("Authorization",auth(delivery)).send({version:0,approved:true,areaIds:[areaId]})).status).toBe(403);
   expect((await api.post(`/delivery/tasks/${randomUUID()}/claim`).set("Authorization",auth(delivery)).send({version:0})).body.code).toBe("DELIVERY_DISABLED");
  });
- it("requires rollout, fresh capacity and pins at checkout and snapshots the listed fee",async()=>{
+ it("requires rollout, fresh capacity and pins at checkout and snapshots the platform delivery fee",async()=>{
   const {Address}=await import("../src/addresses/routes.js");
   const shop=await Shop.findById(shopId).lean(),product=await Product.findById(productId).lean(),area=await Area.findById(areaId).lean(),address=await Address.create({userId:buyer.id,label:"TEST PLATFORM",line1:"TEST DROP",locality:"TEST",city:"TEST",pincode:area!.pincodes[0],location:{type:"Point",coordinates:[86,26]}});
   let created:string|undefined;
@@ -2197,12 +2197,12 @@ describe("live platform delivery",()=>{
    await Shop.updateOne({_id:shopId},{$set:{status:"approved",active:true,areaIds:[areaId],categoryIds:[categoryId],fulfilment:["platform_delivery"],minimumOrderCents:0,deliveryFeeCents:200,location:{type:"Point",coordinates:[86,26]},temporarilyClosed:false,openingHours:Array.from({length:7},(_,day)=>({day,opens:"00:00",closes:"23:59"}))}});
    await Product.updateOne({_id:productId},{$set:{active:true,categoryId,subcategoryId:undefined,variants:[],stock:5,totalStock:5,priceCents:1000,sortPriceCents:1000}});
    await Partner.deleteOne({_id:delivery.id});await Partner.create({_id:delivery.id,approved:true,areaIds:[areaId],online:true,seenAt:new Date(),version:0});
-   const input={areaId,addressId:address._id,addressVersion:address.version,paymentMethod:"cod" as const,expectedTotal:12,items:[{productId,qty:1}],fulfilments:[{shopId,method:"platform_delivery" as const}]};
+   const input={areaId,addressId:address._id,addressVersion:address.version,paymentMethod:"cod" as const,expectedTotal:40,items:[{productId,qty:1}],fulfilments:[{shopId,method:"platform_delivery" as const}]};
    await expect(createCodOrder(buyer,randomUUID(),input)).rejects.toMatchObject({code:"METHOD_UNAVAILABLE"});
-   const quote=await liveApi.post("/checkout/review").set("Authorization",auth(buyer)).send({areaId,addressId:address._id,addressVersion:address.version,items:input.items,fulfilments:input.fulfilments});expect(quote.status).toBe(200);expect(quote.body.issues).toEqual([]);expect(quote.body.shops.flatMap((s:{issues:unknown[]})=>s.issues)).toEqual([]);expect(quote.body.fulfilments.flatMap((s:{issues:unknown[]})=>s.issues)).toEqual([]);expect(quote.body.checkoutAvailable).toBe(true);expect(quote.body.grandTotal).toBe(12);
+   const quote=await liveApi.post("/checkout/review").set("Authorization",auth(buyer)).send({areaId,addressId:address._id,addressVersion:address.version,items:input.items,fulfilments:input.fulfilments});expect(quote.status).toBe(200);expect(quote.body.issues).toEqual([]);expect(quote.body.shops.flatMap((s:{issues:unknown[]})=>s.issues)).toEqual([]);expect(quote.body.fulfilments.flatMap((s:{issues:unknown[]})=>s.issues)).toEqual([]);expect(quote.body.checkoutAvailable).toBe(true);expect(quote.body.deliveryTotal).toBe(30);expect(quote.body.grandTotal).toBe(40);
    await Partner.updateOne({_id:delivery.id},{$set:{seenAt:new Date(0)}});await expect(createCodOrder(buyer,randomUUID(),input,"cod",false,true)).rejects.toMatchObject({code:"METHOD_UNAVAILABLE"});
    await Partner.updateOne({_id:delivery.id},{$set:{seenAt:new Date()}});
-   const placed=await createCodOrder(buyer,randomUUID(),input,"cod",false,true);created=placed.order._id;expect(placed.order.subOrders[0].fulfilment).toBe("platform_delivery");expect(placed.order.subOrders[0].deliveryFeeCents).toBe(200);expect(placed.order.totalCents).toBe(1200);
+   const placed=await createCodOrder(buyer,randomUUID(),input,"cod",false,true);created=placed.order._id;expect(placed.order.subOrders[0].fulfilment).toBe("platform_delivery");expect(placed.order.subOrders[0].deliveryFeeCents).toBe(3000);expect(placed.order.totalCents).toBe(4000);
   }finally{
    if(created){const order=await Order.findById(created);await InventoryReservation.deleteOne({_id:order!.reservationId});await Order.deleteOne({_id:created});}
    await Address.deleteOne({_id:address._id});await Partner.deleteOne({_id:delivery.id});

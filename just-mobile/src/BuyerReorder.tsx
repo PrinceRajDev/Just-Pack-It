@@ -74,6 +74,8 @@ export function BuyerReorder({ order, token, areaId, bag, add, openBag }: {
     return {...row, available, full};
   });
   const count = rows?.reduce((sum, row) => sum + row.available, 0) ?? 0;
+  const subtotal = (rows?.reduce((sum, row) =>
+    sum + Math.round((row.product?.price ?? 0) * 100) * row.available, 0) ?? 0) / 100;
   return <View style={s.card}>
     {rows ? <>
       <Text accessibilityRole="header" style={s.heading}>Review items</Text>
@@ -83,15 +85,22 @@ export function BuyerReorder({ order, token, areaId, bag, add, openBag }: {
         {row.product ? <Text style={s.copy}>{price(row.product.price)} each{row.oldPrice !== row.product.price ? ` · Previously ${price(row.oldPrice)}` : ""} · {row.available ? `${row.available} of ${row.qty} can be added` : row.full ? "Bag has 100 different items" : "No additional stock available"}</Text>
           : <Text style={s.copy}>{row.unavailableReason}</Text>}
       </View>)}
-      {count > 0 && <Pressable accessibilityRole="button" style={s.button} onPress={() => {
-        if (lock.current) return;
-        lock.current = true;
-        try {
-          rows.forEach(row => { if (row.product && row.available) add(row.product, row.available); });
-          setPreview(undefined);
-          setAdded(count);
-        } finally { lock.current = false; }
-      }}><Text style={s.buttonText}>Add {count} {count === 1 ? "item" : "items"} to bag</Text></Pressable>}
+      {count > 0 && <>
+        <View style={s.summary}>
+          <Text style={s.heading}>Items subtotal</Text>
+          <Text style={s.heading}>{price(subtotal)}</Text>
+        </View>
+        <Text style={s.copy}>Delivery fees are shown at checkout.</Text>
+        <Pressable accessibilityRole="button" style={s.button} onPress={() => {
+          if (lock.current) return;
+          lock.current = true;
+          try {
+            rows.forEach(row => { if (row.product && row.available) add(row.product, row.available); });
+            setPreview(undefined);
+            setAdded(count);
+          } finally { lock.current = false; }
+        }}><Text style={s.buttonText}>Add {count} {count === 1 ? "item" : "items"} to bag</Text></Pressable>
+      </>}
       <Pressable accessibilityRole="button" onPress={() => setPreview(undefined)} style={s.button}><Text style={s.buttonText}>Close review</Text></Pressable>
     </> : <>
       {!!added && <>
@@ -107,6 +116,7 @@ export function BuyerReorder({ order, token, areaId, bag, add, openBag }: {
 const s = StyleSheet.create({
   card: { padding: 16, gap: 12, borderRadius: 16, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface },
   row: { borderTopWidth: 1, borderColor: theme.border, paddingTop: 8, gap: 4 },
+  summary: { borderTopWidth: 1, borderColor: theme.border, paddingTop: 12, flexDirection: "row", justifyContent: "space-between", gap: 8 },
   heading: { color: theme.ink, fontWeight: "700" },
   copy: { color: theme.ink, lineHeight: 20 },
   button: { minHeight: 44, justifyContent: "center", alignItems: "center", padding: 8, backgroundColor: theme.selected, borderRadius: 12 },

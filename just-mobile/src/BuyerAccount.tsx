@@ -374,11 +374,13 @@ export function BuyerOrders({
   back,
   signIn,
   browse,
+  reorder,
 }: {
   session: Session | null;
   back: () => void;
   signIn: () => void;
   browse: () => void;
+  reorder?: React.ComponentProps<typeof BuyerOrderDetails>["reorder"];
 }) {
   const [tab, setTab] = useState<"Active" | "Past">("Active");
   const [orders, setOrders] = useState<BuyerOrder[]>([]);
@@ -494,7 +496,7 @@ export function BuyerOrders({
         <Modal visible onRequestClose={closeOrder}>
           <SafeAreaProvider>
             <SafeAreaView style={ordersUI.screen}>
-              <BuyerOrderDetails token={session.token} id={selectedOrder} back={closeOrder} />
+              <BuyerOrderDetails token={session.token} id={selectedOrder} back={closeOrder} reorder={reorder} />
             </SafeAreaView>
           </SafeAreaProvider>
         </Modal>

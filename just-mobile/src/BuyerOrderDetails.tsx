@@ -11,7 +11,8 @@ import { StyleSheet,
 import { BuyerReceipt } from "./BuyerReceipt";
 import { BuyerCancelOrder } from "./BuyerCancelOrder";
 import { BuyerOrderSupport } from "./BuyerOrderSupport";
-import { ApiError, buyerApi, type BuyerOrder } from "./api";
+import { BuyerReorder } from "./BuyerReorder";
+import { ApiError, buyerApi, type BuyerOrder, type Product } from "./api";
 
 export const money = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 const dateTime = (value: string) =>
@@ -111,10 +112,12 @@ export function BuyerOrderDetails({
   token,
   id,
   back,
+  reorder,
 }: {
   token: string;
   id: string;
   back: () => void;
+  reorder?: {areaId: string; bag: (Product & {quantity: number})[]; add: (product: Product, quantity: number) => void};
 }) {
   const [order, setOrder] = useState<BuyerOrder | null>(null);
   const [error, setError] = useState("");
@@ -260,6 +263,7 @@ export function BuyerOrderDetails({
                 <Text style={s.label}>View delivered order</Text>
               </Pressable>
             )}
+            {reorder && isPastOrder(order) && <BuyerReorder order={order} token={token} {...reorder} />}
             {order.subOrders.map((shop) => (
               <View key={shop.id} style={{ gap: 8 }}>
                 <ShopCard

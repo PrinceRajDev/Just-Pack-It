@@ -253,15 +253,15 @@ export default function App() {
   );
   const count = bag.reduce((sum, x) => sum + x.quantity, 0);
   const total = bag.reduce((sum, x) => sum + x.price * x.quantity, 0);
-  const add = (item: Product) =>
+  const add = (item: Product, amount?: number) =>
     setBag((old) => {
       const row = old.find((x) => x.id === item.id);
       if (item.stock <= 0 || (row?.quantity ?? 0) >= item.stock) return old;
       return row
         ? old.map((x) =>
-            x.id === item.id ? { ...x, quantity: x.quantity + 1 } : x,
+            x.id === item.id ? { ...x, ...(amount === undefined ? {} : item), quantity: Math.min(item.stock, x.quantity + (amount ?? 1)) } : x,
           )
-        : [...old, { ...item, quantity: 1 }];
+        : [...old, { ...item, quantity: Math.min(item.stock, amount ?? 1) }];
     });
   const quantity = (id: string, delta: number) =>
     setBag((old) =>
@@ -445,7 +445,7 @@ export default function App() {
       browseAsGuest={browseAsGuest}
     />
   ) : screen === "orders" ? (
-    <BuyerOrders session={session} back={leaveOrders} signIn={openAccount} browse={goHome} />
+    <BuyerOrders session={session} back={leaveOrders} signIn={openAccount} browse={goHome} reorder={area ? {areaId:area.id,bag,add} : undefined} />
   ) : screen === "confirmation" || screen === "tracking" ? (
     currentConfirmation && session ? (
       screen === "tracking" ? (

@@ -13,7 +13,7 @@ export type BuyerOrder = { id: string; total: number; amountDue?: number; online
 type ListPayload<T> = T[] | { items?: T[] };
 const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
 export class ApiError extends Error { constructor(message: string, public status: number, public code?: string, public requestId?: string) { super(message); } }
-export type OrderSupportTicket = { id: string; suborderId: string; status: "open" | "in_progress" | "resolved"; note: string; version: number };
+export type OrderSupportTicket = { id: string; suborderId: string; status: "open" | "in_progress" | "resolved"; note: string; version: number; kind?: string; description?: string };
 export type OrderSupportMessage = { id: string; role: string; kind: string; body: string };
 const sessionListeners = new Set<(token: string) => void>();
 async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {

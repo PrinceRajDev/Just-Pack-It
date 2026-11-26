@@ -557,7 +557,7 @@ const assert = require("node:assert/strict");
         orderId:confirmed.id, suborderId:confirmed.subOrders[1].id, kind:"missing_item", description:"One item was missing.",
       });
       supportRequests++;
-      supportTicket = {id:"support-fixture",suborderId:confirmed.subOrders[1].id,status:"open",note:"",version:0};
+      supportTicket = {id:"support-fixture",suborderId:confirmed.subOrders[1].id,status:"open",note:"",version:0,kind:"missing_item",description:"One item was missing."};
       return route.fulfill({headers:notificationHeaders,json:supportTicket});
     });
     await tracking.getByRole("button",{name:"Get help",exact:true}).nth(1).click();
@@ -568,6 +568,7 @@ const assert = require("node:assert/strict");
     await tracking.getByLabel("Describe the issue",{exact:true}).fill("One item was missing.");
     await tracking.getByRole("button",{name:"Send support request",exact:true}).click();
     await tracking.getByText("Support request · Open",{exact:true}).waitFor();
+    await tracking.getByText("One item was missing.",{exact:true}).waitFor();
     await tracking.getByText("We’re checking with the shop.",{exact:true}).waitFor();
     await tracking.getByLabel("Reply to support",{exact:true}).fill("Thanks for checking.");
     await tracking.getByRole("button",{name:"Send reply",exact:true}).click();

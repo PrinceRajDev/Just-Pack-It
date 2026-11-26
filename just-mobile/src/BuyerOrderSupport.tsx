@@ -109,6 +109,10 @@ export function BuyerOrderSupport({ token, orderId, suborderId }: { token: strin
       {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
       {ticket ? <View style={styles.section}>
         <Text accessibilityLiveRegion="polite" style={styles.copy}>Support request · {statusLabels[ticket.status]}</Text>
+        {!!ticket.description && <View style={styles.message}>
+          <Text style={styles.actionText}>{reasons.find(([value]) => value === ticket.kind)?.[1] ?? "Reported issue"}</Text>
+          <Text style={styles.copy}>{ticket.description}</Text>
+        </View>}
         {!!ticket.note && !messages.some(message => message.kind === "status" && message.body === ticket.note) && <Text style={styles.copy}>{ticket.note}</Text>}
         {messages.map(message => (
           <View key={message.id} style={styles.message}>

@@ -532,10 +532,20 @@ const assert = require("node:assert/strict");
     await tracking.getByText("Patil Fresh Mart",{exact:true}).waitFor();
     let supportTicket;
     let supportRequests = 0;
-    await page.route("**/support/support-fixture/messages", route => route.fulfill({
-      headers:notificationHeaders,
-      json:{items:[{id:"support-reply",role:"admin",kind:"messages",body:"We’re checking with the shop."}]},
-    }));
+    const supportMessages = [{id:"support-reply",role:"admin",kind:"messages",body:"We’re checking with the shop."}];
+    await page.route("**/support/support-fixture/messages", route => {
+      const method = route.request().method();
+      if (method === "OPTIONS") return route.fulfill({status:204,headers:notificationHeaders});
+      if (method === "POST") {
+        const reply = route.request().postDataJSON();
+        assert.equal(reply.version, 0);
+        assert.match(reply.key, /^[a-f0-9-]{36}$/);
+        assert.equal(reply.body, "Thanks for checking.");
+        supportMessages.push({id:"buyer-reply",role:"buyer",kind:"messages",body:reply.body});
+        return route.fulfill({headers:notificationHeaders,json:{version:1}});
+      }
+      return route.fulfill({headers:notificationHeaders,json:{items:supportMessages}});
+    });
     await page.route("**/support?orderId=*", route => {
       assert.equal(new URL(route.request().url()).searchParams.get("orderId"), confirmed.id);
       return route.fulfill({headers:notificationHeaders,json:{items:supportTicket ? [supportTicket] : []}});
@@ -547,7 +557,7 @@ const assert = require("node:assert/strict");
         orderId:confirmed.id, suborderId:confirmed.subOrders[1].id, kind:"missing_item", description:"One item was missing.",
       });
       supportRequests++;
-      supportTicket = {id:"support-fixture",suborderId:confirmed.subOrders[1].id,status:"open",note:""};
+      supportTicket = {id:"support-fixture",suborderId:confirmed.subOrders[1].id,status:"open",note:"",version:0};
       return route.fulfill({headers:notificationHeaders,json:supportTicket});
     });
     await tracking.getByRole("button",{name:"Get help",exact:true}).nth(1).click();
@@ -559,10 +569,14 @@ const assert = require("node:assert/strict");
     await tracking.getByRole("button",{name:"Send support request",exact:true}).click();
     await tracking.getByText("Support request · Open",{exact:true}).waitFor();
     await tracking.getByText("We’re checking with the shop.",{exact:true}).waitFor();
+    await tracking.getByLabel("Reply to support",{exact:true}).fill("Thanks for checking.");
+    await tracking.getByRole("button",{name:"Send reply",exact:true}).click();
+    await tracking.getByText("Thanks for checking.",{exact:true}).waitFor();
     supportTicket = {...supportTicket,status:"resolved",note:"The shop reviewed your request."};
     await tracking.getByRole("button",{name:"Refresh support status",exact:true}).click();
     await tracking.getByText("Support request · Resolved",{exact:true}).waitFor();
     await tracking.getByText(supportTicket.note,{exact:true}).waitFor();
+    await tracking.getByLabel("Reply to support",{exact:true}).waitFor({state:"hidden"});
     assert.equal(supportRequests,1);
     await tracking.getByRole("button",{name:"Hide order help",exact:true}).click();
     await tracking.getByRole("button",{name:"View receipt code"}).click();

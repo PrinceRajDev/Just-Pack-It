@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { buyerApi, type OrderSupportMessage, type OrderSupportTicket } from "./api";
+import { ApiError, buyerApi, type OrderSupportMessage, type OrderSupportTicket } from "./api";
 import { theme } from "./theme";
 
 const reasons = [
@@ -15,6 +15,12 @@ const statusLabels: Record<OrderSupportTicket["status"], string> = {
   in_progress: "In progress",
   resolved: "Resolved",
 };
+// This UUID identifies a retryable message, without granting access to the ticket.
+const replyKey = () => globalThis.crypto?.randomUUID?.() ??
+  "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, char => {
+    const nibble = Math.floor(Math.random() * 16);
+    return (char === "x" ? nibble : (nibble & 3) | 8).toString(16);
+  });
 
 export function BuyerOrderSupport({ token, orderId, suborderId }: { token: string; orderId: string; suborderId: string }) {
   const [open, setOpen] = useState(false);
@@ -24,6 +30,8 @@ export function BuyerOrderSupport({ token, orderId, suborderId }: { token: strin
   const [ticket, setTicket] = useState<OrderSupportTicket>();
   const [messages, setMessages] = useState<OrderSupportMessage[]>([]);
   const [nextMessage, setNextMessage] = useState<string>();
+  const [reply, setReply] = useState("");
+  const pendingReply = useRef<{body: string; key: string}>(undefined);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
@@ -33,7 +41,11 @@ export function BuyerOrderSupport({ token, orderId, suborderId }: { token: strin
     setBusy(true);
     setError("");
     try { await action(); }
-    catch { setError("Couldn’t reach order support. Please try again."); }
+    catch (reason) {
+      setError(reason instanceof ApiError && reason.status === 409
+        ? "The ticket changed. Refresh support status before trying again."
+        : "Couldn’t reach order support. Please try again.");
+    }
     finally { lock.current = false; setBusy(false); }
   };
   const loadMessages = async (id: string, cursor?: string) => {
@@ -66,6 +78,19 @@ export function BuyerOrderSupport({ token, orderId, suborderId }: { token: strin
       await loadMessages(saved.id);
     });
   };
+  const sendReply = () => {
+    const body = reply.trim();
+    if (!ticket || ticket.status === "resolved" || !body) return;
+    void run(async () => {
+      const pending = pendingReply.current?.body === body ? pendingReply.current : {body, key: replyKey()};
+      pendingReply.current = pending;
+      const result = await buyerApi.replyToOrderSupport(token, ticket, body, pending.key);
+      pendingReply.current = undefined;
+      setReply("");
+      setTicket({ ...ticket, version: result.version });
+      await loadMessages(ticket.id);
+    });
+  };
   return <View style={styles.section}>
     <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} disabled={busy} style={styles.action} onPress={() => {
       setOpen(!open);
@@ -86,6 +111,12 @@ export function BuyerOrderSupport({ token, orderId, suborderId }: { token: strin
         {nextMessage && <Pressable accessibilityRole="button" disabled={busy} onPress={() => void run(() => loadMessages(ticket.id, nextMessage))} style={styles.action}>
           <Text style={styles.actionText}>Load more messages</Text>
         </Pressable>}
+        {ticket.status !== "resolved" && <>
+          <TextInput accessibilityLabel="Reply to support" placeholder="Reply to support" placeholderTextColor={theme.muted} multiline maxLength={2000} editable={!busy} value={reply} onChangeText={setReply} style={styles.input} />
+          <Pressable accessibilityRole="button" disabled={busy || !reply.trim()} onPress={sendReply} style={[styles.action, styles.primary, !reply.trim() && styles.disabled]}>
+            <Text style={styles.primaryText}>Send reply</Text>
+          </Pressable>
+        </>}
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => void check()} style={styles.action}>
           <Text style={styles.actionText}>Refresh support status</Text>
         </Pressable>
@@ -111,6 +142,7 @@ const styles = StyleSheet.create({
   actionText: { color: theme.accentInk, fontWeight: "600" },
   primary: { backgroundColor: theme.accentInk, alignItems: "center" },
   primaryText: { color: theme.onPrimary, fontWeight: "700" },
+  disabled: { opacity: 0.55 },
   copy: { color: theme.ink, lineHeight: 20 },
   error: { color: theme.error },
   input: { minHeight: 84, textAlignVertical: "top", padding: 12, borderWidth: 1, borderColor: theme.border, borderRadius: 12, color: theme.ink, backgroundColor: theme.canvas },

@@ -1,5 +1,5 @@
 import { theme, themedStyles } from "./theme";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { StyleSheet, ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, TextInput, View, type TextInputProps } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { ApiError, buyerApi, marketApi, type Category, type ServiceArea, type Session } from "./api";
@@ -35,6 +35,7 @@ const setupCopy = {
 
 export function SellerAccess({ close, initialSession }: { close: () => void; initialSession?: Session }) {
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
+  const approvalHandledFor = useRef<string>(undefined);
   const [step, setStep] = useState<Step>(() => initialSession ? "status" : "login");
   const [session, setSession] = useState<Session | null>(() => initialSession ?? null);
   const [shop, setShop] = useState<Awaited<ReturnType<typeof buyerApi.sellerShop>>>();
@@ -126,7 +127,15 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   useEffect(() => {
     if (!session) return;
     let active = true;
-    void buyerApi.sellerShop(session.token).then(value => {
+    void buyerApi.sellerShop(session.token).then(async value => {
+      if (active && value.status === "approved" && approvalHandledFor.current !== session.token) {
+        const approvalKey = `jpi.seller.approval-seen.${session.userId}`;
+        const seen = await storage.getItemAsync(approvalKey).catch(() => null);
+        if (!active) return;
+        approvalHandledFor.current = session.token;
+        if (seen === "yes") setWorkspaceOpen(true);
+        else await storage.setItemAsync(approvalKey, "yes").catch(() => undefined);
+      }
       if (active) { setShop(value); setShopError(""); }
     }).catch(reason => {
       if (!active) return;
@@ -236,7 +245,12 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
   };
   const back = () => {
     if (busy) return;
-    if (workspaceOpen) { setWorkspaceOpen(false); refreshShop(); return; }
+    if (workspaceOpen) {
+      if (shop?.status === "approved") { close(); return; }
+      setWorkspaceOpen(false);
+      refreshShop();
+      return;
+    }
     if (picker) { setPicker(null); return; }
     if (editingReview && (step === "account" || step === "shop" || step === "delivery")) {
       setEditingReview(false);

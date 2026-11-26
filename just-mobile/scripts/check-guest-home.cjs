@@ -219,7 +219,17 @@ const assert = require("node:assert/strict");
     approvalStatus = "approved";
     await page.getByRole("button", { name: "Refresh shop status", exact: true }).click();
     await page.getByRole("heading", { name: "Your shop is approved", exact: true }).waitFor();
+    await page.route("**/seller/**", route => new URL(route.request().url()).pathname === "/seller/shop"
+      ? route.fallback()
+      : route.fulfill({json:{},headers:sellerHeaders}));
+    await page.getByRole("button",{name:"Close",exact:true}).click();
+    await page.getByRole("button",{name:"Seller access",exact:true}).click();
+    const reopenedSeller = page.getByTestId("native-seller-workspace");
+    await reopenedSeller.waitFor();
+    await reopenedSeller.getByRole("button",{name:"Close",exact:true}).click();
     approvalStatus = "pending";
+    await page.getByRole("button",{name:"Seller access",exact:true}).click();
+    await page.getByRole("heading",{name:"Your shop is under review",exact:true}).waitFor();
     assert.equal(await page.evaluate(() => JSON.parse(sessionStorage.getItem("jpi.seller.session")).role),"seller");
     assert.equal(await page.evaluate(() => sessionStorage.getItem("jpi.buyer.session")),null);
     await page.getByRole("button",{name:"Close",exact:true}).click();

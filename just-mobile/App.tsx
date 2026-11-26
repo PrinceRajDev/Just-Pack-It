@@ -445,7 +445,7 @@ export default function App() {
       browseAsGuest={browseAsGuest}
     />
   ) : screen === "orders" ? (
-    <BuyerOrders session={session} back={leaveOrders} signIn={openAccount} browse={goHome} reorder={area ? {areaId:area.id,bag,add} : undefined} />
+    <BuyerOrders session={session} back={leaveOrders} signIn={openAccount} browse={goHome} reorder={area ? {areaId:area.id,bag,add,openBag} : undefined} />
   ) : screen === "confirmation" || screen === "tracking" ? (
     currentConfirmation && session ? (
       screen === "tracking" ? (

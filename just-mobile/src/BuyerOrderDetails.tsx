@@ -117,7 +117,7 @@ export function BuyerOrderDetails({
   token: string;
   id: string;
   back: () => void;
-  reorder?: {areaId: string; bag: (Product & {quantity: number})[]; add: (product: Product, quantity: number) => void};
+  reorder?: {areaId: string; bag: (Product & {quantity: number})[]; add: (product: Product, quantity: number) => void; openBag: () => void};
 }) {
   const [order, setOrder] = useState<BuyerOrder | null>(null);
   const [error, setError] = useState("");

@@ -7,10 +7,11 @@ type Preview = { key: string; name: string; oldPrice: number; qty: number; produ
 const keyFor = (id: string, variant?: string) => variant ? `${id}:${variant}` : id;
 const price = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
-export function BuyerReorder({ order, token, areaId, bag, add }: {
+export function BuyerReorder({ order, token, areaId, bag, add, openBag }: {
   order: BuyerOrder; token: string; areaId: string;
   bag: (Product & {quantity: number})[];
   add: (product: Product, quantity: number) => void;
+  openBag: () => void;
 }) {
   const [preview, setPreview] = useState<Preview[]>();
   const [busy, setBusy] = useState(false);
@@ -87,7 +88,10 @@ export function BuyerReorder({ order, token, areaId, bag, add }: {
       }}><Text style={s.buttonText}>Add {count} {count === 1 ? "item" : "items"} to bag</Text></Pressable>}
       <Pressable accessibilityRole="button" onPress={() => setPreview(undefined)} style={s.button}><Text style={s.buttonText}>Close review</Text></Pressable>
     </> : <>
-      {!!added && <Text accessibilityLiveRegion="polite" style={s.copy}>Added {added} {added === 1 ? "item" : "items"} to your bag.</Text>}
+      {!!added && <>
+        <Text accessibilityLiveRegion="polite" style={s.copy}>Added {added} {added === 1 ? "item" : "items"} to your bag.</Text>
+        <Pressable accessibilityRole="button" onPress={openBag} style={s.button}><Text style={s.buttonText}>View bag</Text></Pressable>
+      </>}
       {!!error && <Text accessibilityRole="alert" style={s.copy}>{error}</Text>}
       <Pressable accessibilityRole="button" disabled={busy} onPress={() => void review()} style={s.button}><Text style={s.buttonText}>{busy ? "Checking prices and stock…" : "Buy again"}</Text></Pressable>
     </>}

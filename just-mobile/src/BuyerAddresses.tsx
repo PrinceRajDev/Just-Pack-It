@@ -14,6 +14,7 @@ const fields: { key: keyof Draft; label: string }[] = [{ key: "label", label: "L
 const hindiFields: Record<keyof Draft, string> = {
   label: "पते का नाम", line1: "मकान, इमारत और सड़क", locality: "इलाका", city: "शहर", pincode: "पिन कोड",
 };
+const normalizePin = (value: string) => value.replace(/[०-९]/g, digit => String(digit.charCodeAt(0) - 0x0966));
 type CheckoutEditor = {
   address?: Address;
   isDefault: boolean;
@@ -120,7 +121,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area }: { token:
         <Text style={s.editorLabel}>{t(key === "line1" ? "Flat, building and street" : key === "label" ? "Label" : label, hindiFields[key])}</Text>
         <TextInput editable={!busy} accessibilityLabel={t(label, hindiFields[key])} value={draft[key]}
           onChangeText={value => {
-            setDraft(old => old ? {...old, [key]: value} : old);
+            setDraft(old => old ? {...old, [key]: key === "pincode" ? normalizePin(value) : value} : old);
             setFieldErrors(old => ({...old, [key]: undefined}));
           }}
           placeholder={key === "line1" ? t("Flat / house, building, street", "फ़्लैट / मकान, इमारत, सड़क") : undefined}

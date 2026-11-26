@@ -240,6 +240,8 @@ const assert = require("node:assert/strict");
     await page.getByLabel("पिन कोड", { exact: true }).fill("123");
     await page.getByRole("button", { name: "पता सहेजें", exact: true }).click();
     await page.getByText("6 अंकों का सही पिन कोड दर्ज करें।", { exact: true }).waitFor();
+    await page.getByLabel("पिन कोड", { exact: true }).fill("८४७२३८");
+    assert.equal(await page.getByLabel("पिन कोड", { exact: true }).inputValue(), "847238");
     await page.getByRole("button", { name: "पतों की सूची पर वापस जाएँ", exact: true }).click();
     await page.getByRole("button", { name: "खाते पर वापस जाएँ", exact: true }).last().click();
     await page.getByRole("button", { name: "भाषा", exact: true }).click();

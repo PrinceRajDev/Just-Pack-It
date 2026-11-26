@@ -37,9 +37,15 @@ const assert = require("node:assert/strict");
       if (query) records = records.filter(item => item.name.toLowerCase().includes(query));
       await route.fulfill({ json: records, headers: { "access-control-allow-origin": "*" } });
     });
-    await page.route("**/auth/registration-options", route => route.fulfill({
-      json:{emailOtpRequired:true,emailOtpAvailable:true},headers:{"access-control-allow-origin":"*"},
-    }));
+    let failRegistrationOptions = false;
+    await page.route("**/auth/registration-options", route => {
+      const headers = {"access-control-allow-origin":"*"};
+      if (failRegistrationOptions) {
+        failRegistrationOptions = false;
+        return route.fulfill({status:503,json:{message:"Try again"},headers});
+      }
+      return route.fulfill({json:{emailOtpRequired:true,emailOtpAvailable:true},headers});
+    });
     await page.goto(process.env.PREVIEW_URL || "http://localhost:8084", { timeout: 60000 });
     const loader = page.getByRole("heading", {name:"Loading JustPackIt…",exact:true});
     await loader.waitFor();
@@ -133,6 +139,7 @@ const assert = require("node:assert/strict");
     await page.getByRole("textbox",{name:"Search products, shops and brands"}).fill("dog");
     await page.getByRole("button",{name:"View dog food",exact:true}).waitFor();
     for (const [tab,heading] of [["Bag","Your bag is waiting."],["Orders","Sign in to view orders"],["Account","Your neighbourhood starts here."],["Browse","Search products, shops & brands"],["Home","Shop by category"]]) {
+      if (tab === "Account") failRegistrationOptions = true;
       await page.getByText(tab,{exact:true}).click();
       if (tab === "Browse") await page.getByPlaceholder(heading).waitFor(); else await page.getByText(heading,{exact:true}).waitFor();
       if (tab === "Account") {
@@ -143,7 +150,18 @@ const assert = require("node:assert/strict");
         await page.getByRole("button",{name:"Create account",exact:true}).click();
         const registration = page.getByTestId("buyer-sign-up");
         await registration.getByRole("heading",{name:"Account details",exact:true}).waitFor();
+        const signupName = registration.getByLabel("Your name", {exact:true});
+        await signupName.fill("Aditi Test");
+        await registration.getByRole("button",{name:"Retry registration settings",exact:true}).click();
         await registration.getByRole("heading",{name:"Verify your email",exact:true}).waitFor();
+        assert.equal(await signupName.inputValue(), "Aditi Test");
+        const confirmPassword = registration.getByLabel("Confirm password", {exact:true});
+        await registration.getByLabel("Password", {exact:true}).fill("fixture-password");
+        await confirmPassword.fill("another-password");
+        const mismatch = registration.getByText("Passwords must match.", {exact:true});
+        await mismatch.waitFor();
+        await confirmPassword.fill("fixture-password");
+        await mismatch.waitFor({state:"hidden"});
         assert.equal(await registration.getByRole("button",{name:"Create account",exact:true}).isDisabled(),true);
         await registration.screenshot({path:path.join(output,"buyer-signup-390.png")});
         await registration.getByRole("button",{name:"Back to sign in",exact:true}).click();

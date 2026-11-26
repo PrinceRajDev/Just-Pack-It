@@ -453,7 +453,7 @@ export default function App() {
   ) : screen === "confirmation" || screen === "tracking" ? (
     currentConfirmation && session ? (
       screen === "tracking" ? (
-        <BuyerOrderDetails token={session.token} id={currentConfirmation.order.id} back={() => setScreen("confirmation")} />
+        <BuyerOrderDetails token={session.token} id={currentConfirmation.order.id} back={() => setScreen("confirmation")} reorder={area ? {areaId:area.id,bag,add,openBag} : undefined} />
       ) : (
         <BuyerOrderConfirmation
           order={currentConfirmation.order}

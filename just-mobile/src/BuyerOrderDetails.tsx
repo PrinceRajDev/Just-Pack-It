@@ -179,6 +179,7 @@ export function BuyerOrderDetails({
           shop.deliveryState === "out_for_delivery",
       );
   const delivered = activeShops.filter((shop) => shop.status === "delivered");
+  const past = !!order && isPastOrder(order);
 
   return (
     <View style={s.screen} testID="buyer-order-details">
@@ -221,20 +222,8 @@ export function BuyerOrderDetails({
               <Text style={s.shopName}>Taking a little longer</Text>
               <Text style={s.delayCopy}>{delayedShop.shopName} is still preparing your items. We’ll update you when the status changes.</Text>
             </View>}
-            <View style={s.payment}>
-              <View style={s.paymentLabel}><OrderSymbol name="wallet" color={theme.accentInk} /><Text style={s.paymentCopy}>{cod ? "Cash on Delivery" : "Online payment"}</Text></View>
-              <Text style={s.amount}>
-                {cod ? due > 0 ? `${money(due)} due at delivery` : cashPaid > 0 ? `${money(cashPaid)} paid` : "₹0 due"
-                  : order.paymentStatus === "paid" ? `${money(order.onlinePaidAmount ?? order.total)} paid` : `${money(order.total)} · ${order.paymentStatus.replaceAll("_", " ")}`}
-              </Text>
-              {cod && <Text style={s.paymentCopy}>{statusKey === "cancelled" && !cashPaid
-                ? "Nothing to pay. This COD order was cancelled."
-                : statusKey === "partially_cancelled" && due > 0
-                  ? `${order.subOrders.filter(shop => shop.status === "cancelled").map(shop => shop.shopName).join(", ")} items and delivery fees removed.`
-                  : due > 0 ? "Pay the exact amount to your delivery partner."
-                    : cashPaid > 0 ? "Payment collected at delivery." : "No cash payment is outstanding."}</Text>}
-            </View>
-            {!error && receiptShops.length === 0 && pending.length > 0 && <>
+            {!error && !past && receiptShops.length === 0 && pending.length > 0 && <>
+              <Text style={s.muted}>For rider deliveries, the receipt code becomes available when your order is out for delivery.</Text>
               <Pressable accessibilityRole="button" accessibilityState={{ expanded: receiptInfo }} style={[s.refresh, s.sage]} onPress={() => setReceiptInfo(value => !value)}>
                 <Text style={s.label}>View receipt code</Text>
               </Pressable>
@@ -263,7 +252,20 @@ export function BuyerOrderDetails({
                 <Text style={s.label}>View delivered order</Text>
               </Pressable>
             )}
-            {reorder && isPastOrder(order) && <BuyerReorder order={order} token={token} {...reorder} />}
+            {reorder && !error && past && activeShops.length > 0 && <BuyerReorder order={order} token={token} {...reorder} />}
+            <View style={s.payment}>
+              <View style={s.paymentLabel}><OrderSymbol name="wallet" color={theme.accentInk} /><Text style={s.paymentCopy}>{cod ? "Cash on Delivery" : "Online payment"}</Text></View>
+              <Text style={s.amount}>
+                {cod ? due > 0 ? `${money(due)} due at delivery` : cashPaid > 0 ? `${money(cashPaid)} paid` : "₹0 due"
+                  : order.paymentStatus === "paid" ? `${money(order.onlinePaidAmount ?? order.total)} paid` : `${money(order.total)} · ${order.paymentStatus.replaceAll("_", " ")}`}
+              </Text>
+              {cod && <Text style={s.paymentCopy}>{statusKey === "cancelled" && !cashPaid
+                ? "Nothing to pay. This COD order was cancelled."
+                : statusKey === "partially_cancelled" && due > 0
+                  ? `${order.subOrders.filter(shop => shop.status === "cancelled").map(shop => shop.shopName).join(", ")} items and delivery fees removed.`
+                  : due > 0 ? "Pay the exact amount to your delivery partner."
+                    : cashPaid > 0 ? "Payment collected at delivery." : "No cash payment is outstanding."}</Text>}
+            </View>
             {order.subOrders.map((shop) => (
               <View key={shop.id} style={{ gap: 8 }}>
                 <ShopCard

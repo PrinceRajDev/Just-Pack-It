@@ -600,6 +600,14 @@ const assert = require("node:assert/strict");
     await tracking.getByText("The order is still missing an item.",{exact:true}).waitFor();
     assert.equal(supportRequests,1);
     await tracking.getByRole("button",{name:"Hide order help",exact:true}).click();
+    const precedesPayment = async (buttonName) => {
+      const payment = await tracking.getByText("Cash on Delivery", {exact:true}).elementHandle();
+      assert.ok(await tracking.getByRole("button", {name:buttonName, exact:true}).evaluate(
+        (button, paymentLabel) => Boolean(button.compareDocumentPosition(paymentLabel) & Node.DOCUMENT_POSITION_FOLLOWING),
+        payment,
+      ));
+    };
+    await precedesPayment("View receipt code");
     await tracking.getByRole("button",{name:"View receipt code"}).click();
     assert.equal(receiptRequests,0);
     await tracking.getByRole("button",{name:"Received and paid"}).click();
@@ -616,6 +624,7 @@ const assert = require("node:assert/strict");
     assert.equal(await tracking.getByLabel("6 2 8 4 1 5",{exact:true}).count(),0);
 
     await tracking.getByText("Sharma Kirana Store · Delivered",{exact:true}).waitFor();
+    await precedesPayment("Buy again");
     await page.getByRole("button", { name: "Back from order details" }).click();
     await confirmation
       .getByRole("button", { name: "Continue Shopping" })

@@ -6,6 +6,7 @@ import { CheckoutHeading } from "./CheckoutPresentation";
 import { buyerApi, type Address, type BuyerProfile } from "./api";
 
 import { MarketIcon } from "./MarketIcon";
+import { CurrentLocationButton } from "./CurrentLocationButton";
 import * as storage from "./deviceStorage";
 
 type Draft = Omit<Address, "id" | "version" | "location">;
@@ -166,10 +167,15 @@ export function BuyerAddresses({ token, back, checkout, userId, area, fromHome }
           <View style={s.editorRow}>{field("city")}{field("pincode")}</View>
           <View style={s.editorField}>
             <Text style={s.editorLabel}>{t("Delivery map pin", "डिलीवरी का मैप पिन")}</Text>
+            <CurrentLocationButton disabled={busy} hindi={hindi} onLocation={({latitude,longitude}) => {
+              if (lock.current) return;
+              setPinDraft(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+              setPinError("");
+            }} />
             <TextInput accessibilityLabel={t("Delivery map pin", "डिलीवरी का मैप पिन")} style={[s.editorInput, !!pinError && s.invalidInput]}
               editable={!busy} value={pinText} onChangeText={value => {setPinDraft(value);setPinError("");}}
               placeholder="26.35, 86.07" autoCorrect={false} maxLength={60} />
-            <Text style={s.copy}>{t("Paste latitude, longitude from your address in Maps. Rider delivery requires a map pin.", "मैप से अपने पते का अक्षांश, देशांतर पेस्ट करें। राइडर डिलीवरी के लिए मैप पिन ज़रूरी है।")}</Text>
+            <Text style={s.copy}>{t("Set the pin at your drop-off point, or paste its latitude and longitude from Maps. Delivery is available within 6 km of the shop.", "डिलीवरी की जगह का मैप पिन लगाएँ या मैप से अक्षांश और देशांतर पेस्ट करें। दुकान से 6 किमी तक डिलीवरी उपलब्ध है।")}</Text>
             {!!pinError && <Text accessibilityRole="alert" style={s.fieldError}>{pinError}</Text>}
           </View>
           {checkout && <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: makeDefault }} aria-checked={makeDefault} disabled={busy} onPress={() => setMakeDefault(value => !value)} style={s.link}>

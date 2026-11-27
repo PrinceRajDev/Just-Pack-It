@@ -129,7 +129,9 @@ const assert = require("node:assert/strict");
           assert.equal(input.version, buyer.version);
           data = Object.assign(buyer, { name: input.name, version: input.version + 1 });
         } else if (resource === "addresses" && method === "POST") {
-          data = { ...route.request().postDataJSON(), id: "other", version: 0 };
+          const input = route.request().postDataJSON();
+          assert.deepEqual(input.location, {type:"Point",coordinates:[73.8077,18.5074]});
+          data = { ...input, id: "other", version: 0 };
           addresses.push(data);
         } else if (resource === "addresses/home" && method === "PATCH") {
           const input = route.request().postDataJSON();
@@ -504,6 +506,10 @@ const assert = require("node:assert/strict");
     await page
       .getByRole("checkbox", { name: "Set as default on this device" })
       .click();
+    await page.context().grantPermissions(["geolocation"]);
+    await page.context().setGeolocation({latitude:18.5074,longitude:73.8077,accuracy:12});
+    await page.getByRole("button",{name:"Use current location",exact:true}).click();
+    await page.waitForFunction(() => document.querySelector('input[aria-label="Delivery map pin"]')?.value === "18.507400, 73.807700");
     await save.click();
     const other = picker.getByRole("radio", { name: "Other address" });
     await other.waitFor();

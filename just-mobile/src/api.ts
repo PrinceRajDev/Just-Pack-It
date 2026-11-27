@@ -79,6 +79,7 @@ async function searchPage<T>(kind: "products" | "shops", areaId: string, text: s
 }
 export const marketApi = {
   areas: () => getList<ServiceArea>("/areas", "delivery areas"),
+  resolveArea: (latitude: number, longitude: number) => get<{ recommendedAreaId?: string }>(`/location/resolve?lat=${latitude}&lng=${longitude}`),
   categories: () => getList<Category>("/categories", "categories"),
   shopsByIds: (ids: string[]) => getList<Shop>(`/catalogue/shops/by-ids?ids=${encodeURIComponent(ids.join(","))}`, "shops"),
   product: (id: string) => get<Product>(`/products/${encodeURIComponent(id)}`),

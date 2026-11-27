@@ -25,6 +25,7 @@ export type SellerShop = {
   openingHours: { day: number; opens: string; closes: string }[];
   categoryIds: string[]; serviceAreaIds: string[]; description?: string; coverImage?: string;
   deliveryFee?: number; minimumOrderAmount?: number; pickupNote?: string;
+  location?: { type: "Point"; coordinates: [number, number] };
 };
 export type SellerProduct = Product & { version: number; categoryId: string; subcategoryId?: string | null; active: boolean; mrp?: number | null };
 export type ProductInput = Pick<SellerProduct, "name" | "unit" | "categoryId" | "price" | "stock" | "active" | "mrp" | "description"> & { image?: string | null; subcategoryId?: string | null };
@@ -57,7 +58,7 @@ async function page<T>(token: string, path: string, cursor?: string) {
 export const sellerApi = {
   dashboard: (token: string) => request<Dashboard>("/seller/dashboard", token),
   shop: (token: string) => request<SellerShop>("/seller/shop", token),
-  saveProfile: (token: string, shop: SellerShop, input: Partial<Pick<SellerShop,"name"|"address"|"tagline"|"description"|"coverImage"|"serviceAreaIds"|"categoryIds">>) =>
+  saveProfile: (token: string, shop: SellerShop, input: Partial<Pick<SellerShop,"name"|"address"|"tagline"|"description"|"coverImage"|"serviceAreaIds"|"categoryIds"|"location">>) =>
     write<SellerShop>(token, "/seller/shop", "PATCH", { ...input, version: shop.version }),
   saveAvailability: (token: string, shop: SellerShop, input: Partial<Pick<SellerShop, "openingHours" | "temporarilyClosed" | "fulfilment" | "minimumOrderAmount" | "deliveryFee" | "pickupNote">>) =>
     write<SellerShop>(token, "/seller/shop/availability", "PATCH", { ...input, version: shop.version }),

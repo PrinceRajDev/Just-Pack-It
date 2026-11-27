@@ -32,6 +32,7 @@ import {
 } from "./src/api";
 import { BuyerAccount, BuyerOrders } from "./src/BuyerAccount";
 import { BuyerAddresses } from "./src/BuyerAddresses";
+import { CurrentLocationButton } from "./src/CurrentLocationButton";
 import { BuyerCheckout } from "./src/BuyerCheckout";
 import { BuyerOrderConfirmation } from "./src/BuyerOrderConfirmation";
 import { BuyerOrderDetails } from "./src/BuyerOrderDetails";
@@ -555,7 +556,7 @@ export default function App() {
             orders={openOrders}
           />
         )}
-        <AreaSheet
+        {picker && <AreaSheet
           open={picker}
           areas={areas}
           selected={area}
@@ -569,7 +570,7 @@ export default function App() {
             setScreen("home");
             void load(x);
           }}
-        />
+        />}
         {alertOrder?.kind === "buyer" && session?.token === alertOrder.token && (
           <Modal onRequestClose={closeAlertOrder}>
             <SafeAreaProvider>
@@ -2089,6 +2090,9 @@ function AreaSheet({
   choose: (x: ServiceArea) => void;
 }) {
   const available = areas.filter(item => item.active);
+  const [detectedId, setDetectedId] = useState<string>();
+  const [noCoverage, setNoCoverage] = useState(false);
+  const detected = available.find(item => item.id === detectedId);
   return (
     <Modal transparent visible={open} animationType="slide" onRequestClose={close}>
       <SafeAreaProvider>
@@ -2108,6 +2112,18 @@ function AreaSheet({
                 ? `${selected.name} is currently the only available browsing area.`
                 : "See nearby shops and products for the area you choose."}
             </Text>
+            <CurrentLocationButton onLocation={async ({latitude,longitude}, isActive) => {
+              setNoCoverage(false);
+              setDetectedId(undefined);
+              const {recommendedAreaId} = await marketApi.resolveArea(latitude,longitude);
+              if (!isActive()) return;
+              if (available.some(item => item.id === recommendedAreaId)) setDetectedId(recommendedAreaId);
+              else setNoCoverage(true);
+            }} />
+            {noCoverage && <Text accessibilityRole="alert" style={s.sheetCopy}>No nearby shops were found within 6 km. You can still choose a browsing area below.</Text>}
+            {detected && <Pressable accessibilityRole="button" style={s.areaRow} onPress={() => choose(detected)}>
+              <Text style={s.areaName}>Browse {detected.name}</Text>
+            </Pressable>}
             <ScrollView bounces={false} contentContainerStyle={s.areaOptions}>
               {!available.length && <BuyerStateCard title="We’re not here yet." copy="Shops aren’t available in this browsing area." tone="warning" icon="location" action="Back to marketplace" onAction={close} />}
               {available.map(item => {

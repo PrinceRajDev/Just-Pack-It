@@ -4,7 +4,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { adminApi, type AdminShop } from "./adminApi";
 import { ApiError, buyerApi, marketApi, onSessionExpired, type Session } from "./api";
 import { resolveImage } from "./images";
-import { LoadState, MutationFeedback, Row, SellerButton, SellerCard, SellerField, SellerScroll, styles, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
+import { LoadState, MutationFeedback, SellerButton, SellerCard, SellerField, SellerScroll, styles, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
 import { fulfilmentNames } from "./sellerApi";
 import { MarketIcon } from "./MarketIcon";
 import { theme, themedStyles } from "./theme";
@@ -108,12 +108,25 @@ function Approvals({token}:{token:string}) {
     list.reload();
   }} />;
   return <SellerScroll refreshing={list.loading && !!list.data} onRefresh={list.reload}>
-    <Text accessibilityRole="header" style={styles.section}>Pending seller approvals</Text>
-    {!!notice && <Text accessibilityLiveRegion="polite" style={styles.label}>{notice}</Text>}
+    <View style={styles.queueTop}>
+      <Text accessibilityRole="header" style={[styles.section,styles.grow]}>Pending seller approvals</Text>
+      <Pressable accessibilityRole="button" onPress={list.reload} disabled={list.loading || list.moreBusy} style={styles.tap}>
+        <Text style={styles.link}>{list.loading ? "Refreshing…" : "Refresh"}</Text>
+      </Pressable>
+    </View>
+    {!!notice && <Text accessibilityLiveRegion="polite" style={reviewStyles.notice}>{notice}</Text>}
     <LoadState loading={list.loading && !list.data} error={list.error} retry={list.reload} />
     {list.data && <SellerCard>
       {!list.data.items.length && <Text style={styles.copy}>No shops are waiting for review.</Text>}
-      {list.data.items.map(shop=><Row key={shop.id} title={shop.name} detail={shop.locality} onPress={()=>{setNotice("");setSelected(shop);}} />)}
+      {list.data.items.map((shop,index)=><Pressable key={shop.id} accessibilityRole="button" accessibilityLabel={`Review ${shop.name}`} onPress={()=>{setNotice("");setSelected(shop);}}
+        style={({pressed})=>[reviewStyles.shopRow,index>0 && reviewStyles.divider,pressed && styles.pressed]}>
+        <View style={overviewStyles.shopIcon}><MarketIcon name="store" /></View>
+        <View style={styles.grow}>
+          <Text style={styles.label}>{shop.name}</Text>
+          <Text style={styles.copy}>{shop.locality || shop.address || "Address not provided"}</Text>
+        </View>
+        <MarketIcon name="chevron-right" />
+      </Pressable>)}
       {!!list.data.next && <SellerButton label={list.moreBusy ? "Loading…" : "Load more"} onPress={list.more} disabled={list.moreBusy} soft />}
     </SellerCard>}
   </SellerScroll>;
@@ -140,13 +153,24 @@ function Review({token,shop,close,reload,saved}:{token:string;shop:AdminShop;clo
     <SellerCard>
       <Text accessibilityRole="header" style={styles.section}>{shop.name}</Text>
       {!!cover && <Image source={{uri:cover}} accessibilityLabel="Shop cover photo" style={styles.heroPhoto} resizeMode="cover" />}
+      <Text style={styles.label}>Shop address</Text>
       <Text style={styles.copy}>{shop.address || shop.locality || "No address provided"}</Text>
       {!!shop.location && <SellerButton label="Check shop pin on map" onPress={map} disabled={mutation.busy} soft />}
       {!!shop.description && <Text style={styles.copy}>{shop.description}</Text>}
       {!!shop.since && <Text style={styles.copy}>Opened in {shop.since}</Text>}
-      <Text style={styles.label}>Categories</Text><Text style={styles.copy}>{shop.categories.join(", ") || "None listed"}</Text>
-      <Text style={styles.label}>Service areas</Text><Text style={styles.copy}>{shop.serviceAreaIds.map(id=>areas.data?.find(area=>area.id===id)?.name ?? id).join(", ") || "None listed"}</Text>
-      <Text style={styles.label}>Fulfilment</Text><Text style={styles.copy}>{shop.fulfilment.map(method=>fulfilmentNames[method as keyof typeof fulfilmentNames] ?? method).join(", ") || "None listed"}</Text>
+    </SellerCard>
+    <SellerCard>
+      <Text accessibilityRole="header" style={styles.section}>Shop operations</Text>
+      <View style={reviewStyles.detail}><Text style={styles.label}>Categories</Text><Text style={styles.copy}>{shop.categories.join(", ") || "None listed"}</Text></View>
+      <View style={reviewStyles.detail}>
+        <Text style={styles.label}>Service areas</Text>
+        <Text style={styles.copy}>{areas.loading ? "Loading service areas…" : shop.serviceAreaIds.map(id=>areas.data?.find(area=>area.id===id)?.name ?? "Area unavailable").join(", ") || "None listed"}</Text>
+        {!!areas.error && <SellerButton label="Retry service areas" onPress={areas.reload} soft />}
+      </View>
+      <View style={reviewStyles.detail}><Text style={styles.label}>Fulfilment</Text><Text style={styles.copy}>{shop.fulfilment.map(method=>fulfilmentNames[method as keyof typeof fulfilmentNames] ?? method).join(", ") || "None listed"}</Text></View>
+    </SellerCard>
+    <SellerCard>
+      <Text accessibilityRole="header" style={styles.section}>{decision==="approved" ? "Confirm approval" : decision==="rejected" ? "Request changes" : "Review decision"}</Text>
       <MutationFeedback error={mutation.error} onReload={reload} />
       {!decision ? <>
         <SellerButton label="Approve shop" disabled={mutation.busy} onPress={()=>setDecision("approved")} />
@@ -160,3 +184,10 @@ function Review({token,shop,close,reload,saved}:{token:string;shop:AdminShop;clo
     </SellerCard>
   </SellerScroll>;
 }
+
+const reviewStyles=themedStyles(()=>StyleSheet.create({
+  shopRow:{minHeight:64,flexDirection:"row",alignItems:"center",gap:12,paddingVertical:8},
+  divider:{borderTopWidth:1,borderColor:theme.border},
+  detail:{gap:4,paddingTop:8,borderTopWidth:1,borderColor:theme.border},
+  notice:{padding:12,borderRadius:12,backgroundColor:theme.success,color:theme.ink,fontWeight:"600"},
+}));

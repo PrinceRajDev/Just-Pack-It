@@ -106,18 +106,19 @@ function SellerIcon({name,color}: {name:SellerIconName;color:string}) {
 
 export function SellerWorkspace({ session, back, signOut, expired, startInOrders, initialOrder }: { session: Session; back: () => void; signOut: () => Promise<void>; expired: () => void; startInOrders?: boolean; initialOrder?: SellerOrder }) {
   const [tab, setTab] = useState<Tab>(startInOrders ? "Orders" : "Home");
-  const [orderFromAlert, setOrderFromAlert] = useState(initialOrder);
+  const [focusedOrder, setFocusedOrder] = useState(initialOrder);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [group, setGroup] = useState<OrderGroup>("Active");
   const [stockFilter, setStockFilter] = useState<StockFilter>();
   useEffect(() => onSessionExpired(token => { if (token === session.token) expired(); }), [session.token, expired]);
   useAndroidBack(() => {
     if (tab === "Home") return false;
+    setFocusedOrder(undefined);
     setTab("Home");
     return true;
   }, 20);
-  const goOrders = (group: OrderGroup) => { setGroup(group); setTab("Orders"); };
-  const goTab = (next: Tab) => { setStockFilter(undefined); setTab(next); };
+  const goOrders = (group: OrderGroup, order?: SellerOrder) => { setFocusedOrder(order); setGroup(group); setTab("Orders"); };
+  const goTab = (next: Tab) => { setFocusedOrder(undefined); setStockFilter(undefined); setTab(next); };
   return <View style={styles.screen} testID="native-seller-workspace">
     <View style={styles.header}>
       <View style={styles.grow}><Text style={styles.eyebrow}>JustPackIt Seller</Text><Text accessibilityRole="header" style={styles.heading}>{tab === "Home" ? "Shop counter" : tab}</Text></View>
@@ -128,7 +129,7 @@ export function SellerWorkspace({ session, back, signOut, expired, startInOrders
       {tab === "Home" && (confirmSignOut
         ? <SellerScroll><SellerAccountCard name={session.name} signOut={signOut} onCancel={() => setConfirmSignOut(false)} /></SellerScroll>
         : <SellerHome token={session.token} orders={goOrders} open={goTab} openStock={filter => { setStockFilter(filter); setTab("Catalogue"); }} />)}
-      {tab === "Orders" && <SellerOrders token={session.token} group={group} setGroup={setGroup} initialOrder={orderFromAlert} onCloseInitialOrder={() => setOrderFromAlert(undefined)} />}
+      {tab === "Orders" && <SellerOrders token={session.token} group={group} setGroup={setGroup} initialOrder={focusedOrder} onCloseInitialOrder={() => setFocusedOrder(undefined)} />}
       {tab === "Catalogue" && <SellerCatalogue token={session.token} stockFilter={stockFilter} />}
       {tab === "Settlements" && <SellerSettlements token={session.token} />}
       {tab === "Shop" && <SellerShopSettings token={session.token} name={session.name} signOut={signOut} />}
@@ -143,9 +144,21 @@ export function SellerWorkspace({ session, back, signOut, expired, startInOrders
   </View>;
 }
 
-function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:OrderGroup)=>void;open:(tab:Tab)=>void;openStock:(filter:StockFilter)=>void}) {
+function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:OrderGroup,order?:SellerOrder)=>void;open:(tab:Tab)=>void;openStock:(filter:StockFilter)=>void}) {
   const shop = useSellerData(() => sellerApi.shop(token), token);
   const dashboard = useSellerData(() => sellerApi.dashboard(token), token);
+  const attention = useSellerPages(sellerApi.orders, token);
+  const queues = [
+    {title:"Accept", group:"New"},
+    {title:"Pack", group:"Preparing"},
+    {title:"Handoff", group:"Ready"},
+  ] as const;
+  const pending = queues.map(queue => ({
+    ...queue,
+    rows: (attention.data?.items ?? []).filter(order =>
+      !order.testMode && (orderGroups[queue.group] as readonly OrderStatus[]).includes(order.status)
+      && order.delivery?.state !== "picked_up"),
+  }));
   const counts = dashboard.data?.counts;
   const work = [
     {group:"Orders", title:"New orders", count:counts?.placed ?? 0, action:"Review orders to accept", open:() => orders("New"), icon:"orders", tint:theme.selected},
@@ -156,8 +169,8 @@ function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:O
     {group:"Orders", title:"On the way", count:counts?.out_for_delivery ?? 0, action:"View active deliveries", open:() => orders("Out for delivery"), icon:"orders", tint:theme.hero},
   ] satisfies {group:"Orders" | "Inventory";title:string;count:number;action:string;open:()=>void;icon:SellerIconName;tint:string}[];
   const next = dashboard.error ? undefined : work.find(item => item.count > 0);
-  const refresh = () => { shop.reload(); dashboard.reload(); };
-  return <SellerScroll refreshing={shop.loading || dashboard.loading} onRefresh={refresh}>
+  const refresh = () => { shop.reload(); dashboard.reload(); attention.reload(); };
+  return <SellerScroll refreshing={shop.loading || dashboard.loading || attention.loading} onRefresh={refresh}>
     {shop.data && <View style={styles.hero}>
       <View style={styles.heroTop}>
         <View style={styles.grow}>
@@ -180,10 +193,30 @@ function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:O
     <LoadState loading={shop.loading && !shop.data} error={shop.error} retry={shop.reload} />
     {shop.data && shop.data.status !== "approved" && <BuyerStateCard title={sellerShopApproval[shop.data.status]} copy={shop.data.review?.reason || "You can prepare your catalogue and shop details while your shop status is reviewed."} tone="warning" compact icon="shop" action="Shop settings" onAction={() => open("Shop")} />}
     <LoadState loading={dashboard.loading && !dashboard.data} error={dashboard.error} retry={dashboard.reload} />
+    <Text accessibilityRole="header" style={styles.section}>Needs attention</Text>
+    <LoadState loading={attention.loading && !attention.data} error={attention.error} retry={attention.reload} />
+    {attention.data && (
+      <SellerCard>
+        {!pending.some(queue => queue.rows.length) && <Text style={styles.copy}>
+          {attention.data.next ? "No pending work in the orders shown." : "No orders waiting for acceptance, packing or handoff."}
+        </Text>}
+        {pending.filter(queue => queue.rows.length).map(queue => (
+          <View key={queue.group} style={styles.workGroup}>
+            <Text accessibilityRole="header" style={styles.workGroupTitle}>{queue.title}</Text>
+            {queue.rows.slice(0,3).map(order => <Row key={order.id}
+              title={`Order #${order.orderId.slice(-8).toUpperCase()}`}
+              detail={sellerOrderAction(order).label ?? readyRiderLabel(order) ?? sellerStageLabel(order)}
+              onPress={() => orders(queue.group,order)} />)}
+            {queue.rows.length > 3 && <SellerButton label={`View all ${queue.title.toLowerCase()} orders`} soft onPress={() => orders(queue.group)} />}
+          </View>
+        ))}
+        {attention.data.next && <SellerButton label={attention.moreBusy ? "Loading orders…" : "Load more orders"} soft disabled={attention.moreBusy} onPress={attention.more} />}
+      </SellerCard>
+    )}
     {dashboard.data && <>
       <View style={styles.queueTop}>
         <Text accessibilityRole="header" style={styles.section}>Work queue</Text>
-        <Pressable accessibilityRole="button" disabled={shop.loading || dashboard.loading} onPress={refresh} style={styles.tap}><Text style={styles.link}>{dashboard.loading ? "Refreshing…" : "Refresh"}</Text></Pressable>
+        <Pressable accessibilityRole="button" disabled={shop.loading || dashboard.loading || attention.loading} onPress={refresh} style={styles.tap}><Text style={styles.link}>{dashboard.loading || attention.loading ? "Refreshing…" : "Refresh"}</Text></Pressable>
       </View>
       {(["Orders", "Inventory"] as const).map(group => (
         <View key={group} style={styles.workGroup}>

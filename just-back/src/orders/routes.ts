@@ -11,6 +11,7 @@ import {cancelBuyerSuborder} from "./seller.js";
 import {throttle} from "../auth/service.js";
 import {changeSubstitution,decisionInput} from "./substitution.js";
 import {Partner} from "../delivery/models.js";
+import {estimateRoute} from "../delivery/route-estimate.js";
 export async function verifyOrderIndexes(){
   const indexes=await Order.collection.indexes();
   if(!indexes.some(index=>index.unique && index.key.reservationId===1))throw new Error("Order reservation uniqueness index missing");
@@ -44,6 +45,19 @@ export function orderRoutes(config:Config){
     res.setHeader("X-Has-More",String(hasMore));if(hasMore){const last=page.at(-1)!;res.setHeader("X-Next-Cursor",encodeCursor({scope,sort:"newest",key:last.createdAt.toISOString(),id:last._id},config.CURSOR_SECRET));}
     res.json(page.map(orderDto));
   });
+  router.get("/:id/suborders/:subId/eta",rateLimit({windowMs:60000,limit:10,keyGenerator:req=>actor(req).id,standardHeaders:"draft-8",legacyHeaders:false}),async(req,res)=>{
+    const id=z.uuid().parse(req.params.id),subId=z.uuid().parse(req.params.subId);
+    const order=await Order.findOne({_id:id,buyerId:actor(req).id}).lean();
+    if(!order)fail(404,"NOT_FOUND","Order not found");
+    const shop=order.subOrders.find(row=>row._id===subId && row.fulfilment==="platform_delivery" && row.status==="out_for_delivery" && row.delivery?.state==="out_for_delivery");
+    if(!config.GOOGLE_ROUTES_API_KEY || !shop?.delivery || !order.address.location){res.json({eta:null});return;}
+    const partner=await Partner.findOne({_id:shop.delivery.partnerId,approved:true,activeTask:subId,"liveLocation.taskId":subId,"liveLocation.recordedAt":{$gt:new Date(Date.now()-120000)}}).select("liveLocation").lean();
+    const point=partner?.liveLocation;
+    if(!point){res.json({eta:null});return;}
+    const [longitude,latitude]=order.address.location.coordinates;
+    const minutes=await estimateRoute(config.GOOGLE_ROUTES_API_KEY,{latitude:point.latitude,longitude:point.longitude},{latitude:latitude!,longitude:longitude!});
+    res.json({eta:minutes===null ? null : {minutes,validUntil:new Date(Math.min(Date.now()+60000,point.recordedAt.getTime()+120000)).toISOString()}});
+  });
   router.get("/:id",async(req,res)=>{
     const id=z.uuid().parse(req.params.id);
     const order=await Order.findOne({_id:id,buyerId:actor(req).id}).lean();if(!order)fail(404,"NOT_FOUND","Order not found");
@@ -54,7 +68,7 @@ export function orderRoutes(config:Config){
       const delivery=active.find(row=>row._id===shop.id)?.delivery;
       const point=delivery && partners.find(partner=>partner._id===delivery.partnerId && partner.activeTask===shop.id)?.liveLocation;
       if(!point || point.taskId!==shop.id || Date.now()-point.recordedAt.getTime()>120000)return shop;
-      return {...shop,riderLocation:{latitude:point.latitude,longitude:point.longitude,recordedAt:point.recordedAt.toISOString()}};
+      return {...shop,riderLocation:{latitude:point.latitude,longitude:point.longitude,recordedAt:point.recordedAt.toISOString(),routeEstimateAvailable:!!config.GOOGLE_ROUTES_API_KEY && !!order.address.location}};
     })});
   });
   return router;

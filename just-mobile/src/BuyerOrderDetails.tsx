@@ -389,7 +389,7 @@ function ShopCard({
         </View>
       </View>
       {shop.deliveryState === "out_for_delivery" && shop.status === "out_for_delivery" &&
-        <RiderLocation point={shop.riderLocation} destination={order.address.location} />}
+        <RiderLocation point={shop.riderLocation} destination={order.address.location} token={token} orderId={order.id} shopId={shop.id} />}
       {shop.substitution && <BuyerItemChange key={shop.version} shop={shop} orderId={order.id} token={token} refresh={refresh} />}
       {current >= 0 && <View style={s.timeline}>
         {timeline.map(([key, name], index) => (
@@ -427,15 +427,37 @@ function ShopCard({
   );
 }
 
-function RiderLocation({point,destination}:{point:ShopOrder["riderLocation"];destination:BuyerOrder["address"]["location"]}) {
+function RiderLocation({point,destination,token,orderId,shopId}:{point:ShopOrder["riderLocation"];destination:BuyerOrder["address"]["location"];token:string;orderId:string;shopId:string}) {
   const [now,setNow]=useState(Date.now);
   const [error,setError]=useState(false);
+  const [estimate,setEstimate]=useState<{minutes:number;validUntil:string}|null>(null);
+  const [estimateUnavailable,setEstimateUnavailable]=useState(false);
+  const [estimating,setEstimating]=useState(false);
+  const estimatePending=useRef(false);
   useEffect(()=>{
     const timer=setInterval(()=>setNow(Date.now()),5000);
     return ()=>clearInterval(timer);
   },[]);
   const recordedAt=point ? Date.parse(point.recordedAt) : NaN;
   const fresh=!!point && now-recordedAt<=120000;
+  const currentEstimate=fresh && estimate && Date.parse(estimate.validUntil)>now ? estimate : null;
+  const getEstimate=async()=>{
+    if(estimatePending.current)return;
+    estimatePending.current=true;
+    setEstimating(true);
+    setEstimateUnavailable(false);
+    try {
+      const {eta}=await buyerApi.routeEstimate(token,orderId,shopId);
+      setEstimate(eta);
+      setEstimateUnavailable(!eta);
+    } catch {
+      setEstimate(null);
+      setEstimateUnavailable(true);
+    } finally {
+      estimatePending.current=false;
+      setEstimating(false);
+    }
+  };
   const openRoute=async()=>{
     if(!point || !destination || Date.now()-recordedAt>120000)return;
     const [lng,lat]=destination.coordinates;
@@ -447,6 +469,16 @@ function RiderLocation({point,destination}:{point:ShopOrder["riderLocation"];des
   return <View style={{gap:6}}>
     <Text style={s.label}>Rider tracking</Text>
     <Text style={{color:theme.ink}}>{fresh ? `Last updated ${dateTime(point.recordedAt)}` : "Waiting for a fresh rider location."}</Text>
+    {fresh && point.routeEstimateAvailable && <>
+      {currentEstimate && <View style={{gap:4,padding:10,borderRadius:12,backgroundColor:"#FFFFFF"}}>
+        <Text accessibilityLiveRegion="polite" style={{color:"#1F1F1F",fontWeight:"700"}}>{currentEstimate.minutes <= 1 ? "Estimated arrival in under 2 min" : `Estimated arrival in ${currentEstimate.minutes} min`}</Text>
+        <Text style={{color:"#5E5E5E",fontSize:12}}>Google Maps</Text>
+      </View>}
+      {estimateUnavailable && <Text accessibilityLiveRegion="polite" style={{color:theme.ink}}>Arrival estimate unavailable. You can still open the route in Maps.</Text>}
+      <Pressable accessibilityRole="button" disabled={estimating || !!currentEstimate} style={[s.refresh,s.sage]} onPress={()=>void getEstimate()}>
+        <Text style={s.label}>{estimating ? "Checking arrival time…" : "Get arrival estimate"}</Text>
+      </Pressable>
+    </>}
     {fresh && destination && <Pressable accessibilityRole="button" style={[s.refresh,s.sage]} onPress={()=>void openRoute()}>
       <Text style={s.label}>View rider route and travel time in Maps</Text>
     </Pressable>}

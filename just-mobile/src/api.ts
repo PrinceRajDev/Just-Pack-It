@@ -15,7 +15,7 @@ export type OrderItemChange = {
   original: {name:string; unit:string; variantLabel?:string; qty:number; price:number};
   replacement?: {name:string; unit:string; qty:number; price:number};
 };
-export type BuyerOrder = { id: string; total: number; amountDue?: number; onlinePaidAmount?: number; cashRecordedAmount?: number; cancelledAmount?: number; paymentStatus: string; paymentMethod: string; createdAt: string; address: { label: string; line1: string; locality: string; city: string; pincode: string; location?: Address["location"] }; subOrders: { id: string; shopId: string; shopName: string; status: string; deliveryState?: string; riderLocation?: {latitude:number;longitude:number;recordedAt:string}; updatedAt?: string; version?: number; fulfilment?: string; amountDue: number; deliveryFee: number; cancelReason?: string; cashCollection?: {amount:number}; refund?: {state:string;amount:number}; substitution?: OrderItemChange; lines: { productId: string; variantId?: string; variantLabel?: string; name: string; unit: string; qty: number; price: number }[] }[] };
+export type BuyerOrder = { id: string; total: number; amountDue?: number; onlinePaidAmount?: number; cashRecordedAmount?: number; cancelledAmount?: number; paymentStatus: string; paymentMethod: string; createdAt: string; address: { label: string; line1: string; locality: string; city: string; pincode: string; location?: Address["location"] }; subOrders: { id: string; shopId: string; shopName: string; status: string; deliveryState?: string; riderLocation?: {latitude:number;longitude:number;recordedAt:string; routeEstimateAvailable?:boolean}; updatedAt?: string; version?: number; fulfilment?: string; amountDue: number; deliveryFee: number; cancelReason?: string; cashCollection?: {amount:number}; refund?: {state:string;amount:number}; substitution?: OrderItemChange; lines: { productId: string; variantId?: string; variantLabel?: string; name: string; unit: string; qty: number; price: number }[] }[] };
 
 type ListPayload<T> = T[] | { items?: T[] };
 const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
@@ -165,5 +165,7 @@ export const buyerApi = {
   createAddress: (token: string, input: Omit<Address, "id" | "version">) => request<Address>("/addresses", token, { method: "POST", body: JSON.stringify(input) }),
   updateAddress: (token: string, id: string, input: Omit<Address, "id" | "location"> & {location?: Address["location"] | null}) => request<Address>(`/addresses/${id}`, token, { method: "PATCH", body: JSON.stringify(input) }),
   deleteAddress: (token: string, id: string, version: number) => request<void>(`/addresses/${id}`, token, { method: "DELETE", body: JSON.stringify({ version }) }),
+  routeEstimate: (token: string, orderId: string, shopId: string) =>
+    request<{eta:{minutes:number;validUntil:string}|null}>(`/orders/${encodeURIComponent(orderId)}/suborders/${encodeURIComponent(shopId)}/eta`, token),
   orders: (token: string) => request<BuyerOrder[]>("/orders?limit=30", token),
 };

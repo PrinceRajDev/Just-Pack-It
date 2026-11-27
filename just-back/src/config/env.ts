@@ -35,6 +35,7 @@ const schema = z
     FIREBASE_PUSH_ENABLED:z.enum(["true","false"]).default("false").transform(value=>value==="true"),
     FIREBASE_PROJECT_ID:z.string().regex(/^[a-z][a-z0-9-]{4,62}$/).optional(),
     GOOGLE_APPLICATION_CREDENTIALS:z.string().min(1).optional(),
+    GOOGLE_ROUTES_API_KEY:z.preprocess(value=>value==="" ? undefined : value,z.string().min(20).optional()),
     INVENTORY_EXPIRY_WORKER_ENABLED: z.enum(["true","false"]).default("false").transform(value=>value==="true"),
     PLATFORM_DELIVERY_ENABLED:z.enum(["true","false"]).default("false").transform(value=>value==="true"),
     ORDERS_COD_ENABLED: z.enum(["true","false"]).default("false").transform(value=>value==="true"),

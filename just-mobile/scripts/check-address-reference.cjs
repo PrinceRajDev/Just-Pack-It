@@ -97,6 +97,7 @@ const assert = require("node:assert/strict");
     let stockUnavailable = false;
     let deliveryFeeChanged = false;
     let savedAddressChanged = false;
+    let missingDeliveryPin = false;
     page.on("pageerror", (error) => errors.push(error.message));
     await page.addInitScript(
       ({ buyer, products }) => {
@@ -136,6 +137,12 @@ const assert = require("node:assert/strict");
           data = Object.assign(addresses[0], input, {
             version: input.version + 1,
           });
+        } else if (resource === "addresses/work" && method === "PATCH") {
+          const input = route.request().postDataJSON();
+          assert.deepEqual(input.location,{type:"Point",coordinates:[73.81,18.50]});
+          assert.equal(input.version,addresses[1].version);
+          data = Object.assign(addresses[1],input,{version:addresses[1].version+1});
+          missingDeliveryPin = false;
         } else if (resource === "orders" && method === "POST") {
           orderRequests += 1;
           const input = route.request().postDataJSON();
@@ -202,7 +209,9 @@ const assert = require("node:assert/strict");
                     : deliveryFeeChanged && index === 1 ? 40 : 30,
               issues:
                 !eligible && index === 1
-                  ? [{ message: "No approved partner for this address." }]
+                  ? missingDeliveryPin
+                    ? [{code:"ADDRESS_LOCATION_MISSING",message:"This delivery address has no saved map pin."}]
+                    : [{code:"NO_RIDER",message:"No approved partner for this address."}]
                   : [],
             })),
           };
@@ -409,7 +418,19 @@ const assert = require("node:assert/strict");
     await deliver.click();
     await page.getByText("No rider for Patil Fresh Mart", { exact: true }).waitFor();
     assert.equal(await page.getByRole("button", {name:"Resolve delivery to continue",exact:true}).isDisabled(),true);
-    const change = page.getByRole("button", { name: "Change address", exact: true });
+    missingDeliveryPin = true;
+    const blockedShop = page.getByTestId(`bag-shop-${shops[1].id}`);
+    await blockedShop.getByRole("button",{name:"Retry delivery check",exact:true}).click();
+    await blockedShop.getByText("Delivery map pin missing",{exact:true}).waitFor();
+    await blockedShop.getByRole("button",{name:"Edit delivery address",exact:true}).click();
+    const mapPin=page.getByRole("textbox",{name:"Delivery map pin",exact:true});
+    await mapPin.fill("180, 18");
+    await page.getByRole("button",{name:"Save address",exact:true}).click();
+    await page.getByText(/Enter latitude, longitude/).waitFor();
+    await mapPin.fill("18.50, 73.81");
+    await page.getByRole("button",{name:"Save address",exact:true}).click();
+    await blockedShop.getByText("No rider for Patil Fresh Mart",{exact:true}).waitFor();
+    const change = page.getByRole("button", { name: "Choose another address", exact: true });
     await change.click();
     await home.click();
     await deliver.click();
@@ -457,7 +478,7 @@ const assert = require("node:assert/strict");
     await checkout
       .getByText("1 item · Rider delivery available · Fee ₹30", { exact: true })
       .waitFor();
-    await change.click();
+    await checkout.getByRole("button", {name:"Change address",exact:true}).click();
     await home.click();
     await picker.getByRole("button", { name: "Edit Home address" }).click();
     const line1 = page.getByLabel("House, street and landmark", {

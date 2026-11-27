@@ -28,7 +28,7 @@ export function checkoutReviewRoutes(config:Config){
       const option=status?.options.find(option=>option.method===choice?.method);
       const methodIssues=[...(status?.issues ?? [])];
       if(!choice) methodIssues.push({code:"METHOD_REQUIRED",message:"Choose delivery or pickup for this shop."});
-      else if(!option || option.status!=="eligible") methodIssues.push({code:"METHOD_UNAVAILABLE",message:option?.message ?? "The selected method is unavailable for this shop."});
+      else if(!option || option.status!=="eligible") methodIssues.push({code:option?.code ?? "METHOD_UNAVAILABLE",message:option?.message ?? "The selected method is unavailable for this shop."});
       else if(option.listedFee===null) methodIssues.push({code:"DELIVERY_FEE_UNKNOWN",message:"This shop has not supplied a delivery fee."});
       return {shopId:group.shop.id,method:choice?.method ?? null,listedFee:option?.status==="eligible" ? option.listedFee : null,issues:methodIssues};
     });

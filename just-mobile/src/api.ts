@@ -6,9 +6,9 @@ export type Shop = { id: string; slug: string; name: string; locality: string; c
 export type ProductVariant = { id: string; label: string; price: number; stock: number };
 export type Product = { id: string; productId?: string; variantId?: string; variants?: ProductVariant[]; name: string; unit: string; price: number; stock: number; description?: string; image?: string; shopId: string; categorySlug?: string; tags?: string[] };
 export type Session = { userId: string; name: string; role: "buyer" | "seller" | "delivery" | "admin"; token: string; isDemo: false };
-export type Address = { id: string; label: string; line1: string; locality: string; city: string; pincode: string; version: number };
+export type Address = { id: string; label: string; line1: string; locality: string; city: string; pincode: string; location?: {type:"Point";coordinates:[number,number]}; version: number };
 export type CheckoutLine = { productId: string; variantId?: string; qty: number };
-export type CheckoutReview = { checkoutAvailable: boolean; itemsSubtotal: number; deliveryTotal: number | null; grandTotal: number | null; paymentMethods: string[]; issues: { code?: string; message: string }[]; lines: { productId?: string; variantId?: string; unitPrice?: number; availableStock?: number; issues: { code?: string; message: string }[] }[]; shops: { shop: Shop; issues: { code?: string; message: string }[] }[]; fulfilments: { shopId: string; listedFee: number | null; issues: { message: string }[] }[] };
+export type CheckoutReview = { checkoutAvailable: boolean; itemsSubtotal: number; deliveryTotal: number | null; grandTotal: number | null; paymentMethods: string[]; issues: { code?: string; message: string }[]; lines: { productId?: string; variantId?: string; unitPrice?: number; availableStock?: number; issues: { code?: string; message: string }[] }[]; shops: { shop: Shop; issues: { code?: string; message: string }[] }[]; fulfilments: { shopId: string; listedFee: number | null; issues: { code?: string; message: string }[] }[] };
 export type BuyerProfile = { name: string; phone: string; email?: string; emailVerified: boolean; version: number };
 export type OrderItemChange = {
   state: "pending" | "replaced" | "removed";

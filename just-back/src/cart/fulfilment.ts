@@ -34,11 +34,12 @@ export async function readFulfilment(userId:string,input:z.infer<typeof inputSch
       return {shopId,issues:open ? [] : [{code:"SHOP_CLOSED",message:"This shop is currently closed."}],options:shop.fulfilment.map(method=>{
         if(!open) return {method,status:"unavailable",listedFee:null,message:"Shop is closed."};
         if(method==="pickup") return {method,status:"eligible",listedFee:0,message:"Pickup is listed by this shop. Collect from the shop."};
-        if(!covered) return {method,status:"unavailable",listedFee:null,message:"Your address pincode is outside this shop's configured delivery areas."};
+        if(!covered) return {method,status:"unavailable",listedFee:null,code:"ADDRESS_PINCODE_OUTSIDE_AREA",message:"Your address PIN code is outside this shop’s delivery area."};
         if(method==="platform_delivery"&&!config?.PLATFORM_DELIVERY_ENABLED)return {method,status:"unverified",listedFee:null,message:"Platform delivery is not enabled."};
-        if(method==="platform_delivery" && !riders) return {method,status:"unavailable",listedFee:null,message:"No approved available platform partner in this area."};
-        if(method==="platform_delivery" && (!address.location||!shop.location))return {method,status:"unavailable",listedFee:null,message:"Delivery and shop pins are required for platform delivery."};
-        const pinIssue=pinCoverage(address.location,shop.location);if(pinIssue)return {method,status:"unavailable",listedFee:null,message:pinIssue.message};
+        if(method==="platform_delivery" && !address.location)return {method,status:"unavailable",listedFee:null,code:"ADDRESS_LOCATION_MISSING",message:"This delivery address has no saved map pin."};
+        if(method==="platform_delivery" && !shop.location)return {method,status:"unavailable",listedFee:null,code:"SHOP_LOCATION_MISSING",message:"This shop has no saved map pin."};
+        const pinIssue=pinCoverage(address.location,shop.location);if(pinIssue)return {method,status:"unavailable",listedFee:null,...pinIssue};
+        if(method==="platform_delivery" && !riders) return {method,status:"unavailable",listedFee:null,code:"NO_RIDER",message:"No approved available platform partner in this area."};
         return {method,status:"eligible",listedFee:deliveryFeeCents(method,shop.deliveryFeeCents)===undefined ? null : deliveryFeeCents(method,shop.deliveryFeeCents)!/100,message:address.location ? "Pincode and delivery pin pass configured coverage checks (within 6 km straight-line). Final charges are not yet quoted." : "Pincode coverage matches; no delivery pin is saved, so exact location distance has not been checked. Final charges are not yet quoted."};
       })};
     })};

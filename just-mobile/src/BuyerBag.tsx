@@ -140,8 +140,7 @@ export function BuyerBag({
             {[...groups].map(([id, lines]) => {
               const shop = known.get(id);
               const unavailable = signedIn && !delivery.checking ? delivery.unavailable.find(row => row.id === id) : undefined;
-              const riderAvailable = unavailable
-                ? false : shop?.fulfilment?.includes("platform_delivery");
+              const riderAvailable = signedIn && delivery.deliverable.has(id);
               return (
                 <View key={id} style={s.card} testID={`bag-shop-${id}`}>
                   <View style={s.shopHeader}>
@@ -149,18 +148,19 @@ export function BuyerBag({
                     <View style={s.item}><Text accessibilityRole="header" style={s.cardTitle}>{shop?.name ?? "Local shop"}</Text>
                   <Text style={[s.delivery, riderAvailable === false && s.muted]}>
                     {signedIn && delivery.checking ? "Checking rider availability…" : riderAvailable
-                      ? "Rider delivery available"
-                      : riderAvailable === false
+                      ? "Rider delivery available for this address"
+                      : unavailable
                         ? "Rider delivery unavailable"
-                        : "Rider delivery checked at checkout"}
+                        : delivery.address ? "Delivery availability unconfirmed" : "Choose a delivery address to check"}
                   </Text>
                     </View>
                   </View>
                   {unavailable && (
                     <View style={[s.card, s.problem]}>
-                      <Text style={[s.cardTitle, s.remove]}>No rider for {unavailable.name}</Text>
+                      <Text style={[s.cardTitle, s.remove]}>{unavailable.title}</Text>
                       <Text style={s.copy}>{unavailable.reason ? `${unavailable.reason} ` : ""}Your items are saved. Try a different delivery address or remove this shop to continue.</Text>
-                      <Pressable accessibilityRole="button" style={[s.button, s.spaced]} onPress={delivery.change}><Text style={s.buttonText}>Change address</Text></Pressable>
+                      {unavailable.addressRelated && <Pressable accessibilityRole="button" style={[s.button, s.spaced]} onPress={delivery.editAddress}><Text style={s.buttonText}>Edit delivery address</Text></Pressable>}
+                      <Pressable accessibilityRole="button" style={[s.button, unavailable.addressRelated ? s.sageButton : s.spaced]} onPress={delivery.change}><Text style={unavailable.addressRelated ? [s.buttonText,s.sageText] : s.buttonText}>Choose another address</Text></Pressable>
                       <Pressable accessibilityRole="button" style={[s.button, s.sageButton]} onPress={delivery.retry}><Text style={[s.buttonText, s.sageText]}>Retry delivery check</Text></Pressable>
                       <Pressable accessibilityRole="button" style={[s.button, s.removeShop]} onPress={() => {
                         lines.forEach(item => onChange(item.id, -item.quantity));

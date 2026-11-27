@@ -35,7 +35,9 @@ export type BagDelivery = {
   total: number | null;
   checking: boolean;
   blocked: boolean;
-  unavailable: { id: string; name: string; reason?: string }[];
+  unavailable: { id: string; name: string; title: string; reason: string; addressRelated: boolean }[];
+  deliverable: Set<string>;
+  editAddress: () => void;
   error: string | null;
   change: () => void;
   saved: () => void;
@@ -94,7 +96,7 @@ export function BuyerCheckout({
   const [saved, setSaved] = useState(false);
   const [quoteKey, setQuoteKey] = useState("");
   const [requestedKey, setRequestedKey] = useState("");
-  const [editor, setEditor] = useState<{ address?: Address } | null>(null);
+  const [editor, setEditor] = useState<{ address?: Address; fromBagIssue?: boolean } | null>(null);
   const [addressRevision, setAddressRevision] = useState(0);
   const [addressesLoading, setAddressesLoading] = useState(true);
   const preferenceKey = session
@@ -170,6 +172,7 @@ export function BuyerCheckout({
     );
     setSelectedId(address.id);
     setEditor(null);
+    if (editor?.fromBagIssue) setChoosing(false);
     if (reviewedAddress?.id === address.id) setReview(null);
     setError(null);
     if (!preferenceKey || (!makeDefault && defaultId !== address.id)) return;
@@ -301,10 +304,29 @@ export function BuyerCheckout({
   const unavailable = currentReview ? shopIds.flatMap(id => {
     const group = currentReview.shops.find(row => row.shop.id === id);
     const delivery = currentReview.fulfilments.find(row => row.shopId === id);
-    return delivery && (delivery.listedFee == null || delivery.issues.length)
-      ? [{ id, name: group?.shop.name ?? shops.find(shop => shop.id === id)?.name ?? "Local shop", reason: delivery.issues[0]?.message }]
-      : [];
+    if (!delivery || (delivery.listedFee != null && !delivery.issues.length)) return [];
+    const cause = delivery.issues[0];
+    const name = group?.shop.name ?? shops.find(shop => shop.id === id)?.name ?? "Local shop";
+    const titles: Record<string,string> = {
+      ADDRESS_PINCODE_OUTSIDE_AREA:"PIN code outside delivery area",
+      ADDRESS_LOCATION_MISSING:"Delivery map pin missing",
+      ADDRESS_OUTSIDE_RADIUS:"Delivery pin too far from this shop",
+      SHOP_LOCATION_MISSING:"Shop map pin missing",
+      SHOP_CLOSED:"Shop is closed",
+    };
+    return [{
+      id,name,title:cause?.code === "NO_RIDER" ? `No rider for ${name}` : titles[cause?.code ?? ""] ?? "Delivery unavailable",
+      reason:cause?.message ?? "A delivery fee is not available for this shop.",
+      addressRelated:cause?.code?.startsWith("ADDRESS_") ?? false,
+    }];
   }) : [];
+  const deliverable = new Set(currentReview?.fulfilments
+    .filter(row => row.listedFee != null && !row.issues.length).map(row => row.shopId));
+  const editAddress = () => {
+    if (!selected) return;
+    openPicker();
+    setEditor({address:selected,fromBagIssue:inBag});
+  };
   const checking = !!session && (addressesLoading || busy || (!!currentKey && requestedKey !== currentKey));
   const changes = currentReview?.lines.flatMap(quoted => {
     const item = bag.find(line => (line.productId ?? line.id) === quoted.productId && line.variantId === quoted.variantId);
@@ -345,6 +367,7 @@ export function BuyerCheckout({
     address: selected, contact, total, checking,
     blocked: !!selected && !ready,
     unavailable,
+    deliverable, editAddress,
     itemNotices, shopNotices, feeChanges, acceptFees, addressIssue,
     error: error ?? (!checking && !unavailable.length && !addressIssue && !itemNotices.size && !shopNotices.size && !feeChanges.size && currentReview && !ready
       ? issues[0]?.message ?? currentReview.shops.flatMap(group => group.issues)[0]?.message ??
@@ -509,6 +532,7 @@ export function BuyerCheckout({
                           </Text>
                         ))}
                         {feeChanges.has(id) && <Text style={s.error}>{feeChanges.get(id)}</Text>}
+                        {unavailable.some(shop => shop.id === id && shop.addressRelated) && <Pressable accessibilityRole="button" onPress={editAddress}><Text style={s.action}>Edit delivery address</Text></Pressable>}
                         {unavailable.some(shop => shop.id === id) && <Pressable accessibilityRole="button" onPress={openPicker}><Text style={s.action}>Choose another address</Text></Pressable>}
                         {shopNotices.has(id) && <Pressable accessibilityRole="button" onPress={shopNotices.get(id)?.run}><Text style={s.action}>{shopNotices.get(id)?.action}</Text></Pressable>}
                         {bag.filter(item => item.shopId === id && itemNotices.has(item.id)).map(item => {

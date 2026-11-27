@@ -2267,6 +2267,18 @@ describe("live platform delivery",()=>{
    const input={areaId,addressId:address._id,addressVersion:address.version,paymentMethod:"cod" as const,expectedTotal:40,items:[{productId,qty:1}],fulfilments:[{shopId,method:"platform_delivery" as const}]};
    await expect(createCodOrder(buyer,randomUUID(),input)).rejects.toMatchObject({code:"METHOD_UNAVAILABLE"});
    const quote=await liveApi.post("/checkout/review").set("Authorization",auth(buyer)).send({areaId,addressId:address._id,addressVersion:address.version,items:input.items,fulfilments:input.fulfilments});expect(quote.status).toBe(200);expect(quote.body.issues).toEqual([]);expect(quote.body.shops.flatMap((s:{issues:unknown[]})=>s.issues)).toEqual([]);expect(quote.body.fulfilments.flatMap((s:{issues:unknown[]})=>s.issues)).toEqual([]);expect(quote.body.checkoutAvailable).toBe(true);expect(quote.body.deliveryTotal).toBe(30);expect(quote.body.grandTotal).toBe(40);
+   const checkCode=async(code:string)=>{
+    const rejected=await liveApi.post("/checkout/review").set("Authorization",auth(buyer)).send({areaId,addressId:address._id,addressVersion:address.version,items:input.items,fulfilments:input.fulfilments});
+    expect(rejected.status).toBe(200);
+    expect(rejected.body).toMatchObject({checkoutAvailable:false,fulfilments:[{shopId,listedFee:null,issues:[{code}]}]});
+   };
+   await Address.updateOne({_id:address._id},{$unset:{location:1}});
+   await checkCode("ADDRESS_LOCATION_MISSING");
+   await Address.updateOne({_id:address._id},{$set:{location:{type:"Point",coordinates:[86,27]}}});
+   await checkCode("ADDRESS_OUTSIDE_RADIUS");
+   await Address.updateOne({_id:address._id},{$set:{pincode:"111111",location:address.location}});
+   await checkCode("ADDRESS_PINCODE_OUTSIDE_AREA");
+   await Address.updateOne({_id:address._id},{$set:{pincode:address.pincode}});
    await Partner.updateOne({_id:delivery.id},{$set:{seenAt:new Date(0)}});await expect(createCodOrder(buyer,randomUUID(),input,"cod",false,true)).rejects.toMatchObject({code:"METHOD_UNAVAILABLE"});
    await Partner.updateOne({_id:delivery.id},{$set:{seenAt:new Date()}});
    const placed=await createCodOrder(buyer,randomUUID(),input,"cod",false,true);created=placed.order._id;expect(placed.order.subOrders[0].fulfilment).toBe("platform_delivery");expect(placed.order.subOrders[0].deliveryFeeCents).toBe(3000);expect(placed.order.totalCents).toBe(4000);

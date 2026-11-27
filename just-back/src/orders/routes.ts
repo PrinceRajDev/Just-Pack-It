@@ -9,6 +9,7 @@ import {createCodOrder} from "./service.js";
 import {decodeCursor,encodeCursor} from "../common/cursor.js";
 import {cancelBuyerSuborder} from "./seller.js";
 import {throttle} from "../auth/service.js";
+import {changeSubstitution,decisionInput} from "./substitution.js";
 export async function verifyOrderIndexes(){
   const indexes=await Order.collection.indexes();
   if(!indexes.some(index=>index.unique && index.key.reservationId===1))throw new Error("Order reservation uniqueness index missing");
@@ -17,6 +18,10 @@ export async function verifyOrderIndexes(){
 export function orderRoutes(config:Config){
   const router=Router();
   router.use((_req,res,next)=>{res.setHeader("Cache-Control","private, no-store");next();});
+  router.post("/:id/suborders/:subId/substitution",async(req,res)=>{
+    await changeSubstitution(actor(req),z.uuid().parse(req.params.id),z.uuid().parse(req.params.subId),decisionInput.parse(req.body));
+    res.status(204).end();
+  });
   router.post("/:id/suborders/:subId/cancel",async(req,res)=>{
     const input=z.object({version:z.number().int().nonnegative(),reason:z.string().trim().min(3).max(500)}).strict().parse(req.body);
     await throttle(`buyer-cancel:${actor(req).id}`,config,30);

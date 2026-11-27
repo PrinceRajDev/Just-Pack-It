@@ -69,6 +69,7 @@ const assert = require("node:assert/strict");
     let changedPrice = false;
     let trackingDelivered = false;
     let trackingStage = "accepted";
+    let itemChangeState;
     let riderStage;
     let receiptRequests = 0;
     let firstOrderKey;
@@ -218,12 +219,17 @@ const assert = require("node:assert/strict");
             assert.ok(product);
             return {...item,product,unitPrice:product.price,availableStock:product.stock,issues:[]};
           }),shops:[{shop:{...shops[0],isOpen:true}}]};
+        } else if (resource === `orders/${confirmed.id}/suborders/${shops[0].id}/substitution`) {
+          assert.deepEqual(route.request().postDataJSON(),{version:4,decision:"remove"});
+          itemChangeState = "removed";
+          return route.fulfill({status:204,headers});
         } else if (resource === "orders/" + confirmed.id) {
           data = { ...confirmed, amountDue: trackingDelivered ? 0 : 119, cancelledAmount:70, cashRecordedAmount:trackingDelivered ? 119 : 0, subOrders: confirmed.subOrders.map((shop,index) => ({
             ...shop, status: index === 0 ? (trackingDelivered ? "delivered" : trackingStage) : "cancelled",
             shopId: shop.id,
+            ...(index === 0 && itemChangeState ? {substitution:{state:itemChangeState,original:{name:"Fresh pears",unit:"1 kg",qty:1,price:35}}} : {}),
             lines: index === 0 && trackingDelivered ? reorderProducts.map(product=>({productId:product.id,name:product.name,unit:product.unit,qty:1,price:product.price})) : [],
-            ...(index === 0 ? {deliveryState: trackingDelivered ? "delivered" : riderStage, amountDue: trackingDelivered ? 0 : 119, version: trackingDelivered ? 5 : 4} : {amountDue:0}),
+            ...(index === 0 ? {deliveryState: trackingDelivered ? "delivered" : riderStage, amountDue: trackingDelivered ? 0 : 119, version: trackingDelivered ? 8 : trackingStage === "preparing" && itemChangeState === "removed" ? 5 : 4} : {amountDue:0}),
           })) };
         }
         else if (resource === "addresses") data = addresses;
@@ -572,7 +578,7 @@ const assert = require("node:assert/strict");
     const tracking = page.getByTestId("buyer-order-details");
     const firstTimeline = tracking.getByTestId(`shop-timeline-${shops[0].id}`);
     await tracking.getByText("₹119 due at delivery",{exact:true}).waitFor();
-    await tracking.getByText("₹70 removed for cancelled items and delivery",{exact:true}).waitFor();
+    await tracking.getByText(/^₹70 removed for cancelled or unavailable items/).waitFor();
     for (const [stage, deliveryState, label] of [
       ["accepted",undefined,"Accepted"], ["preparing",undefined,"Preparing"],
       ["ready","claimed","Ready for pickup"], ["ready","picked_up","Picked up by rider"],
@@ -580,8 +586,14 @@ const assert = require("node:assert/strict");
     ]) {
       trackingStage = stage;
       riderStage = deliveryState;
+      if (stage === "preparing") itemChangeState="pending";
       await tracking.getByRole("button",{name:"Refresh status"}).click();
       await firstTimeline.getByTestId("shop-current-status").filter({hasText:new RegExp(`^${label}$`)}).waitFor();
+      if (stage === "preparing") {
+        await firstTimeline.getByText("Review item change",{exact:true}).waitFor();
+        await firstTimeline.getByRole("button",{name:"Remove item",exact:true}).click();
+        await firstTimeline.getByText("Item removed",{exact:true}).waitFor();
+      }
     }
     await tracking.getByText("Picked up by rider", {exact:true}).first().waitFor();
     await tracking.getByText("Patil Fresh Mart",{exact:true}).waitFor();

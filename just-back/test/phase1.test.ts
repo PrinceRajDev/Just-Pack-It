@@ -856,6 +856,64 @@ describe("COD orders with explicitly enabled isolated configuration",()=>{
     await expect(createCodOrder(buyer,randomUUID(),input)).rejects.toMatchObject({code:"MINIMUM_NOT_MET"});
     expect((await Product.findById(product))!.stock).toBe(5);expect(await InventoryReservation.countDocuments({"lines.productId":product})).toBe(0);expect(await Order.countDocuments({"subOrders.lines.productId":product})).toBe(0);
   }));
+  it.each(["replace","remove","remove-last"] as const)("requires buyer approval to %s a COD item during packing",async scenario=>fixture(async(product,address)=>{
+    const decision=scenario==="replace"?"replace":"remove";
+    const keepAnother=scenario==="remove";
+    const replacementId=randomUUID();
+    const original=await Product.findById(product).lean();
+    await Product.create({...original!,_id:replacementId,name:"Equivalent replacement"});
+    let created:Awaited<ReturnType<typeof createCodOrder>>["order"]|undefined;
+    try{
+      const input=body(product,address);
+      if(keepAnother){
+        input.items.push({productId:replacementId,qty:2});
+        input.expectedTotal=50;
+      }
+      const {order}=await createCodOrder(buyer,randomUUID(),input);
+      created=order;
+      const subId=order.subOrders[0]._id;
+      await transitionSellerSuborder(seller,order._id,subId,{version:0,status:"accepted"});
+      await transitionSellerSuborder(seller,order._id,subId,{version:1,status:"preparing"});
+      const sellerPath=`/seller/orders/${order._id}/suborders/${subId}`;
+      const buyerPath=`/orders/${order._id}/suborders/${subId}/substitution`;
+      const read=()=>enabled.get(`/orders/${order._id}`).set("Authorization",auth(buyer));
+      const line=order.subOrders[0].lines.findIndex(item=>item.productId===product);
+      const proposal={version:2,line,...(decision==="replace"?{replacementId}:{})};
+      expect((await enabled.post(sellerPath+"/substitution").set("Authorization",auth(otherSeller)).send(proposal)).status).toBe(404);
+      expect((await enabled.post(sellerPath+"/substitution").set("Authorization",auth(seller)).send(proposal)).status).toBe(204);
+      const pending=(await read()).body;
+      expect(pending.amountDue).toBe(input.expectedTotal);
+      expect(pending.subOrders[0].substitution.state).toBe("pending");
+      expect(pending.subOrders[0].lines[line].productId).toBe(product);
+      await expect(transitionSellerSuborder(seller,order._id,subId,{version:3,status:"ready"})).rejects.toMatchObject({code:"SUBSTITUTION_PENDING"});
+      const choice={version:3,decision};
+      expect((await enabled.post(buyerPath).set("Authorization",auth(otherSeller)).send(choice)).status).toBe(403);
+      expect((await enabled.post(buyerPath).set("Authorization",auth(buyer)).send(choice)).status).toBe(204);
+      expect((await enabled.post(buyerPath).set("Authorization",auth(buyer)).send(choice)).status).toBe(409);
+      const result=(await read()).body;
+      expect((await Product.findById(product))!.stock).toBe(3);
+      const reservation=await InventoryReservation.findById(order.reservationId);
+      if(decision==="replace"){
+        expect(result).toMatchObject({amountDue:25,subOrders:[{substitution:{state:"replaced"},lines:[{productId:replacementId,qty:2}]}]});
+        expect(reservation!.lines).toMatchObject([{productId:replacementId,qty:2}]);
+        expect((await Product.findById(replacementId))!.stock).toBe(3);
+        await transitionSellerSuborder(seller,order._id,subId,{version:4,status:"ready"});
+      }else if(keepAnother){
+        expect(result).toMatchObject({amountDue:25,cancelledAmount:25,subOrders:[{status:"preparing",substitution:{state:"removed"},lines:[{productId:replacementId}]}]});
+        expect(reservation!.lines).toMatchObject([{productId:replacementId,qty:2}]);
+        await transitionSellerSuborder(seller,order._id,subId,{version:4,status:"ready"});
+      }else{
+        expect(result).toMatchObject({amountDue:0,cancelledAmount:25,subOrders:[{status:"cancelled",substitution:{state:"removed"},lines:[]}]});
+        expect(reservation!.lines).toHaveLength(0);
+      }
+    }finally{
+      if(created){
+        await Order.deleteOne({_id:created._id});
+        await InventoryReservation.deleteOne({_id:created.reservationId});
+      }
+      await Product.deleteOne({_id:replacementId});
+    }
+  }));
   it("validates address ownership/version and seller-delivery charges and coverage",async()=>fixture(async(product,address)=>{
     const input=body(product,address);
     await expect(createCodOrder({...buyer,id:seller.id},randomUUID(),input)).rejects.toMatchObject({code:"NOT_FOUND"});

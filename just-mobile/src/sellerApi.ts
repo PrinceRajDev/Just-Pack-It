@@ -1,4 +1,4 @@
-import { request, type Product, type ProductVariant } from "./api";
+import { request, type OrderItemChange, type Product, type ProductVariant } from "./api";
 
 export type Fulfilment = "pickup" | "seller_delivery" | "platform_delivery";
 export const fulfilmentNames: Record<Fulfilment, string> = { pickup: "Customer pickup", seller_delivery: "Shop delivery", platform_delivery: "Platform rider" };
@@ -12,10 +12,11 @@ export type SellerOrder = {
   fulfilment: Fulfilment; paymentMethod: "cod" | "razorpay"; paymentStatus: string; amountDue: number;
   total: number; itemsSubtotal: number; deliveryFee: number; testMode?: boolean; cancelReason?: string;
   cashCollection?: { amount: number };
+  substitution?: OrderItemChange;
   refund?: { state: string; amount: number };
   delivery?: { state: string; partnerId: string };
   deliveryAddress?: { line1?: string; locality?: string; city?: string; pincode?: string };
-  lines: { name: string; unit?: string; variantLabel?: string; qty: number; price: number }[];
+  lines: { productId?: string; name: string; unit?: string; variantLabel?: string; qty: number; price: number }[];
 };
 export type SellerShop = {
   id: string; version: number; name: string; address?: string; locality?: string; tagline?: string;
@@ -62,6 +63,8 @@ export const sellerApi = {
     write<SellerShop>(token, "/seller/shop/availability", "PATCH", { ...input, version: shop.version }),
   orders: (token: string, cursor?: string) => page<SellerOrder>(token, "/seller/orders", cursor),
   order: (token: string, orderId: string, subId: string) => request<SellerOrder>(`/seller/orders/${encode(orderId)}/suborders/${encode(subId)}`, token),
+  proposeItemChange: (token: string, order: SellerOrder, line:number, replacementId?:string) =>
+    write<void>(token, orderPath(order) + "/substitution", "POST", {version:order.version,line,replacementId}),
   move: (token: string, order: SellerOrder, status: OrderStatus, reason?: string) =>
     write<SellerOrder>(token, orderPath(order), "PATCH", { version: order.version, status, ...(reason ? { reason } : {}) }),
   handoff: (token: string, order: SellerOrder) =>

@@ -4,6 +4,7 @@ import { AppState, Image, Pressable, Text, TextInput, View } from "react-native"
 import { onSessionExpired, type Session } from "./api";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useAndroidBack } from "./useAndroidBack";
+import { SellerItemChange } from "./SellerItemChange";
 import { fulfilmentNames, orderStatusNames, sellerApi, type SellerOrder, type OrderStatus, type Settlement } from "./sellerApi";
 import { sellerShopApproval, sellerShopAvailability, rupees, styles, LoadState, MutationFeedback, Row, SellerButton, SellerCard, SellerField, SellerScroll, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
 import { SellerAccountCard, SellerCatalogue, SellerShopSettings, type StockFilter } from "./SellerStockAndShop";
@@ -47,6 +48,7 @@ const orderTransitions: Partial<Record<OrderStatus,{ status:OrderStatus; label:s
 };
 function sellerOrderAction(order: SellerOrder) {
   if (order.testMode) return {};
+  if (order.substitution?.state === "pending") return {};
   const move = order.status !== "ready" || order.fulfilment === "seller_delivery" ? orderTransitions[order.status] : undefined;
   if (move) return { label: order.status === "preparing" && order.fulfilment === "seller_delivery" ? "Mark packed" : move.label, move: move.status };
   if (order.status === "ready" && order.fulfilment === "platform_delivery" && order.delivery?.state === "claimed")
@@ -376,11 +378,17 @@ function SellerOrders({token,group,setGroup,initialOrder,onCloseInitialOrder}: {
           {contents}
         </Pressable>;
       })}</SellerCard>
+      <SellerItemChange token={token} order={order} onSaved={() => { close(); listing.reload(); }} />
+      {order.substitution?.state === "pending" && <SellerButton label="Refresh buyer decision" soft disabled={mutation.busy} onPress={() => void mutation.run(async () => {
+        const updated = await sellerApi.order(token,order.orderId,order.id);
+        setSelected(updated);
+        listing.reload();
+      })} />}
       <View style={styles.paymentTicket}>
         <View style={styles.orderTop}><Text style={[styles.title,styles.grow]}>{sellerPaymentLabel(order)}</Text>{order.status !== "cancelled" && <Text style={styles.orderAmount}>{rupees(order.total)}</Text>}</View>
         <Text style={styles.copy}>Items {rupees(order.itemsSubtotal)} · Delivery {rupees(order.deliveryFee)}</Text>
         {sellerCashDue(order) && <Text style={styles.label}>{rupees(order.amountDue)} due</Text>}
-        {order.status === "cancelled" && <Text style={styles.copy}>Original order total · {rupees(order.total)}</Text>}
+        {order.status === "cancelled" && order.substitution?.state !== "removed" && <Text style={styles.copy}>Original order total · {rupees(order.total)}</Text>}
         {order.refund && <Text style={styles.copy}>{sellerRefundLabel(order)}</Text>}
         {order.cancelReason && <Text style={styles.copy}>Cancellation · {order.cancelReason}</Text>}
       </View>
@@ -485,13 +493,14 @@ function SellerOrders({token,group,setGroup,initialOrder,onCloseInitialOrder}: {
             {!!riderStatus && <Text style={styles.label}>{riderStatus}</Text>}
             {!!refundLabel && <Text style={styles.label}>{refundLabel}</Text>}
             {!!packingProgressLabel && <Text style={styles.label}>{packingProgressLabel}</Text>}
+            {order.substitution?.state === "pending" && <Text style={styles.label}>Waiting for buyer approval</Text>}
             {order.status === "cancelled" && !!order.cancelReason?.trim() && (
               <Text style={styles.copy} numberOfLines={2}>Reason · {order.cancelReason.trim()}</Text>
             )}
           </View>
         </View>
         <View style={styles.dispatchTicketFooter}>
-          <Text style={styles.orderAmount}>{cashDue ?? (order.status === "cancelled" ? `Original ${rupees(order.total)}` : rupees(order.total))}</Text>
+          <Text style={styles.orderAmount}>{cashDue ?? (order.status === "cancelled" ? (order.substitution?.state === "removed" ? "No cash due" : `Original ${rupees(order.total)}`) : rupees(order.total))}</Text>
           <Text style={[styles.dispatchTicketLink, nextAction && styles.dispatchPrimaryAction]}>{nextStep}  ›</Text>
         </View>
       </Pressable>;

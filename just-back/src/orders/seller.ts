@@ -11,6 +11,7 @@ import {Order,orderDto,cashStatus,type OrderRecord,type SubOrderRecord,type Sell
 import {Refund} from "../payments/refund-model.js";
 import {OnlinePayment} from "../payments/razorpay.js";
 import {notify} from "../notifications/service.js";
+import {changeSubstitution,proposalInput} from "./substitution.js";
 const statuses=["placed","accepted","preparing","ready","out_for_delivery","delivered","cancelled"] as const;
 export const sellerTransitionInput=z.object({version:z.number().int().nonnegative(),status:z.enum(["accepted","preparing","ready","out_for_delivery","cancelled"]),reason:z.string().trim().min(3).max(500).optional()}).strict().superRefine((input,ctx)=>{
   if(input.status==="cancelled" && !input.reason)ctx.addIssue({code:"custom",path:["reason"],message:"A buyer-visible cancellation reason is required"});
@@ -42,6 +43,7 @@ async function transitionSuborder(who:Actor,orderId:string,suborderId:string,raw
     const version=sub.version ?? 0,last=sub.history?.at(-1);
     if(version===input.version+1 && sub.status===input.status && last?.actorId===who.id && last.reason===input.reason)return sellerSuborderDto(order.toObject(),sub);
     if(version!==input.version)fail(409,"VERSION_CONFLICT","This suborder changed; refresh before trying again");
+    if(input.status==="ready" && sub.substitution?.state==="pending")fail(409,"SUBSTITUTION_PENDING","Wait for the buyer to respond before marking this order ready.");
     const next:Partial<Record<SellerSuborderStatus,SellerSuborderStatus[]>>={placed:["accepted","cancelled"],accepted:["preparing","cancelled"],preparing:["ready"],ready:sub.fulfilment==="seller_delivery" ? ["out_for_delivery"] : []};
     if(!next[sub.status]?.includes(input.status))fail(409,"INVALID_TRANSITION","This status change is not allowed");
     if(input.status!=="cancelled" && (!shop.active || shop.status!=="approved"))fail(409,"SHOP_UNAVAILABLE","Shop approval is required to process orders");
@@ -78,6 +80,10 @@ async function transitionSuborder(who:Actor,orderId:string,suborderId:string,raw
 }
 export function sellerOrderRoutes(config:Config){
   const router=Router();
+  router.post("/orders/:orderId/suborders/:suborderId/substitution",async(req,res)=>{
+    await changeSubstitution(actor(req),z.uuid().parse(req.params.orderId),z.uuid().parse(req.params.suborderId),proposalInput.parse(req.body));
+    res.status(204).end();
+  });
   router.get("/orders",async(req,res)=>{
     res.setHeader("Cache-Control","private, no-store");
     const status=z.enum(statuses).optional().parse(req.query.status),limit=z.coerce.number().int().min(1).max(100).default(50).parse(req.query.limit);

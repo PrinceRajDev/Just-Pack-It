@@ -12,7 +12,7 @@ import { BuyerReceipt } from "./BuyerReceipt";
 import { BuyerCancelOrder } from "./BuyerCancelOrder";
 import { BuyerOrderSupport } from "./BuyerOrderSupport";
 import { BuyerReorder } from "./BuyerReorder";
-import { ApiError, buyerApi, type BuyerOrder, type Product } from "./api";
+import { ApiError, buyerApi, request, type BuyerOrder, type Product } from "./api";
 
 export const money = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 const dateTime = (value: string) =>
@@ -296,7 +296,7 @@ export function BuyerOrderDetails({
                   : due > 0 ? "Pay the exact amount to your delivery partner."
                     : cashPaid > 0 ? "Payment collected at delivery." : "No cash payment is outstanding."}</Text>}
               {cod && due > 0 && cashPaid > 0 && <Text style={s.paymentCopy}>{money(cashPaid)} already paid</Text>}
-              {cod && !!order.cancelledAmount && <Text style={s.paymentCopy}>{money(order.cancelledAmount)} removed for cancelled items and delivery</Text>}
+              {cod && !!order.cancelledAmount && <Text style={s.paymentCopy}>{money(order.cancelledAmount)} removed for cancelled or unavailable items and any applicable delivery fees</Text>}
             </View>
             {order.subOrders.map((shop) => (
               <View key={shop.id} testID={`shop-timeline-${shop.id}`} style={{ gap: 8 }} onLayout={({nativeEvent}) => {
@@ -385,6 +385,7 @@ function ShopCard({
           <Text testID="shop-current-status" style={[s.label, status === "cancelled" && s.error]}>{statusLabel(status)}</Text>
         </View>
       </View>
+      {shop.substitution && <BuyerItemChange key={shop.version} shop={shop} orderId={order.id} token={token} refresh={refresh} />}
       {current >= 0 && <View style={s.timeline}>
         {timeline.map(([key, name], index) => (
           <View key={key} style={s.stage}>
@@ -419,6 +420,42 @@ function ShopCard({
       ) : null}
     </View>
   );
+}
+
+function BuyerItemChange({shop,orderId,token,refresh}:{shop:ShopOrder;orderId:string;token:string;refresh:()=>void}) {
+  const [busy,setBusy] = useState(false);
+  const [error,setError] = useState("");
+  const lock = useRef(false);
+  const change = shop.substitution!;
+  const decide = async (decision:"replace"|"remove") => {
+    if (lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      await request<void>(`/orders/${encodeURIComponent(orderId)}/suborders/${encodeURIComponent(shop.id)}/substitution`,token,{
+        method:"POST",body:JSON.stringify({version:shop.version ?? 0,decision}),
+      });
+      refresh();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Couldn’t save your decision. Try again.");
+      setBusy(false);
+      lock.current = false;
+    }
+  };
+  return <View style={s.summary}>
+    <Text style={s.shopName}>{change.state === "pending" ? "Review item change" : change.state === "replaced" ? "Replacement approved" : "Item removed"}</Text>
+    <Text style={s.muted}>{change.original.name} · {change.original.variantLabel ?? change.original.unit} × {change.original.qty}</Text>
+    {change.replacement && change.state !== "removed" && <Text style={s.label}>
+      {change.replacement.name} · {change.replacement.unit} × {change.replacement.qty} · Same price
+    </Text>}
+    {change.state === "pending" && <>
+      <Text style={s.muted}>Remove this item to reduce your COD amount by {money(change.original.price * change.original.qty)}{shop.lines.length === 1 ? " plus any delivery fee for this shop" : ""}.</Text>
+      {!!error && <Text accessibilityRole="alert" style={s.error}>{error}</Text>}
+      {change.replacement && <Pressable accessibilityRole="button" disabled={busy} style={[s.refresh,s.sage]} onPress={() => void decide("replace")}><Text style={s.label}>Accept replacement</Text></Pressable>}
+      <Pressable accessibilityRole="button" disabled={busy} style={s.refresh} onPress={() => void decide("remove")}><Text style={s.label}>Remove item</Text></Pressable>
+    </>}
+  </View>;
 }
 
 const s = themedStyles(() => StyleSheet.create({

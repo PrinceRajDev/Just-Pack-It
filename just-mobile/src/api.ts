@@ -10,7 +10,12 @@ export type Address = { id: string; label: string; line1: string; locality: stri
 export type CheckoutLine = { productId: string; variantId?: string; qty: number };
 export type CheckoutReview = { checkoutAvailable: boolean; itemsSubtotal: number; deliveryTotal: number | null; grandTotal: number | null; paymentMethods: string[]; issues: { code?: string; message: string }[]; lines: { productId?: string; variantId?: string; unitPrice?: number; availableStock?: number; issues: { code?: string; message: string }[] }[]; shops: { shop: Shop; issues: { code?: string; message: string }[] }[]; fulfilments: { shopId: string; listedFee: number | null; issues: { message: string }[] }[] };
 export type BuyerProfile = { name: string; phone: string; email?: string; emailVerified: boolean; version: number };
-export type BuyerOrder = { id: string; total: number; amountDue?: number; onlinePaidAmount?: number; cashRecordedAmount?: number; cancelledAmount?: number; paymentStatus: string; paymentMethod: string; createdAt: string; address: { label: string; line1: string; locality: string; city: string; pincode: string }; subOrders: { id: string; shopId: string; shopName: string; status: string; deliveryState?: string; updatedAt?: string; version?: number; fulfilment?: string; amountDue: number; deliveryFee: number; cancelReason?: string; lines: { productId: string; variantId?: string; variantLabel?: string; name: string; unit: string; qty: number; price: number }[] }[] };
+export type OrderItemChange = {
+  state: "pending" | "replaced" | "removed";
+  original: {name:string; unit:string; variantLabel?:string; qty:number; price:number};
+  replacement?: {name:string; unit:string; qty:number; price:number};
+};
+export type BuyerOrder = { id: string; total: number; amountDue?: number; onlinePaidAmount?: number; cashRecordedAmount?: number; cancelledAmount?: number; paymentStatus: string; paymentMethod: string; createdAt: string; address: { label: string; line1: string; locality: string; city: string; pincode: string }; subOrders: { id: string; shopId: string; shopName: string; status: string; deliveryState?: string; updatedAt?: string; version?: number; fulfilment?: string; amountDue: number; deliveryFee: number; cancelReason?: string; substitution?: OrderItemChange; lines: { productId: string; variantId?: string; variantLabel?: string; name: string; unit: string; qty: number; price: number }[] }[] };
 
 type ListPayload<T> = T[] | { items?: T[] };
 const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");

@@ -455,6 +455,9 @@ const assert = require("node:assert/strict");
       await workspace.getByRole("button",{name:/^Order #/}).getByText(`${label}  ›`,{exact:true}).waitFor();
       await workspace.getByRole("button",{name:/^Order #/}).click();
       if (label === "Mark ready for pickup") {
+        await workspace.getByRole("button",{name:/Tomatoes 1 kg/}).click();
+        await workspace.getByRole("button",{name:"Request item removal",exact:true}).waitFor();
+        await workspace.getByRole("button",{name:"Cancel item change",exact:true}).click();
         await workspace.getByRole("checkbox",{name:/^Tomatoes,/}).click();
         await workspace.getByText("1 of 1 checked",{exact:true}).waitFor();
         await workspace.getByRole("button",{name:/Back to orders/}).click();

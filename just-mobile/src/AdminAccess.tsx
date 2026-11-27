@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { Image, Linking, Modal, Pressable, Text, View } from "react-native";
+import { Image, Linking, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { adminApi, type AdminShop } from "./adminApi";
 import { ApiError, buyerApi, marketApi, onSessionExpired, type Session } from "./api";
 import { resolveImage } from "./images";
 import { LoadState, MutationFeedback, Row, SellerButton, SellerCard, SellerField, SellerScroll, styles, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
 import { fulfilmentNames } from "./sellerApi";
+import { MarketIcon } from "./MarketIcon";
+import { theme, themedStyles } from "./theme";
 
 export function AdminAccess({close,session}:{close:()=>void;session:Session}) {
   const auth=useSellerMutation();
@@ -50,24 +52,50 @@ function AdminWorkspace({session,logout,loggingOut,error}:{session:Session;logou
 function Overview({token,openApprovals}:{token:string;openApprovals:()=>void}) {
   const overview=useSellerData(()=>adminApi.overview(token),token);
   const data=overview.data;
+  const format=(value:number)=>value.toLocaleString("en-IN");
   return <SellerScroll refreshing={overview.loading && !!data} onRefresh={overview.reload}>
-    <Text accessibilityRole="header" style={styles.section}>Marketplace overview</Text>
+    <View style={styles.queueTop}>
+      <Text accessibilityRole="header" style={[styles.section,styles.grow]}>Marketplace overview</Text>
+      <Pressable accessibilityRole="button" disabled={overview.loading} onPress={overview.reload} style={styles.tap}>
+        <Text style={styles.link}>{overview.loading ? "Refreshing…" : "Refresh"}</Text>
+      </Pressable>
+    </View>
     <LoadState loading={overview.loading && !data} error={overview.error} retry={overview.reload} />
     {data && <>
-      <View style={styles.todayStrip}>
-        <View style={styles.grow}><Text style={styles.todayNumber}>{data.totals.shops}</Text><Text style={styles.copy}>Shops</Text></View>
-        <View style={styles.metricDivider} />
-        <View style={styles.grow}><Text style={styles.todayNumber}>{data.totals.products}</Text><Text style={styles.copy}>Products</Text></View>
-      </View>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Review pending seller approvals, ${format(data.pendingShops.count)} pending`} onPress={openApprovals}
+        style={({pressed})=>[overviewStyles.approvals,pressed && styles.pressed]}>
+        <View style={overviewStyles.shopIcon}><MarketIcon name="store" /></View>
+        <View style={styles.grow}>
+          <Text style={styles.label}>Pending seller approvals</Text>
+          <Text style={styles.link}>Review shops</Text>
+        </View>
+        <Text style={overviewStyles.approvalCount}>{format(data.pendingShops.count)}</Text>
+      </Pressable>
       <SellerCard>
         <Text accessibilityRole="header" style={styles.section}>Needs attention</Text>
-        <Row title="Pending seller approvals" detail={String(data.pendingShops.count)} onPress={openApprovals} />
-        {[ ["Support cases",data.support.count], ["Stalled shop orders",data.staleSuborders.count], ["Payments to check",data.payments.count], ["Refunds to check",data.refunds.count] ].map(([label,count])=>
-          <View key={label} style={styles.queueTop}><Text style={styles.copy}>{label}</Text><Text style={styles.label}>{count}</Text></View>)}
+        {([["Support cases",data.support.count],["Stalled shop orders",data.staleSuborders.count],["Payments to check",data.payments.count],["Refunds to check",data.refunds.count]] as const).map(([label,count])=>
+          <View key={label} style={overviewStyles.queueRow}>
+            <Text style={[styles.label,styles.grow]}>{label}</Text>
+            <Text style={[overviewStyles.count,count>0 && overviewStyles.activeCount]}>{format(count)}</Text>
+          </View>)}
       </SellerCard>
+      <View style={styles.todayStrip}>
+        <View style={styles.grow}><Text style={styles.todayNumber}>{format(data.totals.shops)}</Text><Text style={styles.label}>Shops</Text></View>
+        <View style={styles.metricDivider} />
+        <View style={styles.grow}><Text style={styles.todayNumber}>{format(data.totals.products)}</Text><Text style={styles.label}>Products</Text></View>
+      </View>
     </>}
   </SellerScroll>;
 }
+
+const overviewStyles=themedStyles(()=>StyleSheet.create({
+  approvals:{flexDirection:"row",alignItems:"center",gap:12,padding:16,borderRadius:16,borderWidth:1,borderColor:theme.border,backgroundColor:theme.selected},
+  shopIcon:{width:40,height:40,borderRadius:12,alignItems:"center",justifyContent:"center",backgroundColor:theme.surface},
+  approvalCount:{fontSize:28,fontWeight:"600",fontVariant:["tabular-nums"],color:theme.ink},
+  queueRow:{minHeight:48,flexDirection:"row",alignItems:"center",gap:12,borderTopWidth:1,borderColor:theme.border},
+  count:{minWidth:36,textAlign:"center",fontVariant:["tabular-nums"],fontWeight:"600",color:theme.ink,paddingHorizontal:8,paddingVertical:4,borderRadius:8},
+  activeCount:{backgroundColor:theme.warning,color:theme.warningInk},
+}));
 
 function Approvals({token}:{token:string}) {
   const list=useSellerPages(adminApi.pendingShops,token);

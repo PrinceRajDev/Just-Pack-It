@@ -72,6 +72,10 @@ const assert = require("node:assert/strict");
     let riderStage;
     let receiptRequests = 0;
     let firstOrderKey;
+    const reorderProducts = [
+      {...products[0],name:"Reorder tomatoes",stock:4},
+      {...products[0],id:"reorder-rice",name:"Reorder rice",price:35,stock:3},
+    ];
     const confirmed = {
       id: "JPI-240618-084",
       total: 189,
@@ -158,7 +162,9 @@ const assert = require("node:assert/strict");
           const input = route.request().postDataJSON();
           assert.deepEqual(
             input.fulfilments.map((choice) => choice.shopId).sort(),
-            shops.map((shop) => shop.id).sort(),
+            input.items.length === 1 && input.items[0].productId === "reorder-rice"
+              ? [shops[0].id]
+              : shops.map((shop) => shop.id).sort(),
           );
           assert.equal(
             input.addressVersion,
@@ -205,9 +211,18 @@ const assert = require("node:assert/strict");
           assert.deepEqual(route.request().postDataJSON(), { version: 4, confirmReceived: true, confirmCashPaid: true });
           receiptRequests += 1;
           data = {code:"628415", expiresAt:new Date(Date.now() + 300000).toISOString(),amount:119};
+        } else if (resource === "cart/quote") {
+          const {items}=route.request().postDataJSON();
+          data={lines:items.map(item=>{
+            const product=reorderProducts.find(product=>product.id===item.productId);
+            assert.ok(product);
+            return {...item,product,unitPrice:product.price,availableStock:product.stock,issues:[]};
+          }),shops:[{shop:{...shops[0],isOpen:true}}]};
         } else if (resource === "orders/" + confirmed.id) {
           data = { ...confirmed, amountDue: trackingDelivered ? 0 : 119, cancelledAmount:70, cashRecordedAmount:trackingDelivered ? 119 : 0, subOrders: confirmed.subOrders.map((shop,index) => ({
             ...shop, status: index === 0 ? (trackingDelivered ? "delivered" : trackingStage) : "cancelled",
+            shopId: shop.id,
+            lines: index === 0 && trackingDelivered ? reorderProducts.map(product=>({productId:product.id,name:product.name,unit:product.unit,qty:1,price:product.price})) : [],
             ...(index === 0 ? {deliveryState: trackingDelivered ? "delivered" : riderStage, amountDue: trackingDelivered ? 0 : 119, version: trackingDelivered ? 5 : 4} : {amountDue:0}),
           })) };
         }
@@ -652,6 +667,22 @@ const assert = require("node:assert/strict");
     await tracking.getByText("Sharma Kirana Store · Delivered",{exact:true}).waitFor();
     await tracking.getByText("₹119 paid",{exact:true}).waitFor();
     await precedesPayment("Buy again");
+    await tracking.getByRole("button",{name:"Buy again",exact:true}).click();
+    const tomatoChoice=tracking.getByRole("checkbox",{name:"Reorder tomatoes",exact:true});
+    const riceChoice=tracking.getByRole("checkbox",{name:"Reorder rice",exact:true});
+    await tracking.getByText("₹79",{exact:true}).waitFor();
+    await tomatoChoice.click();
+    await tracking.getByText("₹35",{exact:true}).waitFor();
+    await riceChoice.click();
+    assert.equal(await tracking.getByRole("button",{name:"Select items to add",exact:true}).isDisabled(),true);
+    await riceChoice.click();
+    await tracking.getByRole("button",{name:"Add 1 item to bag",exact:true}).click();
+    await tracking.getByRole("button",{name:"View bag",exact:true}).click();
+    const reorderBag=page.getByTestId("buyer-bag");
+    await reorderBag.getByText("Reorder rice",{exact:true}).waitFor();
+    assert.equal(await reorderBag.getByText("Reorder tomatoes",{exact:true}).count(),0);
+    await reorderBag.getByRole("button",{name:"Remove Reorder rice",exact:true}).click();
+    await reorderBag.getByRole("button",{name:"Back from bag",exact:true}).click();
     await page.getByRole("button", { name: "Back from order details" }).click();
     await confirmation
       .getByRole("button", { name: "Continue Shopping" })

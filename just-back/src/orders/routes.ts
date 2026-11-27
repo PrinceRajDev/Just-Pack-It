@@ -20,6 +20,20 @@ export async function verifyOrderIndexes(){
 export function orderRoutes(config:Config){
   const router=Router();
   router.use((_req,res,next)=>{res.setHeader("Cache-Control","private, no-store");next();});
+  router.put("/:id/suborders/:subId/rating",async(req,res)=>{
+    const id=z.uuid().parse(req.params.id),subId=z.uuid().parse(req.params.subId);
+    const input=z.object({stars:z.number().int().min(1).max(5),feedback:z.string().trim().max(500).optional()}).strict().parse(req.body);
+    const owner={_id:id,buyerId:actor(req).id,testMode:{$ne:true}};
+    const review={stars:input.stars,...(input.feedback ? {feedback:input.feedback} : {})};
+    const result=await Order.updateOne({...owner,subOrders:{$elemMatch:{_id:subId,status:"delivered",buyerRating:{$exists:false}}}},{$set:{"subOrders.$.buyerRating":review}});
+    if(result.modifiedCount){res.json(review);return;}
+    const order=await Order.findOne(owner).select("subOrders").lean();
+    const shop=order?.subOrders.find(row=>row._id===subId);
+    if(!shop)fail(404,"NOT_FOUND","Shop order not found");
+    if(shop.status!=="delivered")fail(409,"RATING_UNAVAILABLE","You can rate this shop after delivery.");
+    if(!shop.buyerRating)fail(409,"RATING_UNAVAILABLE","Refresh this order and try again.");
+    res.json(shop.buyerRating);
+  });
   router.post("/:id/suborders/:subId/substitution",async(req,res)=>{
     await changeSubstitution(actor(req),z.uuid().parse(req.params.id),z.uuid().parse(req.params.subId),decisionInput.parse(req.body));
     res.status(204).end();

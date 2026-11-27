@@ -2336,6 +2336,8 @@ describe("live platform delivery",()=>{
    expect((await liveApi.post(`/seller/orders/${orderId}/suborders/${subId}/pickup`).set("Authorization",auth(seller)).send({version:4,partnerId:winner.id,confirmHandoff:true})).status).toBe(200);
    expect((await liveApi.post(`/delivery/tasks/${subId}/dispatch`).set("Authorization",auth(winner)).send({version:5})).status).toBe(200);
    const point={latitude:26.01,longitude:86.02,accuracy:15};
+   const rate=(id:string,stars:number)=>liveApi.put(`/orders/${orderId}/suborders/${id}/rating`).set("Authorization",auth(buyer)).send({stars,feedback:"Carefully packed"});
+   expect((await rate(subId,5)).status).toBe(409);
    expect((await liveApi.put(`/delivery/tasks/${subId}/location`).set("Authorization",auth(buyer)).send(point)).status).toBe(403);
    expect((await liveApi.put(`/delivery/tasks/${subId}/location`).set("Authorization",auth(winner)).send(point)).status).toBe(200);
    const tracking=(await buyerView()).body.subOrders.find((row:{id:string})=>row.id===subId);
@@ -2357,6 +2359,14 @@ describe("live platform delivery",()=>{
    const saved=await Order.findById(orderId);expect(saved!.subOrders[0].status).toBe("delivered");expect(saved!.subOrders[0].cashCollection!.reportedBy).toBe(winner.id);expect(saved!.subOrders[0].cashCollection!.amountCents).toBe(1200);expect((await Partner.findById(winner.id))!.activeTask).toBeUndefined();
    expect((await buyerView()).body).toMatchObject({total:17,amountDue:0,cancelledAmount:5,cashRecordedAmount:12,subOrders:[{id:subId,status:"delivered"},{id:cancelledId,status:"cancelled"}]});
    expect((await buyerView()).body.subOrders[0]).not.toHaveProperty("riderLocation");
+   expect((await rate(cancelledId,5)).status).toBe(409);
+   expect((await rate(subId,6)).status).toBe(400);
+   expect((await rate(subId,5)).body).toEqual({stars:5,feedback:"Carefully packed"});
+   expect((await rate(subId,2)).body).toEqual({stars:5,feedback:"Carefully packed"});
+   expect((await buyerView()).body.subOrders.find((row:{id:string})=>row.id===subId).buyerRating).toEqual({stars:5,feedback:"Carefully packed"});
+   const publicRating=await liveApi.get(`/shops/${original!.slug}`);
+   expect(publicRating.body).toMatchObject({rating:5,ratingCount:1});
+   expect(JSON.stringify(publicRating.body)).not.toContain("Carefully packed");
    expect((await liveApi.get(`/delivery/tasks/${subId}/contact`).set("Authorization",auth(winner))).status).toBe(404);
   }finally{await Order.deleteMany({_id:{$in:[orderId,extraOrder]}});await InventoryReservation.deleteOne({_id:holdId});await Product.deleteOne({_id:cancelledProductId});await Partner.deleteMany({_id:{$in:[delivery.id,second.id]}});await Shop.updateOne({_id:shopId},{$set:{status:original!.status,active:original!.active,areaIds:original!.areaIds}});}
  });

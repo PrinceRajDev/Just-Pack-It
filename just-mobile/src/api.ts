@@ -15,7 +15,7 @@ export type OrderItemChange = {
   original: {name:string; unit:string; variantLabel?:string; qty:number; price:number};
   replacement?: {name:string; unit:string; qty:number; price:number};
 };
-export type BuyerOrder = { id: string; total: number; amountDue?: number; onlinePaidAmount?: number; cashRecordedAmount?: number; cancelledAmount?: number; paymentStatus: string; paymentMethod: string; createdAt: string; address: { label: string; line1: string; locality: string; city: string; pincode: string; location?: Address["location"] }; subOrders: { id: string; shopId: string; shopName: string; status: string; deliveryState?: string; riderLocation?: {latitude:number;longitude:number;recordedAt:string; routeEstimateAvailable?:boolean}; updatedAt?: string; version?: number; fulfilment?: string; amountDue: number; deliveryFee: number; cancelReason?: string; cashCollection?: {amount:number}; refund?: {state:string;amount:number}; substitution?: OrderItemChange; lines: { productId: string; variantId?: string; variantLabel?: string; name: string; unit: string; qty: number; price: number }[] }[] };
+export type BuyerOrder = { id: string; testMode?: boolean; total: number; amountDue?: number; onlinePaidAmount?: number; cashRecordedAmount?: number; cancelledAmount?: number; paymentStatus: string; paymentMethod: string; createdAt: string; address: { label: string; line1: string; locality: string; city: string; pincode: string; location?: Address["location"] }; subOrders: { id: string; shopId: string; shopName: string; buyerRating?: {stars:number;feedback?:string}; status: string; deliveryState?: string; riderLocation?: {latitude:number;longitude:number;recordedAt:string; routeEstimateAvailable?:boolean}; updatedAt?: string; version?: number; fulfilment?: string; amountDue: number; deliveryFee: number; cancelReason?: string; cashCollection?: {amount:number}; refund?: {state:string;amount:number}; substitution?: OrderItemChange; lines: { productId: string; variantId?: string; variantLabel?: string; name: string; unit: string; qty: number; price: number }[] }[] };
 
 type ListPayload<T> = T[] | { items?: T[] };
 const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
@@ -136,6 +136,8 @@ export const buyerApi = {
   pushStatus: (token: string) => request<{available: boolean; subscribed: boolean}>("/notifications/push", token),
   enablePush: (token: string, deviceToken: string) => request<void>("/notifications/push", token, { method: "PUT", body: JSON.stringify({ token: deviceToken }) }),
   disablePush: (token: string) => request<void>("/notifications/push", token, { method: "DELETE" }),
+  rateShop: (token: string, orderId: string, subId: string, input:{stars:number;feedback?:string}) =>
+    request<{stars:number;feedback?:string}>(`/orders/${encodeURIComponent(orderId)}/suborders/${encodeURIComponent(subId)}/rating`, token, {method:"PUT",body:JSON.stringify(input)}),
   cancelSuborder: (token: string, orderId: string, subId: string, version: number, reason: string) => request<void>(`/orders/${encodeURIComponent(orderId)}/suborders/${encodeURIComponent(subId)}/cancel`, token, { method: "POST", body: JSON.stringify({ version, reason }) }),
   async ordersPage(token: string, cursor?: string) {
     if (!apiUrl) throw new Error("Marketplace connection is missing");

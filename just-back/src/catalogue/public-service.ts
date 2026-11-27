@@ -11,6 +11,19 @@ import {
 } from "./models.js";
 import { productQuery, shopQuery } from "./validators.js";
 import { productDto, shopDto } from "./presenters.js";
+import { Order } from "../orders/models.js";
+
+async function shopRatings(shopIds:string[]) {
+  if(!shopIds.length)return new Map<string,{rating:number;ratingCount:number}>();
+  const match={shopId:{$in:shopIds},status:"delivered","buyerRating.stars":{$gte:1,$lte:5}};
+  const rows=await Order.aggregate<{_id:string;rating:number;ratingCount:number}>([
+    {$match:{testMode:{$ne:true},subOrders:{$elemMatch:match}}},
+    {$unwind:"$subOrders"},
+    {$match:Object.fromEntries(Object.entries(match).map(([key,value])=>[`subOrders.${key}`,value]))},
+    {$group:{_id:"$subOrders.shopId",rating:{$avg:"$subOrders.buyerRating.stars"},ratingCount:{$sum:1}}},
+  ]).option({maxTimeMS:5000});
+  return new Map(rows.map(({_id,rating,ratingCount})=>[_id,{rating,ratingCount}]));
+}
 import { fail } from "../common/errors.js";
 import { encodeCursor, decodeCursor } from "../common/cursor.js";
 import type { Config } from "../config/env.js";
@@ -321,7 +334,8 @@ export async function listShops(
     scope,
     config,
   );
-  return { ...page, items: page.rows.map((s) => shopDto(s, refs.categories)) };
+  const ratings=await shopRatings(page.rows.map(shop=>shop._id));
+  return { ...page, items: page.rows.map((s) => ({...shopDto(s, refs.categories),...ratings.get(s._id)})) };
 }
 export async function listProducts(
   query: z.infer<typeof productQuery>,
@@ -377,9 +391,9 @@ export async function listProducts(
 export async function publicShop(slug: string) {
   const refs = await publicReferences();
   const shop = await Shop.findOne({ ...eligibleShopFilter(refs), slug }).lean();
-  return shop
-    ? shopDto(shop, refs.categories)
-    : fail(404, "SHOP_NOT_FOUND", "Shop not found");
+  if(!shop)fail(404, "SHOP_NOT_FOUND", "Shop not found");
+  const ratings=await shopRatings([shop._id]);
+  return {...shopDto(shop,refs.categories),...ratings.get(shop._id)};
 }
 export async function publicProduct(productId: string, variantId?: string) {
   const refs = await publicReferences();

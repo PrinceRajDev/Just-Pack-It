@@ -15,6 +15,7 @@ import { BuyerCancelOrder } from "./BuyerCancelOrder";
 import { BuyerOrderSupport } from "./BuyerOrderSupport";
 import { BuyerReorder } from "./BuyerReorder";
 import { RiderTrackingMap } from "./RiderTrackingMap";
+import { BuyerShopRating } from "./BuyerShopRating";
 import { ApiError, buyerApi, request, type BuyerOrder, type Product } from "./api";
 
 export const money = (value: number) => `₹${value.toLocaleString("en-IN")}`;
@@ -392,6 +393,7 @@ function ShopCard({
       {shop.deliveryState === "out_for_delivery" && shop.status === "out_for_delivery" &&
         <RiderLocation point={shop.riderLocation} destination={order.address.location} token={token} orderId={order.id} shopId={shop.id} />}
       {shop.substitution && <BuyerItemChange key={shop.version} shop={shop} orderId={order.id} token={token} refresh={refresh} />}
+      {shop.status === "delivered" && !order.testMode && <BuyerShopRating token={token} orderId={order.id} shopId={shop.id} rating={shop.buyerRating} />}
       {current >= 0 && <View style={s.timeline}>
         {timeline.map(([key, name], index) => (
           <View key={key} style={s.stage}>

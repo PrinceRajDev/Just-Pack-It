@@ -130,5 +130,11 @@ export function useBuyerBag(userId?: string) {
         lines: typeof update === "function" ? update(current.lines) : update,
       };
     });
-  return { bag: ready ? saved.lines : [], setBag, ready, error };
+  const clearAfterOrder = async () => {
+    const clear = writes.catch(() => undefined).then(() => SecureStore.setItemAsync(key, "[]"));
+    writes = clear;
+    await clear;
+    setSaved(current => current?.key === key ? { key, lines: [] } : current);
+  };
+  return { bag: ready ? saved.lines : [], setBag, clearAfterOrder, ready, error };
 }

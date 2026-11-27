@@ -498,6 +498,11 @@ const assert = require("node:assert/strict");
       ),
       2,
     );
+    await page.reload();
+    await enter();
+    await home.click();
+    await deliver.click();
+    await page.getByRole("button", {name:"Checkout · ₹189",exact:true}).click();
     await order.evaluate((button) => {
       button.click();
       button.click();

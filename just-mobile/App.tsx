@@ -155,6 +155,7 @@ export default function App() {
   const {
     bag,
     setBag,
+    clearAfterOrder,
     ready: bagReady,
     error: bagError,
   } = useBuyerBag(session?.userId);
@@ -487,10 +488,10 @@ export default function App() {
       }}
       back={() => setScreen("bag")}
       account={openAccount}
-      onConfirmed={(order, contact) => {
+      onConfirmed={async (order, contact) => {
         if (!session) return;
+        await clearAfterOrder();
         setConfirmation({ order, contact, userId: session.userId });
-        setBag([]);
         setScreen("confirmation");
       }}
     />

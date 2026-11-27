@@ -14,6 +14,13 @@ function createPlacementKey() {
   return `mobile_${Date.now()}_${Math.random().toString(36).slice(2, 14)}`;
 }
 
+const rejectedBeforePlacement = new Set([
+  "ADDRESS_CHANGED", "ADDRESS_UNSERVICEABLE", "NOT_FOUND", "AREA_UNAVAILABLE",
+  "HOLD_UNAVAILABLE", "INVALID_SHOP_SELECTION", "SHOP_UNAVAILABLE", "METHOD_UNAVAILABLE",
+  "DELIVERY_FEE_UNKNOWN", "LISTING_UNAVAILABLE", "VARIANT_UNAVAILABLE",
+  "INSUFFICIENT_STOCK", "MINIMUM_NOT_MET", "TOTAL_UNAVAILABLE", "PRICE_CHANGED",
+]);
+
 export function PlaceCodOrder({
   session,
   areaId,
@@ -29,7 +36,7 @@ export function PlaceCodOrder({
   total: number;
   items: CheckoutLine[];
   shopIds: string[];
-  onConfirmed: (order: BuyerOrder) => void;
+  onConfirmed: (order: BuyerOrder) => Promise<void>;
   onBusy: (busy: boolean) => void;
   onFailure: (failure: {message:string; uncertain:boolean; retry:()=>void; code?:string} | null) => void;
 }) {
@@ -42,6 +49,8 @@ export function PlaceCodOrder({
     setBusy(true);
     onBusy(true);
     onFailure(null);
+    const storageKey = `jpi.pending.cod.${session.userId}`;
+    let submitted = false;
     try {
       const input = {
         areaId,
@@ -55,7 +64,6 @@ export function PlaceCodOrder({
           method: "platform_delivery" as const,
         })),
       };
-      const storageKey = `jpi.pending.cod.${session.userId}`;
       const fingerprint = JSON.stringify(input);
       const existing = await SecureStore.getItemAsync(storageKey);
       const pending: { key: string; fingerprint: string } | null = existing
@@ -72,6 +80,7 @@ export function PlaceCodOrder({
         storageKey,
         JSON.stringify({ key, fingerprint }),
       );
+      submitted = true;
       const order = await buyerApi.placeCod(session.token, key, input);
       if (
         !order?.id ||
@@ -85,13 +94,17 @@ export function PlaceCodOrder({
           "Order details could not be confirmed. Retry with the same bag and address.",
         );
       }
+      await onConfirmed(order);
       setOrderId(order.id);
       await SecureStore.deleteItemAsync(storageKey).catch(() => undefined);
-      onConfirmed(order);
     } catch (reason) {
+      const rejected = submitted && reason instanceof ApiError &&
+        reason.status >= 400 && reason.status < 500 &&
+        !!reason.code && rejectedBeforePlacement.has(reason.code);
+      if (rejected) await SecureStore.deleteItemAsync(storageKey).catch(() => undefined);
       onFailure({
         message: reason instanceof Error ? reason.message : "Order result could not be confirmed. Check Orders before trying again.",
-        uncertain: !(reason instanceof ApiError) || reason.status >= 500,
+        uncertain: !rejected,
         code: reason instanceof ApiError ? reason.code : undefined,
         retry: () => void place(),
       });

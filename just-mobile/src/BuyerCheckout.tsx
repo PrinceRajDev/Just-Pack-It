@@ -71,7 +71,7 @@ export function BuyerCheckout({
   shops: Shop[];
   back: () => void;
   account: () => void;
-  onConfirmed: (order: BuyerOrder, contact: string) => void;
+  onConfirmed: (order: BuyerOrder, contact: string) => Promise<void>;
   openOrders: () => void;
   acceptPrice: (id: string, price: number) => void;
   openShop: (shop: Shop) => void;

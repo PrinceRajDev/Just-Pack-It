@@ -3,7 +3,8 @@ import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { buyerApi, type Product, type Session, type Shop } from "./api";
+import { buyerApi, marketApi, type Product, type Session, type Shop } from "./api";
+import { shopHoursLabel } from "./shopHours";
 import { BuyerAuthNotice } from "./BuyerAuthNotice";
 import { AndroidPushSettings } from "./AndroidPushSettings";
 import { MarketIcon, type MarketIconName } from "./MarketIcon";
@@ -65,7 +66,17 @@ export function BuyerAccountHub({ initialFavourites, seller, session, shops, pro
             ...products.map(product => ({ id: product.id, name: product.name, product, key: `jpi.favourite.product.${scope}.${product.productId ?? product.id}` })),
           ];
           const saved = await Promise.all(Array.from(new Map(rows.map(row => [row.key, row])).values(), async row => await storage.getItemAsync(row.key) === "true" ? row : null));
-          if (active) setFavourites(saved.filter(row => row !== null));
+          const favourites = saved.filter(row => row !== null);
+          const ids = favourites.flatMap(row => row.shop ? [row.shop.id] : []);
+          const fresh = new Map<string, Shop>();
+          for (let offset = 0; active && offset < ids.length; offset += 24) {
+            const batch = await marketApi.shopsByIds(ids.slice(offset, offset + 24)).catch(() => []);
+            batch.forEach(shop => fresh.set(shop.id, shop));
+          }
+          if (active) setFavourites(favourites.map(row => {
+            const shop = fresh.get(row.id);
+            return row.shop && shop ? {...row, shop:{...row.shop,...shop}} : row;
+          }));
         }
       } catch { if (active) setError(hindi ? "अभी लोड नहीं हो सका। फिर से कोशिश करें।" : "Couldn’t load right now. Please try again."); }
       finally { if (active) setBusy(false); }
@@ -223,6 +234,9 @@ export function BuyerAccountHub({ initialFavourites, seller, session, shops, pro
               {busy ? <View style={[s.card,s.inlineCard]} accessibilityLiveRegion="polite"><ActivityIndicator color={theme.accentInk} /><Text style={s.rowTitle}>{t("Loading favourites…", "पसंदीदा लोड हो रहे हैं…")}</Text></View> : error ? <BuyerStateCard title={t("Couldn’t load favourites", "पसंदीदा लोड नहीं हो सके")} copy={error} tone="error" icon="network" action={t("Retry favourites", "पसंदीदा फिर से लोड करें")} onAction={() => { setError(""); setBusy(true); setRevision(value => value+1); }} /> : <>
                 {favourites.filter(row => tab === "products" ? row.product : row.shop).map(row => {
                   const photo = resolveImage(row.product?.image ?? row.shop?.coverImage);
+                  const shopStatus = row.shop && shopHoursLabel({
+                    ...row.shop, temporarilyClosed:row.shop.availability === "temporarily_closed",
+                  }, undefined, hindi);
                   return <View key={row.key} style={s.card}>
                   <FavouritePhoto uri={photo} icon={row.shop ? "store" : "bag"} />
                   <View style={s.favouriteHeading}>
@@ -231,7 +245,7 @@ export function BuyerAccountHub({ initialFavourites, seller, session, shops, pro
                   </View>
                   {favouriteRemovalFailed === row.key && <Text accessibilityRole="alert" style={s.dangerText}>{t("Couldn’t remove this favourite. Try again.", "पसंदीदा हटा नहीं सके। फिर से कोशिश करें।")}</Text>}
                   {row.product && <Text style={s.copy}>{row.product.unit}</Text>}
-                  {row.shop && <Text style={s.copy}>{[row.shop.isOpen ? t("Open", "खुली है") : t("Closed", "बंद है"), row.shop.distanceKm != null ? `${row.shop.distanceKm} ${t("km", "किमी")}` : "", row.shop.rating != null ? `★ ${row.shop.rating}` : ""].filter(Boolean).join(" · ")}</Text>}
+                  {row.shop && <Text style={s.copy}>{[shopStatus, row.shop.distanceKm != null ? `${row.shop.distanceKm} ${t("km", "किमी")}` : "", row.shop.rating != null ? `★ ${row.shop.rating}` : ""].filter(Boolean).join(" · ")}</Text>}
                   {row.shop && <Action label={t("View shop", "दुकान देखें")} soft onPress={() => { setPanel(null); openShop(row.shop!); }} />}
                   {row.product && !row.product.variants?.length && <Action label={row.product.stock > 0 ? `${t("+ Add", "+ जोड़ें")} · ₹${row.product.price}` : t("Unavailable", "उपलब्ध नहीं")} disabled={row.product.stock <= 0} soft onPress={() => add(row.product!)} />}
                 </View>;

@@ -1,6 +1,8 @@
+import type { OpeningInterval } from "./shopHours";
+
 export type ServiceArea = { id: string; name: string; city: string; pincodes: string[]; active: boolean };
 export type Category = { id: string; slug: string; name: string; blurb?: string; image?: string; subcategories?: { slug: string; name: string }[] };
-export type Shop = { id: string; slug: string; name: string; locality: string; categories?: string[]; rating?: number; distanceKm?: number; tagline?: string; description?: string; isOpen: boolean; initials?: string; coverImage?: string; fulfilment?: string[]; deliveryFee?: number; minimumOrderAmount?: number };
+export type Shop = { id: string; slug: string; name: string; locality: string; categories?: string[]; rating?: number; distanceKm?: number; tagline?: string; description?: string; isOpen: boolean; initials?: string; coverImage?: string; fulfilment?: string[]; deliveryFee?: number; minimumOrderAmount?: number; openingHours?: OpeningInterval[]; timezone?: string; availability?: string };
 export type ProductVariant = { id: string; label: string; price: number; stock: number };
 export type Product = { id: string; productId?: string; variantId?: string; variants?: ProductVariant[]; name: string; unit: string; price: number; stock: number; description?: string; image?: string; shopId: string; categorySlug?: string; tags?: string[] };
 export type Session = { userId: string; name: string; role: "buyer" | "seller" | "delivery" | "admin"; token: string; isDemo: false };

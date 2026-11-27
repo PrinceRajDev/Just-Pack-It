@@ -231,6 +231,13 @@ const assert = require("node:assert/strict");
           data = buyer;
         else if (resource === "products") data = products;
         else if (resource === "shops") data = shops;
+        else if (resource === "catalogue/shops/by-ids") {
+          const today = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Kolkata",weekday:"short"}).format());
+          data = [
+            {...shops[0],isOpen:true},
+            {...shops[1],isOpen:false,availability:"closed",timezone:"Asia/Kolkata",openingHours:[{day:(today+1)%7,opens:"08:00",closes:"17:00"}]},
+          ];
+        }
         else if (resource === "areas" || resource === "categories")
           data = read(resource);
         await route.fulfill({ json: data, headers });
@@ -248,6 +255,12 @@ const assert = require("node:assert/strict");
     await page.getByRole("button", { name: "Account", exact: true }).click();
     const accountHub = page.getByTestId("buyer-account-hub");
     await accountHub.getByText(buyer.name, { exact: true }).waitFor();
+    await page.evaluate(({userId,ids}) => ids.forEach(id => sessionStorage.setItem(`jpi.favourite.shop.${userId}.${id}`,"true")), {userId:buyer.userId,ids:shops.map(shop=>shop.id)});
+    await page.getByRole("button",{name:/Favourites/}).click();
+    await page.getByRole("tab",{name:"Shops",exact:true}).click();
+    await page.getByText(/^Open now/).waitFor();
+    await page.getByText(/^Opens tomorrow at 8 AM/).waitFor();
+    await page.getByRole("button", { name: "Go back", exact: true }).last().click();
     assert.equal(await accountHub.getByText(/Raiyam/).count(), 0);
     await page.getByRole("button", { name: "Language", exact: true }).click();
     const english = page.getByRole("radio", { name: "English", exact: true });

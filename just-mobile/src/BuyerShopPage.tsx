@@ -14,7 +14,7 @@ import { StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { marketApi, type Category, type Product, type Shop } from "./api";
-import { shopHoursLabel, type OpeningInterval } from "./shopHours";
+import { shopHoursLabel } from "./shopHours";
 import { resolveImage } from "./images";
 import { MarketIcon } from "./MarketIcon";
 import * as storage from "./deviceStorage";
@@ -26,9 +26,6 @@ type ShopInfo = Shop & {
   scheduleLabel?: string;
   ratingCount?: number;
   address?: string;
-  openingHours?: OpeningInterval[];
-  timezone?: string;
-  availability?: string;
 };
 export function BuyerShopPage({
   shop,

@@ -70,7 +70,7 @@ export async function createCodOrder(who:Actor,key:string,raw:z.infer<typeof ord
     const committed=await InventoryReservation.updateOne({_id:hold._id,buyerId:who.id,state:"held"},{$set:{state:"committed",orderId:id}},{session});
     if(committed.modifiedCount!==1)fail(409,"HOLD_UNAVAILABLE","Inventory hold changed; retry your order");
     await notify(`${id}:placed`,{userId:who.id},method==="cod" ? "Order placed" : "Order awaiting online payment",method==="cod" ? "Your shops will review their parts of the order." : "Complete payment in your order details. Shops receive it after verified capture.",`/orders/${id}`,session);
-    if(method==="cod")for(const sub of subOrders){const shop=await Shop.findById(sub.shopId).session(session);if(shop)await notify(`${id}:seller:${sub.shopId}`,{userId:shop.ownerId},"New shop order","A new COD order is waiting for your shop's review.","/seller/orders",session);}
+    if(method==="cod")for(const sub of subOrders){const shop=await Shop.findById(sub.shopId).session(session);if(shop)await notify(`${id}:seller:${sub.shopId}`,{userId:shop.ownerId},"New shop order","A new COD order is waiting for your shop's review.","/seller/orders",session,`/seller/orders/${id}/suborders/${sub._id}`);}
     return {order:order!.toObject(),replayed:false};
   });}catch(error){
     if(typeof error==="object" && error && "code" in error && error.code===11000){const existing=await Order.findOne({_id:id,buyerId:who.id}).lean();if(existing)return replay(existing);}

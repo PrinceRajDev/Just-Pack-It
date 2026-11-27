@@ -90,6 +90,15 @@ export function sellerOrderRoutes(config:Config){
     if(hasMore){const last=page.at(-1)!;res.setHeader("X-Next-Cursor",encodeCursor({scope,sort:"newest",key:last.createdAt.toISOString(),id:last._id},config.CURSOR_SECRET));}
     res.json(page.flatMap(order=>order.subOrders.filter(sub=>sub.shopId===shop._id && (!status || sub.status===status)).map(sub=>sellerSuborderDto(order,sub))));
   });
+  router.get("/orders/:orderId/suborders/:suborderId",async(req,res)=>{
+    const orderId=z.uuid().parse(req.params.orderId),subId=z.uuid().parse(req.params.suborderId);
+    const shop=await Shop.findOne({ownerId:actor(req).id}).lean();
+    if(!shop)fail(404,"NOT_FOUND","Order not found");
+    const order=await Order.findOne({_id:orderId,subOrders:{$elemMatch:{_id:subId,shopId:shop._id}},$or:[{paymentMethod:"cod"},{paymentMethod:"razorpay",paymentStatus:"paid"}]}).lean();
+    const sub=order?.subOrders.find(item=>item._id===subId && item.shopId===shop._id);
+    if(!order || !sub)fail(404,"NOT_FOUND","Order not found");
+    res.setHeader("Cache-Control","private, no-store").json(sellerSuborderDto(order,sub));
+  });
   router.patch("/orders/:orderId/suborders/:suborderId",async(req,res)=>{
     res.setHeader("Cache-Control","private, no-store");
     res.json(await transitionSellerSuborder(actor(req),z.uuid().parse(req.params.orderId),z.uuid().parse(req.params.suborderId),req.body));

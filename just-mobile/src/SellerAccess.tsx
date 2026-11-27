@@ -5,6 +5,8 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { ApiError, buyerApi, marketApi, type Category, type ServiceArea, type Session } from "./api";
 import { StatusBar } from "expo-status-bar";
 import { SellerWorkspace } from "./SellerWorkspace";
+import type { SellerOrder } from "./sellerApi";
+import { sellerSessionKey as sessionKey } from "./useOrderNotification";
 import { BuyerRecovery } from "./BuyerRecovery";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { launchImageLibraryAsync, type ImagePickerAsset } from "expo-image-picker";
@@ -16,7 +18,6 @@ import * as storage from "./deviceStorage";
 const pendingRequests = new WeakSet<object>();
 const clockNow = () => Date.now();
 
-const sessionKey = "jpi.seller.session";
 const storefront = require("../assets/seller-storefront.jpg");
 const methods = [
   ["pickup", "Customer pickup", "Customers collect their orders at your shop."],
@@ -33,7 +34,7 @@ const setupCopy = {
   review: ["Review & submit", "Double-check your details before sending your application."],
 } as const;
 
-export function SellerAccess({ close, initialSession }: { close: () => void; initialSession?: Session }) {
+export function SellerAccess({ close, initialSession, startInOrders, initialOrder }: { close: () => void; initialSession?: Session; startInOrders?: boolean; initialOrder?: SellerOrder }) {
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const approvalHandledFor = useRef<string>(undefined);
   const [step, setStep] = useState<Step>(() => initialSession ? "status" : "login");
@@ -92,7 +93,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
 
   useEffect(() => {
     if (initialSession) {
-      void storage.setItemAsync(sessionKey, JSON.stringify(initialSession)).catch(() => undefined);
+      if (!startInOrders) void storage.setItemAsync(sessionKey, JSON.stringify(initialSession)).catch(() => undefined);
       return;
     }
     let active = true;
@@ -126,7 +127,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
       } finally { if (active) setRestoring(false); }
     })();
     return () => { active = false; };
-  }, [initialSession]);
+  }, [initialSession, startInOrders]);
 
   const go = (next: Step) => { setVisible(false); setError(""); setRequestId(undefined); setStep(next); };
   const clearSeller = () => {
@@ -160,7 +161,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
         const seen = await storage.getItemAsync(approvalKey).catch(() => null);
         if (!active) return;
         approvalHandledFor.current = session.token;
-        if (seen === "yes") setWorkspaceOpen(true);
+        if (seen === "yes" || startInOrders) setWorkspaceOpen(true);
         else await storage.setItemAsync(approvalKey, "yes").catch(() => undefined);
       }
       if (active) { setShop(value); setShopError(""); }
@@ -173,7 +174,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
       if (active) setCheckingShop(false);
     });
     return () => { active = false; };
-  }, [session, refresh]);
+  }, [session, refresh, startInOrders]);
 
   useEffect(() => {
     if (!challenge || step !== "email") return;
@@ -268,7 +269,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     else close();
   };
 
-  if (workspaceOpen && session) return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style="dark" /><SellerWorkspace key={session.userId} session={session} back={back} signOut={signOut} expired={expire} /></SafeAreaView></SafeAreaProvider></Modal>;
+  if (workspaceOpen && session) return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style="dark" /><SellerWorkspace key={session.userId} session={session} back={back} signOut={signOut} expired={expire} startInOrders={startInOrders} initialOrder={session.token === initialSession?.token ? initialOrder : undefined} /></SafeAreaView></SafeAreaProvider></Modal>;
   if (step === "recovery") return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><BuyerRecovery back={() => go("login")} /></SafeAreaView></SafeAreaProvider></Modal>;
   const title = picker === "area" ? "Choose service area" : picker === "category" ? "Choose category" :
     {login:"Welcome back", account:"Create seller account", email:"Check your email", shop:"Tell us about your shop", delivery:"Address & fulfilment", review:"Review your shop", status:"Your seller workspace"}[step];

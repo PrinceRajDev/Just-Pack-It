@@ -61,6 +61,7 @@ export const sellerApi = {
   saveAvailability: (token: string, shop: SellerShop, input: Partial<Pick<SellerShop, "openingHours" | "temporarilyClosed" | "fulfilment" | "minimumOrderAmount" | "deliveryFee" | "pickupNote">>) =>
     write<SellerShop>(token, "/seller/shop/availability", "PATCH", { ...input, version: shop.version }),
   orders: (token: string, cursor?: string) => page<SellerOrder>(token, "/seller/orders", cursor),
+  order: (token: string, orderId: string, subId: string) => request<SellerOrder>(`/seller/orders/${encode(orderId)}/suborders/${encode(subId)}`, token),
   move: (token: string, order: SellerOrder, status: OrderStatus, reason?: string) =>
     write<SellerOrder>(token, orderPath(order), "PATCH", { version: order.version, status, ...(reason ? { reason } : {}) }),
   handoff: (token: string, order: SellerOrder) =>

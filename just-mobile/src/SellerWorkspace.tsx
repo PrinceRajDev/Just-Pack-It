@@ -104,8 +104,9 @@ function SellerIcon({name,color}: {name:SellerIconName;color:string}) {
   return <Image source={sellerIcons[name]} resizeMode="contain" accessible={false} style={[styles.sellerIcon,{tintColor:color}]} />;
 }
 
-export function SellerWorkspace({ session, back, signOut, expired }: { session: Session; back: () => void; signOut: () => Promise<void>; expired: () => void }) {
-  const [tab, setTab] = useState<Tab>("Home");
+export function SellerWorkspace({ session, back, signOut, expired, startInOrders, initialOrder }: { session: Session; back: () => void; signOut: () => Promise<void>; expired: () => void; startInOrders?: boolean; initialOrder?: SellerOrder }) {
+  const [tab, setTab] = useState<Tab>(startInOrders ? "Orders" : "Home");
+  const [orderFromAlert, setOrderFromAlert] = useState(initialOrder);
   const [group, setGroup] = useState<OrderGroup>("Active");
   const [stockFilter, setStockFilter] = useState<StockFilter>();
   useEffect(() => onSessionExpired(token => { if (token === session.token) expired(); }), [session.token, expired]);
@@ -123,7 +124,7 @@ export function SellerWorkspace({ session, back, signOut, expired }: { session: 
     </View>
     <View style={styles.grow}>
       {tab === "Home" && <SellerHome token={session.token} orders={goOrders} open={goTab} openStock={filter => { setStockFilter(filter); setTab("Catalogue"); }} />}
-      {tab === "Orders" && <SellerOrders token={session.token} group={group} setGroup={setGroup} />}
+      {tab === "Orders" && <SellerOrders token={session.token} group={group} setGroup={setGroup} initialOrder={orderFromAlert} onCloseInitialOrder={() => setOrderFromAlert(undefined)} />}
       {tab === "Catalogue" && <SellerCatalogue token={session.token} stockFilter={stockFilter} />}
       {tab === "Settlements" && <SellerSettlements token={session.token} />}
       {tab === "Shop" && <SellerShopSettings token={session.token} name={session.name} signOut={signOut} />}
@@ -215,11 +216,11 @@ function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:O
   </SellerScroll>;
 }
 
-function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;setGroup:(value:OrderGroup)=>void}) {
+function SellerOrders({token,group,setGroup,initialOrder,onCloseInitialOrder}: {token:string;group:OrderGroup;setGroup:(value:OrderGroup)=>void;initialOrder?:SellerOrder;onCloseInitialOrder:()=>void}) {
   const listing = useSellerPages(sellerApi.orders, token);
   const [search,setSearch] = useState("");
   const [fulfilmentFilter,setFulfilmentFilter] = useState<typeof fulfilmentFilters[number]>("all");
-  const [selected, setSelected] = useState<SellerOrder>();
+  const [selected, setSelected] = useState(initialOrder);
   const [packingChecks,setPackingChecks] = useState<Record<string,number[]>>({});
   const [action, setAction] = useState<"cancel" | "cash" | "return" | "pickup">();
   const [reason, setReason] = useState("");
@@ -245,7 +246,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
     });
     return () => subscription.remove();
   }, []);
-  const close = () => { setSelected(undefined); setAction(undefined); mutation.clear(); };
+  const close = () => { setSelected(undefined); onCloseInitialOrder(); setAction(undefined); mutation.clear(); };
   useAndroidBack(() => { if (!selected) return false; if (!mutation.busy) close(); return true; }, 25);
   const term = search.trim().replace(/^(?:order\s*#\s*|#\s*)/i, "").toLowerCase();
   const groupStatuses: readonly OrderStatus[] = orderGroups[group];

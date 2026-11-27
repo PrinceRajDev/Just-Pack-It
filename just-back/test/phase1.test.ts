@@ -898,6 +898,15 @@ describe("COD orders with explicitly enabled isolated configuration",()=>{
       const own=(await enabled.get("/seller/orders").set("Authorization",auth(seller))).body;
       expect(own).toHaveLength(1);expect(own[0].shopId).toBe(shopId);expect(own[0]).not.toHaveProperty("subOrders");expect(own[0]).not.toHaveProperty("buyerId");expect(own[0]).not.toHaveProperty("deliveryAddress");
       const firstSub=result.order.subOrders.find(sub=>sub.shopId===shopId)!;
+      const orderId=result.order._id;
+      const sellerDestination=`/seller/orders/${orderId}/suborders/${firstSub._id}`;
+      const sellerAlert=`/notifications/${readNotificationKey(`${orderId}:seller:${shopId}`)}`;
+      const buyerAlert=`/notifications/${readNotificationKey(`${orderId}:placed`)}`;
+      expect((await enabled.get(sellerAlert).set("Authorization",auth(seller))).body).toEqual({link:sellerDestination});
+      expect((await enabled.get(sellerAlert).set("Authorization",auth(otherSeller))).status).toBe(404);
+      expect((await enabled.get(buyerAlert).set("Authorization",auth(buyer))).body).toEqual({link:`/orders/${orderId}`});
+      expect((await enabled.get(sellerDestination).set("Authorization",auth(seller))).body).toMatchObject({id:firstSub._id,status:"placed"});
+      expect((await enabled.get(sellerDestination).set("Authorization",auth(otherSeller))).status).toBe(404);
       await transitionSellerSuborder(seller,result.order._id,firstSub._id,{version:0,status:"cancelled",reason:"Cannot supply"});
       const partial=await enabled.get(`/orders/${result.order._id}`).set("Authorization",auth(buyer));expect(partial.body).toMatchObject({total:45,amountDue:20,cancelledAmount:25});expect(partial.body.subOrders.find((sub:{shopId:string})=>sub.shopId===otherShopId).status).toBe("placed");expect((await Product.findById(second._id))!.variants[0].stock).toBe(1);
       const secondSub=result.order.subOrders.find(sub=>sub.shopId===otherShopId)!;
@@ -2249,6 +2258,8 @@ describe("live platform delivery",()=>{
    expect((await liveApi.post(`/seller/orders/${orderId}/suborders/${subId}/pickup`).set("Authorization",auth(otherSeller)).send({version:4,partnerId:winner.id,confirmHandoff:true})).status).toBe(404);
    expect((await liveApi.post(`/seller/orders/${orderId}/suborders/${subId}/pickup`).set("Authorization",auth(seller)).send({version:4,partnerId:winner.id,confirmHandoff:true})).status).toBe(200);
    expect((await liveApi.post(`/delivery/tasks/${subId}/dispatch`).set("Authorization",auth(winner)).send({version:5})).status).toBe(200);
+   const dispatchAlert=`/notifications/${readNotificationKey(`${subId}:dispatch`)}`;
+   expect((await liveApi.get(dispatchAlert).set("Authorization",auth(buyer))).body).toEqual({link:`/orders/${orderId}`});
    const proof=await issueReceiptCode(buyer,orderId,subId,{version:6,confirmReceived:true,confirmCashPaid:true},config);
    const command={version:6,code:proof.code,confirmCashReceived:true,amountReceived:12};
    expect((await liveApi.post(`/delivery/tasks/${subId}/complete`).set("Authorization",auth(winner)).send({...command,amountReceived:1})).body.code).toBe("CASH_AMOUNT_MISMATCH");

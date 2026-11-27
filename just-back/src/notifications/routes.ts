@@ -22,6 +22,12 @@ export function notificationRoutes(config:Config){
     res.setHeader("X-Has-More",String(more));if(more){const last=page.at(-1)!;res.setHeader("X-Next-Cursor",encodeCursor({scope,sort:"newest",key:last.createdAt.toISOString(),id:last._id},config.CURSOR_SECRET));}
     res.json(page.map(row=>({id:row._id,title:row.title,body:row.body,link:row.link,createdAt:row.createdAt.toISOString(),read:reads.some(read=>read.notificationId===row._id)})));
   });
+  router.get("/:id",async(req,res)=>{
+    const who=actor(req),id=z.uuid().parse(req.params.id);
+    const row=await Notification.findOne({_id:id,recipientId:who.id}).lean();
+    if(!row)fail(404,"NOT_FOUND","Notification not found");
+    res.setHeader("Cache-Control","private, no-store").json({link:row.mobileLink ?? row.link});
+  });
   router.post("/:id/read",async(req,res)=>{
     z.object({}).strict().parse(req.body);const who=actor(req),id=z.uuid().parse(req.params.id);
     const row=await Notification.findOne({_id:id,...(who.role==="admin" ? {$or:[{recipientId:who.id},{admin:true}]} : {recipientId:who.id})}).lean();if(!row)fail(404,"NOT_FOUND","Notification not found");

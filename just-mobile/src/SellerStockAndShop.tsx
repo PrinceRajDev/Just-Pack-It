@@ -9,6 +9,7 @@ import { fulfilmentNames, sellerApi, type Fulfilment, type SellerProduct, type S
 import { sellerShopApproval, rupees, styles, LoadState, MutationFeedback, Row, SellerButton, SellerCard, SellerField, SellerScroll, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
 import { useAndroidBack } from "./useAndroidBack";
 import { SellerPhotoEditor } from "./SellerPhotoEditor";
+import { AndroidPushSettings } from "./AndroidPushSettings";
 
 const filterGroups = [
   { label: "Availability", filters: ["All", "Active", "Inactive"] },
@@ -608,7 +609,10 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
       {methods.includes("pickup") && <SellerField label="Pickup instructions" editable={!mutation.busy} value={pickupNote} onChangeText={setPickupNote} maxLength={400} multiline />}
     </SellerCard>
     </>}
-    {section === "Account" && <SellerAccountCard name={accountName} signOut={signOut} />}
+    {section === "Account" && <>
+      <AndroidPushSettings token={token} />
+      <SellerAccountCard name={accountName} signOut={signOut} />
+    </>}
     </SellerScroll>
     {section === "Availability" && <View style={styles.orderDock}>
       <MutationFeedback error={mutation.error} onReload={reload} />

@@ -35,6 +35,8 @@ import { BuyerAddresses } from "./src/BuyerAddresses";
 import { BuyerCheckout } from "./src/BuyerCheckout";
 import { BuyerOrderConfirmation } from "./src/BuyerOrderConfirmation";
 import { BuyerOrderDetails } from "./src/BuyerOrderDetails";
+import { SellerAccess } from "./src/SellerAccess";
+import { useOrderNotification } from "./src/useOrderNotification";
 import { mergeGuestBag, useBuyerBag } from "./src/useBuyerBag";
 import { useAndroidBack } from "./src/useAndroidBack";
 import { resolveImage } from "./src/images";
@@ -73,6 +75,7 @@ export default function App() {
   const [picker, setPicker] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
+  const {destination: alertOrder, close: closeAlertOrder} = useOrderNotification(session, sessionReady);
   const [homeVisit, setHomeVisit] = useState(0);
   const [confirmation, setConfirmation] = useState<{ order: BuyerOrder; contact: string; userId: string } | null>(null);
   const currentConfirmation = session && confirmation?.userId === session.userId ? confirmation : null;
@@ -527,7 +530,7 @@ export default function App() {
             },
           }}
         >
-          {body}
+          {alertOrder?.kind === "seller" && screen === "account" ? null : body}
         </BuyerProductContext.Provider>
         {!showStartup && (screen === "home" || screen === "browse") && count > 0 ? (
           <Pressable style={s.bagBar} onPress={openBag}>
@@ -567,6 +570,16 @@ export default function App() {
             void load(x);
           }}
         />
+        {alertOrder?.kind === "buyer" && session?.token === alertOrder.token && (
+          <Modal onRequestClose={closeAlertOrder}>
+            <SafeAreaProvider>
+              <SafeAreaView style={s.safe}>
+                <BuyerOrderDetails key={alertOrder.orderId} token={session.token} id={alertOrder.orderId} back={closeAlertOrder} />
+              </SafeAreaView>
+            </SafeAreaProvider>
+          </Modal>
+        )}
+        {alertOrder?.kind === "seller" && <SellerAccess key={`${alertOrder.session.userId}:${alertOrder.order?.id ?? "orders"}`} initialSession={alertOrder.session} initialOrder={alertOrder.order} startInOrders close={closeAlertOrder} />}
       </View>
     </SafeAreaView>
   );

@@ -74,7 +74,7 @@ export async function completeCashHandoff(who:Actor,orderId:string,subId:string,
     }
     if(!await InventoryReservation.exists({_id:order.reservationId,state:"committed",orderId:order._id,buyerId:order.buyerId}).session(session))fail(409,"INVENTORY_INVARIANT","Committed order proof is missing; reconciliation required");
     await Shop.updateOne({_id:shop._id},{$inc:{revision:1}},{session});
-    if(partnerMode){const released=await Partner.updateOne({_id:who.id,activeTask:sub._id},{$unset:{activeTask:1},$inc:{revision:1}},{session});if(released.modifiedCount!==1)fail(409,"TASK_CHANGED","Active task ownership changed");sub.delivery!.state="delivered";sub.delivery!.completedAt=now;}
+    if(partnerMode){const released=await Partner.updateOne({_id:who.id,activeTask:sub._id},{$unset:{activeTask:1,liveLocation:1},$inc:{revision:1}},{session});if(released.modifiedCount!==1)fail(409,"TASK_CHANGED","Active task ownership changed");sub.delivery!.state="delivered";sub.delivery!.completedAt=now;}
     proof.consumedAt=now;if(!prepaid)sub.cashCollection={id:randomUUID(),method:"cash",amountCents:cents,reportedBy:who.id,recordedAt:now,buyerConfirmedAt:proof.buyerConfirmedAt};
     sub.history ??=[];sub.history.push({from:sub.status,to:"delivered",at:now,actorId:who.id});sub.status="delivered";sub.version=version+1;sub.updatedAt=now;
     order.paymentStatus=cashStatus(order);order.markModified("subOrders");await order.save({session});

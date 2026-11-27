@@ -2335,6 +2335,14 @@ describe("live platform delivery",()=>{
    expect((await liveApi.post(`/seller/orders/${orderId}/suborders/${subId}/pickup`).set("Authorization",auth(otherSeller)).send({version:4,partnerId:winner.id,confirmHandoff:true})).status).toBe(404);
    expect((await liveApi.post(`/seller/orders/${orderId}/suborders/${subId}/pickup`).set("Authorization",auth(seller)).send({version:4,partnerId:winner.id,confirmHandoff:true})).status).toBe(200);
    expect((await liveApi.post(`/delivery/tasks/${subId}/dispatch`).set("Authorization",auth(winner)).send({version:5})).status).toBe(200);
+   const point={latitude:26.01,longitude:86.02,accuracy:15};
+   expect((await liveApi.put(`/delivery/tasks/${subId}/location`).set("Authorization",auth(buyer)).send(point)).status).toBe(403);
+   expect((await liveApi.put(`/delivery/tasks/${subId}/location`).set("Authorization",auth(winner)).send(point)).status).toBe(200);
+   const tracking=(await buyerView()).body.subOrders.find((row:{id:string})=>row.id===subId);
+   expect(tracking.riderLocation).toMatchObject({latitude:point.latitude,longitude:point.longitude});
+   await Partner.updateOne({_id:winner.id},{$set:{"liveLocation.recordedAt":new Date(0)}});
+   expect((await buyerView()).body.subOrders.find((row:{id:string})=>row.id===subId)).not.toHaveProperty("riderLocation");
+   expect((await liveApi.put(`/delivery/tasks/${subId}/location`).set("Authorization",auth(winner)).send(point)).status).toBe(200);
    const dispatchAlert=`/notifications/${readNotificationKey(`${subId}:dispatch`)}`;
    expect((await liveApi.get(dispatchAlert).set("Authorization",auth(buyer))).body).toEqual({link:`/orders/${orderId}`});
    const proof=await issueReceiptCode(buyer,orderId,subId,{version:6,confirmReceived:true,confirmCashPaid:true},config);
@@ -2348,6 +2356,7 @@ describe("live platform delivery",()=>{
    expect((await liveApi.post(`/delivery/tasks/${subId}/complete`).set("Authorization",auth(winner)).send(command)).status).toBe(200);
    const saved=await Order.findById(orderId);expect(saved!.subOrders[0].status).toBe("delivered");expect(saved!.subOrders[0].cashCollection!.reportedBy).toBe(winner.id);expect(saved!.subOrders[0].cashCollection!.amountCents).toBe(1200);expect((await Partner.findById(winner.id))!.activeTask).toBeUndefined();
    expect((await buyerView()).body).toMatchObject({total:17,amountDue:0,cancelledAmount:5,cashRecordedAmount:12,subOrders:[{id:subId,status:"delivered"},{id:cancelledId,status:"cancelled"}]});
+   expect((await buyerView()).body.subOrders[0]).not.toHaveProperty("riderLocation");
    expect((await liveApi.get(`/delivery/tasks/${subId}/contact`).set("Authorization",auth(winner))).status).toBe(404);
   }finally{await Order.deleteMany({_id:{$in:[orderId,extraOrder]}});await InventoryReservation.deleteOne({_id:holdId});await Product.deleteOne({_id:cancelledProductId});await Partner.deleteMany({_id:{$in:[delivery.id,second.id]}});await Shop.updateOne({_id:shopId},{$set:{status:original!.status,active:original!.active,areaIds:original!.areaIds}});}
  });

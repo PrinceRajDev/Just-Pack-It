@@ -33,6 +33,16 @@ export const delivery = {
   profile: () => api<PartnerProfile | null>("/delivery/profile"),
   availability: (online: boolean) => post("/delivery/availability", { online }, "PUT"),
   active: () => api<LiveDeliveryTask | null>("/delivery/active"),
+  location: (
+    id: string,
+    point: { latitude: number; longitude: number; accuracy: number },
+    signal: AbortSignal,
+  ) =>
+    api<{ saved: boolean }>(`/delivery/tasks/${encodeURIComponent(id)}/location`, {
+      method: "PUT",
+      body: JSON.stringify(point),
+      signal: AbortSignal.any([signal, AbortSignal.timeout(10000)]),
+    }),
   available: (cursor?: string) =>
     api<{ items: LiveDeliveryTask[]; next: string | null }>(
       `/delivery/available?limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,

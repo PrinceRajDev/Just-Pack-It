@@ -10,6 +10,7 @@ import {decodeCursor,encodeCursor} from "../common/cursor.js";
 import {cancelBuyerSuborder} from "./seller.js";
 import {throttle} from "../auth/service.js";
 import {changeSubstitution,decisionInput} from "./substitution.js";
+import {Partner} from "../delivery/models.js";
 export async function verifyOrderIndexes(){
   const indexes=await Order.collection.indexes();
   if(!indexes.some(index=>index.unique && index.key.reservationId===1))throw new Error("Order reservation uniqueness index missing");
@@ -45,7 +46,16 @@ export function orderRoutes(config:Config){
   });
   router.get("/:id",async(req,res)=>{
     const id=z.uuid().parse(req.params.id);
-    const order=await Order.findOne({_id:id,buyerId:actor(req).id}).lean();if(!order)fail(404,"NOT_FOUND","Order not found");res.json(orderDto(order));
+    const order=await Order.findOne({_id:id,buyerId:actor(req).id}).lean();if(!order)fail(404,"NOT_FOUND","Order not found");
+    const dto=orderDto(order);
+    const active=order.subOrders.filter(shop=>shop.fulfilment==="platform_delivery" && shop.status==="out_for_delivery" && shop.delivery?.state==="out_for_delivery");
+    const partners=active.length ? await Partner.find({_id:{$in:active.map(shop=>shop.delivery!.partnerId)},approved:true,activeTask:{$in:active.map(shop=>shop._id)}}).select("activeTask liveLocation").lean() : [];
+    res.json({...dto,subOrders:dto.subOrders.map(shop=>{
+      const delivery=active.find(row=>row._id===shop.id)?.delivery;
+      const point=delivery && partners.find(partner=>partner._id===delivery.partnerId && partner.activeTask===shop.id)?.liveLocation;
+      if(!point || point.taskId!==shop.id || Date.now()-point.recordedAt.getTime()>120000)return shop;
+      return {...shop,riderLocation:{latitude:point.latitude,longitude:point.longitude,recordedAt:point.recordedAt.toISOString()}};
+    })});
   });
   return router;
 }

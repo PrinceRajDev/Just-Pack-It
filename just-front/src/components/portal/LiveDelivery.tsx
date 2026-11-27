@@ -456,8 +456,86 @@ function navigation(
 ) {
   const destination = location ? `${location.coordinates[1]},${location.coordinates[0]}` : address;
   if (!destination) return null;
-  const query = new URLSearchParams({api:"1",destination,dir_action:"navigate"});
+  const query = new URLSearchParams({ api: "1", destination, dir_action: "navigate" });
   return `https://www.google.com/maps/dir/?${query}`;
+}
+function RiderLocationSharing({ taskId }: { taskId: string }) {
+  const [sharing, setSharing] = useState(false);
+  const [message, setMessage] = useState("");
+  useEffect(() => {
+    if (!sharing) return;
+    if (!navigator.geolocation) {
+      setMessage("Location is unavailable on this device.");
+      return;
+    }
+    const controller = new AbortController();
+    let lastAttempt = 0;
+    let uploading = false;
+    let latest: GeolocationPosition | undefined;
+    const upload = async () => {
+      if (
+        !latest ||
+        uploading ||
+        Date.now() - lastAttempt < 10000 ||
+        document.visibilityState !== "visible"
+      )
+        return;
+      if (Date.now() - latest.timestamp > 30000) {
+        latest = undefined;
+        return;
+      }
+      const { latitude, longitude, accuracy } = latest.coords;
+      if (accuracy > 150) {
+        setMessage("Turn on precise location to share a delivery update.");
+        return;
+      }
+      latest = undefined;
+      uploading = true;
+      lastAttempt = Date.now();
+      try {
+        await delivery.location(taskId, { latitude, longitude, accuracy }, controller.signal);
+        if (!controller.signal.aborted) setMessage("Your live location is shared with the buyer.");
+      } catch {
+        if (!controller.signal.aborted)
+          setMessage(
+            "Location update failed. Keeping this page open will retry on the next GPS fix.",
+          );
+      } finally {
+        uploading = false;
+      }
+    };
+    const watch = navigator.geolocation.watchPosition(
+      (position) => {
+        latest = position;
+        void upload();
+      },
+      () => setMessage("Location unavailable. Check browser permissions and turn on GPS."),
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
+    );
+    const timer = window.setInterval(() => void upload(), 10000);
+    return () => {
+      controller.abort();
+      navigator.geolocation.clearWatch(watch);
+      window.clearInterval(timer);
+    };
+  }, [sharing, taskId]);
+  return (
+    <div className="my-3">
+      <Button
+        onClick={() => {
+          setMessage(sharing ? "Location sharing stopped." : "Waiting for GPS…");
+          setSharing(!sharing);
+        }}
+      >
+        {sharing ? "Stop sharing location" : "Share live location"}
+      </Button>
+      {!!message && (
+        <p role="status" className="text-sm">
+          {message}
+        </p>
+      )}
+    </div>
+  );
 }
 function DeliveryTask({
   task,
@@ -507,6 +585,9 @@ function DeliveryTask({
         </p>
         <p>Pickup: {task.pickup ?? "Shop address not recorded; contact shop before travelling."}</p>
         <p>Drop-off: {drop ?? "Address unavailable; contact support."}</p>
+        {task.status === "out_for_delivery" && (
+          <RiderLocationSharing key={task.id} taskId={task.id} />
+        )}
         {[
           { label: "Pickup", url: navigation(task.pickup ?? undefined) },
           { label: "Drop-off", url: navigation(drop, task.drop?.location) },

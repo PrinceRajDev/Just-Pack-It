@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ComponentRef } from "react";
 import { StyleSheet,
   ActivityIndicator,
   AppState,
+  Linking,
   Pressable,
   ScrollView,
   Text,
@@ -387,6 +388,8 @@ function ShopCard({
           <Text testID="shop-current-status" style={[s.label, status === "cancelled" && s.error]}>{statusLabel(status)}</Text>
         </View>
       </View>
+      {shop.deliveryState === "out_for_delivery" && shop.status === "out_for_delivery" &&
+        <RiderLocation point={shop.riderLocation} destination={order.address.location} />}
       {shop.substitution && <BuyerItemChange key={shop.version} shop={shop} orderId={order.id} token={token} refresh={refresh} />}
       {current >= 0 && <View style={s.timeline}>
         {timeline.map(([key, name], index) => (
@@ -422,6 +425,33 @@ function ShopCard({
       ) : null}
     </View>
   );
+}
+
+function RiderLocation({point,destination}:{point:ShopOrder["riderLocation"];destination:BuyerOrder["address"]["location"]}) {
+  const [now,setNow]=useState(Date.now);
+  const [error,setError]=useState(false);
+  useEffect(()=>{
+    const timer=setInterval(()=>setNow(Date.now()),5000);
+    return ()=>clearInterval(timer);
+  },[]);
+  const recordedAt=point ? Date.parse(point.recordedAt) : NaN;
+  const fresh=!!point && now-recordedAt<=120000;
+  const openRoute=async()=>{
+    if(!point || !destination || Date.now()-recordedAt>120000)return;
+    const [lng,lat]=destination.coordinates;
+    const origin=encodeURIComponent(`${point.latitude},${point.longitude}`);
+    const drop=encodeURIComponent(`${lat},${lng}`);
+    try {await Linking.openURL(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${drop}&travelmode=driving`);setError(false);}
+    catch {setError(true);}
+  };
+  return <View style={{gap:6}}>
+    <Text style={s.label}>Rider tracking</Text>
+    <Text style={{color:theme.ink}}>{fresh ? `Last updated ${dateTime(point.recordedAt)}` : "Waiting for a fresh rider location."}</Text>
+    {fresh && destination && <Pressable accessibilityRole="button" style={[s.refresh,s.sage]} onPress={()=>void openRoute()}>
+      <Text style={s.label}>View rider route and travel time in Maps</Text>
+    </Pressable>}
+    {error && <Text accessibilityRole="alert" style={s.error}>Couldn’t open Maps.</Text>}
+  </View>;
 }
 
 function BuyerItemChange({shop,orderId,token,refresh}:{shop:ShopOrder;orderId:string;token:string;refresh:()=>void}) {

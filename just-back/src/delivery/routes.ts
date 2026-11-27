@@ -18,6 +18,15 @@ export function taskDto(order:OrderRecord,sub:SubOrderRecord,privateData=false){
 }
 export function deliveryRoutes(config:Config){
  const router=Router();
+ router.put("/tasks/:id/location",async(req,res)=>{
+   const id=z.uuid().parse(req.params.id),partnerId=actor(req).id;
+   const input=z.object({latitude:z.number().min(-90).max(90),longitude:z.number().min(-180).max(180),accuracy:z.number().min(0).max(150)}).strict().parse(req.body);
+   const active=await Order.exists({subOrders:{$elemMatch:{_id:id,status:"out_for_delivery",fulfilment:"platform_delivery","delivery.state":"out_for_delivery","delivery.partnerId":partnerId}}});
+   if(!active)fail(404,"NOT_FOUND","Active delivery not found");
+   const recordedAt=new Date();
+   await Partner.updateOne({_id:partnerId,approved:true,activeTask:id,$or:[{"liveLocation.taskId":{$ne:id}},{"liveLocation.recordedAt":{$lte:new Date(recordedAt.getTime()-9000)}}]},{$set:{liveLocation:{taskId:id,latitude:input.latitude,longitude:input.longitude,recordedAt}}});
+   res.json({saved:true});
+ });
  router.post("/tasks/:id/complete",async(req,res)=>{const id=z.uuid().parse(req.params.id),who=actor(req);await throttle(`receipt-verify:${who.id}`,config,60);const order=await Order.findOne({subOrders:{$elemMatch:{_id:id,"delivery.partnerId":who.id}}}).lean();const sub=order?.subOrders.find(s=>s._id===id&&s.delivery?.partnerId===who.id);if(!order||!sub)fail(404,"NOT_FOUND","Task not found");await completeCashHandoff(who,order._id,id,req.body,config,order.paymentMethod==="razorpay",true);res.json({saved:true});});
  router.post("/tasks/:id/issue",async(req,res)=>{const id=z.uuid().parse(req.params.id),input=z.object({version:z.number().int().nonnegative(),reason:z.string().trim().min(10).max(1000)}).strict().parse(req.body);res.json(await transaction(async session=>{const order=await Order.findOne({subOrders:{$elemMatch:{_id:id,"delivery.partnerId":actor(req).id}}}).session(session),sub=order?.subOrders.find(s=>s._id===id&&s.delivery?.partnerId===actor(req).id);if(!order||!sub?.delivery||["delivered","cancelled"].includes(sub.status))fail(404,"NOT_FOUND","Active task not found");if((sub.version??0)!==input.version)fail(409,"VERSION_CONFLICT","Refresh task");sub.delivery.issue={reason:input.reason,at:new Date()};sub.version=input.version+1;sub.updatedAt=new Date();order.markModified("subOrders");await order.save({session});await notify(`${sub._id}:issue:${sub.version}`,{admin:true},"Delivery assistance requested","A partner reported a delivery problem. Review Delivery partner approval in the admin partners workspace.","/admin/partners",session);return{saved:true};}));});
  router.get("/profile",async(req,res)=>{const p=await Partner.findById(actor(req).id).lean();res.json(p?{approved:p.approved,areaIds:p.areaIds,online:p.online,version:p.version}:null);});

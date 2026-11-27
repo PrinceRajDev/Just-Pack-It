@@ -26,7 +26,7 @@ const adminInput=z.discriminatedUnion("action",[
 const returnedInput=z.object({...base,partnerId:z.uuid(),confirmGoodsReceived:z.literal(true),restock:z.boolean()}).strict();
 type OrderDoc=HydratedDocument<OrderRecord>;
 function receiptGuard(order:OrderRecord,sub:SubOrderRecord){if(sub.status==="delivered"||sub.cashCollection||sub.receipt)fail(409,"FINANCIAL_REVIEW_REQUIRED","Buyer receipt or cash confirmation exists. Resolve through financial review; do not cancel or reassign automatically.");if(order.paymentMethod==="razorpay"&&order.paymentStatus!=="paid")fail(409,"PAYMENT_PENDING","Captured payment proof is required before cancellation");}
-async function releasePartner(sub:SubOrderRecord,session:ClientSession){if(!sub.delivery)return;const result=await Partner.updateOne({_id:sub.delivery.partnerId,activeTask:sub._id},{$unset:{activeTask:1},$inc:{revision:1}},{session});if(result.modifiedCount!==1)fail(409,"ASSIGNMENT_INVARIANT","Partner task ownership differs. Operator reconciliation required");}
+async function releasePartner(sub:SubOrderRecord,session:ClientSession){if(!sub.delivery)return;const result=await Partner.updateOne({_id:sub.delivery.partnerId,activeTask:sub._id},{$unset:{activeTask:1,liveLocation:1},$inc:{revision:1}},{session});if(result.modifiedCount!==1)fail(409,"ASSIGNMENT_INVARIANT","Partner task ownership differs. Operator reconciliation required");}
 async function cancel(order:OrderDoc,sub:SubOrderRecord,restock:boolean,note:string,session:ClientSession){
  receiptGuard(order,sub);if(sub.restockedAt)fail(409,"INVENTORY_INVARIANT","Stock was already returned");
  const hold=await InventoryReservation.findOne({_id:order.reservationId,state:"committed",orderId:order._id,buyerId:order.buyerId}).session(session).lean();

@@ -8,6 +8,7 @@ import { buyerApi, type Address, type BuyerProfile } from "./api";
 import { MarketIcon } from "./MarketIcon";
 import { reverseGeocodeAsync } from "expo-location";
 import { CurrentLocationButton } from "./CurrentLocationButton";
+import { FindDeliveryLocation } from "./FindDeliveryLocation";
 import * as storage from "./deviceStorage";
 
 type Draft = Omit<Address, "id" | "version" | "location">;
@@ -56,6 +57,11 @@ export function BuyerAddresses({ token, back, checkout, userId, area, fromHome }
   const [draft, setDraft] = useState<Draft | null>(() => checkout ? (checkout.address ? { label: checkout.address.label, line1: checkout.address.line1, locality: checkout.address.locality, city: checkout.address.city, pincode: checkout.address.pincode } : { ...blank }) : null);
   const [editing, setEditing] = useState<Address | null>(checkout?.address ?? null)
   const [pinDraft,setPinDraft] = useState<Address["location"]>();
+  const [lookupQuery,setLookupQuery] = useState<string>();
+  const addressParts = draft ? [draft.line1, draft.locality, draft.city, draft.pincode].map(value => value.trim()) : [];
+  const addressQuery = addressParts.length === 4 && addressParts.every(Boolean) && /^[1-9][0-9]{5}$/.test(addressParts[3])
+    ? [...addressParts,"India"].join(", ") : "";
+  const confirmedPin = lookupQuery === undefined || lookupQuery === addressQuery ? pinDraft : undefined;
   const addressMoved = !!editing && !!draft && (draft.line1.trim() !== editing.line1 || draft.locality.trim() !== editing.locality || draft.city.trim() !== editing.city || draft.pincode.trim() !== editing.pincode);
   const [makeDefault, setMakeDefault] = useState(checkout?.isDefault ?? false);
   const checkoutMode = !!checkout;;
@@ -84,7 +90,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area, fromHome }
       label:draft.label.trim(),line1:draft.line1.trim(),locality:draft.locality.trim(),
       city:draft.city.trim(),pincode:draft.pincode.trim(),
     };
-    if (pinDraft) input.location = pinDraft;
+    if (confirmedPin) input.location = confirmedPin;
     const errors: Partial<Record<keyof Draft, string>> = {};
     if (!input.label) errors.label = t("Enter a label, such as Home or Work.", "पते का नाम दर्ज करें, जैसे घर या दफ़्तर।");
     if (input.line1.length < 3) errors.line1 = t("Enter your house or building and street.", "मकान या इमारत और सड़क का नाम दर्ज करें।");
@@ -95,7 +101,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area, fromHome }
     setError(null);
     if (Object.keys(errors).length) return;
     lock.current = true; setBusy(true); setError(null);
-    try { const saved = editing ? await buyerApi.updateAddress(token, editing.id, { ...input, version: editing.version, ...(addressMoved && !pinDraft ? {location:null} : {}) }) : await buyerApi.createAddress(token, input); if (checkout) { checkout.onSaved(saved, makeDefault); return; } setRows((old) => editing ? old.map((row) => row.id === saved.id ? saved : row) : [...old, saved]); setSavedLabel(saved.label); setDraft(null); setEditing(null); setPinDraft(undefined); }
+    try { const saved = editing ? await buyerApi.updateAddress(token, editing.id, { ...input, version: editing.version, ...(addressMoved && !confirmedPin ? {location:null} : {}) }) : await buyerApi.createAddress(token, input); if (checkout) { checkout.onSaved(saved, makeDefault); return; } setRows((old) => editing ? old.map((row) => row.id === saved.id ? saved : row) : [...old, saved]); setSavedLabel(saved.label); setDraft(null); setEditing(null); setPinDraft(undefined); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Address could not save"); }
     finally { lock.current = false; setBusy(false); }
   };
@@ -164,6 +170,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area, fromHome }
             <Text style={s.editorLabel}>{t("Delivery location", "डिलीवरी की जगह")}</Text>
             <CurrentLocationButton disabled={busy} hindi={hindi} onLocation={async ({latitude,longitude}, isActive) => {
               if (lock.current) return;
+              setLookupQuery(undefined);
               setPinDraft({type:"Point",coordinates:[longitude,latitude]});
               if (Platform.OS === "web") return;
               const [place] = await reverseGeocodeAsync({latitude,longitude}).catch(() => []);
@@ -175,7 +182,11 @@ export function BuyerAddresses({ token, back, checkout, userId, area, fromHome }
                 pincode:old.pincode || (/^[1-9][0-9]{5}$/.test(place.postalCode ?? "") ? place.postalCode! : ""),
               }));
             }} />
-            <Text accessibilityLiveRegion="polite" style={s.copy}>{pinDraft || (!addressMoved && editing?.location)
+            <FindDeliveryLocation key={addressQuery} address={addressQuery} disabled={busy} hindi={hindi} onConfirm={point => {
+              setLookupQuery(addressQuery);
+              setPinDraft(point);
+            }} />
+            <Text accessibilityLiveRegion="polite" style={s.copy}>{confirmedPin || (!addressMoved && editing?.location)
               ? t("Delivery location set. Confirm your house, street and landmark above.", "डिलीवरी की जगह सेट है। ऊपर अपना मकान, सड़क और लैंडमार्क जाँचें।")
               : t("Enter your full address. Use current location when you’re at the drop-off point to enable delivery.", "अपना पूरा पता दर्ज करें। डिलीवरी के लिए उस जगह पर पहुँचकर मौजूदा लोकेशन इस्तेमाल करें।")}</Text>
           </View>

@@ -258,15 +258,17 @@ describe("COD orders with explicitly enabled isolated configuration",()=>{
   async function fixture(run:(product:string,address:string)=>Promise<void>){
     await Order.init();await InventoryReservation.init();
     const shop=await Shop.findById(shopId),area=await Area.findById(areaId);
-    await Shop.updateOne({_id:shopId},{$set:{temporarilyClosed:false,openingHours:Array.from({length:7},(_,day)=>({day,opens:"00:00",closes:"23:59"})),fulfilment:["pickup","seller_delivery","platform_delivery"],areaIds:[areaId],deliveryFeeCents:1500,minimumOrderCents:0}});
+    await Shop.updateOne({_id:shopId},{$set:{temporarilyClosed:false,openingHours:Array.from({length:7},(_,day)=>({day,opens:"00:00",closes:"23:59"})),fulfilment:["pickup","seller_delivery","platform_delivery"],areaIds:[areaId],deliveryFeeCents:1500,minimumOrderCents:0,location:{type:"Point",coordinates:[86,26]}}});
     await Area.updateOne({_id:areaId},{$addToSet:{pincodes:"999999"}});
     const product=await Product.create({_id:randomUUID(),shopId,categoryId,name:"Order snapshot listing",sortName:"order snapshot listing",unit:"pack",description:"",priceCents:1250,stock:5,sortPriceCents:1250,totalStock:5,variants:[],active:true});
-    const address=(await api.post("/addresses").set("Authorization",auth(buyer)).send({label:"Test order address",line1:"Isolated test lane",locality:"Test",city:"Test",pincode:"999999"})).body;
+    const address=(await api.post("/addresses").set("Authorization",auth(buyer)).send({label:"Test order address",line1:"Isolated test lane",locality:"Test",city:"Test",pincode:"999999",location:{type:"Point",coordinates:[86,26]}})).body;
     try {await run(product._id,address.id);} finally {
       await Order.deleteMany({"subOrders.lines.productId":product._id});await InventoryReservation.deleteMany({"lines.productId":product._id});await Product.deleteOne({_id:product._id});
       await api.delete(`/addresses/${address.id}`).set("Authorization",auth(buyer)).send({version:0});
       await Area.updateOne({_id:areaId},{$set:{pincodes:area!.pincodes}});
       await Shop.updateOne({_id:shopId},{$set:{status:shop!.status,active:shop!.active,temporarilyClosed:shop!.temporarilyClosed,openingHours:shop!.openingHours,fulfilment:shop!.fulfilment,areaIds:shop!.areaIds},$unset:{deliveryFeeCents:1,minimumOrderCents:1}});
+      if(shop!.location)await Shop.updateOne({_id:shopId},{$set:{location:shop!.location}});
+      else await Shop.updateOne({_id:shopId},{$unset:{location:1}});
       if(shop!.deliveryFeeCents!==undefined)await Shop.updateOne({_id:shopId},{$set:{deliveryFeeCents:shop!.deliveryFeeCents}});
       if(shop!.minimumOrderCents!==undefined)await Shop.updateOne({_id:shopId},{$set:{minimumOrderCents:shop!.minimumOrderCents}});
     }
@@ -1102,7 +1104,7 @@ describe("address fulfilment review",()=>{
     await Shop.updateOne({_id:shopId},{$set:{status:"approved",active:true,temporarilyClosed:false,openingHours:Array.from({length:7},(_,day)=>({day,opens:"00:00",closes:"23:59"})),fulfilment:["pickup","seller_delivery","platform_delivery"],deliveryFeeCents:1250,areaIds:[areaId]}});
     const review=()=>api.post("/cart/fulfilment").set("Authorization",auth(buyer)).send({addressId:address.id,shopIds:[shopId]});
     try {
-      const covered=await review();expect(covered.status).toBe(200);expect(covered.headers["cache-control"]).toContain("no-store");expect(covered.body.shops[0].options.map((o:{status:string})=>o.status)).toEqual(["eligible","eligible","unverified"]);expect(covered.body.shops[0].options[1].listedFee).toBe(12.5);expect(covered.body.checkoutAvailable).toBe(false);expect(covered.body).not.toHaveProperty("line1");
+      const covered=await review();expect(covered.status).toBe(200);expect(covered.headers["cache-control"]).toContain("no-store");expect(covered.body.shops[0].options.map((o:{status:string})=>o.status)).toEqual(["eligible","unavailable","unverified"]);expect(covered.body.shops[0].options[1]).toMatchObject({code:"ADDRESS_LOCATION_MISSING",listedFee:null});expect(covered.body.checkoutAvailable).toBe(false);expect(covered.body).not.toHaveProperty("line1");
       await Shop.updateOne({_id:shopId},{$set:{areaIds:[]}});
       expect((await review()).body.shops[0].options.map((o:{status:string})=>o.status)).toEqual(["eligible","unavailable","unavailable"]);
       await Shop.updateOne({_id:shopId},{$set:{temporarilyClosed:true}});expect((await review()).body.shops[0].options.every((o:{status:string})=>o.status==="unavailable")).toBe(true);
@@ -2182,8 +2184,8 @@ describe("delivery address pins",()=>{
  expect((await api.patch(`/addresses/${created.body.id}`).set("Authorization",auth(buyer)).send({version:0,location:null})).status).toBe(409);
  const clear=await api.patch(`/addresses/${created.body.id}`).set("Authorization",auth(buyer)).send({version:1,location:null});expect(clear.status).toBe(200);expect(clear.body.location).toBeUndefined();
  });
- it("checks radius and missing shop pin, preserving pincode-only legacy addresses",()=>{
- expect(pinCoverage(undefined)).toBeNull();expect(pinCoverage({type:"Point",coordinates:[86,26]})).toMatchObject({code:"SHOP_LOCATION_MISSING"});expect(pinCoverage({type:"Point",coordinates:[86,26]},{type:"Point",coordinates:[86,26.02]})).toBeNull();expect(pinCoverage({type:"Point",coordinates:[86,26]},{type:"Point",coordinates:[86,26.06]})).toMatchObject({code:"ADDRESS_OUTSIDE_RADIUS"});
+ it("checks radius and requires both pins and checks the delivery radius",()=>{
+ expect(pinCoverage(undefined)).toMatchObject({code:"ADDRESS_LOCATION_MISSING"});expect(pinCoverage({type:"Point",coordinates:[86,26]})).toMatchObject({code:"SHOP_LOCATION_MISSING"});expect(pinCoverage({type:"Point",coordinates:[86,26]},{type:"Point",coordinates:[86,26.02]})).toBeNull();expect(pinCoverage({type:"Point",coordinates:[86,26]},{type:"Point",coordinates:[86,26.06]})).toMatchObject({code:"ADDRESS_OUTSIDE_RADIUS"});
  });
 });
 
@@ -2198,6 +2200,11 @@ describe("delivery pin placement parity",()=>{
  await Shop.updateOne({_id:shopId},{$set:{active:true,status:"approved",temporarilyClosed:false,areaIds:[areaId],categoryIds:[categoryId],fulfilment:["pickup","seller_delivery"],deliveryFeeCents:1000,minimumOrderCents:0,location:{type:"Point",coordinates:[86,26.1]},openingHours:Array.from({length:7},(_,day)=>({day,opens:"00:00",closes:"23:59"}))}});
  const review=await api.post("/cart/fulfilment").set("Authorization",auth(buyer)).send({addressId:address._id,shopIds:[shopId]});expect(review.status).toBe(200);expect(review.body.shops[0].options.find((o:{method:string})=>o.method==="seller_delivery").status).toBe("unavailable");expect(review.body.shops[0].options.find((o:{method:string})=>o.method==="pickup").status).toBe("eligible");
  await expect(createCodOrder(buyer,randomUUID(),input)).rejects.toMatchObject({code:"ADDRESS_UNSERVICEABLE"});expect((await Product.findById(product._id))!.stock).toBe(10);
+ await address.updateOne({$unset:{location:1}});
+ const missingPin=await api.post("/cart/fulfilment").set("Authorization",auth(buyer)).send({addressId:address._id,shopIds:[shopId]});
+ expect(missingPin.body.shops[0].options).toEqual(expect.arrayContaining([expect.objectContaining({method:"seller_delivery",code:"ADDRESS_LOCATION_MISSING"}),expect.objectContaining({method:"pickup",status:"eligible"})]));
+ await expect(createCodOrder(buyer,randomUUID(),input)).rejects.toMatchObject({code:"ADDRESS_UNSERVICEABLE"});
+ await address.updateOne({$set:{location:{type:"Point",coordinates:[86,26]}}});
  await Shop.updateOne({_id:shopId},{$set:{location:{type:"Point",coordinates:[86,26.01]}}});const made=await createCodOrder(buyer,randomUUID(),input);expect(made.order.address.location).toEqual({type:"Point",coordinates:[86,26]});await address.updateOne({$set:{location:{type:"Point",coordinates:[87,27]}}});expect((await Order.findById(made.order._id))!.address.location?.coordinates).toEqual([86,26]);
  }finally{if(originalArea)await Area.updateOne({_id:areaId},{$set:{active:originalArea.active,pincodes:originalArea.pincodes}});if(original){const{_id,...rest}=original;await Shop.replaceOne({_id},rest);}}
  });

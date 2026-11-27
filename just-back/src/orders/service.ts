@@ -46,9 +46,9 @@ export async function createCodOrder(who:Actor,key:string,raw:z.infer<typeof ord
       const method=fulfilments.find(choice=>choice.shopId===shopId)!.method;
       if(!shop.fulfilment.includes(method))fail(409,"METHOD_UNAVAILABLE","The selected fulfilment method is unavailable");
       let fee=0;
-      if(method==="platform_delivery" && (!platformEnabled||testMode||!address.location||!shop.location||!await deliveryAvailable(shop.areaIds)))fail(409,"METHOD_UNAVAILABLE","Platform delivery requires pins, enabled live operations and an available approved partner");
       if(method==="seller_delivery"||method==="platform_delivery"){
         const pinIssue=pinCoverage(address.location,shop.location);if(pinIssue)fail(409,"ADDRESS_UNSERVICEABLE",pinIssue.message);
+        if(method==="platform_delivery" && (!platformEnabled||testMode||!await deliveryAvailable(shop.areaIds)))fail(409,"METHOD_UNAVAILABLE","Platform delivery requires enabled live operations and an available approved partner");
         const coverage=await Area.findOneAndUpdate({_id:{$in:shop.areaIds},active:true,pincodes:address.pincode},{$inc:{revision:1}},{session,returnDocument:"after"});
         if(!coverage)fail(409,"ADDRESS_UNSERVICEABLE","A shop does not deliver to your saved pincode");
         const charge=deliveryFeeCents(method,shop.deliveryFeeCents);if(charge===undefined)fail(409,"DELIVERY_FEE_UNKNOWN","A shop has no configured delivery charge");fee=charge;

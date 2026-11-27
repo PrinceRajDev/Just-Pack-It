@@ -1,5 +1,5 @@
 import { theme, themedStyles } from "./theme";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { StyleSheet, ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, TextInput, View, type TextInputProps } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { ApiError, buyerApi, marketApi, type Category, type ServiceArea, type Session } from "./api";
@@ -101,7 +101,10 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
         const saved = await storage.getItemAsync(sessionKey);
         if (!saved) return;
         const candidate = JSON.parse(saved) as Session;
-        if (candidate.role !== "seller" || typeof candidate.token !== "string") return;
+        if (!candidate || candidate.role !== "seller" || typeof candidate.token !== "string" || typeof candidate.userId !== "string") {
+          await storage.deleteItemAsync(sessionKey);
+          return;
+        }
         let restored = candidate;
         try {
           const verified = await buyerApi.me(candidate.token);
@@ -111,19 +114,43 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
           }
           restored = { ...verified, token: candidate.token };
         } catch (reason) {
-          if (reason instanceof ApiError && reason.status === 401) throw reason;
+          if (reason instanceof ApiError && (reason.status === 401 || reason.status === 403)) throw reason;
         }
         if (active) {
           setSession(restored);
           setStep("status");
         }
       } catch (reason) {
-        if (reason instanceof ApiError && reason.status === 401) await storage.deleteItemAsync(sessionKey).catch(() => undefined);
+        if (reason instanceof SyntaxError || (reason instanceof ApiError && (reason.status === 401 || reason.status === 403)))
+          await storage.deleteItemAsync(sessionKey).catch(() => undefined);
       } finally { if (active) setRestoring(false); }
     })();
     return () => { active = false; };
   }, [initialSession]);
 
+  const go = (next: Step) => { setVisible(false); setError(""); setRequestId(undefined); setStep(next); };
+  const clearSeller = () => {
+    setWorkspaceOpen(false);
+    setSession(null);
+    setCoverAsset(undefined);
+    setCoverSaved(false);
+    setCoverError("");
+    setShop(undefined);
+    setCheckingShop(false);
+    setShopError("");
+    setPhone(""); setName(""); setEmail(""); setPassword(""); setOtp(""); setChallenge(undefined);
+    setVisible(false); setVerify(false); setAccountSubmitted(false); setLoginSubmitted(false);
+    setShopName(""); setAddress(""); setSince(""); setShopSubmitted(false);
+    setCategory(undefined); setArea(undefined); setFulfilment([]); setDeliverySubmitted(false);
+    setEditingReview(false); setPicker(null); setPickerSearch(""); setFailedCover(undefined);
+    go("login");
+  };
+  const expire = () => {
+    void storage.deleteItemAsync(sessionKey).catch(() => undefined);
+    clearSeller();
+    setError("Your seller session expired. Sign in again.");
+  };
+  const expireFromShop = useEffectEvent(() => expire());
   useEffect(() => {
     if (!session) return;
     let active = true;
@@ -140,11 +167,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     }).catch(reason => {
       if (!active) return;
       if (reason instanceof ApiError && reason.status === 401) {
-        void storage.deleteItemAsync(sessionKey).catch(() => undefined);
-        setSession(null);
-        setShop(undefined);
-        setStep("login");
-        setError("Your seller session expired. Sign in again.");
+        expireFromShop();
       } else setShopError(reason instanceof Error ? reason.message : "Could not load shop status.");
     }).finally(() => {
       if (active) setCheckingShop(false);
@@ -158,7 +181,6 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     return () => clearInterval(timer);
   }, [challenge, step]);
 
-  const go = (next: Step) => { setVisible(false); setError(""); setRequestId(undefined); setStep(next); };
   const run = async (action: () => Promise<void>) => {
     if (pendingRequests.has(requestOwner)) return;
     pendingRequests.add(requestOwner); setBusy(true); setError(""); setRequestId(undefined);
@@ -196,17 +218,6 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     setChallenge({ address, id: reply.challengeId, expires: Date.parse(reply.expiresAt), retryAt: time + reply.resendAfterSeconds * 1000 });
     go("email");
   };
-  const clearSeller = () => {
-    setWorkspaceOpen(false);
-    setSession(null);
-    setCoverAsset(undefined);
-    setCoverSaved(false);
-    setCoverError("");
-    setShop(undefined);
-    setCheckingShop(false);
-    setShopError("");
-    go("login");
-  };
   const signOut = async () => {
     if (!session) return;
     await buyerApi.logout(session.token).catch(reason => {
@@ -214,11 +225,6 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     });
     await storage.deleteItemAsync(sessionKey);
     clearSeller();
-  };
-  const expire = () => {
-    void storage.deleteItemAsync(sessionKey).catch(() => undefined);
-    clearSeller();
-    setError("Your seller session expired. Sign in again.");
   };
   const refreshShop = () => {
     setFailedCover(undefined);
@@ -262,7 +268,7 @@ export function SellerAccess({ close, initialSession }: { close: () => void; ini
     else close();
   };
 
-  if (workspaceOpen && session) return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style="dark" /><SellerWorkspace session={session} back={back} signOut={signOut} expired={expire} /></SafeAreaView></SafeAreaProvider></Modal>;
+  if (workspaceOpen && session) return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><StatusBar style="dark" /><SellerWorkspace key={session.userId} session={session} back={back} signOut={signOut} expired={expire} /></SafeAreaView></SafeAreaProvider></Modal>;
   if (step === "recovery") return <Modal onRequestClose={back}><SafeAreaProvider><SafeAreaView style={s.screen}><BuyerRecovery back={() => go("login")} /></SafeAreaView></SafeAreaProvider></Modal>;
   const title = picker === "area" ? "Choose service area" : picker === "category" ? "Choose category" :
     {login:"Welcome back", account:"Create seller account", email:"Check your email", shop:"Tell us about your shop", delivery:"Address & fulfilment", review:"Review your shop", status:"Your seller workspace"}[step];

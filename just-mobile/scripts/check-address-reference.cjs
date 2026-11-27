@@ -736,6 +736,28 @@ const assert = require("node:assert/strict");
     await page.reload();
     await page.getByRole("button", { name: "Account", exact: true }).click();
     await page.getByRole("button", { name: "Sign in / Create account", exact: true }).waitFor();
+    const secondBuyer = {...buyer, userId:"qa-second-buyer",token:"second-buyer-token",name:"Second Buyer"};
+    await page.route(/\/auth\/(me|login)$|\/(addresses|orders)(?:\?|$)/, route => {
+      const request = route.request();
+      const endpoint = new URL(request.url()).pathname;
+      if (request.method() === "OPTIONS") return route.fulfill({status:204,headers:notificationHeaders});
+      if (endpoint === "/auth/login") return route.fulfill({json:secondBuyer,headers:notificationHeaders});
+      if (request.headers().authorization !== `Bearer ${secondBuyer.token}`) return route.fallback();
+      return route.fulfill({json:endpoint === "/auth/me" ? secondBuyer : [],headers:notificationHeaders});
+    });
+    await page.getByRole("button",{name:"Sign in / Create account",exact:true}).click();
+    await page.getByLabel("Mobile number",{exact:true}).fill("9876543211");
+    await page.getByLabel("Password",{exact:true}).fill("FixturePassword123");
+    await page.getByRole("button",{name:"Sign in",exact:true}).click();
+    await page.getByTestId("buyer-account-hub").getByText(secondBuyer.name,{exact:true}).waitFor();
+    await page.getByRole("button",{name:"Saved Addresses",exact:true}).click();
+    await page.getByText("No saved addresses yet",{exact:true}).waitFor();
+    await page.getByRole("button",{name:"Back to Account",exact:true}).click();
+    await page.getByTestId("buyer-account-hub").getByText("Orders",{exact:true}).click();
+    await page.getByText("Your first local find awaits.",{exact:true}).waitFor();
+    await page.reload();
+    await page.getByRole("button",{name:"Account",exact:true}).click();
+    await page.getByTestId("buyer-account-hub").getByText(secondBuyer.name,{exact:true}).waitFor();
     assert.deepEqual(errors, []);
     console.log(
       "PASS: address management, four viewports, shop fees, delivery and stock blockers, COD payload, duplicate prevention and confirmed navigation",

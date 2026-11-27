@@ -378,7 +378,7 @@ export function BuyerBrowse({
             {brand ?? (globalSearch || focused ? "Search results" : "Browse")}
           </Text>
         )}
-        <HomeNotifications session={session} />
+        <HomeNotifications key={session?.userId ?? "guest"} session={session} />
       </View>
       {areaName && <Text style={styles.area}>Browsing area · {areaName}</Text>}
       <View

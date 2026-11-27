@@ -5,7 +5,6 @@ import { StatusBar } from "expo-status-bar";
 import * as SecureStore from "./src/deviceStorage";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Image,
   Modal,
@@ -225,7 +224,7 @@ export default function App() {
             setSession({ ...verified, token: candidate.token });
           else await SecureStore.deleteItemAsync("jpi.buyer.session");
         } catch (reason) {
-          if (reason instanceof ApiError && reason.status === 401)
+          if (reason instanceof ApiError && (reason.status === 401 || reason.status === 403))
             await SecureStore.deleteItemAsync("jpi.buyer.session");
           else setSession(candidate);
         }
@@ -242,6 +241,7 @@ export default function App() {
       onSessionExpired((token) => {
         if (session?.token !== token) return;
         setSession(null);
+        setConfirmation(null);
         setAccountMode("auth");
         setScreen("account");
         void SecureStore.deleteItemAsync("jpi.buyer.session").catch(
@@ -281,11 +281,14 @@ export default function App() {
     setScreen("home");
   };
   const saveSession = async (next: Session | null) => {
+    if (!next && !session) return;
+    if (next && next.role !== "buyer") throw new Error("Buyer account required.");
     if (next && !session) await mergeGuestBag(next.userId);
     if (next)
       await SecureStore.setItemAsync("jpi.buyer.session", JSON.stringify(next));
     else await SecureStore.deleteItemAsync("jpi.buyer.session");
     setSession(next);
+    if (session?.userId !== next?.userId) setConfirmation(null);
     if (next && signInFromBag) {
       setSignInFromBag(false);
       setScreen("bag");
@@ -430,6 +433,7 @@ export default function App() {
     />
   ) : screen === "account" ? (
     <BuyerAccount
+      key={session?.userId ?? "guest"}
       session={session}
       save={saveSession}
       openOrders={openOrders}
@@ -451,7 +455,7 @@ export default function App() {
       browseAsGuest={browseAsGuest}
     />
   ) : screen === "orders" ? (
-    <BuyerOrders session={session} back={leaveOrders} signIn={openAccount} browse={goHome} reorder={area ? {areaId:area.id,bag,add,openBag} : undefined} />
+    <BuyerOrders key={session?.userId ?? "guest"} session={session} back={leaveOrders} signIn={openAccount} browse={goHome} reorder={area ? {areaId:area.id,bag,add,openBag} : undefined} />
   ) : screen === "confirmation" || screen === "tracking" ? (
     currentConfirmation && session ? (
       screen === "tracking" ? (
@@ -470,6 +474,7 @@ export default function App() {
     )
   ) : (
     <BuyerCheckout
+      key={session?.userId ?? "guest"}
       session={session}
       areaId={area?.id}
       bag={bag}
@@ -605,7 +610,7 @@ function HomeHeader({
             JustPackIt
           </Text>
         </View>
-        <HomeNotifications session={session} />
+        <HomeNotifications key={session?.userId ?? "guest"} session={session} />
       </View>
       <Pressable
         accessibilityRole="button"

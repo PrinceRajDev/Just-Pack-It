@@ -9,6 +9,7 @@ import { fulfilmentNames } from "./sellerApi";
 import { MarketIcon } from "./MarketIcon";
 import { theme, themedStyles } from "./theme";
 import { AdminOrders } from "./AdminOrders";
+import { AdminSupport } from "./AdminSupport";
 
 export function AdminAccess({close,session}:{close:()=>void;session:Session}) {
   const auth=useSellerMutation();
@@ -37,14 +38,15 @@ export function AdminAccess({close,session}:{close:()=>void;session:Session}) {
 }
 
 function AdminWorkspace({session,logout,loggingOut,error}:{session:Session;logout:()=>void;loggingOut:boolean;error:string}) {
-  const [tab,setTab]=useState<"Overview"|"Seller Approvals"|"Orders">("Overview");
+  const [tab,setTab]=useState<"Overview"|"Seller Approvals"|"Orders"|"Support">("Overview");
   return <>
     <View style={[styles.header,{minHeight:54}]} accessibilityRole="tablist">
-      {(["Overview","Seller Approvals","Orders"] as const).map(value=><Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:value===tab}} onPress={()=>setTab(value)} style={[styles.tap,{flexShrink:1},value===tab && styles.sage]}><Text style={styles.link}>{value}</Text></Pressable>)}
+      {(["Overview","Seller Approvals","Orders","Support"] as const).map(value=><Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:value===tab}} onPress={()=>setTab(value)} style={[styles.tap,{flexShrink:1,paddingHorizontal:8},value===tab && styles.sage]}><Text style={styles.link}>{value}</Text></Pressable>)}
     </View>
-    {tab==="Overview" && <Overview token={session.token} openApprovals={()=>setTab("Seller Approvals")} />}
+    {tab==="Overview" && <Overview token={session.token} openApprovals={()=>setTab("Seller Approvals")} openSupport={()=>setTab("Support")} />}
     {tab==="Seller Approvals" && <Approvals token={session.token} />}
     {tab==="Orders" && <AdminOrders token={session.token} />}
+    {tab==="Support" && <AdminSupport token={session.token} />}
     <View style={[styles.content,{paddingTop:0,paddingBottom:10}]}>
       <MutationFeedback error={error} />
       <SellerButton label={loggingOut ? "Signing out…" : "Sign out of Admin"} soft onPress={logout} disabled={loggingOut} />
@@ -52,7 +54,7 @@ function AdminWorkspace({session,logout,loggingOut,error}:{session:Session;logou
   </>;
 }
 
-function Overview({token,openApprovals}:{token:string;openApprovals:()=>void}) {
+function Overview({token,openApprovals,openSupport}:{token:string;openApprovals:()=>void;openSupport:()=>void}) {
   const overview=useSellerData(()=>adminApi.overview(token),token);
   const data=overview.data;
   const format=(value:number)=>value.toLocaleString("en-IN");
@@ -76,7 +78,12 @@ function Overview({token,openApprovals}:{token:string;openApprovals:()=>void}) {
       </Pressable>
       <SellerCard>
         <Text accessibilityRole="header" style={styles.section}>Needs attention</Text>
-        {([["Support cases",data.support.count],["Stalled shop orders",data.staleSuborders.count],["Payments to check",data.payments.count],["Refunds to check",data.refunds.count]] as const).map(([label,count])=>
+        <Pressable accessibilityRole="button" accessibilityLabel={`Open support cases, ${format(data.support.count)} need attention`} onPress={openSupport} style={overviewStyles.queueRow}>
+          <Text style={[styles.link,styles.grow]}>Support cases</Text>
+          <Text style={[overviewStyles.count,data.support.count>0 && overviewStyles.activeCount]}>{format(data.support.count)}</Text>
+          <MarketIcon name="chevron-right" />
+        </Pressable>
+        {([["Stalled shop orders",data.staleSuborders.count],["Payments to check",data.payments.count],["Refunds to check",data.refunds.count]] as const).map(([label,count])=>
           <View key={label} style={overviewStyles.queueRow}>
             <Text style={[styles.label,styles.grow]}>{label}</Text>
             <Text style={[overviewStyles.count,count>0 && overviewStyles.activeCount]}>{format(count)}</Text>

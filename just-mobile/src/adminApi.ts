@@ -39,8 +39,22 @@ export type AdminOrder = {
   subOrders:{id:string;shopName:string;status:string;amountDue:number;cancelReason?:string}[];
 };
 export type AdminCashFilter = "all" | "outstanding" | "recorded";
+export type SupportStatus = "open" | "in_progress" | "resolved";
+export type AdminSupportCase = {
+  id:string; orderId:string; shopName:string; kind:string; description:string;
+  status:SupportStatus; version:number; note:string;
+};
 
 export const adminApi={
+  support:(token:string,status:SupportStatus,after?:string)=>request<{items:AdminSupportCase[];next?:string}>(
+    `/support?${new URLSearchParams({status,...(after ? {after} : {})})}`,token,
+  ),
+  supportMessages:(token:string,id:string,cursor?:string)=>request<{items:{id:string;role:string;body:string}[];next?:string}>(
+    `/support/${encodeURIComponent(id)}/messages${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`,token,
+  ),
+  updateSupport:(token:string,ticket:AdminSupportCase,status:Exclude<SupportStatus,"open">,note:string)=>request<void>(
+    `/support/${encodeURIComponent(ticket.id)}`,token,{method:"PATCH",body:JSON.stringify({status,note,version:ticket.version})},
+  ),
   orders:async(token:string, cash:AdminCashFilter, cursor?:string)=>{
     let next:string|undefined;
     const query=new URLSearchParams({cash,limit:"20",...(cursor ? {cursor} : {})});

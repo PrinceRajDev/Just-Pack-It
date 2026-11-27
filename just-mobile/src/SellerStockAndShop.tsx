@@ -642,18 +642,22 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
   </>;
 }
 
-function SellerAccountCard({name,signOut}:{name:string;signOut:()=>Promise<void>}) {
-  const [confirm,setConfirm] = useState(false);
+export function SellerAccountCard({name,signOut,onCancel}:{name:string;signOut:()=>Promise<void>;onCancel?:()=>void}) {
+  const [confirm,setConfirm] = useState(!!onCancel);
   const mutation = useSellerMutation();
+  const cancel = () => { setConfirm(false); mutation.clear(); onCancel?.(); };
+  useAndroidBack(() => {
+    if (!confirm) return false;
+    if (!mutation.busy) cancel();
+    return true;
+  }, 25);
   return <SellerCard>
     <Text style={styles.title}>{name}</Text>
     {confirm ? <>
       <Text accessibilityRole="header" style={styles.section}>Sign out of Seller?</Text>
       <Text style={styles.copy}>You’ll need to sign in again to manage your shop and orders.</Text>
       <MutationFeedback error={mutation.error} />
-      <SellerButton label="Keep working" soft disabled={mutation.busy} onPress={() => {
-        setConfirm(false); mutation.clear();
-      }} />
+      <SellerButton label="Keep working" soft disabled={mutation.busy} onPress={cancel} />
       <SellerButton label={mutation.busy ? "Signing out…" : "Confirm sign out"} disabled={mutation.busy} onPress={() => void mutation.run(signOut)} />
     </> : <SellerButton label="Sign out of seller account" soft onPress={() => setConfirm(true)} />}
   </SellerCard>;

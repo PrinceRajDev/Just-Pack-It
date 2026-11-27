@@ -6,7 +6,7 @@ import { BuyerStateCard } from "./BuyerStateCard";
 import { useAndroidBack } from "./useAndroidBack";
 import { fulfilmentNames, orderStatusNames, sellerApi, type SellerOrder, type OrderStatus, type Settlement } from "./sellerApi";
 import { sellerShopApproval, sellerShopAvailability, rupees, styles, LoadState, MutationFeedback, Row, SellerButton, SellerCard, SellerField, SellerScroll, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
-import { SellerCatalogue, SellerShopSettings, type StockFilter } from "./SellerStockAndShop";
+import { SellerAccountCard, SellerCatalogue, SellerShopSettings, type StockFilter } from "./SellerStockAndShop";
 
 type Tab = "Home" | "Orders" | "Catalogue" | "Settlements" | "Shop";
 const sellerIcons = {
@@ -107,6 +107,7 @@ function SellerIcon({name,color}: {name:SellerIconName;color:string}) {
 export function SellerWorkspace({ session, back, signOut, expired, startInOrders, initialOrder }: { session: Session; back: () => void; signOut: () => Promise<void>; expired: () => void; startInOrders?: boolean; initialOrder?: SellerOrder }) {
   const [tab, setTab] = useState<Tab>(startInOrders ? "Orders" : "Home");
   const [orderFromAlert, setOrderFromAlert] = useState(initialOrder);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [group, setGroup] = useState<OrderGroup>("Active");
   const [stockFilter, setStockFilter] = useState<StockFilter>();
   useEffect(() => onSessionExpired(token => { if (token === session.token) expired(); }), [session.token, expired]);
@@ -120,22 +121,25 @@ export function SellerWorkspace({ session, back, signOut, expired, startInOrders
   return <View style={styles.screen} testID="native-seller-workspace">
     <View style={styles.header}>
       <View style={styles.grow}><Text style={styles.eyebrow}>JustPackIt Seller</Text><Text accessibilityRole="header" style={styles.heading}>{tab === "Home" ? "Shop counter" : tab}</Text></View>
-      <Pressable accessibilityRole="button" onPress={back} style={styles.tap}><Text style={styles.link}>Close</Text></Pressable>
+      {tab === "Home" && !confirmSignOut && <Pressable accessibilityRole="button" onPress={() => setConfirmSignOut(true)} style={styles.tap}><Text style={styles.link}>Logout</Text></Pressable>}
+      {!confirmSignOut && <Pressable accessibilityRole="button" onPress={back} style={styles.tap}><Text style={styles.link}>Close</Text></Pressable>}
     </View>
     <View style={styles.grow}>
-      {tab === "Home" && <SellerHome token={session.token} orders={goOrders} open={goTab} openStock={filter => { setStockFilter(filter); setTab("Catalogue"); }} />}
+      {tab === "Home" && (confirmSignOut
+        ? <SellerScroll><SellerAccountCard name={session.name} signOut={signOut} onCancel={() => setConfirmSignOut(false)} /></SellerScroll>
+        : <SellerHome token={session.token} orders={goOrders} open={goTab} openStock={filter => { setStockFilter(filter); setTab("Catalogue"); }} />)}
       {tab === "Orders" && <SellerOrders token={session.token} group={group} setGroup={setGroup} initialOrder={orderFromAlert} onCloseInitialOrder={() => setOrderFromAlert(undefined)} />}
       {tab === "Catalogue" && <SellerCatalogue token={session.token} stockFilter={stockFilter} />}
       {tab === "Settlements" && <SellerSettlements token={session.token} />}
       {tab === "Shop" && <SellerShopSettings token={session.token} name={session.name} signOut={signOut} />}
     </View>
-    <View style={styles.nav}>{tabs.map(item => {
+    {!confirmSignOut && <View style={styles.nav}>{tabs.map(item => {
       const selected = tab === item.name;
       return <Pressable key={item.name} accessibilityRole="tab" accessibilityState={{selected}} onPress={() => { if (!selected) goTab(item.name); }} style={styles.navItem}>
         <View style={[styles.navIcon, selected && styles.sage]}><SellerIcon name={item.icon} color={selected ? theme.accentInk : theme.secondary} /></View>
         <Text style={[styles.navLabel, selected && styles.link, styles.navText]}>{item.name}</Text>
       </Pressable>;
-    })}</View>
+    })}</View>}
   </View>;
 }
 

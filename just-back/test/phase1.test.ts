@@ -2364,6 +2364,9 @@ describe("live platform delivery",()=>{
    expect((await rate(subId,5)).body).toEqual({stars:5,feedback:"Carefully packed"});
    expect((await rate(subId,2)).body).toEqual({stars:5,feedback:"Carefully packed"});
    expect((await buyerView()).body.subOrders.find((row:{id:string})=>row.id===subId).buyerRating).toEqual({stars:5,feedback:"Carefully packed"});
+   await Order.updateOne({_id:orderId,"subOrders._id":cancelledId},{$set:{"subOrders.$.buyerRating":{stars:1,feedback:"Cancelled shop comment"}}});
+   const feedback=(await liveApi.get("/seller/dashboard").set("Authorization",auth(seller))).body.customerFeedback;
+   expect(feedback).toEqual({average:5,count:1,recent:[{stars:5,feedback:"Carefully packed"}]});
    const publicRating=await liveApi.get(`/shops/${original!.slug}`);
    expect(publicRating.body).toMatchObject({rating:5,ratingCount:1});
    expect(JSON.stringify(publicRating.body)).not.toContain("Carefully packed");

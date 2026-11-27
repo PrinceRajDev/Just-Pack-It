@@ -25,7 +25,7 @@ export function orderRoutes(config:Config){
     const input=z.object({stars:z.number().int().min(1).max(5),feedback:z.string().trim().max(500).optional()}).strict().parse(req.body);
     const owner={_id:id,buyerId:actor(req).id,testMode:{$ne:true}};
     const review={stars:input.stars,...(input.feedback ? {feedback:input.feedback} : {})};
-    const result=await Order.updateOne({...owner,subOrders:{$elemMatch:{_id:subId,status:"delivered",buyerRating:{$exists:false}}}},{$set:{"subOrders.$.buyerRating":review}});
+    const result=await Order.updateOne({...owner,subOrders:{$elemMatch:{_id:subId,status:"delivered",buyerRating:{$exists:false}}}},{$set:{"subOrders.$.buyerRating":review,"subOrders.$.buyerRatedAt":new Date()}});
     if(result.modifiedCount){res.json(review);return;}
     const order=await Order.findOne(owner).select("subOrders").lean();
     const shop=order?.subOrders.find(row=>row._id===subId);

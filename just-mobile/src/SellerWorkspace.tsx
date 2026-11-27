@@ -5,7 +5,7 @@ import { onSessionExpired, type Session } from "./api";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useAndroidBack } from "./useAndroidBack";
 import { SellerItemChange } from "./SellerItemChange";
-import { fulfilmentNames, orderStatusNames, sellerApi, type SellerOrder, type OrderStatus, type Settlement } from "./sellerApi";
+import { fulfilmentNames, orderStatusNames, sellerApi, type SellerOrder, type OrderStatus, type SellerFeedback, type Settlement } from "./sellerApi";
 import { sellerShopApproval, sellerShopAvailability, rupees, styles, LoadState, MutationFeedback, Row, SellerButton, SellerCard, SellerField, SellerScroll, useSellerData, useSellerMutation, useSellerPages } from "./SellerWorkspaceUI";
 import { SellerAccountCard, SellerCatalogue, SellerShopSettings, type StockFilter } from "./SellerStockAndShop";
 
@@ -246,6 +246,7 @@ function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:O
         <View style={styles.metricDivider} />
         <View style={styles.grow}><Text style={styles.todayNumber}>{dashboard.data.pendingPayment}</Text><Text style={styles.copy}>Awaiting payment</Text></View>
       </View>
+      {dashboard.data.customerFeedback && <SellerCustomerFeedback feedback={dashboard.data.customerFeedback} />}
     </>}
     <Text accessibilityRole="header" style={styles.section}>Shop tools</Text>
     <SellerCard>
@@ -253,6 +254,25 @@ function SellerHome({token,orders,open,openStock}: {token:string;orders:(group:O
       <Row title="Opening hours and shop settings" onPress={() => open("Shop")} />
     </SellerCard>
   </SellerScroll>;
+}
+
+function SellerCustomerFeedback({feedback}:{feedback:SellerFeedback}) {
+  return <>
+    <Text accessibilityRole="header" style={styles.section}>Customer feedback</Text>
+    <SellerCard>
+      {feedback.average === null ? <Text style={styles.copy}>No ratings yet. Ratings appear here after customers rate a delivered order.</Text> : <>
+        <Text style={styles.todayNumber}>{feedback.average.toFixed(1)} / 5</Text>
+        <Text style={styles.copy}>{feedback.count} verified {feedback.count === 1 ? "rating" : "ratings"}</Text>
+        {feedback.recent.length > 0 ? <>
+          <Text accessibilityRole="header" style={styles.workGroupTitle}>Recent feedback</Text>
+          {feedback.recent.map((row,index)=><View key={index} style={styles.workGroup}>
+            <Text style={styles.label}>{row.stars} out of 5 stars</Text>
+            <Text style={styles.copy}>{row.feedback}</Text>
+          </View>)}
+        </> : <Text style={styles.copy}>No written feedback yet.</Text>}
+      </>}
+    </SellerCard>
+  </>;
 }
 
 function SellerOrders({token,group,setGroup,initialOrder,onCloseInitialOrder}: {token:string;group:OrderGroup;setGroup:(value:OrderGroup)=>void;initialOrder?:SellerOrder;onCloseInitialOrder:()=>void}) {

@@ -15,16 +15,19 @@ export function sellerDashboardRoutes() {
     const timezone = shop.timezone;
     const date = new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year:"numeric",month:"2-digit",day:"2-digit" }).format(now);
     const payable = { $or: [{ paymentMethod: "cod" }, { paymentMethod: "razorpay", paymentStatus: "paid" }] };
-    type Summary = { today:{count:number}[]; pendingPayment:{count:number}[]; counts:{_id:string;count:number}[]; urgent:OrderRecord[] };
+    type Summary = { today:{count:number}[]; pendingPayment:{count:number}[]; counts:{_id:string;count:number}[]; urgent:OrderRecord[]; ratings:{average:number;count:number}[]; feedback:{stars:number;feedback:string}[] };
+    const verifiedRating={ownedStatus:"delivered","ownedRating.stars":{$gte:1,$lte:5}};
     const [summary] = await Order.aggregate<Summary>([
       { $match: { "subOrders.shopId":shop._id, testMode:{$ne:true} } },
       { $unwind:"$subOrders" }, { $match:{"subOrders.shopId":shop._id} },
-      { $set:{ownedStatus:"$subOrders.status",subOrders:["$subOrders"]} },
+      { $set:{ownedStatus:"$subOrders.status",ownedRating:"$subOrders.buyerRating",ratedAt:{$ifNull:["$subOrders.buyerRatedAt","$subOrders.updatedAt","$createdAt"]},subOrders:["$subOrders"]} },
       { $facet:{
         today:[{$match:{...payable,$expr:{$eq:[{$dateToString:{date:"$createdAt",format:"%Y-%m-%d",timezone}},date]}}},{$count:"count"}],
         pendingPayment:[{$match:{paymentMethod:"razorpay",paymentStatus:{$ne:"paid"},ownedStatus:"placed"}},{$count:"count"}],
         counts:[{$match:payable},{$group:{_id:"$ownedStatus",count:{$sum:1}}}],
-        urgent:[{$match:{...payable,ownedStatus:"placed"}},{$sort:{createdAt:1,_id:1}},{$limit:5}]
+        urgent:[{$match:{...payable,ownedStatus:"placed"}},{$sort:{createdAt:1,_id:1}},{$limit:5}],
+        ratings:[{$match:verifiedRating},{$group:{_id:null,average:{$avg:"$ownedRating.stars"},count:{$sum:1}}}],
+        feedback:[{$match:{...verifiedRating,"ownedRating.feedback":{$type:"string",$ne:""}}},{$sort:{ratedAt:-1,_id:-1}},{$limit:5},{$project:{_id:0,stars:"$ownedRating.stars",feedback:"$ownedRating.feedback"}}],
       } }
     ]).option({maxTimeMS:5000});
     type Stock = { count:{count:number}[]; out:{count:number}[]; items:{productId:string;name:string;variantId?:string;label?:string;stock:number}[] };
@@ -34,7 +37,8 @@ export function sellerDashboardRoutes() {
       {$unwind:"$options"},{$match:{"options.stock":{$lte:5}}},
       {$facet:{count:[{$count:"count"}],out:[{$match:{"options.stock":0}},{$count:"count"}],items:[{$sort:{"options.stock":1,name:1,_id:1,"options.variantId":1}},{$limit:10},{$project:{_id:0,productId:"$_id",name:1,variantId:"$options.variantId",label:"$options.label",stock:"$options.stock"}}]}}
     ]).option({maxTimeMS:5000});
-    res.json({checkedAt:now.toISOString(),date,timezone,todayOrders:summary?.today[0]?.count ?? 0,pendingPayment:summary?.pendingPayment[0]?.count ?? 0,counts:Object.fromEntries((summary?.counts ?? []).map(item=>[item._id,item.count])),urgent:(summary?.urgent ?? []).map(order=>sellerSuborderDto(order,order.subOrders[0])),lowStock:{threshold:5,count:stock?.count[0]?.count ?? 0,outOfStock:stock?.out[0]?.count ?? 0,items:stock?.items ?? []}});
+    const ratings=summary?.ratings[0];
+    res.json({checkedAt:now.toISOString(),date,timezone,todayOrders:summary?.today[0]?.count ?? 0,pendingPayment:summary?.pendingPayment[0]?.count ?? 0,counts:Object.fromEntries((summary?.counts ?? []).map(item=>[item._id,item.count])),urgent:(summary?.urgent ?? []).map(order=>sellerSuborderDto(order,order.subOrders[0])),lowStock:{threshold:5,count:stock?.count[0]?.count ?? 0,outOfStock:stock?.out[0]?.count ?? 0,items:stock?.items ?? []},customerFeedback:{average:ratings?.average ?? null,count:ratings?.count ?? 0,recent:summary?.feedback ?? []}});
   });
   return router;
 }

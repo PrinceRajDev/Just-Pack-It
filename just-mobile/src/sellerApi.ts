@@ -36,7 +36,9 @@ export type Settlement = {
   holdReason: string | null; posted: boolean; payout: null | { state: string; reference?: string; recordedAt?: string };
   remittance: null | { state: string };
 };
+export type SellerFeedback = {average:number|null;count:number;recent:{stars:number;feedback:string}[]};
 type Dashboard = {
+  customerFeedback?: SellerFeedback;
   todayOrders: number; pendingPayment: number; counts: Partial<Record<OrderStatus, number>>;
   lowStock: { count: number; outOfStock: number; items: { productId: string; name: string; label?: string; stock: number }[] };
 };

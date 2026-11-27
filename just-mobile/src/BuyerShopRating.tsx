@@ -36,6 +36,7 @@ export function BuyerShopRating({token,orderId,shopId,rating}: {
         </Pressable>)}
       </View>
       <TextInput accessibilityLabel="Optional shop feedback" placeholder="Optional feedback" placeholderTextColor={theme.ink} multiline maxLength={500} editable={!busy} value={feedback} onChangeText={setFeedback} style={s.input} />
+      <Text style={s.copy}>The shop can read your feedback. Leave out your name and contact details.</Text>
       {!!error && <Text accessibilityRole="alert" style={s.copy}>{error}</Text>}
       <Pressable accessibilityRole="button" disabled={busy || !stars} onPress={()=>void submit()} style={[s.action,(busy || !stars) && s.disabled]}>
         <Text style={s.title}>{busy ? "Saving rating…" : "Submit rating"}</Text>

@@ -9,6 +9,7 @@ import { StyleSheet,
   View,
 } from "react-native";
 import { BuyerReceipt } from "./BuyerReceipt";
+import { BuyerDigitalReceipt } from "./BuyerDigitalReceipt";
 import { BuyerCancelOrder } from "./BuyerCancelOrder";
 import { BuyerOrderSupport } from "./BuyerOrderSupport";
 import { BuyerReorder } from "./BuyerReorder";
@@ -283,6 +284,7 @@ export function BuyerOrderDetails({
               </Pressable>
             )}
             {reorder && !error && past && activeShops.length > 0 && <BuyerReorder order={order} token={token} {...reorder} />}
+            {delivered.length > 0 && <BuyerDigitalReceipt order={order} token={token} />}
             <View style={s.payment}>
               <View style={s.paymentLabel}><OrderSymbol name="wallet" color={theme.accentInk} /><Text style={s.paymentCopy}>{cod ? "Cash on Delivery" : "Online payment"}</Text></View>
               <Text style={s.amount}>

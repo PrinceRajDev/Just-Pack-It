@@ -22,7 +22,7 @@ const replyKey = () => globalThis.crypto?.randomUUID?.() ??
     return (char === "x" ? nibble : (nibble & 3) | 8).toString(16);
   });
 
-export function BuyerOrderSupport({ token, orderId, suborderId }: { token: string; orderId: string; suborderId: string }) {
+export function BuyerOrderSupport({ token, orderId, suborderId, actionLabel = "Get help" }: { token: string; orderId: string; suborderId: string; actionLabel?: string }) {
   const [open, setOpen] = useState(false);
   const [checked, setChecked] = useState(false);
   const [kind, setKind] = useState<(typeof reasons)[number][0]>();
@@ -103,7 +103,7 @@ export function BuyerOrderSupport({ token, orderId, suborderId }: { token: strin
     <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} disabled={busy} style={styles.action} onPress={() => {
       setOpen(!open);
       if (!open) void check();
-    }}><Text style={styles.actionText}>{open ? "Hide order help" : "Get help"}</Text></Pressable>
+    }}><Text style={styles.actionText}>{open ? "Hide order help" : actionLabel}</Text></Pressable>
     {open && <>
       {busy && <Text accessibilityLiveRegion="polite" style={styles.copy}>{checked && !ticket ? "Sending request…" : "Checking support requests…"}</Text>}
       {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}

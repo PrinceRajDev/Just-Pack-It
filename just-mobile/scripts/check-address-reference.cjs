@@ -236,6 +236,7 @@ const assert = require("node:assert/strict");
           data = { ...confirmed, amountDue: trackingDelivered ? 0 : 119, cancelledAmount:70, cashRecordedAmount:trackingDelivered ? 119 : 0, subOrders: confirmed.subOrders.map((shop,index) => ({
             ...shop, status: index === 0 ? (trackingDelivered ? "delivered" : trackingStage) : "cancelled",
             shopId: shop.id,
+            ...(index === 0 && trackingDelivered ? {cashCollection:{amount:119}} : {}),
             ...(index === 0 && itemChangeState ? {substitution:{state:itemChangeState,original:{name:"Fresh pears",unit:"1 kg",qty:1,price:35}}} : {}),
             lines: index === 0 && trackingDelivered ? reorderProducts.map(product=>({productId:product.id,name:product.name,unit:product.unit,qty:1,price:product.price})) : [],
             ...(index === 0 ? {deliveryState: trackingDelivered ? "delivered" : riderStage, amountDue: trackingDelivered ? 0 : 119, version: trackingDelivered ? 8 : trackingStage === "preparing" && itemChangeState === "removed" ? 5 : 4} : {amountDue:0}),
@@ -713,6 +714,19 @@ const assert = require("node:assert/strict");
     await tracking.getByText("Sharma Kirana Store · Delivered",{exact:true}).waitFor();
     await tracking.getByText("₹119 paid",{exact:true}).waitFor();
     await precedesPayment("Buy again");
+    await tracking.getByRole("button",{name:"View receipt",exact:true}).click();
+    const receipt = tracking.getByTestId("buyer-digital-receipt");
+    await receipt.getByText("Cash paid: ₹119",{exact:true}).waitFor();
+    await receipt.getByText("Removed: Fresh pears × 1 · ₹35",{exact:true}).waitFor();
+    await receipt.getByText("No cash due for this shop.",{exact:true}).waitFor();
+    await page.evaluate(() => Object.defineProperty(navigator,"share",{
+      configurable:true, value:async ({text}) => { window.sharedReceipt = text; },
+    }));
+    await receipt.getByRole("button",{name:"Share receipt"}).click();
+    const sharedReceipt = await page.evaluate(() => window.sharedReceipt);
+    assert.match(sharedReceipt,/Cash paid: ₹119/);
+    assert.doesNotMatch(sharedReceipt,/628415|6 2 8 4 1 5/);
+    await tracking.getByRole("button",{name:"Hide receipt"}).click();
     await tracking.getByRole("button",{name:"Buy again",exact:true}).click();
     const tomatoChoice=tracking.getByRole("checkbox",{name:"Reorder tomatoes",exact:true});
     const riceChoice=tracking.getByRole("checkbox",{name:"Reorder rice",exact:true});

@@ -432,7 +432,7 @@ const assert = require("node:assert/strict");
       if (label === "Accept order") await page.screenshot({path:path.join(output,"seller-order-detail-390.png"),animations:"disabled"});
       await workspace.getByRole("button",{name:label,exact:true}).click();
       await workspace.getByRole("tab",{name:tab,exact:true}).click();
-      await workspace.getByText(sellerOrder.status==="accepted"?"Accepted":sellerOrder.status==="preparing"?"Preparing":"Ready",{exact:true}).last().waitFor();
+      await workspace.getByText(sellerOrder.status==="accepted"?"Accepted":sellerOrder.status==="preparing"?"Preparing":"Ready for pickup",{exact:true}).last().waitFor();
     }
     await workspace.getByRole("button",{name:/^Order #/}).click();
     await workspace.getByText("Waiting for a platform rider to claim this order.",{exact:true}).waitFor();

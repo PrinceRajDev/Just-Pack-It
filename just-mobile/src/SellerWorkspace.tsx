@@ -60,8 +60,12 @@ function readyRiderLabel(order: SellerOrder) {
   if (order.testMode || order.status !== "ready" || order.fulfilment !== "platform_delivery") return undefined;
   if (!order.delivery) return "Waiting for a rider";
   if (order.delivery.state === "claimed") return "Rider assigned";
-  if (order.delivery.state === "picked_up") return "Picked up by rider";
   return undefined;
+}
+function sellerStageLabel(order: SellerOrder) {
+  if (order.status === "ready" && order.delivery?.state === "picked_up") return "Picked up by rider";
+  if (order.status === "ready") return "Ready for pickup";
+  return orderStatusNames[order.status];
 }
 const statementFilters = {
   All: undefined,
@@ -280,7 +284,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
         </Pressable>}
       </View>
       <View style={styles.orderHero}>
-        <View style={styles.orderTop}><SellerIcon name="orders" color={theme.accentInk} /><Text style={styles.orderStatus}>{orderStatusNames[order.status]}</Text></View>
+        <View style={styles.orderTop}><SellerIcon name="orders" color={theme.accentInk} /><Text style={styles.orderStatus}>{sellerStageLabel(order)}</Text></View>
         <Text style={styles.heroTitle}>Order #{order.orderId.slice(-8).toUpperCase()}</Text>
         <View style={styles.orderReference}>
           <Text style={styles.heroKicker}>Full order ID</Text>
@@ -417,7 +421,7 @@ function SellerOrders({token,group,setGroup}: {token:string;group:OrderGroup;set
       onAction={term ? () => setSearch("") : () => setFulfilmentFilter("all")} />}
     {rows?.map(order => {
       const reference = `Order #${order.orderId.slice(-8).toUpperCase()}`;
-      const status = orderStatusNames[order.status];
+      const status = sellerStageLabel(order);
       const units = order.lines.reduce((sum,item) => sum + item.qty,0);
       const checkedCount = packingChecks[`${order.id}:${order.version}`]?.length ?? 0;
       const packingProgressLabel = checkedCount > 0 ? `${checkedCount} of ${order.lines.length} checked` : undefined;

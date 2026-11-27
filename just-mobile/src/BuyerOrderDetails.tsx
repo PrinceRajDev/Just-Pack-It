@@ -29,7 +29,7 @@ const stages = [
   ["accepted", "Accepted"],
   ["preparing", "Preparing"],
   ["ready", "Ready for pickup"],
-  ["picked_up", "Picked up"],
+  ["picked_up", "Picked up by rider"],
   ["out_for_delivery", "Out for delivery"],
   ["delivered", "Delivered"],
 ] as const;
@@ -59,7 +59,7 @@ export function statusLabel(status: string) {
 
 export function shopTimelineLabel(shop: ShopOrder) {
   const stage = shopStage(shop);
-  return stage === "out_for_delivery" || stage === "picked_up" ? "On the way" : statusLabel(stage);
+  return stage === "out_for_delivery" ? "On the way" : statusLabel(stage);
 }
 
 export function shopProgressSummary(shops: ShopOrder[]) {
@@ -295,6 +295,8 @@ export function BuyerOrderDetails({
                   ? `${order.subOrders.filter(shop => shop.status === "cancelled").map(shop => shop.shopName).join(", ")} items and delivery fees removed.`
                   : due > 0 ? "Pay the exact amount to your delivery partner."
                     : cashPaid > 0 ? "Payment collected at delivery." : "No cash payment is outstanding."}</Text>}
+              {cod && due > 0 && cashPaid > 0 && <Text style={s.paymentCopy}>{money(cashPaid)} already paid</Text>}
+              {cod && !!order.cancelledAmount && <Text style={s.paymentCopy}>{money(order.cancelledAmount)} removed for cancelled items and delivery</Text>}
             </View>
             {order.subOrders.map((shop) => (
               <View key={shop.id} testID={`shop-timeline-${shop.id}`} style={{ gap: 8 }} onLayout={({nativeEvent}) => {
@@ -329,7 +331,7 @@ export function BuyerOrderDetails({
                 {order.address.line1}, {order.address.locality},{" "}
                 {order.address.city} · {order.address.pincode}
               </Text>
-              {order.cancelledAmount ? (
+              {!cod && order.cancelledAmount ? (
                 <Text style={s.muted}>
                   Cancelled amount: {money(order.cancelledAmount)}
                 </Text>
@@ -380,7 +382,7 @@ function ShopCard({
         <View style={s.shopIcon}><OrderSymbol name={status === "cancelled" ? "cancelled" : "shop"} color={status === "cancelled" ? theme.error : theme.accentInk} /></View>
         <View style={s.headingCopy}>
           <Text style={s.shopName}>{shop.shopName}</Text>
-          <Text style={[s.label, status === "cancelled" && s.error]}>{statusLabel(status)}</Text>
+          <Text testID="shop-current-status" style={[s.label, status === "cancelled" && s.error]}>{statusLabel(status)}</Text>
         </View>
       </View>
       {current >= 0 && <View style={s.timeline}>

@@ -68,6 +68,8 @@ const assert = require("node:assert/strict");
     let orderRequests = 0;
     let changedPrice = false;
     let trackingDelivered = false;
+    let trackingStage = "accepted";
+    let riderStage;
     let receiptRequests = 0;
     let firstOrderKey;
     const confirmed = {
@@ -202,11 +204,11 @@ const assert = require("node:assert/strict");
           assert.equal(resource, `orders/${confirmed.id}/suborders/${shops[0].id}/receipt-code`);
           assert.deepEqual(route.request().postDataJSON(), { version: 4, confirmReceived: true, confirmCashPaid: true });
           receiptRequests += 1;
-          data = {code:"628415", expiresAt:new Date(Date.now() + 300000).toISOString(),amount:189};
+          data = {code:"628415", expiresAt:new Date(Date.now() + 300000).toISOString(),amount:119};
         } else if (resource === "orders/" + confirmed.id) {
-          data = { ...confirmed, amountDue: trackingDelivered ? 0 : 189, subOrders: confirmed.subOrders.map((shop,index) => ({
-            ...shop, status: index === 0 ? (trackingDelivered ? "delivered" : "out_for_delivery") : "cancelled",
-            ...(index === 0 ? {deliveryState: trackingDelivered ? "delivered" : "out_for_delivery", amountDue: trackingDelivered ? 0 : 189, version: trackingDelivered ? 5 : 4} : {amountDue:0}),
+          data = { ...confirmed, amountDue: trackingDelivered ? 0 : 119, cancelledAmount:70, cashRecordedAmount:trackingDelivered ? 119 : 0, subOrders: confirmed.subOrders.map((shop,index) => ({
+            ...shop, status: index === 0 ? (trackingDelivered ? "delivered" : trackingStage) : "cancelled",
+            ...(index === 0 ? {deliveryState: trackingDelivered ? "delivered" : riderStage, amountDue: trackingDelivered ? 0 : 119, version: trackingDelivered ? 5 : 4} : {amountDue:0}),
           })) };
         }
         else if (resource === "addresses") data = addresses;
@@ -540,7 +542,20 @@ const assert = require("node:assert/strict");
     await confirmation.getByRole("button", { name: "Track Order" }).click();
     await page.getByText("Sharma Kirana Store", { exact: true }).waitFor();
     const tracking = page.getByTestId("buyer-order-details");
-    await tracking.getByText("Picked up", {exact:true}).first().waitFor();
+    const firstTimeline = tracking.getByTestId(`shop-timeline-${shops[0].id}`);
+    await tracking.getByText("₹119 due at delivery",{exact:true}).waitFor();
+    await tracking.getByText("₹70 removed for cancelled items and delivery",{exact:true}).waitFor();
+    for (const [stage, deliveryState, label] of [
+      ["accepted",undefined,"Accepted"], ["preparing",undefined,"Preparing"],
+      ["ready","claimed","Ready for pickup"], ["ready","picked_up","Picked up by rider"],
+      ["out_for_delivery","out_for_delivery","Out for delivery"],
+    ]) {
+      trackingStage = stage;
+      riderStage = deliveryState;
+      await tracking.getByRole("button",{name:"Refresh status"}).click();
+      await firstTimeline.getByTestId("shop-current-status").filter({hasText:new RegExp(`^${label}$`)}).waitFor();
+    }
+    await tracking.getByText("Picked up by rider", {exact:true}).first().waitFor();
     await tracking.getByText("Patil Fresh Mart",{exact:true}).waitFor();
     let supportTicket;
     let supportRequests = 0;
@@ -635,6 +650,7 @@ const assert = require("node:assert/strict");
     assert.equal(await tracking.getByLabel("6 2 8 4 1 5",{exact:true}).count(),0);
 
     await tracking.getByText("Sharma Kirana Store · Delivered",{exact:true}).waitFor();
+    await tracking.getByText("₹119 paid",{exact:true}).waitFor();
     await precedesPayment("Buy again");
     await page.getByRole("button", { name: "Back from order details" }).click();
     await confirmation

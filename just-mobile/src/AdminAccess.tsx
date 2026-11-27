@@ -8,6 +8,7 @@ import { LoadState, MutationFeedback, SellerButton, SellerCard, SellerField, Sel
 import { fulfilmentNames } from "./sellerApi";
 import { MarketIcon } from "./MarketIcon";
 import { theme, themedStyles } from "./theme";
+import { AdminOrders } from "./AdminOrders";
 
 export function AdminAccess({close,session}:{close:()=>void;session:Session}) {
   const auth=useSellerMutation();
@@ -36,12 +37,14 @@ export function AdminAccess({close,session}:{close:()=>void;session:Session}) {
 }
 
 function AdminWorkspace({session,logout,loggingOut,error}:{session:Session;logout:()=>void;loggingOut:boolean;error:string}) {
-  const [tab,setTab]=useState<"Overview"|"Seller Approvals">("Overview");
+  const [tab,setTab]=useState<"Overview"|"Seller Approvals"|"Orders">("Overview");
   return <>
     <View style={[styles.header,{minHeight:54}]} accessibilityRole="tablist">
-      {(["Overview","Seller Approvals"] as const).map(value=><Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:value===tab}} onPress={()=>setTab(value)} style={[styles.tap,value===tab && styles.sage]}><Text style={styles.link}>{value}</Text></Pressable>)}
+      {(["Overview","Seller Approvals","Orders"] as const).map(value=><Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:value===tab}} onPress={()=>setTab(value)} style={[styles.tap,{flexShrink:1},value===tab && styles.sage]}><Text style={styles.link}>{value}</Text></Pressable>)}
     </View>
-    {tab==="Overview" ? <Overview token={session.token} openApprovals={()=>setTab("Seller Approvals")} /> : <Approvals token={session.token} />}
+    {tab==="Overview" && <Overview token={session.token} openApprovals={()=>setTab("Seller Approvals")} />}
+    {tab==="Seller Approvals" && <Approvals token={session.token} />}
+    {tab==="Orders" && <AdminOrders token={session.token} />}
     <View style={[styles.content,{paddingTop:0,paddingBottom:10}]}>
       <MutationFeedback error={error} />
       <SellerButton label={loggingOut ? "Signing out…" : "Sign out of Admin"} soft onPress={logout} disabled={loggingOut} />

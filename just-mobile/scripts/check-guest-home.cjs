@@ -195,16 +195,25 @@ const assert = require("node:assert/strict");
     }
     await page.getByText("Account",{exact:true}).last().click();
     const sellerFixture = { userId:"seller-fixture", name:"Anita Sharma", role:"seller", token:"seller-fixture-token", isDemo:false };
+    const secondSeller = {...sellerFixture,userId:"second-seller",name:"Second Seller",token:"second-seller-token"};
     const sellerHeaders = {"access-control-allow-origin":"*", "access-control-allow-headers":"*", "access-control-allow-methods":"GET, POST, OPTIONS"};
     let sellerAttempts = 0;
     await page.route("**/auth/login", async route => {
       if (route.request().method() === "OPTIONS") return route.fulfill({status:204,headers:sellerHeaders});
-      assert.deepEqual(route.request().postDataJSON(),{phone:"+919876543210",password:"fixture-password"});
+      const credentials=route.request().postDataJSON();
+      if (credentials.phone === "+919876543211") {
+        assert.equal(credentials.password,"fixture-second-password");
+        return route.fulfill({json:secondSeller,headers:sellerHeaders});
+      }
+      assert.deepEqual(credentials,{phone:"+919876543210",password:"fixture-password"});
       if (++sellerAttempts === 1) return route.fulfill({status:401,json:{message:"Invalid phone or password",code:"INVALID_CREDENTIALS",requestId:"seller-qa-reference"},headers:sellerHeaders});
       await route.fulfill({json:sellerFixture,headers:sellerHeaders});
     });
     let approvalStatus = "pending";
-    await page.route("**/seller/shop", route => route.request().method() === "OPTIONS" ? route.fulfill({status:204,headers:sellerHeaders}) : route.fulfill({json:{name:"Fixture Kirana",status:approvalStatus},headers:sellerHeaders}));
+    await page.route("**/seller/shop", route => route.request().method() === "OPTIONS" ? route.fulfill({status:204,headers:sellerHeaders}) : route.fulfill({json:{
+      name:route.request().headers().authorization === `Bearer ${secondSeller.token}` ? "Second Seller Shop" : "Fixture Kirana",
+      status:approvalStatus,
+    },headers:sellerHeaders}));
     await page.getByRole("button",{name:"Seller access",exact:true}).click();
     await page.getByRole("heading",{name:"Welcome back"}).waitFor();
     await page.getByTestId("seller-access-cover").locator("img").evaluate(image => image.decode());
@@ -255,6 +264,15 @@ const assert = require("node:assert/strict");
     await page.getByRole("heading",{name:"Welcome back"}).waitFor();
     assert.equal(await page.getByLabel("Mobile number",{exact:true}).inputValue(),"");
     assert.equal(await page.evaluate(() => sessionStorage.getItem("jpi.seller.session")),null);
+    await page.getByLabel("Mobile number",{exact:true}).fill("9876543211");
+    await page.getByLabel("Password",{exact:true}).fill("fixture-second-password");
+    await page.getByRole("button",{name:"Sign in",exact:true}).click();
+    await page.getByText("Second Seller Shop",{exact:true}).waitFor();
+    assert.equal(await page.getByText("Fixture Kirana",{exact:true}).count(),0);
+    assert.equal(await page.getByTestId("native-seller-workspace").count(),0);
+    assert.equal(await page.evaluate(() => JSON.parse(sessionStorage.getItem("jpi.seller.session")).userId),secondSeller.userId);
+    await page.getByRole("button",{name:"Sign out of seller account"}).click();
+    await page.getByRole("heading",{name:"Welcome back"}).waitFor();
     await page.getByRole("button",{name:/Create account/}).click();
     await page.getByLabel("Full name",{exact:true}).fill("Anita Sharma");
     await page.getByLabel("Mobile number",{exact:true}).fill("91 98765 43210");

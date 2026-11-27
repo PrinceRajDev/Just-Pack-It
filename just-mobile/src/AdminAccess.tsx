@@ -10,6 +10,7 @@ import { MarketIcon } from "./MarketIcon";
 import { theme, themedStyles } from "./theme";
 import { AdminOrders } from "./AdminOrders";
 import { AdminSupport } from "./AdminSupport";
+import { AdminPayments } from "./AdminPayments";
 
 export function AdminAccess({close,session}:{close:()=>void;session:Session}) {
   const auth=useSellerMutation();
@@ -38,15 +39,16 @@ export function AdminAccess({close,session}:{close:()=>void;session:Session}) {
 }
 
 function AdminWorkspace({session,logout,loggingOut,error}:{session:Session;logout:()=>void;loggingOut:boolean;error:string}) {
-  const [tab,setTab]=useState<"Overview"|"Seller Approvals"|"Orders"|"Support">("Overview");
+  const [tab,setTab]=useState<"Overview"|"Seller Approvals"|"Orders"|"Support"|"Finance">("Overview");
   return <>
-    <View style={[styles.header,{minHeight:54}]} accessibilityRole="tablist">
-      {(["Overview","Seller Approvals","Orders","Support"] as const).map(value=><Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:value===tab}} onPress={()=>setTab(value)} style={[styles.tap,{flexShrink:1,paddingHorizontal:8},value===tab && styles.sage]}><Text style={styles.link}>{value}</Text></Pressable>)}
+    <View style={[styles.header,{minHeight:54,flexWrap:"wrap",gap:4,paddingBottom:8}]} accessibilityRole="tablist">
+      {(["Overview","Seller Approvals","Orders","Support","Finance"] as const).map(value=><Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:value===tab}} onPress={()=>setTab(value)} style={[styles.tap,{paddingHorizontal:8},value===tab && styles.sage]}><Text style={styles.link}>{value}</Text></Pressable>)}
     </View>
     {tab==="Overview" && <Overview token={session.token} openApprovals={()=>setTab("Seller Approvals")} openSupport={()=>setTab("Support")} />}
     {tab==="Seller Approvals" && <Approvals token={session.token} />}
     {tab==="Orders" && <AdminOrders token={session.token} />}
     {tab==="Support" && <AdminSupport token={session.token} />}
+    {tab==="Finance" && <AdminPayments token={session.token} />}
     <View style={[styles.content,{paddingTop:0,paddingBottom:10}]}>
       <MutationFeedback error={error} />
       <SellerButton label={loggingOut ? "Signing out…" : "Sign out of Admin"} soft onPress={logout} disabled={loggingOut} />

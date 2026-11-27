@@ -39,6 +39,10 @@ export type AdminOrder = {
   subOrders:{id:string;shopName:string;status:string;amountDue:number;cancelReason?:string}[];
 };
 export type AdminCashFilter = "all" | "outstanding" | "recorded";
+export type AdminPayment = {
+  orderId:string; state:string; amount:number; testMode:boolean; paidAt:string|null;
+};
+export type AdminRefund = {id:string; shopName:string; amount:number; state:string; reason:string; testMode:boolean};
 export type SupportStatus = "open" | "in_progress" | "resolved";
 export type AdminSupportCase = {
   id:string; orderId:string; shopName:string; kind:string; description:string;
@@ -46,6 +50,13 @@ export type AdminSupportCase = {
 };
 
 export const adminApi={
+  payments:async(token:string,mode:"live"|"test",cursor?:string)=>{
+    let next:string|undefined;
+    const query=new URLSearchParams({state:"all",mode,limit:"20",...(cursor ? {cursor} : {})});
+    const rows=await request<AdminPayment[]>(`/admin/payments?${query}`,token,{},headers=>{next=headers.get("x-next-cursor") ?? undefined;});
+    return {items:rows.map(payment=>({...payment,id:payment.orderId})),next};
+  },
+  refunds:(token:string,orderId:string)=>request<AdminRefund[]>(`/admin/payments/${encodeURIComponent(orderId)}/refunds`,token),
   support:(token:string,status:SupportStatus,after?:string)=>request<{items:AdminSupportCase[];next?:string}>(
     `/support?${new URLSearchParams({status,...(after ? {after} : {})})}`,token,
   ),

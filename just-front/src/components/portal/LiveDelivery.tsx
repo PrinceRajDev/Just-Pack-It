@@ -454,11 +454,10 @@ function navigation(
   address: string | undefined,
   location?: { coordinates: [number, number] } | null,
 ) {
-  return location
-    ? `https://www.google.com/maps/dir/?api=1&destination=${location.coordinates[1]},${location.coordinates[0]}`
-    : address
-      ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`
-      : null;
+  const destination = location ? `${location.coordinates[1]},${location.coordinates[0]}` : address;
+  if (!destination) return null;
+  const query = new URLSearchParams({api:"1",destination,dir_action:"navigate"});
+  return `https://www.google.com/maps/dir/?${query}`;
 }
 function DeliveryTask({
   task,

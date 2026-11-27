@@ -490,12 +490,12 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
   const [pickupNote,setPickupNote] = useState(shop.pickupNote ?? "");
   const mutation = useSellerMutation();
   const cover = resolveImage(shop.coverImage);
-  const [pin, setPin] = useState<string>();
-  const currentPin = shop.location ? [...shop.location.coordinates].reverse().join(", ") : "";
+  const [pin, setPin] = useState<SellerShop["location"]>();
+  const pinChanged = !!pin && pin.coordinates.some((value,index) => value !== shop.location?.coordinates[index]);
   const profileChanged = name.trim() !== shop.name.trim()
     || address.trim() !== (shop.address ?? "").trim()
     || description.trim() !== (shop.description ?? "").trim()
-    || (pin !== undefined && pin !== currentPin);
+    || pinChanged;
   const pauseChanged = closed !== !!shop.temporarilyClosed;
   const hoursChanged = JSON.stringify(hours) !== JSON.stringify(shop.openingHours ?? []);
   const formatAvailability = (openingHours: SellerShop["openingHours"], temporarilyClosed?: boolean) => {
@@ -542,9 +542,8 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
       <SellerField label="Street address" value={address} onChangeText={setAddress} maxLength={500} />
       <SellerField label="Shop description" value={description} onChangeText={setDescription} maxLength={1000} multiline />
       <Text style={styles.copy}>Set your pin from the shop entrance. Delivery is available within 6 km of this point.</Text>
-      <CurrentLocationButton disabled={mutation.busy} onLocation={({latitude,longitude}) => setPin(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`)} />
-      <SellerField label="Shop map pin (latitude, longitude)" value={pin ?? currentPin} onChangeText={setPin} editable={!mutation.busy} maxLength={60} />
-      {pin !== undefined && pin !== currentPin && <Text style={styles.copy}>Saving an updated shop pin sends your shop profile for review.</Text>}
+      <CurrentLocationButton disabled={mutation.busy} onLocation={({latitude,longitude}) => setPin({type:"Point",coordinates:[longitude,latitude]})} />
+      <Text style={styles.copy}>{pinChanged ? "Shop location captured. Save to submit it for review." : shop.location ? "Shop location saved." : "Shop location is required for delivery."}</Text>
       {profileChanged && <SellerButton label="Discard changes" soft disabled={mutation.busy} onPress={() => {
         setName(shop.name); setAddress(shop.address ?? ""); setDescription(shop.description ?? "");
         setPin(undefined);
@@ -553,12 +552,7 @@ function ShopEditor({token,shop,accountName,signOut,onSaved,reload}:{token:strin
       <SellerButton label="Save shop details" disabled={mutation.busy || !profileChanged} onPress={() => void mutation.run(async () => {
         if (name.trim().length<2 || address.trim().length<2) throw new Error("Enter the shop name and street address.");
         const input: Parameters<typeof sellerApi.saveProfile>[2] = {name:name.trim(),address:address.trim(),description:description.trim()};
-        if (pin !== undefined && pin !== currentPin) {
-          const match = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/.exec(pin);
-          const latitude = Number(match?.[1]), longitude = Number(match?.[2]);
-          if (!match || Math.abs(latitude)>90 || Math.abs(longitude)>180) throw new Error("Enter a valid shop pin as latitude, longitude.");
-          input.location = {type:"Point",coordinates:[longitude,latitude]};
-        }
+        if (pinChanged) input.location = pin;
         const updated = await sellerApi.saveProfile(token,shop,input);
         onSaved(updated);
         setPin(undefined);

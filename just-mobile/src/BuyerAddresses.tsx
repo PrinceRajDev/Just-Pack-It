@@ -1,11 +1,12 @@
 import { theme, themedStyles } from "./theme";
 import { BuyerStateCard } from "./BuyerStateCard";
 import { useEffect, useRef, useState } from "react";
-import { StyleSheet, ActivityIndicator, Pressable, ScrollView, Text, TextInput, View, type TextInputProps } from "react-native";
+import { Platform, StyleSheet, ActivityIndicator, Pressable, ScrollView, Text, TextInput, View, type TextInputProps } from "react-native";
 import { CheckoutHeading } from "./CheckoutPresentation";
 import { buyerApi, type Address, type BuyerProfile } from "./api";
 
 import { MarketIcon } from "./MarketIcon";
+import { reverseGeocodeAsync } from "expo-location";
 import { CurrentLocationButton } from "./CurrentLocationButton";
 import * as storage from "./deviceStorage";
 
@@ -54,9 +55,8 @@ export function BuyerAddresses({ token, back, checkout, userId, area, fromHome }
   const [pendingRemoval, setPendingRemoval] = useState<string>();
   const [draft, setDraft] = useState<Draft | null>(() => checkout ? (checkout.address ? { label: checkout.address.label, line1: checkout.address.line1, locality: checkout.address.locality, city: checkout.address.city, pincode: checkout.address.pincode } : { ...blank }) : null);
   const [editing, setEditing] = useState<Address | null>(checkout?.address ?? null)
-  const [pinDraft,setPinDraft] = useState<string>();
-  const [pinError,setPinError] = useState("");
-  const pinText = pinDraft ?? (editing?.location ? [...editing.location.coordinates].reverse().join(", ") : "");
+  const [pinDraft,setPinDraft] = useState<Address["location"]>();
+  const addressMoved = !!editing && !!draft && (draft.line1.trim() !== editing.line1 || draft.locality.trim() !== editing.locality || draft.city.trim() !== editing.city || draft.pincode.trim() !== editing.pincode);
   const [makeDefault, setMakeDefault] = useState(checkout?.isDefault ?? false);
   const checkoutMode = !!checkout;;
   const [busy, setBusy] = useState(false);
@@ -84,11 +84,7 @@ export function BuyerAddresses({ token, back, checkout, userId, area, fromHome }
       label:draft.label.trim(),line1:draft.line1.trim(),locality:draft.locality.trim(),
       city:draft.city.trim(),pincode:draft.pincode.trim(),
     };
-    const pin = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/.exec(pinText);
-    const latitude = Number(pin?.[1]), longitude = Number(pin?.[2]);
-    const invalidPin = !!pinText.trim() && (!pin || Math.abs(latitude)>90 || Math.abs(longitude)>180);
-    setPinError(invalidPin ? t("Enter latitude, longitude, such as 26.35, 86.07.", "अक्षांश, देशांतर दर्ज करें, जैसे 26.35, 86.07।") : "");
-    if (pin && !invalidPin && pinDraft !== undefined) input.location={type:"Point",coordinates:[longitude,latitude]};
+    if (pinDraft) input.location = pinDraft;
     const errors: Partial<Record<keyof Draft, string>> = {};
     if (!input.label) errors.label = t("Enter a label, such as Home or Work.", "पते का नाम दर्ज करें, जैसे घर या दफ़्तर।");
     if (input.line1.length < 3) errors.line1 = t("Enter your house or building and street.", "मकान या इमारत और सड़क का नाम दर्ज करें।");
@@ -97,9 +93,9 @@ export function BuyerAddresses({ token, back, checkout, userId, area, fromHome }
     if (!/^[1-9][0-9]{5}$/.test(input.pincode)) errors.pincode = t("Enter a valid 6-digit PIN code.", "6 अंकों का सही पिन कोड दर्ज करें।");
     setFieldErrors(errors);
     setError(null);
-    if (invalidPin || Object.keys(errors).length) return;
+    if (Object.keys(errors).length) return;
     lock.current = true; setBusy(true); setError(null);
-    try { const saved = editing ? await buyerApi.updateAddress(token, editing.id, { ...input, version: editing.version }) : await buyerApi.createAddress(token, input); if (checkout) { checkout.onSaved(saved, makeDefault); return; } setRows((old) => editing ? old.map((row) => row.id === saved.id ? saved : row) : [...old, saved]); setSavedLabel(saved.label); setDraft(null); setEditing(null); setPinDraft(undefined); }
+    try { const saved = editing ? await buyerApi.updateAddress(token, editing.id, { ...input, version: editing.version, ...(addressMoved && !pinDraft ? {location:null} : {}) }) : await buyerApi.createAddress(token, input); if (checkout) { checkout.onSaved(saved, makeDefault); return; } setRows((old) => editing ? old.map((row) => row.id === saved.id ? saved : row) : [...old, saved]); setSavedLabel(saved.label); setDraft(null); setEditing(null); setPinDraft(undefined); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Address could not save"); }
     finally { lock.current = false; setBusy(false); }
   };
@@ -131,7 +127,6 @@ export function BuyerAddresses({ token, back, checkout, userId, area, fromHome }
       setError(null);
       setFieldErrors({});
       setPinDraft(undefined);
-      setPinError("");
     };
     const field = (key: keyof Draft) => {
       const label = fields.find(row => row.key === key)!.label;
@@ -166,17 +161,23 @@ export function BuyerAddresses({ token, back, checkout, userId, area, fromHome }
           {field("locality")}
           <View style={s.editorRow}>{field("city")}{field("pincode")}</View>
           <View style={s.editorField}>
-            <Text style={s.editorLabel}>{t("Delivery map pin", "डिलीवरी का मैप पिन")}</Text>
-            <CurrentLocationButton disabled={busy} hindi={hindi} onLocation={({latitude,longitude}) => {
+            <Text style={s.editorLabel}>{t("Delivery location", "डिलीवरी की जगह")}</Text>
+            <CurrentLocationButton disabled={busy} hindi={hindi} onLocation={async ({latitude,longitude}, isActive) => {
               if (lock.current) return;
-              setPinDraft(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
-              setPinError("");
+              setPinDraft({type:"Point",coordinates:[longitude,latitude]});
+              if (Platform.OS === "web") return;
+              const [place] = await reverseGeocodeAsync({latitude,longitude}).catch(() => []);
+              if (!isActive() || !place || lock.current) return;
+              setDraft(old => old && ({
+                ...old,
+                locality:old.locality || place.district || place.subregion || "",
+                city:old.city || place.city || "",
+                pincode:old.pincode || (/^[1-9][0-9]{5}$/.test(place.postalCode ?? "") ? place.postalCode! : ""),
+              }));
             }} />
-            <TextInput accessibilityLabel={t("Delivery map pin", "डिलीवरी का मैप पिन")} style={[s.editorInput, !!pinError && s.invalidInput]}
-              editable={!busy} value={pinText} onChangeText={value => {setPinDraft(value);setPinError("");}}
-              placeholder="26.35, 86.07" autoCorrect={false} maxLength={60} />
-            <Text style={s.copy}>{t("Set the pin at your drop-off point, or paste its latitude and longitude from Maps. Delivery is available within 6 km of the shop.", "डिलीवरी की जगह का मैप पिन लगाएँ या मैप से अक्षांश और देशांतर पेस्ट करें। दुकान से 6 किमी तक डिलीवरी उपलब्ध है।")}</Text>
-            {!!pinError && <Text accessibilityRole="alert" style={s.fieldError}>{pinError}</Text>}
+            <Text accessibilityLiveRegion="polite" style={s.copy}>{pinDraft || (!addressMoved && editing?.location)
+              ? t("Delivery location set. Confirm your house, street and landmark above.", "डिलीवरी की जगह सेट है। ऊपर अपना मकान, सड़क और लैंडमार्क जाँचें।")
+              : t("Enter your full address. Use current location when you’re at the drop-off point to enable delivery.", "अपना पूरा पता दर्ज करें। डिलीवरी के लिए उस जगह पर पहुँचकर मौजूदा लोकेशन इस्तेमाल करें।")}</Text>
           </View>
           {checkout && <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: makeDefault }} aria-checked={makeDefault} disabled={busy} onPress={() => setMakeDefault(value => !value)} style={s.link}>
             <Text style={s.editorLabel}>{makeDefault ? "✓ " : ""}Set as default on this device</Text>

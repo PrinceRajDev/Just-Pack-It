@@ -1,9 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { Accuracy, getCurrentPositionAsync, requestForegroundPermissionsAsync } from "expo-location";
-import { Pressable, Text, View } from "react-native";
+import { Platform, Pressable, Text, View } from "react-native";
 import { theme } from "./theme";
 
 type Coordinates = { latitude: number; longitude: number };
+
+async function readCurrentCoordinates() {
+  if (Platform.OS === "web") {
+    const {coords} = await new Promise<GeolocationPosition>((resolve,reject) => {
+      navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,maximumAge:0,timeout:15000});
+    });
+    return coords;
+  }
+  return (await getCurrentPositionAsync({accuracy:Accuracy.High})).coords;
+}
 
 export function CurrentLocationButton({ onLocation, disabled, hindi }: {
   onLocation: (coordinates: Coordinates, isActive: () => boolean) => void | Promise<void>;
@@ -32,13 +42,13 @@ export function CurrentLocationButton({ onLocation, disabled, hindi }: {
         setMessage(t("Allow location in settings or enter it manually.", "सेटिंग्स में लोकेशन की अनुमति दें या खुद दर्ज करें।"));
         return;
       }
-      const { coords } = await Promise.race([
-        getCurrentPositionAsync({ accuracy: Accuracy.High }),
+      const coords = await Promise.race([
+        readCurrentCoordinates(),
         new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error("Location timed out")), 15000); }),
       ]);
       if (!active.current) return;
       if (coords.accuracy == null || coords.accuracy > 150) {
-        setMessage(t("Location is approximate. Enable precise location or enter the map pin manually.", "सटीक लोकेशन चालू करें या मैप पिन खुद दर्ज करें।"));
+        setMessage(t("Location is approximate. Enable precise location or try again at the delivery point.", "सटीक लोकेशन चालू करें या डिलीवरी की जगह से फिर कोशिश करें।"));
         return;
       }
       await onLocation(coords, () => active.current);

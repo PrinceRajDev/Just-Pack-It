@@ -16,7 +16,7 @@
         }
       ]
     ],
-    "version": "1.0.3",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/just-pack-it-icon.png",
     "userInterfaceStyle": "automatic",
@@ -25,7 +25,7 @@
     },
     "android": {
       "package": "com.princeraj.justpackit",
-      "versionCode": 3,
+      "versionCode": 5,
       "adaptiveIcon": {
         "backgroundColor": "#FFF9F2",
         "foregroundImage": "./assets/just-pack-it-adaptive.png"

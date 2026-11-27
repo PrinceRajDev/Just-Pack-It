@@ -14,6 +14,7 @@ import { BuyerDigitalReceipt } from "./BuyerDigitalReceipt";
 import { BuyerCancelOrder } from "./BuyerCancelOrder";
 import { BuyerOrderSupport } from "./BuyerOrderSupport";
 import { BuyerReorder } from "./BuyerReorder";
+import { RiderTrackingMap } from "./RiderTrackingMap";
 import { ApiError, buyerApi, request, type BuyerOrder, type Product } from "./api";
 
 export const money = (value: number) => `₹${value.toLocaleString("en-IN")}`;
@@ -469,6 +470,7 @@ function RiderLocation({point,destination,token,orderId,shopId}:{point:ShopOrder
   return <View style={{gap:6}}>
     <Text style={s.label}>Rider tracking</Text>
     <Text style={{color:theme.ink}}>{fresh ? `Last updated ${dateTime(point.recordedAt)}` : "Waiting for a fresh rider location."}</Text>
+    {destination && <RiderTrackingMap destination={destination.coordinates} rider={fresh ? point : undefined} />}
     {fresh && point.routeEstimateAvailable && <>
       {currentEstimate && <View style={{gap:4,padding:10,borderRadius:12,backgroundColor:"#FFFFFF"}}>
         <Text accessibilityLiveRegion="polite" style={{color:"#1F1F1F",fontWeight:"700"}}>{currentEstimate.minutes <= 1 ? "Estimated arrival in under 2 min" : `Estimated arrival in ${currentEstimate.minutes} min`}</Text>

@@ -2212,7 +2212,7 @@ describe("live platform delivery",()=>{
  it("exclusively claims, enforces pickup and exact COD proof, and records cash once",async()=>{
   const secondUser=await createUser({name:"TEST SECOND DELIVERY",phone:"+919887001111",password},"delivery"),second:Actor={id:secondUser._id,role:"delivery"};
   const secondSession=await login({phone:secondUser.phone,password},config,"delivery-test");tokens[second.id]=secondSession.token;
-  const orderId=randomUUID(),subId=randomUUID(),holdId=randomUUID(),extraOrder=randomUUID(),extraSub=randomUUID();
+  const orderId=randomUUID(),subId=randomUUID(),holdId=randomUUID(),extraOrder=randomUUID(),extraSub=randomUUID(),cancelledProductId=randomUUID();
   const original=await Shop.findById(shopId).lean();
   try{
    await Shop.updateOne({_id:shopId},{$set:{status:"approved",active:true,areaIds:[areaId]}});
@@ -2221,21 +2221,36 @@ describe("live platform delivery",()=>{
     expect((await liveApi.put(`/admin/delivery/partners/${who.id}`).set("Authorization",auth(admin)).send({version:0,approved:true,areaIds:[areaId]})).status).toBe(200);
     expect((await liveApi.put("/delivery/availability").set("Authorization",auth(who)).send({online:true})).status).toBe(200);
    }
-   await Order.create({_id:orderId,buyerId:buyer.id,fingerprint:"TEST DELIVERY",reservationId:holdId,createdAt:new Date(),addressId:randomUUID(),address:{label:"TEST",line1:"PRIVATE DELIVERY DROP",locality:"TEST",city:"TEST",pincode:"999999",location:{type:"Point",coordinates:[86,26]}},paymentMethod:"cod",paymentStatus:"unpaid",totalCents:1200,subOrders:[{_id:subId,shopId,shopName:"TEST SHOP",shopAddress:"TEST PICKUP",status:"ready",version:0,fulfilment:"platform_delivery",itemsSubtotalCents:1000,deliveryFeeCents:200,lines:[{productId,name:"TEST ITEM",unit:"bag",priceCents:1000,qty:1}]}]});
-   await InventoryReservation.create({_id:holdId,buyerId:buyer.id,orderId,state:"committed",fingerprint:"TEST",createdAt:new Date(),expiresAt:new Date(Date.now()+100000),lines:[{productId,shopId,qty:1,priceCents:1000}]});
+   const cancelledId=randomUUID();
+   const otherProduct=await Product.findById(otherProductId).lean();
+   await Product.create({...otherProduct!,_id:cancelledProductId,stock:0,variants:[]});
+   await Order.create({_id:orderId,buyerId:buyer.id,fingerprint:"TEST DELIVERY",reservationId:holdId,createdAt:new Date(),addressId:randomUUID(),address:{label:"TEST",line1:"PRIVATE DELIVERY DROP",locality:"TEST",city:"TEST",pincode:"999999",location:{type:"Point",coordinates:[86,26]}},paymentMethod:"cod",paymentStatus:"unpaid",totalCents:1700,subOrders:[
+    {_id:subId,shopId,shopName:"TEST SHOP",shopAddress:"TEST PICKUP",status:"placed",version:0,fulfilment:"platform_delivery",itemsSubtotalCents:1000,deliveryFeeCents:200,lines:[{productId,name:"TEST ITEM",unit:"bag",priceCents:1000,qty:1}]},
+    {_id:cancelledId,shopId:otherShopId,shopName:"CANCELLED SHOP",status:"placed",version:0,fulfilment:"pickup",itemsSubtotalCents:500,deliveryFeeCents:0,lines:[{productId:cancelledProductId,name:"CANCELLED ITEM",unit:"piece",priceCents:500,qty:1}]},
+   ]});
+   await InventoryReservation.create({_id:holdId,buyerId:buyer.id,orderId,state:"committed",fingerprint:"TEST",createdAt:new Date(),expiresAt:new Date(Date.now()+100000),lines:[{productId,shopId,qty:1,priceCents:1000},{productId:cancelledProductId,shopId:otherShopId,qty:1,priceCents:500}]});
+   const buyerView=()=>liveApi.get(`/orders/${orderId}`).set("Authorization",auth(buyer));
+   expect((await buyerView()).body.amountDue).toBe(17);
+   await transitionSellerSuborder(otherSeller,orderId,cancelledId,{version:0,status:"cancelled",reason:"Test shop cannot supply"});
+   expect((await buyerView()).body).toMatchObject({total:17,amountDue:12,cancelledAmount:5,cashRecordedAmount:0});
+   for(const [version,status] of ["accepted","preparing","ready"].entries()){
+    await transitionSellerSuborder(seller,orderId,subId,{version,status:status as "accepted"|"preparing"|"ready"});
+    const view=await buyerView();
+    expect(view.body.subOrders).toMatchObject([{id:subId,status,amountDue:12},{id:cancelledId,status:"cancelled",amountDue:0}]);
+   }
    const available=await liveApi.get("/delivery/available").set("Authorization",auth(delivery));expect(available.status).toBe(200);expect(available.body.items.some((t:{id:string})=>t.id===subId)).toBe(true);expect(JSON.stringify(available.body)).not.toContain("PRIVATE DELIVERY DROP");expect(JSON.stringify(available.body)).not.toContain("TEST PICKUP");
-   const claims=await Promise.all([delivery,second].map(who=>liveApi.post(`/delivery/tasks/${subId}/claim`).set("Authorization",auth(who)).send({version:0})));
+   const claims=await Promise.all([delivery,second].map(who=>liveApi.post(`/delivery/tasks/${subId}/claim`).set("Authorization",auth(who)).send({version:3})));
    expect(claims.map(r=>r.status).sort()).toEqual([200,409]);const winner=claims[0].status===200?delivery:second,loser=winner===delivery?second:delivery;
-   expect((await liveApi.post(`/delivery/tasks/${subId}/claim`).set("Authorization",auth(winner)).send({version:0})).status).toBe(200);
-   const copy=await Order.findById(orderId).lean();await Order.create({...copy!,_id:extraOrder,reservationId:randomUUID(),subOrders:[{...copy!.subOrders[0],_id:extraSub,delivery:undefined,version:0}]});
-   expect((await liveApi.post(`/delivery/tasks/${extraSub}/claim`).set("Authorization",auth(winner)).send({version:0})).body.code).toBe("ACTIVE_TASK");
+   expect((await liveApi.post(`/delivery/tasks/${subId}/claim`).set("Authorization",auth(winner)).send({version:3})).status).toBe(200);
+   const copy=await Order.findById(orderId).lean();await Order.create({...copy!,_id:extraOrder,reservationId:randomUUID(),subOrders:[{...copy!.subOrders[0],_id:extraSub,delivery:undefined,version:3}]});
+   expect((await liveApi.post(`/delivery/tasks/${extraSub}/claim`).set("Authorization",auth(winner)).send({version:3})).body.code).toBe("ACTIVE_TASK");
    expect((await liveApi.get(`/delivery/tasks/${subId}/contact`).set("Authorization",auth(loser))).status).toBe(404);
-   expect((await liveApi.post(`/delivery/tasks/${subId}/dispatch`).set("Authorization",auth(winner)).send({version:1})).status).toBe(409);
-   expect((await liveApi.post(`/seller/orders/${orderId}/suborders/${subId}/pickup`).set("Authorization",auth(otherSeller)).send({version:1,partnerId:winner.id,confirmHandoff:true})).status).toBe(404);
-   expect((await liveApi.post(`/seller/orders/${orderId}/suborders/${subId}/pickup`).set("Authorization",auth(seller)).send({version:1,partnerId:winner.id,confirmHandoff:true})).status).toBe(200);
-   expect((await liveApi.post(`/delivery/tasks/${subId}/dispatch`).set("Authorization",auth(winner)).send({version:2})).status).toBe(200);
-   const proof=await issueReceiptCode(buyer,orderId,subId,{version:3,confirmReceived:true,confirmCashPaid:true},config);
-   const command={version:3,code:proof.code,confirmCashReceived:true,amountReceived:12};
+   expect((await liveApi.post(`/delivery/tasks/${subId}/dispatch`).set("Authorization",auth(winner)).send({version:4})).status).toBe(409);
+   expect((await liveApi.post(`/seller/orders/${orderId}/suborders/${subId}/pickup`).set("Authorization",auth(otherSeller)).send({version:4,partnerId:winner.id,confirmHandoff:true})).status).toBe(404);
+   expect((await liveApi.post(`/seller/orders/${orderId}/suborders/${subId}/pickup`).set("Authorization",auth(seller)).send({version:4,partnerId:winner.id,confirmHandoff:true})).status).toBe(200);
+   expect((await liveApi.post(`/delivery/tasks/${subId}/dispatch`).set("Authorization",auth(winner)).send({version:5})).status).toBe(200);
+   const proof=await issueReceiptCode(buyer,orderId,subId,{version:6,confirmReceived:true,confirmCashPaid:true},config);
+   const command={version:6,code:proof.code,confirmCashReceived:true,amountReceived:12};
    expect((await liveApi.post(`/delivery/tasks/${subId}/complete`).set("Authorization",auth(winner)).send({...command,amountReceived:1})).body.code).toBe("CASH_AMOUNT_MISMATCH");
    const wrong=proof.code==="111111"?"222222":"111111";
    expect((await liveApi.post(`/delivery/tasks/${subId}/complete`).set("Authorization",auth(winner)).send({...command,code:wrong})).status).toBe(400);
@@ -2244,8 +2259,9 @@ describe("live platform delivery",()=>{
    expect((await liveApi.post(`/delivery/tasks/${subId}/complete`).set("Authorization",auth(winner)).send(command)).status).toBe(200);
    expect((await liveApi.post(`/delivery/tasks/${subId}/complete`).set("Authorization",auth(winner)).send(command)).status).toBe(200);
    const saved=await Order.findById(orderId);expect(saved!.subOrders[0].status).toBe("delivered");expect(saved!.subOrders[0].cashCollection!.reportedBy).toBe(winner.id);expect(saved!.subOrders[0].cashCollection!.amountCents).toBe(1200);expect((await Partner.findById(winner.id))!.activeTask).toBeUndefined();
+   expect((await buyerView()).body).toMatchObject({total:17,amountDue:0,cancelledAmount:5,cashRecordedAmount:12,subOrders:[{id:subId,status:"delivered"},{id:cancelledId,status:"cancelled"}]});
    expect((await liveApi.get(`/delivery/tasks/${subId}/contact`).set("Authorization",auth(winner))).status).toBe(404);
-  }finally{await Order.deleteMany({_id:{$in:[orderId,extraOrder]}});await InventoryReservation.deleteOne({_id:holdId});await Partner.deleteMany({_id:{$in:[delivery.id,second.id]}});await Shop.updateOne({_id:shopId},{$set:{status:original!.status,active:original!.active,areaIds:original!.areaIds}});}
+  }finally{await Order.deleteMany({_id:{$in:[orderId,extraOrder]}});await InventoryReservation.deleteOne({_id:holdId});await Product.deleteOne({_id:cancelledProductId});await Partner.deleteMany({_id:{$in:[delivery.id,second.id]}});await Shop.updateOne({_id:shopId},{$set:{status:original!.status,active:original!.active,areaIds:original!.areaIds}});}
  });
 });
 

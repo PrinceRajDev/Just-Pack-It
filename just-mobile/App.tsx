@@ -368,6 +368,7 @@ export default function App() {
     <BuyerBrowse
       session={session}
       areaName={area?.name}
+      onChangeArea={() => setPicker(true)}
       onShop={(item) => {
         setShopOrigin("browse");
         setShop(item);

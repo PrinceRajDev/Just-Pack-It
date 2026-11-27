@@ -79,6 +79,7 @@ export function BuyerBrowse({
   session,
   areaId,
   areaName,
+  onChangeArea,
   onShop,
   categories,
   query,
@@ -90,6 +91,7 @@ export function BuyerBrowse({
   session: Session | null;
   areaId?: string;
   areaName?: string;
+  onChangeArea: () => void;
   onShop: (item: Shop) => void;
   categories: Category[];
   query: string;
@@ -339,8 +341,16 @@ export function BuyerBrowse({
       <Text style={styles.emptyText}>{copy}</Text>
     </View>
   );
+  const areaAction = (
+    <Pressable accessibilityRole="button" onPress={onChangeArea} style={{minHeight:44, justifyContent:"center", alignItems:"center"}}>
+      <Text style={styles.retry}>Change browsing area</Text>
+    </Pressable>
+  );
   const missingResults = (copy: string) => (
-    <BuyerStateCard title={`No matches for “${search}”.`} copy={copy} icon="search" action="Clear search" onAction={reset} />
+    <View>
+      <BuyerStateCard title={`No matches for “${search}”.`} copy={copy} icon="search" action="Clear search" onAction={reset} />
+      {areaAction}
+    </View>
   );
   const searching = <>
     <BuyerStateCard title="Searching nearby…" copy="Looking across products, shops and brands." tone="info" compact loading />
@@ -370,7 +380,7 @@ export function BuyerBrowse({
         )}
         <HomeNotifications session={session} />
       </View>
-      {areaName && <Text style={styles.area}>{areaName}</Text>}
+      {areaName && <Text style={styles.area}>Browsing area · {areaName}</Text>}
       <View
         style={[
           styles.search,
@@ -588,7 +598,7 @@ export function BuyerBrowse({
           </View>
         </>
       ) : !areaId ? (
-        empty("Choose a delivery area from Home to browse nearby listings.")
+        <View>{empty("Choose a browsing area to see nearby listings.")}{areaAction}</View>
       ) : category &&
         !categories.some((item) => item.slug === category.slug) ? (
         empty("This category is not available in your area yet.")
@@ -809,16 +819,17 @@ export function BuyerBrowse({
                       onPress={() => onShop(item)}
                     />
                   ))
-                : <BuyerStateCard
+                : <View><BuyerStateCard
                     title="No matching shops in this area."
                     copy={areaName ? `Check again for listings near ${areaName}.` : "Check again for nearby listings."}
                     icon="shop"
-                    action="Refresh shops"
+                    action={search ? "Clear search" : "Refresh shops"}
                     onAction={() => {
+                      if (search) { setQuery(""); return; }
                       setResult(null);
                       setAttempt(value => value + 1);
                     }}
-                  />}
+                  />{areaAction}</View>}
             </View>
           ) : null}
           {tab === "Categories" &&
@@ -854,7 +865,7 @@ export function BuyerBrowse({
                 )}
               </View>
             ) : category ? (
-              <BuyerStateCard
+              <View><BuyerStateCard
                 title={search || subcategory ? "No matching products" : "No products are available in this category yet."}
                 copy={search || subcategory ? "Clear the search and filters to see all products in this category." : "Check again for new listings in this category."}
                 icon="bag"
@@ -864,11 +875,12 @@ export function BuyerBrowse({
                   if (search || subcategory) {
                     setQuery("");
                     setSubcategory(undefined);
+                    setSort(undefined);
                   } else {
                     setAttempt(value => value + 1);
                   }
                 }}
-              />
+              />{areaAction}</View>
             ) : (
               empty("No matching products found.")
             )

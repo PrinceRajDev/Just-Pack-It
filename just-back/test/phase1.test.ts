@@ -1284,12 +1284,19 @@ it("keeps review reasons private, versioned and available after seller resubmiss
   const ownerAuth=`Bearer ${session.token}`;
   const shop=await createShop(owner,shopCreate.parse({slug:"test-review-shop",name:"TEST review shop",locality:"TEST area",categoryIds:[categoryId],serviceAreaIds:[areaId],fulfilment:["pickup"],since:2020,initials:"TR"}));
   const path=`/admin/shops/${shop._id}/approval`;
+  const pendingPath="/admin/shops?status=pending&limit=100";
+  expect((await api.get(pendingPath).set("Authorization",ownerAuth)).status).toBe(403);
+  const pending=await api.get(pendingPath).set("Authorization",auth(admin));
+  expect(pending.status).toBe(200);
+  expect(pending.body).toEqual(expect.arrayContaining([expect.objectContaining({id:shop._id,status:"pending",version:shop.version})]));
+  expect(pending.body.every((row:{status:string})=>row.status==="pending")).toBe(true);
   for(const status of ["rejected","suspended"]) {
     const missing=await api.patch(path).set("Authorization",auth(admin)).send({status,version:shop.version});
     expect(missing.status).toBe(400);expect(missing.body.fields).toContain("reason");
   }
   const rejected=await api.patch(path).set("Authorization",auth(admin)).send({status:"rejected",version:shop.version,reason:"  Please correct the shop address  "});
   expect(rejected.status).toBe(200);
+  expect((await api.get(pendingPath).set("Authorization",auth(admin))).body.some((row:{id:string})=>row.id===shop._id)).toBe(false);
   const ownerView=await api.get("/seller/shop").set("Authorization",ownerAuth);
   expect(ownerView.body.review.reason).toBe("Please correct the shop address");
   expect(ownerView.body.review).not.toHaveProperty("reviewedBy");

@@ -24,6 +24,7 @@ import { BuyerOrderDetails, isPastOrder, money, orderDue, OrderSymbol, orderStag
 import { BuyerProfile } from "./BuyerProfile";
 import { useAndroidBack } from "./useAndroidBack";
 import { SellerAccess } from "./SellerAccess";
+import { AdminAccess } from "./AdminAccess";
 import { BuyerRecovery } from "./BuyerRecovery";
 
 
@@ -67,6 +68,8 @@ export function BuyerAccount({
   const [profileOpen, setProfileOpen] = useState(false);
   const [sellerOpen, setSellerOpen] = useState(false);
   const [sellerHandoff, setSellerHandoff] = useState<Session>();
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [adminHandoff, setAdminHandoff] = useState<Session>();
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   useAndroidBack(() => {
     if (!session && busy) return true;
@@ -143,6 +146,13 @@ export function BuyerAccount({
         setSellerOpen(true);
         return;
       }
+      if (!register && next.role === "admin") {
+        setPassword("");
+        setPasswordVisible(false);
+        setAdminHandoff(next);
+        setAdminOpen(true);
+        return;
+      }
       if (next.role !== "buyer")
         throw new Error("Use the matching workspace for this account.");
       await save(next);
@@ -163,6 +173,7 @@ export function BuyerAccount({
     }
   };
   if (sellerOpen) return <SellerAccess initialSession={sellerHandoff} close={() => { setSellerHandoff(undefined); setSellerOpen(false); }} />;
+  if (adminOpen) return <AdminAccess initialSession={adminHandoff} close={() => { setAdminOpen(false); setAdminHandoff(undefined); }} />;
   if (session && addressesOpen) return <Modal onRequestClose={() => setAddressesOpen(false)}><SafeAreaView style={{ flex: 1, backgroundColor: theme.canvas }}><BuyerAddresses key={session.userId} token={session.token} userId={session.userId} area={area} back={() => setAddressesOpen(false)} /></SafeAreaView></Modal>;
   if (!session && recoveryOpen) return <BuyerRecovery back={() => { setPassword(""); setRecoveryOpen(false); }} />;
   if (session && profileOpen) return <Modal onRequestClose={() => setProfileOpen(false)}><SafeAreaView style={{ flex: 1, backgroundColor: theme.canvas }}><BuyerProfile key={session.userId} token={session.token} back={() => setProfileOpen(false)} onSaved={(updatedName) => save({ ...session, name: updatedName })} /></SafeAreaView></Modal>;
@@ -170,6 +181,7 @@ export function BuyerAccount({
     <BuyerAccountHub initialFavourites={initialFavourites} session={session} shops={shops} products={products}
       back={back} signIn={startSignIn} profile={() => setProfileOpen(true)} addresses={() => setAddressesOpen(true)}
       seller={() => setSellerOpen(true)}
+      admin={() => setAdminOpen(true)}
       orders={openOrders} browse={browse} openShop={openShop} add={add}
       signOut={async () => {
         if (session) {

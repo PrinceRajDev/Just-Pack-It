@@ -15,9 +15,10 @@ const languageKey = "jpi.account.language";
 type Panel = "language" | "notifications" | "favourites" | "signout";
 type Favourite = { id: string; name: string; key: string; shop?: Shop; product?: Product };
 
-export function BuyerAccountHub({ initialFavourites, seller, session, shops, products, back, signIn, profile, addresses, orders, signOut, browse, openShop, add }: {
+export function BuyerAccountHub({ initialFavourites, seller, admin, session, shops, products, back, signIn, profile, addresses, orders, signOut, browse, openShop, add }: {
   initialFavourites?: boolean;
   seller: () => void;
+  admin: () => void;
   session: Session | null; shops: Shop[]; products: Product[];
   back: () => void; signIn: () => void; profile: () => void; addresses: () => void;
   orders: () => void; signOut: () => Promise<void>; browse: () => void;
@@ -165,6 +166,7 @@ export function BuyerAccountHub({ initialFavourites, seller, session, shops, pro
         </View>
         <View style={s.menu}>
           <Row icon="store" title={t("Seller access", "विक्रेता खाता")} copy={t("Sign in or set up your shop", "साइन इन करें या अपनी दुकान जोड़ें")} onPress={seller} />
+          <Row icon="account" title={t("Admin access", "एडमिन खाता")} copy={t("Marketplace operations and seller approvals", "मार्केटप्लेस संचालन और विक्रेता मंज़ूरी")} onPress={admin} />
         </View>
         {session && <Action label={panels.signout} onPress={() => open("signout")} danger />}
       </ScrollView>

@@ -422,13 +422,13 @@ export function adminRoutes(config: Config) {
     res.json(areaDto(area));
   });
   router.get("/shops", async (req, res) => {
-    const input = validate.privateListQuery.parse(req.query);
+    const {status,...input} = validate.privateListQuery.extend({status:z.enum(["pending","approved","rejected","suspended"]).optional()}).parse(req.query);
     const { cursor: _cursor, ...scope } = input;
     const page = await paginate<ShopRecord & { _key: string }>(
       "shops",
-      [{ $addFields: { _key: "$sortName" } }],
+      [...(status ? [{ $match: { status } }] : []), { $addFields: { _key: "$sortName" } }],
       { ...input, sort: "name" },
-      { ...scope, private: true, actorId: actor(req).id },
+      { ...scope, ...(status ? { status } : {}), private: true, actorId: actor(req).id },
       config,
     );
     const refs = await categories();

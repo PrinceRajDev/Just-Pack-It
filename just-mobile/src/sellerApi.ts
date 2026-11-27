@@ -91,5 +91,7 @@ export const sellerApi = {
     write<SellerProduct>(token, productPath(product) + "/inventory", "PATCH", { stock, version: product.version }),
   variant: (token: string, product: SellerProduct, input: Omit<ProductVariant, "id">, id?: string) =>
     write<ProductVariant>(token, productPath(product) + "/variants" + (id ? "/" + encode(id) : ""), id ? "PATCH" : "POST", { ...input, version: product.version }),
+  variantStock: (token: string, product: SellerProduct, id: string, stock: number) =>
+    write<ProductVariant & {version: number}>(token, productPath(product) + "/variants/" + encode(id), "PATCH", {stock, version:product.version}),
   settlements: (token: string, cursor?: string) => page<Settlement>(token, "/settlements", cursor),
 };

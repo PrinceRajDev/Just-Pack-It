@@ -600,6 +600,12 @@ const assert = require("node:assert/strict");
     await tracking.getByText("The order is still missing an item.",{exact:true}).waitFor();
     assert.equal(supportRequests,1);
     await tracking.getByRole("button",{name:"Hide order help",exact:true}).click();
+    await tracking.getByText("1 on the way · 1 cancelled",{exact:true}).waitFor();
+    await tracking.getByRole("button",{name:"View Patil Fresh Mart timeline · Cancelled",exact:true}).click();
+    await page.waitForFunction(id => {
+      const target = document.querySelector(`[data-testid="shop-timeline-${id}"]`);
+      return target && target.getBoundingClientRect().top < innerHeight;
+    }, shops[1].id);
     const precedesPayment = async (buttonName) => {
       const payment = await tracking.getByText("Cash on Delivery", {exact:true}).elementHandle();
       assert.ok(await tracking.getByRole("button", {name:buttonName, exact:true}).evaluate(

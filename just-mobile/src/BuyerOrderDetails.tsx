@@ -57,6 +57,20 @@ export function statusLabel(status: string) {
   );
 }
 
+export function shopTimelineLabel(shop: ShopOrder) {
+  const stage = shopStage(shop);
+  return stage === "out_for_delivery" || stage === "picked_up" ? "On the way" : statusLabel(stage);
+}
+
+export function shopProgressSummary(shops: ShopOrder[]) {
+  const counts = new Map<string, number>();
+  for (const shop of shops) {
+    const label = shopTimelineLabel(shop).toLowerCase();
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  return [...counts].map(([label, count]) => `${count} ${label}`).join(" · ");
+}
+
 export function isPastOrder(order: BuyerOrder) {
   return order.subOrders.length > 0 && order.subOrders.every(shop =>
     shop.status === "delivered" || shop.status === "cancelled" || shopStage(shop) === "returned");
@@ -113,10 +127,12 @@ export function BuyerOrderDetails({
   id,
   back,
   reorder,
+  initialShopId,
 }: {
   token: string;
   id: string;
   back: () => void;
+  initialShopId?: string;
   reorder?: {areaId: string; bag: (Product & {quantity: number})[]; add: (product: Product, quantity: number) => void; openBag: () => void};
 }) {
   const [order, setOrder] = useState<BuyerOrder | null>(null);
@@ -124,6 +140,8 @@ export function BuyerOrderDetails({
   const [attempt, setAttempt] = useState(0);
   const scroller = useRef<ComponentRef<typeof ScrollView>>(null);
   const deliveredOffset = useRef(0);
+  const shopOffsets = useRef(new Map<string, number>());
+  const pendingShop = useRef(initialShopId);
   useEffect(() => {
     let active = true;
     let busy = false;
@@ -218,6 +236,18 @@ export function BuyerOrderDetails({
                 <Text style={s.muted}>#{order.id} · {dateTime(order.createdAt)}</Text>
               </View>
             </View>
+            {order.subOrders.length > 1 && <View style={s.card}>
+              <Text accessibilityRole="header" style={s.shopName}>Shop progress</Text>
+              <Text style={s.muted}>{shopProgressSummary(order.subOrders)}</Text>
+              {order.subOrders.map(shop => <Pressable key={shop.id} accessibilityRole="button"
+                accessibilityLabel={`View ${shop.shopName} timeline · ${shopTimelineLabel(shop)}`}
+                style={[s.refresh, s.sage]} onPress={() => {
+                  const y = shopOffsets.current.get(shop.id);
+                  if (y !== undefined) scroller.current?.scrollTo({y});
+                }}>
+                <Text style={s.label}>{shop.shopName} · {shopTimelineLabel(shop)} ›</Text>
+              </Pressable>)}
+            </View>}
             {statusKey === "delayed" && delayedShop && <View style={s.delay}>
               <Text style={s.shopName}>Taking a little longer</Text>
               <Text style={s.delayCopy}>{delayedShop.shopName} is still preparing your items. We’ll update you when the status changes.</Text>
@@ -267,7 +297,14 @@ export function BuyerOrderDetails({
                     : cashPaid > 0 ? "Payment collected at delivery." : "No cash payment is outstanding."}</Text>}
             </View>
             {order.subOrders.map((shop) => (
-              <View key={shop.id} style={{ gap: 8 }}>
+              <View key={shop.id} testID={`shop-timeline-${shop.id}`} style={{ gap: 8 }} onLayout={({nativeEvent}) => {
+                const {y} = nativeEvent.layout;
+                shopOffsets.current.set(shop.id, y);
+                if (pendingShop.current === shop.id) {
+                  pendingShop.current = undefined;
+                  scroller.current?.scrollTo({y, animated:false});
+                }
+              }}>
                 <ShopCard
                   shop={shop}
                   order={order}

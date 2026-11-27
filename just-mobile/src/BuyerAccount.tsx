@@ -20,7 +20,7 @@ import { BuyerAuthNotice } from "./BuyerAuthNotice";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { MarketIcon } from "./MarketIcon";
 import { BuyerAddresses } from "./BuyerAddresses";
-import { BuyerOrderDetails, isPastOrder, money, orderDue, OrderSymbol, orderStage, statusLabel } from "./BuyerOrderDetails";
+import { BuyerOrderDetails, isPastOrder, money, orderDue, OrderSymbol, orderStage, shopProgressSummary, shopTimelineLabel, statusLabel } from "./BuyerOrderDetails";
 import { BuyerProfile } from "./BuyerProfile";
 import { useAndroidBack } from "./useAndroidBack";
 import { SellerAccess } from "./SellerAccess";
@@ -384,7 +384,7 @@ export function BuyerOrders({
 }) {
   const [tab, setTab] = useState<"Active" | "Past">("Active");
   const [orders, setOrders] = useState<BuyerOrder[]>([]);
-  const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<{id:string; shopId?:string} | null>(null);
   useAndroidBack(() => { if (!selectedOrder) return false; setSelectedOrder(null); return true; }, 10);
   const [cursor, setCursor] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -476,18 +476,26 @@ export function BuyerOrders({
               ? due || item.cashRecordedAmount || Math.max(0, item.total - (item.cancelledAmount ?? 0))
               : item.onlinePaidAmount || item.total;
             return (
-              <Pressable accessibilityRole="button" style={[ordersUI.card, ordersUI.orderCard, tab === "Active" && index === 0 && ordersUI.lead]} onPress={() => setSelectedOrder(item.id)}>
+              <View style={[ordersUI.card, ordersUI.orderCard, tab === "Active" && index === 0 && ordersUI.lead]}>
+              <Pressable accessibilityRole="button" style={{gap:10}} onPress={() => setSelectedOrder({id:item.id})}>
                 <View style={ordersUI.cardTop}>
                   <Text style={ordersUI.badge}>{statusLabel(stage)}{hasActiveCash && stage !== "out_for_delivery" ? " · Active COD" : ""}</Text>
                   <OrderSymbol name={stage} />
                 </View>
                 <Text style={ordersUI.orderTitle}>{names[0] || "Local order"}{names.length > 1 ? ` + ${names.length - 1} ${names.length === 2 ? "shop" : "shops"}` : ""}</Text>
                 <Text style={ordersUI.copy}>#{item.id} · {new Date(item.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" })}</Text>
+                {names.length > 1 && <Text style={ordersUI.copy}>{shopProgressSummary(item.subOrders)}</Text>}
                 <View style={ordersUI.orderFooter}>
                   <Text style={ordersUI.total}>{money(displayedTotal)}</Text>
                   <Text style={ordersUI.detailsLink}>View details →</Text>
                 </View>
               </Pressable>
+              {names.length > 1 && item.subOrders.map(shop => <Pressable key={shop.id} accessibilityRole="button"
+                accessibilityLabel={`View ${shop.shopName} timeline · ${shopTimelineLabel(shop)}`}
+                style={{minHeight:44, justifyContent:"center"}} onPress={() => setSelectedOrder({id:item.id, shopId:shop.id})}>
+                <Text style={ordersUI.detailsLink}>{shop.shopName} · {shopTimelineLabel(shop)} ›</Text>
+              </Pressable>)}
+              </View>
             );
           }}
         />
@@ -496,7 +504,7 @@ export function BuyerOrders({
         <Modal visible onRequestClose={closeOrder}>
           <SafeAreaProvider>
             <SafeAreaView style={ordersUI.screen}>
-              <BuyerOrderDetails token={session.token} id={selectedOrder} back={closeOrder} reorder={reorder} />
+              <BuyerOrderDetails token={session.token} id={selectedOrder.id} initialShopId={selectedOrder.shopId} back={closeOrder} reorder={reorder} />
             </SafeAreaView>
           </SafeAreaProvider>
         </Modal>
